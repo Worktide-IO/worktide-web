@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { UserAvatarStack } from '@/components/UserAvatarStack';
 
 const PRIORITY_VARIANT: Record<string, 'outline' | 'secondary' | 'default' | 'destructive'> = {
   low: 'outline',
@@ -230,20 +231,23 @@ function TaskCard({ task, dragging = false }: { task: Row<TaskJsonld>; dragging?
           ) : null}
         </div>
         <p className="text-sm font-medium leading-snug">{task.title}</p>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {task.priority ? (
-            <Badge
-              variant={PRIORITY_VARIANT[task.priority] ?? 'outline'}
-              className="text-[10px]"
-            >
-              {PRIORITY_LABEL[task.priority] ?? task.priority}
-            </Badge>
-          ) : null}
-          {task.dueOn ? (
-            <span className="text-[10px] text-muted-foreground">
-              {new Date(task.dueOn).toLocaleDateString()}
-            </span>
-          ) : null}
+        <div className="flex items-center justify-between gap-2 pt-0.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {task.priority ? (
+              <Badge
+                variant={PRIORITY_VARIANT[task.priority] ?? 'outline'}
+                className="text-[10px]"
+              >
+                {PRIORITY_LABEL[task.priority] ?? task.priority}
+              </Badge>
+            ) : null}
+            {task.dueOn ? (
+              <span className="text-[10px] text-muted-foreground">
+                {new Date(task.dueOn).toLocaleDateString()}
+              </span>
+            ) : null}
+          </div>
+          <UserAvatarStack iris={task.assignees} size="sm" max={3} />
         </div>
       </CardContent>
     </Card>
