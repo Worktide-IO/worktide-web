@@ -54,9 +54,15 @@ src/
 ├── App.tsx              Refine + Router wiring
 ├── main.tsx             React entrypoint
 ├── index.css            Tailwind v4 + shadcn design tokens
+├── api/                 GENERATED — kubb output (do not edit by hand)
+│   ├── types/           TypeScript types per entity + per operation
+│   ├── zod/             Zod schemas (handy for runtime guards / forms)
+│   └── schemas/         Raw JSON schemas (kubb's intermediate format)
 ├── lib/
 │   ├── api.ts           Shared axios instance + JWT / workspace headers
+│   ├── refine.ts        Row<T> helper that drops null from generated `id`
 │   └── utils.ts         cn() helper for class composition
+├── components/ui/       shadcn primitives
 ├── providers/
 │   ├── dataProvider.ts  Refine data provider for API Platform (Hydra/JSON-LD)
 │   └── authProvider.ts  JWT login + refresh + workspace bootstrap
@@ -65,10 +71,34 @@ src/
     └── DashboardPage.tsx
 ```
 
+## OpenAPI codegen
+
+The backend exposes its OpenAPI 3.1 spec at
+`https://api.worktide.ddev.site/v1/docs.jsonopenapi` (API Platform 4
+serves the JSON-LD/Hydra contract there — note the `.jsonopenapi`
+suffix; `.json` 404s). `kubb` generates types + Zod schemas from it:
+
+```bash
+ddev exec ./node_modules/.bin/kubb generate
+# or:  pnpm gen:api  (host-side, when running outside DDEV)
+```
+
+Output lives in `src/api/` and is committed. Refresh whenever the
+backend schema moves. Each entity has three useful variants:
+
+| File | When to use |
+|---|---|
+| `types/<Entity>.ts` | bare entity shape (POST body, no Hydra wrapper) |
+| `types/<entity>/Jsonld.ts` | GET response shape (with `@id`, `@type`, `@context`) |
+| `types/<entity>/JsonMergePatch.ts` | PATCH body shape |
+| `zod/<entity>/jsonldSchema.ts` | Zod for runtime validation |
+
+Wrap generated `*Jsonld` types with the `Row<T>` helper from
+`lib/refine.ts` when handing them to Refine — it drops the spec-allowed
+`null` from `id` so they satisfy Refine's `BaseRecord` constraint.
+
 ## Next milestones
 
-- [ ] `npx shadcn@latest init` to materialise the component primitives
-- [ ] OpenAPI codegen (kubb / openapi-typescript) → typed API client
 - [ ] Refine `<ThemedLayout>` (sidebar + header) + first CRUD resource
 - [ ] Mercure subscription hook for live task / timer updates
 - [ ] Kanban board (`dnd-kit`)

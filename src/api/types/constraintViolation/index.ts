@@ -1,0 +1,1 @@
+export type { ConstraintViolationJsonld } from "./Jsonld.ts";

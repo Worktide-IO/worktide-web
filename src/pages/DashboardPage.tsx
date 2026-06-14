@@ -1,6 +1,8 @@
 import { useGetIdentity, useList, useLogout } from '@refinedev/core';
 import { LogOut } from 'lucide-react';
 
+import type { ProjectJsonld } from '@/api/types/project/Jsonld';
+import type { Row } from '@/lib/refine';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,26 +18,28 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-type Identity = { id: string; email: string; name: string };
-type ProjectRow = {
-  id: string;
-  name: string;
-  key: string;
-  status?: { name?: string } | string;
-};
-
 /**
  * Stub dashboard for the very first end-to-end run. Once the real data is
  * flowing it shows the authenticated user, the active workspace, and a
  * sanity list of projects via shadcn primitives.
  *
- * Replace with the Refine <ThemedLayout> once we lay out the proper navigation
- * shell; this hand-rolled header keeps the surface area minimal for now.
+ * Replace with the Refine <ThemedLayout> once we lay out the proper
+ * navigation shell; this hand-rolled header keeps the surface area minimal.
+ *
+ * Note on the status column: API Platform's JSON-LD output serialises
+ * relations as IRIs ("/v1/project_statuses/<uuid>"), so the status field is
+ * a bare string here. To render the human-readable name we'd either need to
+ * (a) join via useMany on the relation, or (b) ask the backend for a
+ * groups-expanded projection. Deferred — for the smoke test the IRI is fine.
  */
+// Identity comes from the custom /v1/auth/me endpoint which isn't in the
+// OpenAPI spec — keep the local shape until the backend annotates it.
+type Identity = { id: string; email: string; name: string };
+
 export function DashboardPage() {
   const { data: identity } = useGetIdentity<Identity>();
   const { mutate: logout } = useLogout();
-  const { result: projects, query } = useList<ProjectRow>({
+  const { result: projects, query } = useList<Row<ProjectJsonld>>({
     resource: 'projects',
     pagination: { currentPage: 1, pageSize: 10 },
     sorters: [{ field: 'updatedAt', order: 'desc' }],
@@ -91,19 +95,19 @@ export function DashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {projects?.data?.map((p: ProjectRow) => {
-                    const statusName =
-                      typeof p.status === 'string' ? p.status : p.status?.name ?? null;
-                    return (
-                      <TableRow key={p.id}>
-                        <TableCell className="font-mono text-xs">{p.key}</TableCell>
-                        <TableCell>{p.name}</TableCell>
-                        <TableCell>
-                          {statusName ? <Badge variant="secondary">{statusName}</Badge> : null}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {projects?.data?.map((p) => (
+                    <TableRow key={p['@id']}>
+                      <TableCell className="font-mono text-xs">{p.key}</TableCell>
+                      <TableCell>{p.name}</TableCell>
+                      <TableCell>
+                        {p.status ? (
+                          <Badge variant="secondary" className="font-mono text-[10px]">
+                            {p.status.split('/').pop()}
+                          </Badge>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             )}

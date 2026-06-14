@@ -1,0 +1,2 @@
+export type { WorkspaceInvitationHtml, WorkspaceInvitationHtmlRoleEnum, WorkspaceInvitationHtmlStatusEnum } from "./Html.ts";
+export type { WorkspaceInvitationJsonld, WorkspaceInvitationJsonldRoleEnum, WorkspaceInvitationJsonldStatusEnum } from "./Jsonld.ts";

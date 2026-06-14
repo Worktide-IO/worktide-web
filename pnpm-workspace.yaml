@@ -1,0 +1,6 @@
+# Deny postinstall scripts for transitively-pulled-in build-script packages
+# we don't actually need. Without this entry pnpm 11 errors out under
+# headless (CI / supervisord) execution because the `es5-ext` legacy
+# package wants to run a tracking postinstall.
+allowBuilds:
+  es5-ext: false
