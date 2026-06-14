@@ -1,5 +1,6 @@
 import type { AuthProvider } from '@refinedev/core';
 import { api, JWT_STORAGE_KEY, REFRESH_STORAGE_KEY, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { clearMercureToken } from '@/lib/mercure';
 
 /**
  * Refine auth-provider wired to Worktide's JWT login endpoints:
@@ -57,6 +58,7 @@ export const authProvider: AuthProvider = {
     localStorage.removeItem(JWT_STORAGE_KEY);
     localStorage.removeItem(REFRESH_STORAGE_KEY);
     localStorage.removeItem(WORKSPACE_STORAGE_KEY);
+    clearMercureToken();
     return { success: true, redirectTo: '/login' };
   },
 
