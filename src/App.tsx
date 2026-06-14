@@ -3,21 +3,24 @@ import { DevtoolsPanel, DevtoolsProvider } from '@refinedev/devtools';
 import routerProvider, { NavigateToResource } from '@refinedev/react-router';
 import { BrowserRouter, Outlet, Route, Routes } from 'react-router';
 
+import { AppLayout } from '@/components/AppLayout';
 import { Toaster } from '@/components/ui/sonner';
 import { authProvider } from '@/providers/authProvider';
 import { dataProvider } from '@/providers/dataProvider';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { PlaceholderPage } from '@/pages/PlaceholderPage';
 
 /**
  * Top-level wiring. Refine handles auth-gating + data-provider injection;
- * react-router 7 owns the URL → component mapping.
+ * react-router 7 owns the URL → component mapping; AppLayout wraps every
+ * authenticated route with the sidebar + header shell.
  *
- * Resources are registered here so Refine can compute navigation, default
- * action paths and breadcrumbs — but in v0 only "projects" is wired up.
- * As CRUD pages get built each entity (customers, contacts,
- * customer_systems, service_subscriptions, …) appears here and Refine
- * auto-generates its sidebar entry.
+ * Adding a resource: append it to `resources` below with a `meta.icon`
+ * (Lucide name) and `meta.category` ("Arbeit" / "CRM" / "Admin"). Refine's
+ * useMenu() then picks it up automatically in the sidebar — no layout
+ * change needed. Each entry needs a matching <Route> down below until its
+ * dedicated page lands; until then the PlaceholderPage carries the load.
  */
 export default function App() {
   return (
@@ -28,10 +31,70 @@ export default function App() {
           authProvider={authProvider}
           routerProvider={routerProvider}
           resources={[
+            // ---- Arbeit ----------------------------------------------------
             {
               name: 'projects',
               list: '/projects',
-              meta: { label: 'Projekte', canDelete: false },
+              meta: { label: 'Projekte', icon: 'FolderKanban', category: 'Arbeit', canDelete: false },
+            },
+            {
+              name: 'tasks',
+              list: '/tasks',
+              meta: { label: 'Aufgaben', icon: 'CheckSquare', category: 'Arbeit' },
+            },
+            {
+              name: 'time_entries',
+              list: '/time-entries',
+              meta: { label: 'Zeiteinträge', icon: 'Clock', category: 'Arbeit' },
+            },
+            {
+              name: 'documents',
+              list: '/documents',
+              meta: { label: 'Dokumente', icon: 'FileText', category: 'Arbeit' },
+            },
+
+            // ---- CRM -------------------------------------------------------
+            {
+              name: 'customers',
+              list: '/customers',
+              meta: { label: 'Kunden', icon: 'Building2', category: 'CRM' },
+            },
+            {
+              name: 'contacts',
+              list: '/contacts',
+              meta: { label: 'Kontakte', icon: 'Contact', category: 'CRM' },
+            },
+            {
+              name: 'customer_systems',
+              list: '/customer-systems',
+              meta: { label: 'Systeme', icon: 'Server', category: 'CRM' },
+            },
+            {
+              name: 'service_subscriptions',
+              list: '/subscriptions',
+              meta: { label: 'Abos', icon: 'Receipt', category: 'CRM' },
+            },
+
+            // ---- Admin -----------------------------------------------------
+            {
+              name: 'workspace_members',
+              list: '/workspace-members',
+              meta: { label: 'Mitglieder', icon: 'Users', category: 'Admin' },
+            },
+            {
+              name: 'role_permission_overrides',
+              list: '/permissions',
+              meta: { label: 'Berechtigungen', icon: 'Shield', category: 'Admin' },
+            },
+            {
+              name: 'webhooks',
+              list: '/webhooks',
+              meta: { label: 'Webhooks', icon: 'Webhook', category: 'Admin' },
+            },
+            {
+              name: 'personal_access_tokens',
+              list: '/access-tokens',
+              meta: { label: 'API-Tokens', icon: 'KeyRound', category: 'Admin' },
             },
           ]}
           options={{
@@ -44,12 +107,27 @@ export default function App() {
             <Route
               element={
                 <Authenticated key="auth" fallback={<NavigateToResource resource="login" />}>
-                  <Outlet />
+                  <AppLayout>
+                    <Outlet />
+                  </AppLayout>
                 </Authenticated>
               }
             >
               <Route index element={<DashboardPage />} />
               <Route path="/projects" element={<DashboardPage />} />
+              {/* Until each resource has its own page, the placeholder
+                  acknowledges the navigation without breaking the layout. */}
+              <Route path="/tasks" element={<PlaceholderPage resource="tasks" />} />
+              <Route path="/time-entries" element={<PlaceholderPage resource="time_entries" />} />
+              <Route path="/documents" element={<PlaceholderPage resource="documents" />} />
+              <Route path="/customers" element={<PlaceholderPage resource="customers" />} />
+              <Route path="/contacts" element={<PlaceholderPage resource="contacts" />} />
+              <Route path="/customer-systems" element={<PlaceholderPage resource="customer_systems" />} />
+              <Route path="/subscriptions" element={<PlaceholderPage resource="service_subscriptions" />} />
+              <Route path="/workspace-members" element={<PlaceholderPage resource="workspace_members" />} />
+              <Route path="/permissions" element={<PlaceholderPage resource="role_permission_overrides" />} />
+              <Route path="/webhooks" element={<PlaceholderPage resource="webhooks" />} />
+              <Route path="/access-tokens" element={<PlaceholderPage resource="personal_access_tokens" />} />
             </Route>
             <Route path="/login" element={<LoginPage />} />
           </Routes>
