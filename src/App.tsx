@@ -3,6 +3,7 @@ import { DevtoolsPanel, DevtoolsProvider } from '@refinedev/devtools';
 import routerProvider, { NavigateToResource } from '@refinedev/react-router';
 import { BrowserRouter, Outlet, Route, Routes } from 'react-router';
 
+import { Toaster } from '@/components/ui/sonner';
 import { authProvider } from '@/providers/authProvider';
 import { dataProvider } from '@/providers/dataProvider';
 import { LoginPage } from '@/pages/LoginPage';
@@ -53,6 +54,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
           </Routes>
         </Refine>
+        <Toaster richColors closeButton position="top-right" />
         <DevtoolsPanel />
       </DevtoolsProvider>
     </BrowserRouter>

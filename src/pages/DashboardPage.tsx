@@ -1,16 +1,36 @@
-import { useGetIdentity, useLogout, useList } from '@refinedev/core';
+import { useGetIdentity, useList, useLogout } from '@refinedev/core';
+import { LogOut } from 'lucide-react';
+
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 type Identity = { id: string; email: string; name: string };
-type ProjectRow = { id: string; name: string; key: string; status?: { name?: string } };
+type ProjectRow = {
+  id: string;
+  name: string;
+  key: string;
+  status?: { name?: string } | string;
+};
 
 /**
  * Stub dashboard for the very first end-to-end run. Once the real data is
- * flowing it shows the authenticated user, the active workspace slug, and
- * a sanity list of projects.
+ * flowing it shows the authenticated user, the active workspace, and a
+ * sanity list of projects via shadcn primitives.
  *
- * Replace with the Refine resource layout (`<Refine resources={...}>`) once
- * the second CRUD page lands; the inline useList here is just to prove
- * the data-provider round-trip works against API Platform.
+ * Replace with the Refine <ThemedLayout> once we lay out the proper navigation
+ * shell; this hand-rolled header keeps the surface area minimal for now.
  */
 export function DashboardPage() {
   const { data: identity } = useGetIdentity<Identity>();
@@ -22,48 +42,73 @@ export function DashboardPage() {
   });
   const isLoading = query.isLoading;
 
+  const initials = identity?.name?.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase();
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border px-6 py-3 flex items-center justify-between">
         <h1 className="text-lg">Worktide</h1>
-        <div className="flex items-center gap-4 text-sm">
-          {identity ? <span>{identity.name ?? identity.email}</span> : null}
-          <button
-            type="button"
-            onClick={() => logout()}
-            className="text-muted-foreground hover:text-foreground"
-          >
+        <div className="flex items-center gap-3 text-sm">
+          {identity ? (
+            <>
+              <Avatar className="size-7">
+                <AvatarFallback className="text-xs">{initials || '?'}</AvatarFallback>
+              </Avatar>
+              <span className="text-muted-foreground">{identity.name ?? identity.email}</span>
+            </>
+          ) : null}
+          <Separator orientation="vertical" className="h-6" />
+          <Button variant="ghost" size="sm" onClick={() => logout()}>
+            <LogOut className="size-4" />
             Abmelden
-          </button>
+          </Button>
         </div>
       </header>
 
       <main className="p-6 space-y-6">
-        <section className="space-y-2">
-          <h2 className="text-xl">Projekte</h2>
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground">Lade …</p>
-          ) : (
-            <ul className="divide-y divide-border rounded-md border border-border bg-card">
-              {projects?.data?.map((p: ProjectRow) => (
-                <li key={p.id} className="px-4 py-3 flex items-center justify-between">
-                  <span>
-                    <span className="font-mono text-xs text-muted-foreground mr-2">{p.key}</span>
-                    {p.name}
-                  </span>
-                  {p.status?.name ? (
-                    <span className="text-xs text-muted-foreground">{p.status.name}</span>
-                  ) : null}
-                </li>
-              ))}
-              {projects?.data?.length === 0 ? (
-                <li className="px-4 py-6 text-center text-sm text-muted-foreground">
-                  Keine Projekte sichtbar.
-                </li>
-              ) : null}
-            </ul>
-          )}
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Projekte</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-2/3" />
+              </div>
+            ) : projects?.data?.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-6">
+                Keine Projekte sichtbar.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-24">Key</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead className="w-40">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {projects?.data?.map((p: ProjectRow) => {
+                    const statusName =
+                      typeof p.status === 'string' ? p.status : p.status?.name ?? null;
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-mono text-xs">{p.key}</TableCell>
+                        <TableCell>{p.name}</TableCell>
+                        <TableCell>
+                          {statusName ? <Badge variant="secondary">{statusName}</Badge> : null}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
