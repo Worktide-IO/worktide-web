@@ -1,10 +1,11 @@
 import { Authenticated, Refine } from '@refinedev/core';
 import { DevtoolsPanel, DevtoolsProvider } from '@refinedev/devtools';
-import routerProvider, { NavigateToResource } from '@refinedev/react-router';
-import { BrowserRouter, Outlet, Route, Routes } from 'react-router';
+import routerProvider from '@refinedev/react-router';
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router';
 
 import { AppLayout } from '@/components/AppLayout';
 import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { authProvider } from '@/providers/authProvider';
 import { dataProvider } from '@/providers/dataProvider';
 import { LoginPage } from '@/pages/LoginPage';
@@ -25,6 +26,7 @@ import { PlaceholderPage } from '@/pages/PlaceholderPage';
 export default function App() {
   return (
     <BrowserRouter>
+      <TooltipProvider delayDuration={300}>
       <DevtoolsProvider>
         <Refine
           dataProvider={dataProvider}
@@ -106,7 +108,7 @@ export default function App() {
           <Routes>
             <Route
               element={
-                <Authenticated key="auth" fallback={<NavigateToResource resource="login" />}>
+                <Authenticated key="auth" fallback={<Navigate to="/login" replace />}>
                   <AppLayout>
                     <Outlet />
                   </AppLayout>
@@ -135,6 +137,7 @@ export default function App() {
         <Toaster richColors closeButton position="top-right" />
         <DevtoolsPanel />
       </DevtoolsProvider>
+      </TooltipProvider>
     </BrowserRouter>
   );
 }

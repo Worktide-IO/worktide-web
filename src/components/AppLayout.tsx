@@ -119,7 +119,12 @@ function NavItem({ item }: { item: Resource }) {
  * Buckets the flat resources list into the labelled groups the sidebar
  * renders. The category lives on `meta.category` and falls back to "App"
  * so adding a new resource without a category is harmless.
+ *
+ * Section order is fixed (most-used first) rather than alphabetical so
+ * users find Projekte / Aufgaben without scanning the whole sidebar.
  */
+const CATEGORY_ORDER = ['App', 'Arbeit', 'CRM', 'Admin'] as const;
+
 function groupByCategory(items: Resource[]): { label: string; items: Resource[] }[] {
   const buckets = new Map<string, Resource[]>();
   for (const item of items) {
@@ -127,9 +132,12 @@ function groupByCategory(items: Resource[]): { label: string; items: Resource[] 
     if (!buckets.has(cat)) buckets.set(cat, []);
     buckets.get(cat)!.push(item);
   }
-  // Preserve a deterministic order: App first, then categories alphabetically.
+  const orderIndex = (label: string) => {
+    const i = CATEGORY_ORDER.indexOf(label as (typeof CATEGORY_ORDER)[number]);
+    return i === -1 ? CATEGORY_ORDER.length : i;
+  };
   return [...buckets.entries()]
-    .sort(([a], [b]) => (a === 'App' ? -1 : b === 'App' ? 1 : a.localeCompare(b)))
+    .sort(([a], [b]) => orderIndex(a) - orderIndex(b) || a.localeCompare(b))
     .map(([label, items]) => ({ label, items }));
 }
 
