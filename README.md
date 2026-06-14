@@ -6,14 +6,34 @@ Stack: **Vite 8** · **Refine 5** · **React Router 7** · **Tailwind CSS v4** �
 
 ## Local dev
 
-The Symfony backend lives at `https://api.worktide.ddev.site` (DDEV) and serves
-its REST API under `/v1`. The Vite dev server proxies `/v1/*` to that host so
-CORS doesn't enter the picture in development.
+The Symfony backend lives at `https://api.worktide.ddev.site` (DDEV) and
+serves its REST API under `/v1`. The Vite dev server proxies `/v1/*` to that
+host so CORS doesn't enter the picture in development.
+
+### Recommended: run inside DDEV (matches the rest of the stack)
+
+```bash
+ddev start                    # https://worktide-web.ddev.site
+ddev logs -f                  # tail vite output
+ddev exec pnpm <command>      # any pnpm command inside the container
+```
+
+The DDEV project (see `.ddev/config.yaml`) keeps Vite running as a
+supervisord daemon and lets `.ddev/nginx_full/nginx-site.conf` proxy
+all traffic — including the HMR WebSocket — to port 5173.
+
+### Bare metal (without DDEV)
+
+If you don't have DDEV or want a simpler setup, the dev server runs
+fine on the host:
 
 ```bash
 pnpm install
 pnpm dev     # http://localhost:5173
 ```
+
+In that case the Vite proxy still talks to `https://api.worktide.ddev.site`,
+so you need the *backend* DDEV project running either way.
 
 Demo login (from the Symfony fixtures): `sven@worktide.test` / `demo`.
 
