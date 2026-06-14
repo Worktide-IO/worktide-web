@@ -15,6 +15,8 @@
     "@hookform/resolvers": "^5.4.0",
     "@refinedev/core": "^5.0.12",
     "@refinedev/devtools": "^2.0.5",
+    "@refinedev/inferencer": "^7.0.0",
+    "@refinedev/react-hook-form": "^5.0.4",
     "@refinedev/react-router": "^2.0.4",
     "@tailwindcss/vite": "^4.3.1",
     "@tanstack/react-query": "^5.101.0",

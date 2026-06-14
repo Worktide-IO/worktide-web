@@ -11,6 +11,9 @@ import { dataProvider } from '@/providers/dataProvider';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
+import { CustomersListPage } from '@/pages/customers/CustomersListPage';
+import { CustomerCreatePage } from '@/pages/customers/CustomerCreatePage';
+import { CustomerEditPage } from '@/pages/customers/CustomerEditPage';
 
 /**
  * Top-level wiring. Refine handles auth-gating + data-provider injection;
@@ -59,6 +62,9 @@ export default function App() {
             {
               name: 'customers',
               list: '/customers',
+              create: '/customers/create',
+              edit: '/customers/:id',
+              show: '/customers/:id',
               meta: { label: 'Kunden', icon: 'Building2', category: 'CRM' },
             },
             {
@@ -122,7 +128,9 @@ export default function App() {
               <Route path="/tasks" element={<PlaceholderPage resource="tasks" />} />
               <Route path="/time-entries" element={<PlaceholderPage resource="time_entries" />} />
               <Route path="/documents" element={<PlaceholderPage resource="documents" />} />
-              <Route path="/customers" element={<PlaceholderPage resource="customers" />} />
+              <Route path="/customers" element={<CustomersListPage />} />
+              <Route path="/customers/create" element={<CustomerCreatePage />} />
+              <Route path="/customers/:id" element={<CustomerEditPage />} />
               <Route path="/contacts" element={<PlaceholderPage resource="contacts" />} />
               <Route path="/customer-systems" element={<PlaceholderPage resource="customer_systems" />} />
               <Route path="/subscriptions" element={<PlaceholderPage resource="service_subscriptions" />} />
