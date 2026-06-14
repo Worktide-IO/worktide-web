@@ -1,6 +1,6 @@
 # worktide-web
 
-React 19 + TypeScript 6 SPA for the [Worktide](https://git.wappler.systems/WapplerSystems/worktide) API.
+React 19 + TypeScript 6 SPA for the [Worktide](https://github.com/Worktide-IO/worktide) API.
 Stack: **Vite 8** · **Refine 5** · **React Router 7** · **Tailwind CSS v4** ·
 **TanStack Query 5** · **react-hook-form** · **Zod**.
 
