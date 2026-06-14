@@ -1,5 +1,6 @@
+import { useInvalidate } from '@refinedev/core';
 import { EventSourcePlus } from 'event-source-plus';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { api } from '@/lib/api';
 
@@ -201,4 +202,30 @@ export function useMercureTopic<T = unknown>(
   }, [topicKey, enabled]);
 
   return { connected, lastMessage };
+}
+
+/**
+ * Higher-level convenience for list pages: subscribes to the resource's
+ * URI-template (covers every member) and invalidates the Refine list
+ * query whenever a frame arrives. Returns `{ connected }` so the page
+ * can render a Live/offline badge in the header.
+ *
+ * Replaces the ~10-line copy-paste of `useMercureTopic + useInvalidate`
+ * that every list page would otherwise duplicate. Pass `enabled: false`
+ * to pause the subscription without unmounting the consumer.
+ */
+export function useLiveResource(
+  resource: string,
+  options: { enabled?: boolean } = {},
+): { connected: boolean } {
+  const invalidate = useInvalidate();
+  const onMessage = useCallback(() => {
+    void invalidate({ resource, invalidates: ['list'] });
+  }, [invalidate, resource]);
+
+  const { connected } = useMercureTopic(topicFor(resource), {
+    enabled: options.enabled,
+    onMessage,
+  });
+  return { connected };
 }

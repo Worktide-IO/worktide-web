@@ -14,6 +14,8 @@ import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { CustomersListPage } from '@/pages/customers/CustomersListPage';
 import { CustomerCreatePage } from '@/pages/customers/CustomerCreatePage';
 import { CustomerEditPage } from '@/pages/customers/CustomerEditPage';
+import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
+import { TasksListPage } from '@/pages/tasks/TasksListPage';
 
 /**
  * Top-level wiring. Refine handles auth-gating + data-provider injection;
@@ -122,10 +124,10 @@ export default function App() {
               }
             >
               <Route index element={<DashboardPage />} />
-              <Route path="/projects" element={<DashboardPage />} />
+              <Route path="/projects" element={<ProjectsListPage />} />
+              <Route path="/tasks" element={<TasksListPage />} />
               {/* Until each resource has its own page, the placeholder
                   acknowledges the navigation without breaking the layout. */}
-              <Route path="/tasks" element={<PlaceholderPage resource="tasks" />} />
               <Route path="/time-entries" element={<PlaceholderPage resource="time_entries" />} />
               <Route path="/documents" element={<PlaceholderPage resource="documents" />} />
               <Route path="/customers" element={<CustomersListPage />} />

@@ -1,11 +1,11 @@
-import { useInvalidate, useTable } from '@refinedev/core';
+import { useTable } from '@refinedev/core';
 import { Link } from 'react-router';
 import { Plus, Search, Wifi, WifiOff } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 import type { Row } from '@/lib/refine';
 import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
-import { topicFor, useMercureTopic } from '@/lib/mercure';
+import { useLiveResource } from '@/lib/mercure';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -82,19 +82,11 @@ export function CustomersListPage() {
   const rows = tableQuery.data?.data ?? [];
   const total = tableQuery.data?.total ?? 0;
 
-  // Live updates via Mercure — subscribe to the customers URI template so
-  // every create/update/delete on any customer in the workspace nudges
-  // Refine to refetch this list. Cheap (one invalidate per change, the
-  // refetch is debounced by TanStack Query's defaults). Voter-protected:
-  // even with anonymous Mercure subscriptions, the refetch still goes
-  // through the auth provider, so we never display data the user can't
-  // see — at worst we waste a single 200/0-row response.
-  const invalidate = useInvalidate();
-  const { connected: liveConnected } = useMercureTopic(topicFor('customers'), {
-    onMessage: useCallback(() => {
-      void invalidate({ resource: 'customers', invalidates: ['list'] });
-    }, [invalidate]),
-  });
+  // Live updates via Mercure — the helper subscribes to the customers
+  // URI template + invalidates this list on any frame. Voter protection
+  // at the API layer means anonymous (or off-tenant) Mercure messages
+  // never leak data; the worst case is a wasted refetch.
+  const { connected: liveConnected } = useLiveResource('customers');
 
   return (
     <div className="space-y-4">
