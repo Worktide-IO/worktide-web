@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Worktide · Brand Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Worktide — Brand Design Tokens
+   Logo mark: 04e "Tide-Crop" with coral crest
+   ============================================================ */
+
+:root {
+  /* --- Tide ramp (core brand) --- */
+  --wt-foam:  #DCF4EC;   /* lightest — highlights, tints, foam      */
+  --wt-light: #5DCAA5;   /* light band                              */
+  --wt-mid:   #1D9E75;   /* mid band                                */
+  --wt-tide:  #0F8C72;   /* PRIMARY — ring, links, wordmark "tide"  */
+  --wt-deep:  #0B5E4D;   /* deepest band — headers, dark surfaces   */
+
+  /* --- Accent --- */
+  --wt-coral:      #E0623A;  /* alerts, the crest, "now" markers    */
+  --wt-coral-tint: #FBEAE3;  /* soft alert background               */
+
+  /* --- Neutrals (warm green-grey, tuned to the tide) --- */
+  --wt-ink:   #14201C;   /* primary text                            */
+  --wt-slate: #5A6A65;   /* secondary text                          */
+  --wt-line:  #E2EAE7;   /* hairline borders                        */
+  --wt-mist:  #F5F8F7;   /* app / surface background                */
+  --wt-white: #FFFFFF;
+
+  /* --- Dark surfaces --- */
+  --wt-bg-dark:      #0E1714;
+  --wt-surface-dark: #15211D;
+  --wt-text-dark:    #E8F0ED;
+  --wt-muted-dark:   #9DB0AA;
+  --wt-line-dark:    #25342F;
+  --wt-tide-dark:    #2BB78F;  /* lightened teal for use on dark    */
+
+  /* --- Semantic tokens (light theme default) --- */
+  --color-primary:      var(--wt-tide);
+  --color-primary-deep: var(--wt-deep);
+  --color-accent:       var(--wt-coral);
+  --color-bg:           var(--wt-white);
+  --color-surface:      var(--wt-mist);
+  --color-text:         var(--wt-ink);
+  --color-text-muted:   var(--wt-slate);
+  --color-border:       var(--wt-line);
+  --color-link:         var(--wt-tide);
+
+  /* --- Type --- */
+  --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body:    "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* --- Radius / elevation --- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(11,94,77,.08);
+  --shadow-md: 0 6px 24px rgba(11,94,77,.12);
+}
+
+/* Dark theme: add data-theme="dark" on <html> or honor OS setting */
+:root[data-theme="dark"] {
+  --color-primary:      var(--wt-tide-dark);
+  --color-primary-deep: var(--wt-light);
+  --color-accent:       var(--wt-coral);
+  --color-bg:           var(--wt-bg-dark);
+  --color-surface:      var(--wt-surface-dark);
+  --color-text:         var(--wt-text-dark);
+  --color-text-muted:   var(--wt-muted-dark);
+  --color-border:       var(--wt-line-dark);
+  --color-link:         var(--wt-tide-dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-primary:      var(--wt-tide-dark);
+    --color-primary-deep: var(--wt-light);
+    --color-accent:       var(--wt-coral);
+    --color-bg:           var(--wt-bg-dark);
+    --color-surface:      var(--wt-surface-dark);
+    --color-text:         var(--wt-text-dark);
+    --color-text-muted:   var(--wt-muted-dark);
+    --color-border:       var(--wt-line-dark);
+    --color-link:         var(--wt-tide-dark);
+  }
+}
+
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font-body);background:var(--color-bg);color:var(--color-text);-webkit-font-smoothing:antialiased;line-height:1.6;transition:background .25s,color .25s}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:var(--font-display);font-weight:600;letter-spacing:-.02em;line-height:1.1;color:var(--color-text)}
+code,.mono{font-family:var(--font-mono)}
+a{color:var(--color-link)}
+.bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:color-mix(in srgb,var(--color-bg) 86%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--color-border)}
+.bar .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:600}
+.toggle{font-family:var(--font-display);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);padding:7px 14px;border-radius:999px}
+.hero{position:relative;overflow:hidden;padding:84px 0 70px;text-align:center}
+.hero-bands{position:absolute;inset:auto 0 0 0;height:160px;pointer-events:none}
+.hero .lock{max-width:430px;margin:0 auto 26px}
+.hero .lock svg{width:100%;height:auto}
+.hero p.kick{font-family:var(--font-display);text-transform:uppercase;letter-spacing:.28em;font-size:12px;color:var(--color-primary);margin:0 0 20px}
+.hero h1{font-size:clamp(30px,5vw,46px);margin:.2em 0 .35em}
+.hero .lede{max-width:560px;margin:0 auto;color:var(--color-text-muted);font-size:18px}
+section{padding:60px 0}
+.eyebrow{font-family:var(--font-display);text-transform:uppercase;letter-spacing:.22em;font-size:12px;color:var(--color-primary);margin:0 0 8px}
+.sec-head h2{font-size:28px;margin:0 0 8px}
+.sec-head p{margin:0 0 30px;color:var(--color-text-muted);max-width:640px}
+.wave-rule{display:block;width:100%;height:30px;margin:10px 0 0}
+.card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:26px}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:720px){.g2{grid-template-columns:1fr}}
+.logo-show{display:flex;align-items:center;justify-content:center;min-height:140px;border-radius:var(--radius-md)}
+.logo-show svg{width:78%;max-width:320px;height:auto}
+.bg-light{background:#fff}
+.bg-dark{background:var(--wt-bg-dark)}
+.cap{font-size:13px;color:var(--color-text-muted);margin:13px 2px 0;display:flex;justify-content:space-between;gap:10px}
+.cap .dl{font-family:var(--font-mono);font-size:11px}
+.spec{display:flex;gap:26px;flex-wrap:wrap;align-items:center}
+.clearbox{background:repeating-linear-gradient(45deg,var(--color-surface),var(--color-surface) 8px,transparent 8px,transparent 16px);border:1px dashed var(--color-primary);border-radius:12px;padding:22px}
+.clearbox svg{width:110px;height:110px;display:block;background:var(--color-bg);border-radius:8px}
+.minrow{display:flex;align-items:flex-end;gap:22px}
+.minrow .m{text-align:center;color:var(--color-text-muted);font-size:12px}
+.minrow .m svg{display:block;margin:0 auto 6px}
+.fav-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;margin-bottom:22px}
+.fav-row .f{text-align:center;color:var(--color-text-muted);font-size:12px}
+.fav-row .f svg{display:block;margin:0 auto 8px;border-radius:5px}
+.fav-os{display:inline-flex;align-items:center;gap:7px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:7px;padding:6px 11px}
+pre{background:var(--wt-deep);color:#CFEFE4;border-radius:var(--radius-md);padding:15px 17px;overflow:auto;font-family:var(--font-mono);font-size:13px;line-height:1.7;margin:0}
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:12px}
+.sw{display:flex;gap:11px;align-items:center;text-align:left;cursor:pointer;border:1px solid var(--color-border);background:var(--color-bg);border-radius:var(--radius-md);padding:8px;font:inherit;color:inherit;position:relative}
+.sw:hover{border-color:var(--color-primary)}
+.sw-chip{width:60px;height:60px;border-radius:8px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;font-family:var(--font-mono);font-size:10px;padding-bottom:5px}
+.sw-meta{display:flex;flex-direction:column;gap:1px;font-size:13px}
+.sw-meta b{font-family:var(--font-display);font-weight:600}
+.sw-meta code{font-size:11px;color:var(--color-primary)}
+.sw-meta em{font-style:normal;font-size:11px;color:var(--color-text-muted)}
+.sw.copied::after{content:"kopiert";position:absolute;top:7px;right:10px;font-family:var(--font-mono);font-size:10px;color:var(--color-primary)}
+.type-spec{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px}
+.type-spec .ts{background:var(--color-bg);border:1px solid var(--color-border);border-radius:7px;padding:6px 12px;font-size:12px}
+.type-spec .ts b{font-family:var(--font-display)}
+.specimen{font-family:var(--font-display);line-height:1.06;margin:6px 0}
+.s-xl{font-size:50px;font-weight:600;letter-spacing:-.02em}
+.s-l{font-size:28px;font-weight:500;color:var(--color-primary)}
+.s-body{font-family:var(--font-body);font-size:16px;color:var(--color-text-muted);max-width:640px;line-height:1.65}
+ul.rules{margin:0;padding-left:0;list-style:none}
+ul.rules li{padding:7px 0;border-bottom:1px solid var(--color-border);font-size:14px}
+ul.rules li:last-child{border-bottom:0}
+.dont{color:var(--wt-coral);font-weight:700;margin-right:6px}
+.do{color:var(--wt-tide);font-weight:700;margin-right:6px}
+footer{padding:38px 0 64px;color:var(--color-text-muted);font-size:13px;border-top:1px solid var(--color-border);margin-top:20px}
+
+.lock-dark{display:none}
+:root[data-theme="dark"] .lock-light{display:none}
+:root[data-theme="dark"] .lock-dark{display:block}
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="brand"><svg viewBox="0 0 64 64" width="30" height="30" xmlns="http://www.w3.org/2000/svg">
+  <defs><clipPath id="ic_bar"><circle cx="32" cy="32" r="23"/></clipPath></defs>
+  <g clip-path="url(#ic_bar)">
+    <rect x="6" y="6" width="52" height="52" fill="#DCF4EC"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25 L58 58 L6 58 Z" fill="#5DCAA5"/>
+    <path d="M6 35 Q19 28 32 35 Q45 42 58 35 L58 58 L6 58 Z" fill="#1D9E75"/>
+    <path d="M6 45 Q19 38 32 45 Q45 52 58 45 L58 58 L6 58 Z" fill="#0B5E4D"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25" fill="none" stroke="#E0623A" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#0F8C72" stroke-width="2.5"/>
+</svg><span>Worktide</span></div>
+  <button class="toggle" id="themeBtn">Dunkel</button>
+</div>
+
+<header class="hero">
+  <svg class="hero-bands" viewBox="0 0 1200 160" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 70 Q300 30 600 70 T1200 70 L1200 160 L0 160Z" fill="var(--wt-light)" opacity=".30"/>
+    <path d="M0 95 Q300 55 600 95 T1200 95 L1200 160 L0 160Z" fill="var(--wt-mid)" opacity=".38"/>
+    <path d="M0 120 Q300 80 600 120 T1200 120 L1200 160 L0 160Z" fill="var(--wt-tide)" opacity=".48"/>
+  </svg>
+  <div class="wrap">
+    <p class="kick">Brand Book</p>
+    <div class="lock lock-light"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 266.9 64" role="img" aria-label="Worktide">
+  <defs><clipPath id="il_worktide-lockup_lk"><circle cx="32" cy="32" r="23"/></clipPath></defs>
+  <g clip-path="url(#il_worktide-lockup_lk)">
+    <rect x="6" y="6" width="52" height="52" fill="#DCF4EC"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25 L58 58 L6 58 Z" fill="#5DCAA5"/>
+    <path d="M6 35 Q19 28 32 35 Q45 42 58 35 L58 58 L6 58 Z" fill="#1D9E75"/>
+    <path d="M6 45 Q19 38 32 45 Q45 52 58 45 L58 58 L6 58 Z" fill="#0B5E4D"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25" fill="none" stroke="#E0623A" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#0F8C72" stroke-width="2.5"/>
+  <g transform="translate(76.0,46.70) scale(0.4286)">
+    <path d="M13.59 -0.00 L3.30 -70.00 L14.09 -70.00 L22.50 -7.30 L24.09 -7.30 L34.91 -70.00 L53.80 -70.00 L64.59 -7.30 L66.20 -7.30 L74.50 -70.00 L85.30 -70.00 L75.00 -0.00 L56.09 -0.00 L45.09 -63.59 L43.50 -63.59 L32.59 -0.00 L13.59 -0.00 Z M119.40 1.41 Q112.00 1.41 106.25 -1.64 Q100.50 -4.70 97.20 -10.39 Q93.90 -16.09 93.90 -23.91 L93.90 -25.41 Q93.90 -33.20 97.20 -38.84 Q100.50 -44.50 106.25 -47.59 Q112.00 -50.70 119.40 -50.70 Q126.79 -50.70 132.59 -47.59 Q138.40 -44.50 141.70 -38.84 Q145.00 -33.20 145.00 -25.41 L145.00 -23.91 Q145.00 -16.09 141.70 -10.39 Q138.40 -4.70 132.59 -1.64 Q126.79 1.41 119.40 1.41 Z M119.40 -7.80 Q126.20 -7.80 130.45 -12.14 Q134.70 -16.50 134.70 -24.20 L134.70 -25.09 Q134.70 -32.80 130.50 -37.14 Q126.29 -41.50 119.40 -41.50 Q112.70 -41.50 108.45 -37.14 Q104.20 -32.80 104.20 -25.09 L104.20 -24.20 Q104.20 -16.50 108.45 -12.14 Q112.70 -7.80 119.40 -7.80 Z M157.79 -0.00 L157.79 -49.30 L167.90 -49.30 L167.90 -43.50 L169.50 -43.50 Q170.70 -46.59 173.34 -48.05 Q176.00 -49.50 179.90 -49.50 L185.79 -49.50 L185.79 -40.20 L179.50 -40.20 Q174.50 -40.20 171.29 -37.45 Q168.11 -34.70 168.11 -29.00 L168.11 -0.00 L157.79 -0.00 Z M196.49 -0.00 L196.49 -70.00 L206.81 -70.00 L206.81 -30.09 L208.40 -30.09 L227.81 -49.30 L241.49 -49.30 L216.60 -25.41 L242.31 -0.00 L228.70 -0.00 L208.40 -20.50 L206.81 -20.50 L206.81 -0.00 L196.49 -0.00 Z" fill="#14201C"/>
+    <g transform="translate(242.31,0)"><path d="M26.09 -0.00 Q21.59 -0.00 18.94 -2.70 Q16.30 -5.41 16.30 -9.91 L16.30 -40.59 L2.70 -40.59 L2.70 -49.30 L16.30 -49.30 L16.30 -65.59 L26.59 -65.59 L26.59 -49.30 L41.30 -49.30 L41.30 -40.59 L26.59 -40.59 L26.59 -11.70 Q26.59 -8.70 29.41 -8.70 L39.70 -8.70 L39.70 -0.00 L26.09 -0.00 Z M53.39 -0.00 L53.39 -49.30 L63.71 -49.30 L63.71 -0.00 L53.39 -0.00 Z M58.60 -56.00 Q55.60 -56.00 53.55 -57.95 Q51.50 -59.91 51.50 -63.00 Q51.50 -66.09 53.55 -68.05 Q55.60 -70.00 58.60 -70.00 Q61.71 -70.00 63.71 -68.05 Q65.71 -66.09 65.71 -63.00 Q65.71 -59.91 63.71 -57.95 Q61.71 -56.00 58.60 -56.00 Z M99.40 1.41 Q93.31 1.41 88.10 -1.59 Q82.90 -4.59 79.74 -10.25 Q76.60 -15.91 76.60 -23.91 L76.60 -25.41 Q76.60 -33.30 79.70 -39.00 Q82.81 -44.70 87.99 -47.70 Q93.20 -50.70 99.40 -50.70 Q104.20 -50.70 107.45 -49.50 Q110.70 -48.30 112.79 -46.44 Q114.90 -44.59 115.99 -42.59 L117.60 -42.59 L117.60 -70.00 L127.90 -70.00 L127.90 -0.00 L117.81 -0.00 L117.81 -7.00 L116.20 -7.00 Q114.31 -3.80 110.45 -1.19 Q106.60 1.41 99.40 1.41 Z M102.31 -7.59 Q108.99 -7.59 113.34 -11.89 Q117.70 -16.20 117.70 -24.20 L117.70 -25.09 Q117.70 -33.00 113.40 -37.30 Q109.10 -41.59 102.31 -41.59 Q95.70 -41.59 91.34 -37.30 Q86.99 -33.00 86.99 -25.09 L86.99 -24.20 Q86.99 -16.20 91.34 -11.89 Q95.70 -7.59 102.31 -7.59 Z M165.70 1.41 Q158.20 1.41 152.59 -1.75 Q147.00 -4.91 143.84 -10.66 Q140.70 -16.41 140.70 -24.00 L140.70 -25.20 Q140.70 -32.91 143.80 -38.66 Q146.91 -44.41 152.45 -47.55 Q158.00 -50.70 165.30 -50.70 Q172.41 -50.70 177.75 -47.55 Q183.09 -44.41 186.09 -38.80 Q189.09 -33.20 189.09 -25.70 L189.09 -21.80 L151.20 -21.80 Q151.41 -15.30 155.55 -11.44 Q159.70 -7.59 165.91 -7.59 Q171.70 -7.59 174.64 -10.19 Q177.59 -12.80 179.20 -16.20 L187.70 -11.80 Q186.30 -9.00 183.64 -5.89 Q181.00 -2.80 176.70 -0.69 Q172.41 1.41 165.70 1.41 Z M151.30 -29.70 L178.59 -29.70 Q178.20 -35.30 174.59 -38.44 Q171.00 -41.59 165.20 -41.59 Q159.41 -41.59 155.75 -38.44 Q152.09 -35.30 151.30 -29.70 Z" fill="#0F8C72"/></g>
+  </g>
+</svg></div>
+    <div class="lock lock-dark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 266.9 64" role="img" aria-label="Worktide">
+  <defs><clipPath id="il_worktide-lockup-dark_hero"><circle cx="32" cy="32" r="23"/></clipPath></defs>
+  <g clip-path="url(#il_worktide-lockup-dark_hero)">
+    <rect x="6" y="6" width="52" height="52" fill="#DCF4EC"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25 L58 58 L6 58 Z" fill="#5DCAA5"/>
+    <path d="M6 35 Q19 28 32 35 Q45 42 58 35 L58 58 L6 58 Z" fill="#1D9E75"/>
+    <path d="M6 45 Q19 38 32 45 Q45 52 58 45 L58 58 L6 58 Z" fill="#0B5E4D"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25" fill="none" stroke="#E0623A" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#0F8C72" stroke-width="2.5"/>
+  <g transform="translate(76.0,46.70) scale(0.4286)">
+    <path d="M13.59 -0.00 L3.30 -70.00 L14.09 -70.00 L22.50 -7.30 L24.09 -7.30 L34.91 -70.00 L53.80 -70.00 L64.59 -7.30 L66.20 -7.30 L74.50 -70.00 L85.30 -70.00 L75.00 -0.00 L56.09 -0.00 L45.09 -63.59 L43.50 -63.59 L32.59 -0.00 L13.59 -0.00 Z M119.40 1.41 Q112.00 1.41 106.25 -1.64 Q100.50 -4.70 97.20 -10.39 Q93.90 -16.09 93.90 -23.91 L93.90 -25.41 Q93.90 -33.20 97.20 -38.84 Q100.50 -44.50 106.25 -47.59 Q112.00 -50.70 119.40 -50.70 Q126.79 -50.70 132.59 -47.59 Q138.40 -44.50 141.70 -38.84 Q145.00 -33.20 145.00 -25.41 L145.00 -23.91 Q145.00 -16.09 141.70 -10.39 Q138.40 -4.70 132.59 -1.64 Q126.79 1.41 119.40 1.41 Z M119.40 -7.80 Q126.20 -7.80 130.45 -12.14 Q134.70 -16.50 134.70 -24.20 L134.70 -25.09 Q134.70 -32.80 130.50 -37.14 Q126.29 -41.50 119.40 -41.50 Q112.70 -41.50 108.45 -37.14 Q104.20 -32.80 104.20 -25.09 L104.20 -24.20 Q104.20 -16.50 108.45 -12.14 Q112.70 -7.80 119.40 -7.80 Z M157.79 -0.00 L157.79 -49.30 L167.90 -49.30 L167.90 -43.50 L169.50 -43.50 Q170.70 -46.59 173.34 -48.05 Q176.00 -49.50 179.90 -49.50 L185.79 -49.50 L185.79 -40.20 L179.50 -40.20 Q174.50 -40.20 171.29 -37.45 Q168.11 -34.70 168.11 -29.00 L168.11 -0.00 L157.79 -0.00 Z M196.49 -0.00 L196.49 -70.00 L206.81 -70.00 L206.81 -30.09 L208.40 -30.09 L227.81 -49.30 L241.49 -49.30 L216.60 -25.41 L242.31 -0.00 L228.70 -0.00 L208.40 -20.50 L206.81 -20.50 L206.81 -0.00 L196.49 -0.00 Z" fill="#E8F0ED"/>
+    <g transform="translate(242.31,0)"><path d="M26.09 -0.00 Q21.59 -0.00 18.94 -2.70 Q16.30 -5.41 16.30 -9.91 L16.30 -40.59 L2.70 -40.59 L2.70 -49.30 L16.30 -49.30 L16.30 -65.59 L26.59 -65.59 L26.59 -49.30 L41.30 -49.30 L41.30 -40.59 L26.59 -40.59 L26.59 -11.70 Q26.59 -8.70 29.41 -8.70 L39.70 -8.70 L39.70 -0.00 L26.09 -0.00 Z M53.39 -0.00 L53.39 -49.30 L63.71 -49.30 L63.71 -0.00 L53.39 -0.00 Z M58.60 -56.00 Q55.60 -56.00 53.55 -57.95 Q51.50 -59.91 51.50 -63.00 Q51.50 -66.09 53.55 -68.05 Q55.60 -70.00 58.60 -70.00 Q61.71 -70.00 63.71 -68.05 Q65.71 -66.09 65.71 -63.00 Q65.71 -59.91 63.71 -57.95 Q61.71 -56.00 58.60 -56.00 Z M99.40 1.41 Q93.31 1.41 88.10 -1.59 Q82.90 -4.59 79.74 -10.25 Q76.60 -15.91 76.60 -23.91 L76.60 -25.41 Q76.60 -33.30 79.70 -39.00 Q82.81 -44.70 87.99 -47.70 Q93.20 -50.70 99.40 -50.70 Q104.20 -50.70 107.45 -49.50 Q110.70 -48.30 112.79 -46.44 Q114.90 -44.59 115.99 -42.59 L117.60 -42.59 L117.60 -70.00 L127.90 -70.00 L127.90 -0.00 L117.81 -0.00 L117.81 -7.00 L116.20 -7.00 Q114.31 -3.80 110.45 -1.19 Q106.60 1.41 99.40 1.41 Z M102.31 -7.59 Q108.99 -7.59 113.34 -11.89 Q117.70 -16.20 117.70 -24.20 L117.70 -25.09 Q117.70 -33.00 113.40 -37.30 Q109.10 -41.59 102.31 -41.59 Q95.70 -41.59 91.34 -37.30 Q86.99 -33.00 86.99 -25.09 L86.99 -24.20 Q86.99 -16.20 91.34 -11.89 Q95.70 -7.59 102.31 -7.59 Z M165.70 1.41 Q158.20 1.41 152.59 -1.75 Q147.00 -4.91 143.84 -10.66 Q140.70 -16.41 140.70 -24.00 L140.70 -25.20 Q140.70 -32.91 143.80 -38.66 Q146.91 -44.41 152.45 -47.55 Q158.00 -50.70 165.30 -50.70 Q172.41 -50.70 177.75 -47.55 Q183.09 -44.41 186.09 -38.80 Q189.09 -33.20 189.09 -25.70 L189.09 -21.80 L151.20 -21.80 Q151.41 -15.30 155.55 -11.44 Q159.70 -7.59 165.91 -7.59 Q171.70 -7.59 174.64 -10.19 Q177.59 -12.80 179.20 -16.20 L187.70 -11.80 Q186.30 -9.00 183.64 -5.89 Q181.00 -2.80 176.70 -0.69 Q172.41 1.41 165.70 1.41 Z M151.30 -29.70 L178.59 -29.70 Q178.20 -35.30 174.59 -38.44 Q171.00 -41.59 165.20 -41.59 Q159.41 -41.59 155.75 -38.44 Q152.09 -35.30 151.30 -29.70 Z" fill="#2BB78F"/></g>
+  </g>
+</svg></div>
+    <h1>Die Marke, an einem Ort.</h1>
+    <p class="lede">Logo, Favicon, Farb-Tokens und Typografie für Worktide — das self-hostbare Werkzeug für Projekte, Zeit und Kund:innen.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="logo">
+    <div class="sec-head"><p class="eyebrow">01 · Logo</p><h2>Das Tide-Zeichen</h2>
+      <p>Gestaffelte Wellen als steigender Pegel, eingefasst im Bullauge, mit einer Coral-Kante als „aktueller Stand". Das Bildzeichen steht solo; das Lockup setzt die Wortmarke daneben — „Work" in Ink, „tide" in Tide.</p></div>
+    <div class="grid g2">
+      <div><div class="card logo-show bg-light"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 266.9 64" role="img" aria-label="Worktide">
+  <defs><clipPath id="il_worktide-lockup_lk"><circle cx="32" cy="32" r="23"/></clipPath></defs>
+  <g clip-path="url(#il_worktide-lockup_lk)">
+    <rect x="6" y="6" width="52" height="52" fill="#DCF4EC"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25 L58 58 L6 58 Z" fill="#5DCAA5"/>
+    <path d="M6 35 Q19 28 32 35 Q45 42 58 35 L58 58 L6 58 Z" fill="#1D9E75"/>
+    <path d="M6 45 Q19 38 32 45 Q45 52 58 45 L58 58 L6 58 Z" fill="#0B5E4D"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25" fill="none" stroke="#E0623A" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#0F8C72" stroke-width="2.5"/>
+  <g transform="translate(76.0,46.70) scale(0.4286)">
+    <path d="M13.59 -0.00 L3.30 -70.00 L14.09 -70.00 L22.50 -7.30 L24.09 -7.30 L34.91 -70.00 L53.80 -70.00 L64.59 -7.30 L66.20 -7.30 L74.50 -70.00 L85.30 -70.00 L75.00 -0.00 L56.09 -0.00 L45.09 -63.59 L43.50 -63.59 L32.59 -0.00 L13.59 -0.00 Z M119.40 1.41 Q112.00 1.41 106.25 -1.64 Q100.50 -4.70 97.20 -10.39 Q93.90 -16.09 93.90 -23.91 L93.90 -25.41 Q93.90 -33.20 97.20 -38.84 Q100.50 -44.50 106.25 -47.59 Q112.00 -50.70 119.40 -50.70 Q126.79 -50.70 132.59 -47.59 Q138.40 -44.50 141.70 -38.84 Q145.00 -33.20 145.00 -25.41 L145.00 -23.91 Q145.00 -16.09 141.70 -10.39 Q138.40 -4.70 132.59 -1.64 Q126.79 1.41 119.40 1.41 Z M119.40 -7.80 Q126.20 -7.80 130.45 -12.14 Q134.70 -16.50 134.70 -24.20 L134.70 -25.09 Q134.70 -32.80 130.50 -37.14 Q126.29 -41.50 119.40 -41.50 Q112.70 -41.50 108.45 -37.14 Q104.20 -32.80 104.20 -25.09 L104.20 -24.20 Q104.20 -16.50 108.45 -12.14 Q112.70 -7.80 119.40 -7.80 Z M157.79 -0.00 L157.79 -49.30 L167.90 -49.30 L167.90 -43.50 L169.50 -43.50 Q170.70 -46.59 173.34 -48.05 Q176.00 -49.50 179.90 -49.50 L185.79 -49.50 L185.79 -40.20 L179.50 -40.20 Q174.50 -40.20 171.29 -37.45 Q168.11 -34.70 168.11 -29.00 L168.11 -0.00 L157.79 -0.00 Z M196.49 -0.00 L196.49 -70.00 L206.81 -70.00 L206.81 -30.09 L208.40 -30.09 L227.81 -49.30 L241.49 -49.30 L216.60 -25.41 L242.31 -0.00 L228.70 -0.00 L208.40 -20.50 L206.81 -20.50 L206.81 -0.00 L196.49 -0.00 Z" fill="#14201C"/>
+    <g transform="translate(242.31,0)"><path d="M26.09 -0.00 Q21.59 -0.00 18.94 -2.70 Q16.30 -5.41 16.30 -9.91 L16.30 -40.59 L2.70 -40.59 L2.70 -49.30 L16.30 -49.30 L16.30 -65.59 L26.59 -65.59 L26.59 -49.30 L41.30 -49.30 L41.30 -40.59 L26.59 -40.59 L26.59 -11.70 Q26.59 -8.70 29.41 -8.70 L39.70 -8.70 L39.70 -0.00 L26.09 -0.00 Z M53.39 -0.00 L53.39 -49.30 L63.71 -49.30 L63.71 -0.00 L53.39 -0.00 Z M58.60 -56.00 Q55.60 -56.00 53.55 -57.95 Q51.50 -59.91 51.50 -63.00 Q51.50 -66.09 53.55 -68.05 Q55.60 -70.00 58.60 -70.00 Q61.71 -70.00 63.71 -68.05 Q65.71 -66.09 65.71 -63.00 Q65.71 -59.91 63.71 -57.95 Q61.71 -56.00 58.60 -56.00 Z M99.40 1.41 Q93.31 1.41 88.10 -1.59 Q82.90 -4.59 79.74 -10.25 Q76.60 -15.91 76.60 -23.91 L76.60 -25.41 Q76.60 -33.30 79.70 -39.00 Q82.81 -44.70 87.99 -47.70 Q93.20 -50.70 99.40 -50.70 Q104.20 -50.70 107.45 -49.50 Q110.70 -48.30 112.79 -46.44 Q114.90 -44.59 115.99 -42.59 L117.60 -42.59 L117.60 -70.00 L127.90 -70.00 L127.90 -0.00 L117.81 -0.00 L117.81 -7.00 L116.20 -7.00 Q114.31 -3.80 110.45 -1.19 Q106.60 1.41 99.40 1.41 Z M102.31 -7.59 Q108.99 -7.59 113.34 -11.89 Q117.70 -16.20 117.70 -24.20 L117.70 -25.09 Q117.70 -33.00 113.40 -37.30 Q109.10 -41.59 102.31 -41.59 Q95.70 -41.59 91.34 -37.30 Q86.99 -33.00 86.99 -25.09 L86.99 -24.20 Q86.99 -16.20 91.34 -11.89 Q95.70 -7.59 102.31 -7.59 Z M165.70 1.41 Q158.20 1.41 152.59 -1.75 Q147.00 -4.91 143.84 -10.66 Q140.70 -16.41 140.70 -24.00 L140.70 -25.20 Q140.70 -32.91 143.80 -38.66 Q146.91 -44.41 152.45 -47.55 Q158.00 -50.70 165.30 -50.70 Q172.41 -50.70 177.75 -47.55 Q183.09 -44.41 186.09 -38.80 Q189.09 -33.20 189.09 -25.70 L189.09 -21.80 L151.20 -21.80 Q151.41 -15.30 155.55 -11.44 Q159.70 -7.59 165.91 -7.59 Q171.70 -7.59 174.64 -10.19 Q177.59 -12.80 179.20 -16.20 L187.70 -11.80 Q186.30 -9.00 183.64 -5.89 Q181.00 -2.80 176.70 -0.69 Q172.41 1.41 165.70 1.41 Z M151.30 -29.70 L178.59 -29.70 Q178.20 -35.30 174.59 -38.44 Q171.00 -41.59 165.20 -41.59 Q159.41 -41.59 155.75 -38.44 Q152.09 -35.30 151.30 -29.70 Z" fill="#0F8C72"/></g>
+  </g>
+</svg></div><div class="cap"><span>Lockup · hell</span><span class="dl">logo/worktide-lockup.svg</span></div></div>
+      <div><div class="card logo-show bg-dark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 266.9 64" role="img" aria-label="Worktide">
+  <defs><clipPath id="il_worktide-lockup-dark_lkd"><circle cx="32" cy="32" r="23"/></clipPath></defs>
+  <g clip-path="url(#il_worktide-lockup-dark_lkd)">
+    <rect x="6" y="6" width="52" height="52" fill="#DCF4EC"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25 L58 58 L6 58 Z" fill="#5DCAA5"/>
+    <path d="M6 35 Q19 28 32 35 Q45 42 58 35 L58 58 L6 58 Z" fill="#1D9E75"/>
+    <path d="M6 45 Q19 38 32 45 Q45 52 58 45 L58 58 L6 58 Z" fill="#0B5E4D"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25" fill="none" stroke="#E0623A" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#0F8C72" stroke-width="2.5"/>
+  <g transform="translate(76.0,46.70) scale(0.4286)">
+    <path d="M13.59 -0.00 L3.30 -70.00 L14.09 -70.00 L22.50 -7.30 L24.09 -7.30 L34.91 -70.00 L53.80 -70.00 L64.59 -7.30 L66.20 -7.30 L74.50 -70.00 L85.30 -70.00 L75.00 -0.00 L56.09 -0.00 L45.09 -63.59 L43.50 -63.59 L32.59 -0.00 L13.59 -0.00 Z M119.40 1.41 Q112.00 1.41 106.25 -1.64 Q100.50 -4.70 97.20 -10.39 Q93.90 -16.09 93.90 -23.91 L93.90 -25.41 Q93.90 -33.20 97.20 -38.84 Q100.50 -44.50 106.25 -47.59 Q112.00 -50.70 119.40 -50.70 Q126.79 -50.70 132.59 -47.59 Q138.40 -44.50 141.70 -38.84 Q145.00 -33.20 145.00 -25.41 L145.00 -23.91 Q145.00 -16.09 141.70 -10.39 Q138.40 -4.70 132.59 -1.64 Q126.79 1.41 119.40 1.41 Z M119.40 -7.80 Q126.20 -7.80 130.45 -12.14 Q134.70 -16.50 134.70 -24.20 L134.70 -25.09 Q134.70 -32.80 130.50 -37.14 Q126.29 -41.50 119.40 -41.50 Q112.70 -41.50 108.45 -37.14 Q104.20 -32.80 104.20 -25.09 L104.20 -24.20 Q104.20 -16.50 108.45 -12.14 Q112.70 -7.80 119.40 -7.80 Z M157.79 -0.00 L157.79 -49.30 L167.90 -49.30 L167.90 -43.50 L169.50 -43.50 Q170.70 -46.59 173.34 -48.05 Q176.00 -49.50 179.90 -49.50 L185.79 -49.50 L185.79 -40.20 L179.50 -40.20 Q174.50 -40.20 171.29 -37.45 Q168.11 -34.70 168.11 -29.00 L168.11 -0.00 L157.79 -0.00 Z M196.49 -0.00 L196.49 -70.00 L206.81 -70.00 L206.81 -30.09 L208.40 -30.09 L227.81 -49.30 L241.49 -49.30 L216.60 -25.41 L242.31 -0.00 L228.70 -0.00 L208.40 -20.50 L206.81 -20.50 L206.81 -0.00 L196.49 -0.00 Z" fill="#E8F0ED"/>
+    <g transform="translate(242.31,0)"><path d="M26.09 -0.00 Q21.59 -0.00 18.94 -2.70 Q16.30 -5.41 16.30 -9.91 L16.30 -40.59 L2.70 -40.59 L2.70 -49.30 L16.30 -49.30 L16.30 -65.59 L26.59 -65.59 L26.59 -49.30 L41.30 -49.30 L41.30 -40.59 L26.59 -40.59 L26.59 -11.70 Q26.59 -8.70 29.41 -8.70 L39.70 -8.70 L39.70 -0.00 L26.09 -0.00 Z M53.39 -0.00 L53.39 -49.30 L63.71 -49.30 L63.71 -0.00 L53.39 -0.00 Z M58.60 -56.00 Q55.60 -56.00 53.55 -57.95 Q51.50 -59.91 51.50 -63.00 Q51.50 -66.09 53.55 -68.05 Q55.60 -70.00 58.60 -70.00 Q61.71 -70.00 63.71 -68.05 Q65.71 -66.09 65.71 -63.00 Q65.71 -59.91 63.71 -57.95 Q61.71 -56.00 58.60 -56.00 Z M99.40 1.41 Q93.31 1.41 88.10 -1.59 Q82.90 -4.59 79.74 -10.25 Q76.60 -15.91 76.60 -23.91 L76.60 -25.41 Q76.60 -33.30 79.70 -39.00 Q82.81 -44.70 87.99 -47.70 Q93.20 -50.70 99.40 -50.70 Q104.20 -50.70 107.45 -49.50 Q110.70 -48.30 112.79 -46.44 Q114.90 -44.59 115.99 -42.59 L117.60 -42.59 L117.60 -70.00 L127.90 -70.00 L127.90 -0.00 L117.81 -0.00 L117.81 -7.00 L116.20 -7.00 Q114.31 -3.80 110.45 -1.19 Q106.60 1.41 99.40 1.41 Z M102.31 -7.59 Q108.99 -7.59 113.34 -11.89 Q117.70 -16.20 117.70 -24.20 L117.70 -25.09 Q117.70 -33.00 113.40 -37.30 Q109.10 -41.59 102.31 -41.59 Q95.70 -41.59 91.34 -37.30 Q86.99 -33.00 86.99 -25.09 L86.99 -24.20 Q86.99 -16.20 91.34 -11.89 Q95.70 -7.59 102.31 -7.59 Z M165.70 1.41 Q158.20 1.41 152.59 -1.75 Q147.00 -4.91 143.84 -10.66 Q140.70 -16.41 140.70 -24.00 L140.70 -25.20 Q140.70 -32.91 143.80 -38.66 Q146.91 -44.41 152.45 -47.55 Q158.00 -50.70 165.30 -50.70 Q172.41 -50.70 177.75 -47.55 Q183.09 -44.41 186.09 -38.80 Q189.09 -33.20 189.09 -25.70 L189.09 -21.80 L151.20 -21.80 Q151.41 -15.30 155.55 -11.44 Q159.70 -7.59 165.91 -7.59 Q171.70 -7.59 174.64 -10.19 Q177.59 -12.80 179.20 -16.20 L187.70 -11.80 Q186.30 -9.00 183.64 -5.89 Q181.00 -2.80 176.70 -0.69 Q172.41 1.41 165.70 1.41 Z M151.30 -29.70 L178.59 -29.70 Q178.20 -35.30 174.59 -38.44 Q171.00 -41.59 165.20 -41.59 Q159.41 -41.59 155.75 -38.44 Q152.09 -35.30 151.30 -29.70 Z" fill="#2BB78F"/></g>
+  </g>
+</svg></div><div class="cap"><span>Lockup · dunkel</span><span class="dl">logo/worktide-lockup-dark.svg</span></div></div>
+      <div><div class="card logo-show bg-light"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Worktide">
+  <defs><clipPath id="ic_clr"><circle cx="32" cy="32" r="23"/></clipPath></defs>
+  <g clip-path="url(#ic_clr)">
+    <rect x="6" y="6" width="52" height="52" fill="#DCF4EC"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25 L58 58 L6 58 Z" fill="#5DCAA5"/>
+    <path d="M6 35 Q19 28 32 35 Q45 42 58 35 L58 58 L6 58 Z" fill="#1D9E75"/>
+    <path d="M6 45 Q19 38 32 45 Q45 52 58 45 L58 58 L6 58 Z" fill="#0B5E4D"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25" fill="none" stroke="#E0623A" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#0F8C72" stroke-width="2.5"/>
+</svg></div><div class="cap"><span>Bildzeichen solo</span><span class="dl">logo/worktide-icon.svg</span></div></div>
+      <div><div class="card">
+        <p class="eyebrow" style="margin-bottom:16px">Schutzraum &amp; Mindestgröße</p>
+        <div class="spec">
+          <div class="clearbox"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Worktide">
+  <defs><clipPath id="ic_clear"><circle cx="32" cy="32" r="23"/></clipPath></defs>
+  <g clip-path="url(#ic_clear)">
+    <rect x="6" y="6" width="52" height="52" fill="#DCF4EC"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25 L58 58 L6 58 Z" fill="#5DCAA5"/>
+    <path d="M6 35 Q19 28 32 35 Q45 42 58 35 L58 58 L6 58 Z" fill="#1D9E75"/>
+    <path d="M6 45 Q19 38 32 45 Q45 52 58 45 L58 58 L6 58 Z" fill="#0B5E4D"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25" fill="none" stroke="#E0623A" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#0F8C72" stroke-width="2.5"/>
+</svg></div>
+          <div class="minrow">
+            <div class="m"><svg viewBox="0 0 64 64" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+  <defs><clipPath id="ic_min1"><circle cx="32" cy="32" r="23"/></clipPath></defs>
+  <g clip-path="url(#ic_min1)">
+    <rect x="6" y="6" width="52" height="52" fill="#DCF4EC"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25 L58 58 L6 58 Z" fill="#5DCAA5"/>
+    <path d="M6 35 Q19 28 32 35 Q45 42 58 35 L58 58 L6 58 Z" fill="#1D9E75"/>
+    <path d="M6 45 Q19 38 32 45 Q45 52 58 45 L58 58 L6 58 Z" fill="#0B5E4D"/>
+    <path d="M6 25 Q19 18 32 25 Q45 32 58 25" fill="none" stroke="#E0623A" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#0F8C72" stroke-width="2.5"/>
+</svg>24&nbsp;px</div>
+            <div class="m"><svg viewBox="0 0 64 64" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+  <defs><clipPath id="fv_min2"><circle cx="32" cy="32" r="26"/></clipPath></defs>
+  <g clip-path="url(#fv_min2)">
+    <rect x="4" y="4" width="56" height="56" fill="#DCF4EC"/>
+    <path d="M4 27 Q18 19 32 27 Q46 35 60 27 L60 60 L4 60 Z" fill="#1D9E75"/>
+    <path d="M4 41 Q18 33 32 41 Q46 49 60 41 L60 60 L4 60 Z" fill="#0B5E4D"/>
+    <path d="M4 27 Q18 19 32 27 Q46 35 60 27" fill="none" stroke="#E0623A" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#0F8C72" stroke-width="3"/>
+</svg>16&nbsp;px*</div>
+          </div>
+        </div>
+        <p style="font-size:12.5px;color:var(--color-text-muted);margin:16px 0 0">Freiraum rundum ≥ halber Kreisdurchmesser. Bildzeichen nicht unter 24&nbsp;px — *darunter die Favicon-Fassung verwenden.</p>
+      </div></div>
+    </div>
+    <div class="card" style="margin-top:18px"><div class="grid g2">
+      <ul class="rules">
+        <li><span class="do">✓</span>Coral-Kante nur am obersten Pegel</li>
+        <li><span class="do">✓</span>Auf ruhigem, kontrastreichem Grund</li>
+        <li><span class="do">✓</span>Dunkles Lockup auf dunklen Flächen</li>
+      </ul>
+      <ul class="rules">
+        <li><span class="dont">✗</span>Nicht verzerren oder rotieren</li>
+        <li><span class="dont">✗</span>Wortmarke nicht in anderer Schrift</li>
+        <li><span class="dont">✗</span>Tide-Töne nicht durch Fremdfarben ersetzen</li>
+      </ul>
+    </div></div>
+    <svg class="wave-rule" viewBox="0 0 1200 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 20 Q150 4 300 20 T600 20 T900 20 T1200 20" fill="none" stroke="var(--wt-tide)" stroke-width="2" opacity="0.5"/></svg>
+  </section>
+
+  <section id="favicon">
+    <div class="sec-head"><p class="eyebrow">02 · Favicon</p><h2>Klein, aber lesbar</h2>
+      <p>Für kleine Größen eine vereinfachte Fassung: dickere Bänder, kräftigere Coral-Kante, größerer Kreis — der Pegel bleibt im Browser-Tab erkennbar.</p></div>
+    <div class="card">
+      <div class="fav-row">
+        <div class="f"><svg viewBox="0 0 64 64" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+  <defs><clipPath id="fv_f1"><circle cx="32" cy="32" r="26"/></clipPath></defs>
+  <g clip-path="url(#fv_f1)">
+    <rect x="4" y="4" width="56" height="56" fill="#DCF4EC"/>
+    <path d="M4 27 Q18 19 32 27 Q46 35 60 27 L60 60 L4 60 Z" fill="#1D9E75"/>
+    <path d="M4 41 Q18 33 32 41 Q46 49 60 41 L60 60 L4 60 Z" fill="#0B5E4D"/>
+    <path d="M4 27 Q18 19 32 27 Q46 35 60 27" fill="none" stroke="#E0623A" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#0F8C72" stroke-width="3"/>
+</svg>16&nbsp;px</div>
+        <div class="f"><svg viewBox="0 0 64 64" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <defs><clipPath id="fv_f2"><circle cx="32" cy="32" r="26"/></clipPath></defs>
+  <g clip-path="url(#fv_f2)">
+    <rect x="4" y="4" width="56" height="56" fill="#DCF4EC"/>
+    <path d="M4 27 Q18 19 32 27 Q46 35 60 27 L60 60 L4 60 Z" fill="#1D9E75"/>
+    <path d="M4 41 Q18 33 32 41 Q46 49 60 41 L60 60 L4 60 Z" fill="#0B5E4D"/>
+    <path d="M4 27 Q18 19 32 27 Q46 35 60 27" fill="none" stroke="#E0623A" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#0F8C72" stroke-width="3"/>
+</svg>32&nbsp;px</div>
+        <div class="f"><svg viewBox="0 0 64 64" width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <defs><clipPath id="fv_f3"><circle cx="32" cy="32" r="26"/></clipPath></defs>
+  <g clip-path="url(#fv_f3)">
+    <rect x="4" y="4" width="56" height="56" fill="#DCF4EC"/>
+    <path d="M4 27 Q18 19 32 27 Q46 35 60 27 L60 60 L4 60 Z" fill="#1D9E75"/>
+    <path d="M4 41 Q18 33 32 41 Q46 49 60 41 L60 60 L4 60 Z" fill="#0B5E4D"/>
+    <path d="M4 27 Q18 19 32 27 Q46 35 60 27" fill="none" stroke="#E0623A" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#0F8C72" stroke-width="3"/>
+</svg>64&nbsp;px</div>
+        <div class="f"><span class="fav-os"><svg viewBox="0 0 64 64" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+  <defs><clipPath id="fv_os"><circle cx="32" cy="32" r="26"/></clipPath></defs>
+  <g clip-path="url(#fv_os)">
+    <rect x="4" y="4" width="56" height="56" fill="#DCF4EC"/>
+    <path d="M4 27 Q18 19 32 27 Q46 35 60 27 L60 60 L4 60 Z" fill="#1D9E75"/>
+    <path d="M4 41 Q18 33 32 41 Q46 49 60 41 L60 60 L4 60 Z" fill="#0B5E4D"/>
+    <path d="M4 27 Q18 19 32 27 Q46 35 60 27" fill="none" stroke="#E0623A" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#0F8C72" stroke-width="3"/>
+</svg><span style="font-size:12px;color:var(--color-text)">worktide</span></span><div style="margin-top:8px">Tab-Vorschau</div></div>
+      </div>
+      <p class="eyebrow" style="margin:4px 0 8px">Einbinden im &lt;head&gt;</p>
+      <pre>&lt;link rel="icon" href="/favicon.svg" type="image/svg+xml"&gt;
+&lt;link rel="icon" href="/favicon.ico" sizes="any"&gt;
+&lt;link rel="apple-touch-icon" href="/apple-touch-icon.png"&gt;</pre>
+      <p style="font-size:12.5px;color:var(--color-text-muted);margin:14px 0 0">Geliefert: <code>favicon.svg</code>, <code>favicon.ico</code> (16/32/48), <code>favicon-16/32/48/180.png</code>, <code>apple-touch-icon.png</code>.</p>
+    </div>
+    <svg class="wave-rule" viewBox="0 0 1200 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 20 Q150 4 300 20 T600 20 T900 20 T1200 20" fill="none" stroke="var(--wt-tide)" stroke-width="2" opacity="0.5"/></svg>
+  </section>
+
+  <section id="color">
+    <div class="sec-head"><p class="eyebrow">03 · Farbe</p><h2>Tide-Rampe + Coral</h2>
+      <p>Eine durchgehende Teal-Rampe trägt die Marke; Coral ist die einzige Signalfarbe — sparsam für Alerts und den „jetzt"-Zustand. Klick auf ein Feld kopiert den Token.</p></div>
+    <div class="sw-grid"><button class="sw" data-copy="var(--wt-foam)"><span class="sw-chip" style="background:#DCF4EC;color:#14201C">#DCF4EC</span><span class="sw-meta"><b>Foam</b><code>--wt-foam</code><em>Tints, Hover, Schaum</em></span></button><button class="sw" data-copy="var(--wt-light)"><span class="sw-chip" style="background:#5DCAA5;color:#14201C">#5DCAA5</span><span class="sw-meta"><b>Light</b><code>--wt-light</code><em>Helles Wellenband</em></span></button><button class="sw" data-copy="var(--wt-mid)"><span class="sw-chip" style="background:#1D9E75;color:#fff">#1D9E75</span><span class="sw-meta"><b>Mid</b><code>--wt-mid</code><em>Mittleres Band</em></span></button><button class="sw" data-copy="var(--wt-tide)"><span class="sw-chip" style="background:#0F8C72;color:#fff">#0F8C72</span><span class="sw-meta"><b>Tide</b><code>--wt-tide</code><em>Primär · Links · Ring</em></span></button><button class="sw" data-copy="var(--wt-deep)"><span class="sw-chip" style="background:#0B5E4D;color:#fff">#0B5E4D</span><span class="sw-meta"><b>Deep</b><code>--wt-deep</code><em>Tiefstes Band · dunkel</em></span></button><button class="sw" data-copy="var(--wt-coral)"><span class="sw-chip" style="background:#E0623A;color:#fff">#E0623A</span><span class="sw-meta"><b>Coral</b><code>--wt-coral</code><em>Akzent · Alerts · Kamm</em></span></button><button class="sw" data-copy="var(--wt-ink)"><span class="sw-chip" style="background:#14201C;color:#fff">#14201C</span><span class="sw-meta"><b>Ink</b><code>--wt-ink</code><em>Primärtext</em></span></button><button class="sw" data-copy="var(--wt-slate)"><span class="sw-chip" style="background:#5A6A65;color:#fff">#5A6A65</span><span class="sw-meta"><b>Slate</b><code>--wt-slate</code><em>Sekundärtext</em></span></button><button class="sw" data-copy="var(--wt-mist)"><span class="sw-chip" style="background:#F5F8F7;color:#14201C">#F5F8F7</span><span class="sw-meta"><b>Mist</b><code>--wt-mist</code><em>App-Hintergrund</em></span></button><button class="sw" data-copy="var(--wt-line)"><span class="sw-chip" style="background:#E2EAE7;color:#14201C">#E2EAE7</span><span class="sw-meta"><b>Line</b><code>--wt-line</code><em>Hairline-Border</em></span></button></div>
+    <p class="eyebrow" style="margin:28px 0 10px">Dark-Surfaces</p>
+    <div class="sw-grid"><button class="sw" data-copy="var(--wt-bg-dark)"><span class="sw-chip" style="background:#0E1714;color:#fff">#0E1714</span><span class="sw-meta"><b>BG</b><code>--wt-bg-dark</code></span></button><button class="sw" data-copy="var(--wt-surface-dark)"><span class="sw-chip" style="background:#15211D;color:#fff">#15211D</span><span class="sw-meta"><b>Surface</b><code>--wt-surface-dark</code></span></button><button class="sw" data-copy="var(--wt-text-dark)"><span class="sw-chip" style="background:#E8F0ED;color:#14201C">#E8F0ED</span><span class="sw-meta"><b>Text</b><code>--wt-text-dark</code></span></button><button class="sw" data-copy="var(--wt-muted-dark)"><span class="sw-chip" style="background:#9DB0AA;color:#14201C">#9DB0AA</span><span class="sw-meta"><b>Muted</b><code>--wt-muted-dark</code></span></button><button class="sw" data-copy="var(--wt-line-dark)"><span class="sw-chip" style="background:#25342F;color:#fff">#25342F</span><span class="sw-meta"><b>Line</b><code>--wt-line-dark</code></span></button><button class="sw" data-copy="var(--wt-tide-dark)"><span class="sw-chip" style="background:#2BB78F;color:#fff">#2BB78F</span><span class="sw-meta"><b>Tide/dark</b><code>--wt-tide-dark</code></span></button></div>
+    <div class="card" style="margin-top:20px">
+      <p class="eyebrow" style="margin-bottom:10px">Semantische Tokens</p>
+      <pre>--color-primary:    var(--wt-tide);   /* #2BB78F im Dark-Mode */
+--color-accent:     var(--wt-coral);
+--color-bg:         var(--wt-white);  /* #0E1714 im Dark-Mode */
+--color-surface:    var(--wt-mist);
+--color-text:       var(--wt-ink);
+--color-text-muted: var(--wt-slate);
+--color-border:     var(--wt-line);</pre>
+    </div>
+    <svg class="wave-rule" viewBox="0 0 1200 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 20 Q150 4 300 20 T600 20 T900 20 T1200 20" fill="none" stroke="var(--wt-tide)" stroke-width="2" opacity="0.5"/></svg>
+  </section>
+
+  <section id="type">
+    <div class="sec-head"><p class="eyebrow">04 · Typografie</p><h2>Space Grotesk + Inter</h2>
+      <p>Space Grotesk prägt Überschriften und Wortmarke mit technischem, leicht eigenwilligem Charakter. Inter trägt den Fließtext ruhig; JetBrains Mono setzt Code und Werte.</p></div>
+    <div class="grid g2">
+      <div class="card">
+        <div class="type-spec"><span class="ts"><b>Space Grotesk</b></span><span class="ts">Display · 500/600</span></div>
+        <div class="specimen s-xl">Projekte, Zeit &amp; Kund:innen.</div>
+        <div class="specimen s-l">Self-hosted. Open source.</div>
+        <p class="mono" style="font-size:13px;color:var(--color-text-muted);margin-top:10px">Aa Bb Cc 0123456789 &amp; @ # %</p>
+      </div>
+      <div class="card">
+        <div class="type-spec"><span class="ts"><b>Inter</b></span><span class="ts">Body · 400/500</span><span class="ts mono">JetBrains Mono</span></div>
+        <p class="s-body">Worktide bündelt Projekt-Tracking, Task-Boards, Zeiterfassung, wiederkehrende Pläne, Autopilot-Hinweise und Workflow-Automation in einem selbst betreibbaren Werkzeug.</p>
+        <pre style="margin-top:14px">GET /api/v1/projects/42/time-entries
+Authorization: Bearer &lt;token&gt;</pre>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">Worktide Brand Book · Bildzeichen 04e „Tide-Crop" · erzeugt 14.06.2026 · Schriften: Space Grotesk, Inter, JetBrains Mono (SIL OFL).</footer>
+
+<script>
+const root=document.documentElement, btn=document.getElementById('themeBtn');
+btn.addEventListener('click',()=>{const d=root.getAttribute('data-theme')==='dark';root.setAttribute('data-theme',d?'light':'dark');btn.textContent=d?'Dunkel':'Hell';});
+document.querySelectorAll('.sw').forEach(b=>b.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);}catch(e){}b.classList.add('copied');setTimeout(()=>b.classList.remove('copied'),1100);}));
+</script>
+</body>
+</html>

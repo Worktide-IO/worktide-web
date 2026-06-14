@@ -80,7 +80,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <header className="flex h-14 items-center gap-2 border-b border-border px-4">
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-6" />
-          <h1 className="text-sm font-medium text-muted-foreground">Worktide</h1>
+          <img
+            src="/brand/logo/worktide-lockup.svg"
+            alt="Worktide"
+            className="h-6 w-auto"
+          />
         </header>
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </SidebarInset>

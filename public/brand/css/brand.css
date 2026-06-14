@@ -1,0 +1,82 @@
+/* ============================================================
+   Worktide — Brand Design Tokens
+   Logo mark: 04e "Tide-Crop" with coral crest
+   ============================================================ */
+
+:root {
+  /* --- Tide ramp (core brand) --- */
+  --wt-foam:  #DCF4EC;   /* lightest — highlights, tints, foam      */
+  --wt-light: #5DCAA5;   /* light band                              */
+  --wt-mid:   #1D9E75;   /* mid band                                */
+  --wt-tide:  #0F8C72;   /* PRIMARY — ring, links, wordmark "tide"  */
+  --wt-deep:  #0B5E4D;   /* deepest band — headers, dark surfaces   */
+
+  /* --- Accent --- */
+  --wt-coral:      #E0623A;  /* alerts, the crest, "now" markers    */
+  --wt-coral-tint: #FBEAE3;  /* soft alert background               */
+
+  /* --- Neutrals (warm green-grey, tuned to the tide) --- */
+  --wt-ink:   #14201C;   /* primary text                            */
+  --wt-slate: #5A6A65;   /* secondary text                          */
+  --wt-line:  #E2EAE7;   /* hairline borders                        */
+  --wt-mist:  #F5F8F7;   /* app / surface background                */
+  --wt-white: #FFFFFF;
+
+  /* --- Dark surfaces --- */
+  --wt-bg-dark:      #0E1714;
+  --wt-surface-dark: #15211D;
+  --wt-text-dark:    #E8F0ED;
+  --wt-muted-dark:   #9DB0AA;
+  --wt-line-dark:    #25342F;
+  --wt-tide-dark:    #2BB78F;  /* lightened teal for use on dark    */
+
+  /* --- Semantic tokens (light theme default) --- */
+  --color-primary:      var(--wt-tide);
+  --color-primary-deep: var(--wt-deep);
+  --color-accent:       var(--wt-coral);
+  --color-bg:           var(--wt-white);
+  --color-surface:      var(--wt-mist);
+  --color-text:         var(--wt-ink);
+  --color-text-muted:   var(--wt-slate);
+  --color-border:       var(--wt-line);
+  --color-link:         var(--wt-tide);
+
+  /* --- Type --- */
+  --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body:    "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* --- Radius / elevation --- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(11,94,77,.08);
+  --shadow-md: 0 6px 24px rgba(11,94,77,.12);
+}
+
+/* Dark theme: add data-theme="dark" on <html> or honor OS setting */
+:root[data-theme="dark"] {
+  --color-primary:      var(--wt-tide-dark);
+  --color-primary-deep: var(--wt-light);
+  --color-accent:       var(--wt-coral);
+  --color-bg:           var(--wt-bg-dark);
+  --color-surface:      var(--wt-surface-dark);
+  --color-text:         var(--wt-text-dark);
+  --color-text-muted:   var(--wt-muted-dark);
+  --color-border:       var(--wt-line-dark);
+  --color-link:         var(--wt-tide-dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-primary:      var(--wt-tide-dark);
+    --color-primary-deep: var(--wt-light);
+    --color-accent:       var(--wt-coral);
+    --color-bg:           var(--wt-bg-dark);
+    --color-surface:      var(--wt-surface-dark);
+    --color-text:         var(--wt-text-dark);
+    --color-text-muted:   var(--wt-muted-dark);
+    --color-border:       var(--wt-line-dark);
+    --color-link:         var(--wt-tide-dark);
+  }
+}

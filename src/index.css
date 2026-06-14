@@ -1,21 +1,38 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/space-grotesk";
 
 @custom-variant dark (&:is(.dark *));
 
-/* All shadcn design tokens live in :root + .dark below — DO NOT add a
- * static @theme {} block here that hard-codes --color-* values; it would
- * lock the variables in light mode and break dark-mode toggling. To tweak
- * theme colours, edit :root and .dark. */
-
+/* Worktide brand tokens — sourced from public/brand/css/brand.css and
+ * re-expressed in oklch so they slot directly into the shadcn theme
+ * variables. The semantic --color-* aliases in @theme inline below
+ * still drive everything; only :root + .dark change.
+ *
+ * Brand ramp reference (sRGB → OKLCH):
+ *   foam   #DCF4EC  →  oklch(0.942 0.034 168)
+ *   light  #5DCAA5  →  oklch(0.755 0.094 168)
+ *   mid    #1D9E75  →  oklch(0.602 0.110 168)
+ *   tide   #0F8C72  →  oklch(0.555 0.105 170)   ← PRIMARY
+ *   deep   #0B5E4D  →  oklch(0.412 0.073 168)
+ *   coral  #E0623A  →  oklch(0.665 0.158 35)    ← DESTRUCTIVE / accent
+ *   ink    #14201C  →  oklch(0.218 0.013 168)   ← foreground (light)
+ *   slate  #5A6A65  →  oklch(0.488 0.011 168)
+ *   line   #E2EAE7  →  oklch(0.927 0.005 168)
+ *   mist   #F5F8F7  →  oklch(0.974 0.004 168)
+ *   tide-dark #2BB78F →  oklch(0.690 0.130 168) ← PRIMARY on dark surfaces
+ */
 @layer base {
   body {
     @apply antialiased bg-background text-foreground;
     margin: 0;
   }
-  h1, h2, h3, h4 { @apply font-semibold; }
+  h1, h2, h3, h4 {
+    @apply font-semibold;
+    font-family: var(--font-heading);
+  }
   * {
     @apply border-border outline-ring/50;
   }
@@ -25,8 +42,13 @@
 }
 
 @theme inline {
-  --font-heading: var(--font-sans);
-  --font-sans: 'Geist Variable', sans-serif;
+  /* Brand says: Space Grotesk for headings/display, Inter for body,
+   * JetBrains Mono for code. We point the Tailwind aliases at those. */
+  --font-heading: 'Space Grotesk Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-sans: 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* shadcn semantic aliases (unchanged — only the underlying :root vars move) */
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -68,70 +90,96 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Surfaces */
+  --background: oklch(1 0 0);                  /* white */
+  --foreground: oklch(0.218 0.013 168);        /* wt-ink */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.218 0.013 168);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.218 0.013 168);
+
+  /* Primary = tide; foreground = white for AA contrast on tide */
+  --primary: oklch(0.555 0.105 170);           /* wt-tide #0F8C72 */
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+
+  /* Secondary / muted / accent = mist + foam */
+  --secondary: oklch(0.974 0.004 168);          /* wt-mist */
+  --secondary-foreground: oklch(0.218 0.013 168);
+  --muted: oklch(0.974 0.004 168);
+  --muted-foreground: oklch(0.488 0.011 168);   /* wt-slate */
+  --accent: oklch(0.942 0.034 168);             /* wt-foam — gentle tide tint */
+  --accent-foreground: oklch(0.412 0.073 168);  /* wt-deep — readable on foam */
+
+  /* Destructive = coral (also serves as alert "now" marker per brand book) */
+  --destructive: oklch(0.665 0.158 35);
+  --destructive-foreground: oklch(0.985 0 0);
+
+  /* Borders / inputs / focus ring */
+  --border: oklch(0.927 0.005 168);             /* wt-line */
+  --input: oklch(0.927 0.005 168);
+  --ring: oklch(0.555 0.105 170);               /* tide for the focus ring */
+
+  /* Charts: ramp through the tide so the deeper colour means "more". */
+  --chart-1: oklch(0.755 0.094 168);            /* wt-light */
+  --chart-2: oklch(0.602 0.110 168);            /* wt-mid */
+  --chart-3: oklch(0.555 0.105 170);            /* wt-tide */
+  --chart-4: oklch(0.412 0.073 168);            /* wt-deep */
+  --chart-5: oklch(0.665 0.158 35);             /* wt-coral — sits outside the ramp on purpose */
+
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+
+  /* Sidebar — slightly tinted "mist" so it reads as a chrome surface
+   * but doesn't fight the content area. */
+  --sidebar: oklch(0.974 0.004 168);            /* wt-mist */
+  --sidebar-foreground: oklch(0.218 0.013 168);
+  --sidebar-primary: oklch(0.555 0.105 170);    /* tide for the highlighted item */
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-accent: oklch(0.942 0.034 168);     /* foam on hover */
+  --sidebar-accent-foreground: oklch(0.412 0.073 168);
+  --sidebar-border: oklch(0.927 0.005 168);
+  --sidebar-ring: oklch(0.555 0.105 170);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Brand dark-mode surfaces are intentionally deeper-than-black so the
+   * tide accent reads as bright. */
+  --background: oklch(0.165 0.011 168);         /* wt-bg-dark #0E1714 */
+  --foreground: oklch(0.94 0.005 168);          /* wt-text-dark */
+  --card: oklch(0.218 0.014 168);               /* wt-surface-dark #15211D */
+  --card-foreground: oklch(0.94 0.005 168);
+  --popover: oklch(0.218 0.014 168);
+  --popover-foreground: oklch(0.94 0.005 168);
+
+  /* Lifted tide for legibility against dark surfaces */
+  --primary: oklch(0.69 0.13 168);              /* wt-tide-dark #2BB78F */
+  --primary-foreground: oklch(0.165 0.011 168);
+
+  --secondary: oklch(0.30 0.012 168);           /* wt-line-dark, used as soft hover */
+  --secondary-foreground: oklch(0.94 0.005 168);
+  --muted: oklch(0.30 0.012 168);
+  --muted-foreground: oklch(0.71 0.011 168);
+  --accent: oklch(0.30 0.012 168);
+  --accent-foreground: oklch(0.94 0.005 168);
+
+  --destructive: oklch(0.72 0.15 35);
+  --destructive-foreground: oklch(0.94 0.005 168);
+
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.69 0.13 168);
+
+  --chart-1: oklch(0.755 0.094 168);
+  --chart-2: oklch(0.69 0.13 168);
+  --chart-3: oklch(0.555 0.105 170);
+  --chart-4: oklch(0.412 0.073 168);
+  --chart-5: oklch(0.72 0.15 35);
+
+  --sidebar: oklch(0.218 0.014 168);
+  --sidebar-foreground: oklch(0.94 0.005 168);
+  --sidebar-primary: oklch(0.69 0.13 168);
+  --sidebar-primary-foreground: oklch(0.165 0.011 168);
+  --sidebar-accent: oklch(0.30 0.012 168);
+  --sidebar-accent-foreground: oklch(0.94 0.005 168);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.69 0.13 168);
 }

@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -28,8 +28,12 @@ export function LoginPage() {
     <div className="min-h-screen grid place-items-center bg-muted/40 p-6">
       <Card className="w-full max-w-sm">
         <form onSubmit={onSubmit} noValidate>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Worktide</CardTitle>
+          <CardHeader className="text-center items-center">
+            <img
+              src="/brand/logo/worktide-lockup.svg"
+              alt="Worktide"
+              className="h-9 w-auto"
+            />
             <CardDescription>Bitte anmelden, um fortzufahren.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
