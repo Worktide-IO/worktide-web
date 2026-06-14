@@ -14,6 +14,7 @@ import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { CustomersListPage } from '@/pages/customers/CustomersListPage';
 import { CustomerCreatePage } from '@/pages/customers/CustomerCreatePage';
 import { CustomerEditPage } from '@/pages/customers/CustomerEditPage';
+import { ProjectDetailPage } from '@/pages/projects/ProjectDetailPage';
 import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
 import { TasksListPage } from '@/pages/tasks/TasksListPage';
 import { TimeEntriesListPage } from '@/pages/timeEntries/TimeEntriesListPage';
@@ -43,6 +44,7 @@ export default function App() {
             {
               name: 'projects',
               list: '/projects',
+              show: '/projects/:id',
               meta: { label: 'Projekte', icon: 'FolderKanban', category: 'Arbeit', canDelete: false },
             },
             {
@@ -126,6 +128,7 @@ export default function App() {
             >
               <Route index element={<DashboardPage />} />
               <Route path="/projects" element={<ProjectsListPage />} />
+              <Route path="/projects/:id" element={<ProjectDetailPage />} />
               <Route path="/tasks" element={<TasksListPage />} />
               {/* Until each resource has its own page, the placeholder
                   acknowledges the navigation without breaking the layout. */}

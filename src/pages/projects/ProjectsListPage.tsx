@@ -1,6 +1,7 @@
 import { useList, useTable } from '@refinedev/core';
 import { Search, Wifi, WifiOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
 
 import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
@@ -39,6 +40,7 @@ import {
  * owns the full filter+pagination experience.
  */
 export function ProjectsListPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -165,7 +167,11 @@ export function ProjectsListPage() {
                   const status = p.status ? statusByIri[p.status] : null;
                   const customer = p.customer ? customerByIri[p.customer] : null;
                   return (
-                    <TableRow key={p['@id']}>
+                    <TableRow
+                      key={p['@id']}
+                      className="cursor-pointer"
+                      onClick={() => p.id && navigate(`/projects/${p.id}`)}
+                    >
                       <TableCell className="font-mono text-xs">{p.key}</TableCell>
                       <TableCell className="font-medium">{p.name}</TableCell>
                       <TableCell>
