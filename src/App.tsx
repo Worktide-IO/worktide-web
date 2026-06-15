@@ -16,6 +16,7 @@ import { CustomerCreatePage } from '@/pages/customers/CustomerCreatePage';
 import { CustomerEditPage } from '@/pages/customers/CustomerEditPage';
 import { ProjectDetailPage } from '@/pages/projects/ProjectDetailPage';
 import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
+import { WallPage } from '@/pages/wall/WallPage';
 import { TasksListPage } from '@/pages/tasks/TasksListPage';
 import { TimeEntriesListPage } from '@/pages/timeEntries/TimeEntriesListPage';
 
@@ -41,6 +42,11 @@ export default function App() {
           routerProvider={routerProvider}
           resources={[
             // ---- Arbeit ----------------------------------------------------
+            {
+              name: 'wall',
+              list: '/wall',
+              meta: { label: 'The Wall', icon: 'LayoutDashboard', category: 'Arbeit' },
+            },
             {
               name: 'projects',
               list: '/projects',
@@ -127,6 +133,7 @@ export default function App() {
               }
             >
               <Route index element={<DashboardPage />} />
+              <Route path="/wall" element={<WallPage />} />
               <Route path="/projects" element={<ProjectsListPage />} />
               <Route path="/projects/:id" element={<ProjectDetailPage />} />
               <Route path="/tasks" element={<TasksListPage />} />
