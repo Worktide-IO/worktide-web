@@ -12,6 +12,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { ActivityPage } from '@/pages/activity/ActivityPage';
+import { ImportPage } from '@/pages/imports/ImportPage';
 import { ContactCreatePage } from '@/pages/contacts/ContactCreatePage';
 import { ContactEditPage } from '@/pages/contacts/ContactEditPage';
 import { ContactsListPage } from '@/pages/contacts/ContactsListPage';
@@ -138,6 +139,11 @@ export default function App() {
               list: '/access-tokens',
               meta: { label: 'API-Tokens', icon: 'KeyRound', category: 'Admin' },
             },
+            {
+              name: 'imports',
+              list: '/imports',
+              meta: { label: 'Import', icon: 'Upload', category: 'Admin' },
+            },
           ]}
           options={{
             syncWithLocation: true,
@@ -181,6 +187,7 @@ export default function App() {
               <Route path="/permissions" element={<PlaceholderPage resource="role_permission_overrides" />} />
               <Route path="/webhooks" element={<PlaceholderPage resource="webhooks" />} />
               <Route path="/access-tokens" element={<PlaceholderPage resource="personal_access_tokens" />} />
+              <Route path="/imports" element={<ImportPage />} />
               <Route path="/settings/profile" element={<ProfileSettingsPage />} />
               <Route path="/settings/workspace" element={<WorkspaceSettingsPage />} />
             </Route>
