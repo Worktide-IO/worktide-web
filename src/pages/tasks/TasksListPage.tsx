@@ -7,9 +7,11 @@ import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
+import { BulkActionsBar } from '@/components/BulkActionsBar';
 import { SavedViewsBar } from '@/components/SavedViewsBar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -132,6 +134,31 @@ export function TasksListPage() {
   const rows = tableQuery.data?.data ?? [];
   const total = tableQuery.data?.total ?? 0;
 
+  // Bulk-edit selection state — set of task IRIs.
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const allSelected = rows.length > 0 && rows.every((r) => r['@id'] && selected.has(r['@id']));
+  const someSelected = rows.some((r) => r['@id'] && selected.has(r['@id']));
+
+  const toggleOne = (iri: string, checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(iri);
+      else next.delete(iri);
+      return next;
+    });
+  };
+  const togglePage = (checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const r of rows) {
+        if (!r['@id']) continue;
+        if (checked) next.add(r['@id']);
+        else next.delete(r['@id']);
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
@@ -219,6 +246,15 @@ export function TasksListPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={
+                        allSelected ? true : someSelected ? 'indeterminate' : false
+                      }
+                      onCheckedChange={(v) => togglePage(v === true)}
+                      aria-label="Alle auf dieser Seite auswählen"
+                    />
+                  </TableHead>
                   <TableHead className="w-24">ID</TableHead>
                   <TableHead>Titel</TableHead>
                   <TableHead className="w-32">Status</TableHead>
@@ -231,8 +267,20 @@ export function TasksListPage() {
                 {rows.map((t) => {
                   const status = t.status ? statusByIri[t.status] : null;
                   const project = t.project ? projectByIri[t.project] : null;
+                  const iri = t['@id'] ?? '';
+                  const isChecked = selected.has(iri);
                   return (
-                    <TableRow key={t['@id']}>
+                    <TableRow
+                      key={t['@id']}
+                      data-state={isChecked ? 'selected' : undefined}
+                    >
+                      <TableCell>
+                        <Checkbox
+                          checked={isChecked}
+                          onCheckedChange={(v) => toggleOne(iri, v === true)}
+                          aria-label="Diesen Task auswählen"
+                        />
+                      </TableCell>
                       <TableCell className="font-mono text-xs">{t.identifier}</TableCell>
                       <TableCell className="font-medium">{t.title}</TableCell>
                       <TableCell>
@@ -276,6 +324,11 @@ export function TasksListPage() {
           )}
         </CardContent>
       </Card>
+
+      <BulkActionsBar
+        selectedIris={Array.from(selected)}
+        onClear={() => setSelected(new Set())}
+      />
     </div>
   );
 }
