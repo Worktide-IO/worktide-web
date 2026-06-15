@@ -89,6 +89,7 @@ const FIELDS_BY_RESOURCE: Record<Resource, { key: string; label: string; require
     { key: 'description', label: 'Beschreibung' },
     { key: 'identifier', label: 'Identifier' },
     { key: 'dueOn', label: 'Fällig am (YYYY-MM-DD)' },
+    { key: 'correlationId', label: 'CorrelationID (UUID, für idempotente Re-Imports)' },
   ],
 };
 
@@ -104,6 +105,7 @@ export function ImportPage() {
   const [busy, setBusy] = useState(false);
   const [dryRunResult, setDryRunResult] = useState<{
     created: number;
+    matched?: number;
     skipped: number;
     errors: { row: number; message: string }[];
   } | null>(null);
@@ -159,6 +161,7 @@ export function ImportPage() {
       const rows = buildRows();
       const { data } = await api.post<{
         created: number;
+        matched?: number;
         skipped: number;
         errors: { row: number; message: string }[];
       }>(`/imports/${resource}`, { rows, dryRun: true });
@@ -178,12 +181,18 @@ export function ImportPage() {
       const rows = buildRows();
       const { data } = await api.post<{
         created: number;
+        matched?: number;
         skipped: number;
         errors: { row: number; message: string }[];
       }>(`/imports/${resource}`, { rows, dryRun: false });
-      toast.success(
-        `${data.created} angelegt${data.skipped > 0 ? `, ${data.skipped} übersprungen` : ''}.`,
-      );
+      const parts: string[] = [`${data.created} angelegt`];
+      if (data.matched && data.matched > 0) {
+        parts.push(`${data.matched} bereits vorhanden (korrelations-Match)`);
+      }
+      if (data.skipped > 0) {
+        parts.push(`${data.skipped} übersprungen`);
+      }
+      toast.success(parts.join(', ') + '.');
       // Reset to step 1 for the next batch.
       setStep(1);
       setFileName(null);
@@ -313,6 +322,11 @@ export function ImportPage() {
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center gap-3">
               <Badge variant="default">{dryRunResult.created} importierbar</Badge>
+              {dryRunResult.matched && dryRunResult.matched > 0 ? (
+                <Badge variant="secondary">
+                  {dryRunResult.matched} bereits vorhanden
+                </Badge>
+              ) : null}
               {dryRunResult.skipped > 0 ? (
                 <Badge variant="destructive">
                   {dryRunResult.skipped} mit Fehlern
