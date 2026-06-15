@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router';
 import * as Icons from 'lucide-react';
 
 import { FloatingTimer } from '@/components/FloatingTimer';
+import { MyProjectsSidebar } from '@/components/MyProjectsSidebar';
 import { UserMenu } from '@/components/UserMenu';
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher';
 import {
@@ -66,6 +67,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarGroupContent>
             </SidebarGroup>
           ))}
+          <MyProjectsSidebar />
         </SidebarContent>
         <SidebarFooter>
           <SidebarMenu>
