@@ -14,6 +14,8 @@ import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { ActivityPage } from '@/pages/activity/ActivityPage';
 import { CalendarPage } from '@/pages/calendar/CalendarPage';
 import { ImportPage } from '@/pages/imports/ImportPage';
+import { ReportsPage } from '@/pages/reports/ReportsPage';
+import { TeamMembersListPage } from '@/pages/team-members/TeamMembersListPage';
 import { ContactCreatePage } from '@/pages/contacts/ContactCreatePage';
 import { ContactEditPage } from '@/pages/contacts/ContactEditPage';
 import { ContactsListPage } from '@/pages/contacts/ContactsListPage';
@@ -91,6 +93,16 @@ export default function App() {
               name: 'documents',
               list: '/documents',
               meta: { label: 'Dokumente', icon: 'FileText', category: 'Arbeit' },
+            },
+            {
+              name: 'team_members',
+              list: '/personen',
+              meta: { label: 'Personen', icon: 'Users', category: 'Arbeit' },
+            },
+            {
+              name: 'reports',
+              list: '/auswertungen',
+              meta: { label: 'Auswertungen', icon: 'BarChart3', category: 'Arbeit' },
             },
 
             // ---- CRM -------------------------------------------------------
@@ -178,6 +190,8 @@ export default function App() {
               <Route path="/activity" element={<ActivityPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/documents" element={<PlaceholderPage resource="documents" />} />
+              <Route path="/personen" element={<TeamMembersListPage />} />
+              <Route path="/auswertungen" element={<ReportsPage />} />
               <Route path="/customers" element={<CustomersListPage />} />
               <Route path="/customers/create" element={<CustomerCreatePage />} />
               <Route path="/customers/:id" element={<CustomerDetailPage />} />
