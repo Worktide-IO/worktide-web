@@ -7,6 +7,7 @@ import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
+import { SavedViewsBar } from '@/components/SavedViewsBar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -59,13 +60,37 @@ export function TasksListPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const { tableQuery, setFilters, setCurrentPage } = useTable<Row<TaskJsonld>>({
+  const { tableQuery, filters, setFilters, setCurrentPage } = useTable<Row<TaskJsonld>>({
     resource: 'tasks',
     sorters: { initial: [{ field: 'updatedAt', order: 'desc' }] },
     pagination: { currentPage: 1, pageSize: 50 },
     syncWithLocation: true,
   });
   const { connected: liveConnected } = useLiveResource('tasks');
+
+  /**
+   * Round-trip saved-view filters through the local search/status/priority
+   * state so the inputs reflect what was loaded. Anything Refine doesn't
+   * understand (no input bound to it) still applies as a query filter — we
+   * just won't render it back in the form, which is fine for v1.
+   */
+  const applySavedFilters = (next: typeof filters) => {
+    setFilters(next as never, 'replace');
+    setCurrentPage(1);
+    let nextSearch = '';
+    let nextStatus = 'all';
+    let nextPrio = 'all';
+    for (const f of next) {
+      if ('field' in f && typeof f.value === 'string') {
+        if (f.field === 'title') nextSearch = f.value;
+        if (f.field === 'status') nextStatus = f.value;
+        if (f.field === 'priority') nextPrio = f.value;
+      }
+    }
+    setSearch(nextSearch);
+    setStatusFilter(nextStatus);
+    setPriorityFilter(nextPrio);
+  };
 
   // One-time lookups for IRI → human-readable joins. `pagination.mode:off`
   // pulls every row in a single request; both tables are small.
@@ -109,7 +134,7 @@ export function TasksListPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl">Aufgaben</h2>
@@ -119,6 +144,7 @@ export function TasksListPage() {
             {total} Aufgaben im Workspace
           </p>
         </div>
+        <SavedViewsBar currentFilters={filters} onApply={applySavedFilters} />
       </div>
 
       <Card>
