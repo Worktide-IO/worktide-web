@@ -1,6 +1,7 @@
 import { Clock, FolderKanban, ListChecks, ListTodo, type LucideIcon } from 'lucide-react';
 
 import { PlaceholderWidget } from './PlaceholderWidget';
+import { MyProjectsWidget } from './widgets/MyProjectsWidget';
 
 /**
  * Widget catalog. Every renderable dashboard tile must have an entry
@@ -37,9 +38,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetDefinition> = {
     description: 'Projekte mit mir als Mitglied',
     icon: FolderKanban,
     defaultSize: { w: 5, h: 8 },
-    Component: (p) => (
-      <PlaceholderWidget title="Meine Projekte" instanceId={p.instanceId} icon={FolderKanban} />
-    ),
+    Component: MyProjectsWidget,
   },
   'open-customer-tasks': {
     key: 'open-customer-tasks',
