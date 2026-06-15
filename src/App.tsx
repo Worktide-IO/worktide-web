@@ -11,6 +11,7 @@ import { dataProvider } from '@/providers/dataProvider';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
+import { ActivityPage } from '@/pages/activity/ActivityPage';
 import { ContactCreatePage } from '@/pages/contacts/ContactCreatePage';
 import { ContactEditPage } from '@/pages/contacts/ContactEditPage';
 import { ContactsListPage } from '@/pages/contacts/ContactsListPage';
@@ -73,6 +74,11 @@ export default function App() {
               name: 'time_entries',
               list: '/time-entries',
               meta: { label: 'Zeiteinträge', icon: 'Clock', category: 'Arbeit' },
+            },
+            {
+              name: 'activity',
+              list: '/activity',
+              meta: { label: 'Aktivität', icon: 'Activity', category: 'Arbeit' },
             },
             {
               name: 'documents',
@@ -157,6 +163,7 @@ export default function App() {
               {/* Until each resource has its own page, the placeholder
                   acknowledges the navigation without breaking the layout. */}
               <Route path="/time-entries" element={<TimeEntriesListPage />} />
+              <Route path="/activity" element={<ActivityPage />} />
               <Route path="/documents" element={<PlaceholderPage resource="documents" />} />
               <Route path="/customers" element={<CustomersListPage />} />
               <Route path="/customers/create" element={<CustomerCreatePage />} />
