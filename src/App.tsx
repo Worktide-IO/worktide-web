@@ -14,9 +14,15 @@ import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { ContactCreatePage } from '@/pages/contacts/ContactCreatePage';
 import { ContactEditPage } from '@/pages/contacts/ContactEditPage';
 import { ContactsListPage } from '@/pages/contacts/ContactsListPage';
+import { CustomerSystemCreatePage } from '@/pages/customer-systems/CustomerSystemCreatePage';
+import { CustomerSystemEditPage } from '@/pages/customer-systems/CustomerSystemEditPage';
+import { CustomerSystemsListPage } from '@/pages/customer-systems/CustomerSystemsListPage';
 import { CustomersListPage } from '@/pages/customers/CustomersListPage';
 import { CustomerCreatePage } from '@/pages/customers/CustomerCreatePage';
 import { CustomerEditPage } from '@/pages/customers/CustomerEditPage';
+import { SubscriptionCreatePage } from '@/pages/subscriptions/SubscriptionCreatePage';
+import { SubscriptionEditPage } from '@/pages/subscriptions/SubscriptionEditPage';
+import { SubscriptionsListPage } from '@/pages/subscriptions/SubscriptionsListPage';
 import { ProjectDetailPage } from '@/pages/projects/ProjectDetailPage';
 import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
 import { ProfileSettingsPage } from '@/pages/settings/ProfileSettingsPage';
@@ -93,11 +99,15 @@ export default function App() {
             {
               name: 'customer_systems',
               list: '/customer-systems',
+              create: '/customer-systems/create',
+              edit: '/customer-systems/:id',
               meta: { label: 'Systeme', icon: 'Server', category: 'CRM' },
             },
             {
               name: 'service_subscriptions',
               list: '/subscriptions',
+              create: '/subscriptions/create',
+              edit: '/subscriptions/:id',
               meta: { label: 'Abos', icon: 'Receipt', category: 'CRM' },
             },
 
@@ -154,8 +164,12 @@ export default function App() {
               <Route path="/contacts" element={<ContactsListPage />} />
               <Route path="/contacts/create" element={<ContactCreatePage />} />
               <Route path="/contacts/:id" element={<ContactEditPage />} />
-              <Route path="/customer-systems" element={<PlaceholderPage resource="customer_systems" />} />
-              <Route path="/subscriptions" element={<PlaceholderPage resource="service_subscriptions" />} />
+              <Route path="/customer-systems" element={<CustomerSystemsListPage />} />
+              <Route path="/customer-systems/create" element={<CustomerSystemCreatePage />} />
+              <Route path="/customer-systems/:id" element={<CustomerSystemEditPage />} />
+              <Route path="/subscriptions" element={<SubscriptionsListPage />} />
+              <Route path="/subscriptions/create" element={<SubscriptionCreatePage />} />
+              <Route path="/subscriptions/:id" element={<SubscriptionEditPage />} />
               <Route path="/workspace-members" element={<PlaceholderPage resource="workspace_members" />} />
               <Route path="/permissions" element={<PlaceholderPage resource="role_permission_overrides" />} />
               <Route path="/webhooks" element={<PlaceholderPage resource="webhooks" />} />
