@@ -11,6 +11,9 @@ import { dataProvider } from '@/providers/dataProvider';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
+import { ContactCreatePage } from '@/pages/contacts/ContactCreatePage';
+import { ContactEditPage } from '@/pages/contacts/ContactEditPage';
+import { ContactsListPage } from '@/pages/contacts/ContactsListPage';
 import { CustomersListPage } from '@/pages/customers/CustomersListPage';
 import { CustomerCreatePage } from '@/pages/customers/CustomerCreatePage';
 import { CustomerEditPage } from '@/pages/customers/CustomerEditPage';
@@ -83,6 +86,8 @@ export default function App() {
             {
               name: 'contacts',
               list: '/contacts',
+              create: '/contacts/create',
+              edit: '/contacts/:id',
               meta: { label: 'Kontakte', icon: 'Contact', category: 'CRM' },
             },
             {
@@ -146,7 +151,9 @@ export default function App() {
               <Route path="/customers" element={<CustomersListPage />} />
               <Route path="/customers/create" element={<CustomerCreatePage />} />
               <Route path="/customers/:id" element={<CustomerEditPage />} />
-              <Route path="/contacts" element={<PlaceholderPage resource="contacts" />} />
+              <Route path="/contacts" element={<ContactsListPage />} />
+              <Route path="/contacts/create" element={<ContactCreatePage />} />
+              <Route path="/contacts/:id" element={<ContactEditPage />} />
               <Route path="/customer-systems" element={<PlaceholderPage resource="customer_systems" />} />
               <Route path="/subscriptions" element={<PlaceholderPage resource="service_subscriptions" />} />
               <Route path="/workspace-members" element={<PlaceholderPage resource="workspace_members" />} />
