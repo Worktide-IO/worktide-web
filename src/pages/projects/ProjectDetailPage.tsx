@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useList } from '@refinedev/core';
+import { WatchButton } from '@/components/WatchButton';
 
 import { ProjectBoardTab } from './ProjectBoardTab';
 import { ProjectOverviewTab } from './ProjectOverviewTab';
@@ -95,6 +96,7 @@ export function ProjectDetailPage() {
                 <WifiOff className="size-3" /> offline
               </Badge>
             )}
+            <WatchButton target="project" targetId={p.id} className="ml-2" />
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             {status ? (
