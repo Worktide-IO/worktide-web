@@ -1,7 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useList } from '@refinedev/core';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, Settings } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import { toast } from 'sonner';
 
 import type { Row } from '@/lib/refine';
@@ -120,6 +121,17 @@ export function WorkspaceSwitcher() {
                   />
                 </CommandItem>
               ))}
+            </CommandGroup>
+            <CommandGroup>
+              <CommandItem asChild value="settings">
+                <Link
+                  to="/settings/workspace"
+                  className="flex items-center gap-2"
+                  onClick={() => setOpen(false)}
+                >
+                  <Settings className="size-4" /> Workspace-Einstellungen
+                </Link>
+              </CommandItem>
             </CommandGroup>
           </CommandList>
         </Command>

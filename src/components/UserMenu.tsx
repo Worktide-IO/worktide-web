@@ -1,5 +1,6 @@
 import { useGetIdentity, useLogout } from '@refinedev/core';
 import { ChevronsUpDown, LogOut, Settings, UserCircle } from 'lucide-react';
+import { Link } from 'react-router';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -81,11 +82,15 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem disabled>
-            <UserCircle className="size-4" /> Profil (bald)
+          <DropdownMenuItem asChild>
+            <Link to="/settings/profile">
+              <UserCircle className="size-4" /> Profil
+            </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem disabled>
-            <Settings className="size-4" /> Workspace-Einstellungen (bald)
+          <DropdownMenuItem asChild>
+            <Link to="/settings/workspace">
+              <Settings className="size-4" /> Workspace-Einstellungen
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

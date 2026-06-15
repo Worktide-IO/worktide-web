@@ -16,6 +16,8 @@ import { CustomerCreatePage } from '@/pages/customers/CustomerCreatePage';
 import { CustomerEditPage } from '@/pages/customers/CustomerEditPage';
 import { ProjectDetailPage } from '@/pages/projects/ProjectDetailPage';
 import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
+import { ProfileSettingsPage } from '@/pages/settings/ProfileSettingsPage';
+import { WorkspaceSettingsPage } from '@/pages/settings/WorkspaceSettingsPage';
 import { WallPage } from '@/pages/wall/WallPage';
 import { TasksListPage } from '@/pages/tasks/TasksListPage';
 import { TimeEntriesListPage } from '@/pages/timeEntries/TimeEntriesListPage';
@@ -151,6 +153,8 @@ export default function App() {
               <Route path="/permissions" element={<PlaceholderPage resource="role_permission_overrides" />} />
               <Route path="/webhooks" element={<PlaceholderPage resource="webhooks" />} />
               <Route path="/access-tokens" element={<PlaceholderPage resource="personal_access_tokens" />} />
+              <Route path="/settings/profile" element={<ProfileSettingsPage />} />
+              <Route path="/settings/workspace" element={<WorkspaceSettingsPage />} />
             </Route>
             <Route path="/login" element={<LoginPage />} />
           </Routes>
