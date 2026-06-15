@@ -1,83 +1,129 @@
-import { useList } from '@refinedev/core';
+import { Pencil, Plus, RotateCcw, Save } from 'lucide-react';
+import { useState } from 'react';
 
-import type { ProjectJsonld } from '@/api/types/project/Jsonld';
-import type { Row } from '@/lib/refine';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { DashboardGrid } from '@/components/dashboard/DashboardGrid';
+import { WIDGET_REGISTRY } from '@/components/dashboard/registry';
+import { Button } from '@/components/ui/button';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useDashboardLayout } from '@/hooks/useDashboardLayout';
+import type { DashboardLayout, DashboardWidget } from '@/lib/dashboard';
 
 /**
- * First real page on top of the AppLayout shell — lists projects in the
- * active workspace. Replaced by a richer "/" landing once we add Kanban
- * boards / time-summary widgets / autopilot alerts; for now this proves
- * the data round-trip and provides the entry point to drill into a project.
+ * Configurable widget dashboard.
  *
- * Status column shows the bare IRI suffix for now — see the comment in the
- * Refine data provider for why JSON-LD relations are unresolved strings
- * (we'll add an embed-projection or a useMany lookup once detail pages land).
+ * Reads/writes the user's layout from `/v1/me/preferences` via
+ * `useDashboardLayout()`. In read mode the grid is locked; pressing
+ * "Bearbeiten" flips edit mode, exposing drag handles, resize corners,
+ * the X-remove button on each widget, and an "+ Hinzufügen" dropdown
+ * with every registered widget the user doesn't already have.
+ *
+ * "Zurücksetzen" wipes the user's customisations and rolls back to the
+ * shipped default layout. Saves happen automatically via the hook's
+ * debounce — the explicit "Speichern" button just exits edit mode (the
+ * commit already landed milliseconds ago).
  */
 export function DashboardPage() {
-  const { result: projects, query } = useList<Row<ProjectJsonld>>({
-    resource: 'projects',
-    pagination: { currentPage: 1, pageSize: 20 },
-    sorters: [{ field: 'updatedAt', order: 'desc' }],
-  });
-  const isLoading = query.isLoading;
+  const { layout, setLayout, resetToDefault, isLoading } = useDashboardLayout();
+  const [editing, setEditing] = useState(false);
+
+  const handleLayoutChange = (next: DashboardLayout) => {
+    setLayout(next);
+  };
+
+  const handleRemove = (instanceId: string) => {
+    setLayout({
+      ...layout,
+      widgets: layout.widgets.filter((w) => w.instanceId !== instanceId),
+    });
+  };
+
+  const handleAdd = (key: string) => {
+    const def = WIDGET_REGISTRY[key];
+    if (!def) return;
+    const newWidget: DashboardWidget = {
+      instanceId: `${key}-${Date.now()}`,
+      key,
+      x: 0,
+      y: Infinity, // RGL pushes it to the end
+      w: def.defaultSize.w,
+      h: def.defaultSize.h,
+    };
+    setLayout({ ...layout, widgets: [...layout.widgets, newWidget] });
+  };
+
+  const handleReset = () => {
+    if (confirm('Dashboard auf Standard-Layout zurücksetzen?')) {
+      resetToDefault();
+    }
+  };
+
+  const usedKeys = new Set(layout.widgets.map((w) => w.key));
+  const addable = Object.values(WIDGET_REGISTRY).filter((d) => !usedKeys.has(d.key));
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-9 w-48" />
+        <div className="grid gap-4 md:grid-cols-3">
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl">Projekte</h2>
-      <Card>
-        <CardHeader>
-          <CardTitle>Zuletzt aktualisiert</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-9 w-2/3" />
-            </div>
-          ) : projects?.data?.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-6">
-              Keine Projekte sichtbar.
-            </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-2xl">Dashboard</h2>
+        <div className="flex items-center gap-2">
+          {editing ? (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="outline" size="sm" disabled={addable.length === 0}>
+                    <Plus className="size-4" /> Widget hinzufügen
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {addable.map((d) => {
+                    const Icon = d.icon;
+                    return (
+                      <DropdownMenuItem key={d.key} onClick={() => handleAdd(d.key)}>
+                        <Icon className="size-4" /> {d.label}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button type="button" variant="ghost" size="sm" onClick={handleReset}>
+                <RotateCcw className="size-4" /> Zurücksetzen
+              </Button>
+              <Button type="button" size="sm" onClick={() => setEditing(false)}>
+                <Save className="size-4" /> Fertig
+              </Button>
+            </>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-24">Key</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="w-40">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {projects?.data?.map((p) => (
-                  <TableRow key={p['@id']}>
-                    <TableCell className="font-mono text-xs">{p.key}</TableCell>
-                    <TableCell>{p.name}</TableCell>
-                    <TableCell>
-                      {p.status ? (
-                        <Badge variant="secondary" className="font-mono text-[10px]">
-                          {p.status.split('/').pop()}
-                        </Badge>
-                      ) : null}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
+              <Pencil className="size-4" /> Bearbeiten
+            </Button>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      <DashboardGrid
+        layout={layout}
+        editing={editing}
+        onLayoutChange={handleLayoutChange}
+        onRemoveWidget={handleRemove}
+      />
     </div>
   );
 }
