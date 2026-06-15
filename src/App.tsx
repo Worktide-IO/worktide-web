@@ -12,6 +12,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { ActivityPage } from '@/pages/activity/ActivityPage';
+import { CalendarPage } from '@/pages/calendar/CalendarPage';
 import { ImportPage } from '@/pages/imports/ImportPage';
 import { ContactCreatePage } from '@/pages/contacts/ContactCreatePage';
 import { ContactEditPage } from '@/pages/contacts/ContactEditPage';
@@ -80,6 +81,11 @@ export default function App() {
               name: 'activity',
               list: '/activity',
               meta: { label: 'Aktivität', icon: 'Activity', category: 'Arbeit' },
+            },
+            {
+              name: 'calendar',
+              list: '/calendar',
+              meta: { label: 'Kalender', icon: 'CalendarDays', category: 'Arbeit' },
             },
             {
               name: 'documents',
@@ -170,6 +176,7 @@ export default function App() {
                   acknowledges the navigation without breaking the layout. */}
               <Route path="/time-entries" element={<TimeEntriesListPage />} />
               <Route path="/activity" element={<ActivityPage />} />
+              <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/documents" element={<PlaceholderPage resource="documents" />} />
               <Route path="/customers" element={<CustomersListPage />} />
               <Route path="/customers/create" element={<CustomerCreatePage />} />
