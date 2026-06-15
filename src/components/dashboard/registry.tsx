@@ -1,7 +1,9 @@
 import { Clock, FolderKanban, ListChecks, ListTodo, type LucideIcon } from 'lucide-react';
 
-import { PlaceholderWidget } from './PlaceholderWidget';
+import { ActiveTimerWidget } from './widgets/ActiveTimerWidget';
 import { MyProjectsWidget } from './widgets/MyProjectsWidget';
+import { MyTasksWidget } from './widgets/MyTasksWidget';
+import { OpenCustomerTasksWidget } from './widgets/OpenCustomerTasksWidget';
 
 /**
  * Widget catalog. Every renderable dashboard tile must have an entry
@@ -28,9 +30,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetDefinition> = {
     description: 'Laufende Stoppuhr + heutige Summe',
     icon: Clock,
     defaultSize: { w: 3, h: 8 },
-    Component: (p) => (
-      <PlaceholderWidget title="Zeiterfassung" instanceId={p.instanceId} icon={Clock} />
-    ),
+    Component: ActiveTimerWidget,
   },
   'my-projects': {
     key: 'my-projects',
@@ -46,13 +46,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetDefinition> = {
     description: 'Cross-Projekt offene Tasks der Kundenprojekte',
     icon: ListChecks,
     defaultSize: { w: 5, h: 10 },
-    Component: (p) => (
-      <PlaceholderWidget
-        title="Offene Kunden-Aufgaben"
-        instanceId={p.instanceId}
-        icon={ListChecks}
-      />
-    ),
+    Component: OpenCustomerTasksWidget,
   },
   'my-tasks': {
     key: 'my-tasks',
@@ -60,9 +54,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetDefinition> = {
     description: 'Mir zugewiesene Tasks, gefiltert nach Fälligkeit',
     icon: ListTodo,
     defaultSize: { w: 4, h: 18 },
-    Component: (p) => (
-      <PlaceholderWidget title="Meine Aufgaben" instanceId={p.instanceId} icon={ListTodo} />
-    ),
+    Component: MyTasksWidget,
   },
 };
 
