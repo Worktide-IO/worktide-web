@@ -4,6 +4,7 @@ import * as Icons from 'lucide-react';
 
 import { FloatingTimer } from '@/components/FloatingTimer';
 import { MyProjectsSidebar } from '@/components/MyProjectsSidebar';
+import { QuickAddDialog } from '@/components/QuickAddDialog';
 import { UserMenu } from '@/components/UserMenu';
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher';
 import {
@@ -92,6 +93,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </SidebarInset>
       <FloatingTimer />
+      <QuickAddDialog />
     </SidebarProvider>
   );
 }
