@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router';
 import * as Icons from 'lucide-react';
 
 import { FloatingTimer } from '@/components/FloatingTimer';
+import { GlobalSearchDialog } from '@/components/GlobalSearchDialog';
 import { MyProjectsSidebar } from '@/components/MyProjectsSidebar';
 import { QuickAddDialog } from '@/components/QuickAddDialog';
 import { UserMenu } from '@/components/UserMenu';
@@ -94,6 +95,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       </SidebarInset>
       <FloatingTimer />
       <QuickAddDialog />
+      <GlobalSearchDialog />
     </SidebarProvider>
   );
 }
