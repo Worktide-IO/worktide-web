@@ -19,7 +19,7 @@ import { CustomerSystemEditPage } from '@/pages/customer-systems/CustomerSystemE
 import { CustomerSystemsListPage } from '@/pages/customer-systems/CustomerSystemsListPage';
 import { CustomersListPage } from '@/pages/customers/CustomersListPage';
 import { CustomerCreatePage } from '@/pages/customers/CustomerCreatePage';
-import { CustomerEditPage } from '@/pages/customers/CustomerEditPage';
+import { CustomerDetailPage } from '@/pages/customers/CustomerDetailPage';
 import { SubscriptionCreatePage } from '@/pages/subscriptions/SubscriptionCreatePage';
 import { SubscriptionEditPage } from '@/pages/subscriptions/SubscriptionEditPage';
 import { SubscriptionsListPage } from '@/pages/subscriptions/SubscriptionsListPage';
@@ -160,7 +160,7 @@ export default function App() {
               <Route path="/documents" element={<PlaceholderPage resource="documents" />} />
               <Route path="/customers" element={<CustomersListPage />} />
               <Route path="/customers/create" element={<CustomerCreatePage />} />
-              <Route path="/customers/:id" element={<CustomerEditPage />} />
+              <Route path="/customers/:id" element={<CustomerDetailPage />} />
               <Route path="/contacts" element={<ContactsListPage />} />
               <Route path="/contacts/create" element={<ContactCreatePage />} />
               <Route path="/contacts/:id" element={<ContactEditPage />} />

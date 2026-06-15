@@ -42,7 +42,17 @@ import { Textarea } from '@/components/ui/textarea';
  */
 type Mode = { action: 'create' } | { action: 'edit'; id: string };
 
-export function CustomerForm(props: Mode) {
+type Props = Mode & {
+  /**
+   * Drop the form's title/back-arrow header so the form can be embedded
+   * inside a detail page that already shows the customer name. Save +
+   * Delete buttons stay (right-aligned) so the user can still commit
+   * changes without scrolling.
+   */
+  embedded?: boolean;
+};
+
+export function CustomerForm(props: Props) {
   const navigate = useNavigate();
   const { show } = useNavigation();
   const {
@@ -70,26 +80,8 @@ export function CustomerForm(props: Mode) {
 
   return (
     <form onSubmit={handleSubmit((values) => onFinish(values))} className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button type="button" variant="ghost" size="icon" onClick={() => navigate('/customers')}>
-            <ArrowLeft className="size-4" />
-          </Button>
-          <div>
-            <h2 className="text-2xl">
-              {props.action === 'create' ? 'Neuer Kunde' : current?.name ?? 'Kunde bearbeiten'}
-            </h2>
-            {props.action === 'edit' && current?.legalName ? (
-              <p className="text-sm text-muted-foreground">{current.legalName}</p>
-            ) : null}
-          </div>
-          {props.action === 'edit' && current?.status ? (
-            <Badge variant="secondary" className="ml-3">
-              {current.status}
-            </Badge>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2">
+      {props.embedded ? (
+        <div className="flex items-center justify-end gap-2">
           {props.action === 'edit' ? (
             <Button type="button" variant="outline" size="sm" disabled>
               <Trash2 className="size-4" /> Löschen
@@ -100,7 +92,39 @@ export function CustomerForm(props: Mode) {
             {isSubmitting ? 'Speichern …' : 'Speichern'}
           </Button>
         </div>
-      </div>
+      ) : (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button type="button" variant="ghost" size="icon" onClick={() => navigate('/customers')}>
+              <ArrowLeft className="size-4" />
+            </Button>
+            <div>
+              <h2 className="text-2xl">
+                {props.action === 'create' ? 'Neuer Kunde' : current?.name ?? 'Kunde bearbeiten'}
+              </h2>
+              {props.action === 'edit' && current?.legalName ? (
+                <p className="text-sm text-muted-foreground">{current.legalName}</p>
+              ) : null}
+            </div>
+            {props.action === 'edit' && current?.status ? (
+              <Badge variant="secondary" className="ml-3">
+                {current.status}
+              </Badge>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-2">
+            {props.action === 'edit' ? (
+              <Button type="button" variant="outline" size="sm" disabled>
+                <Trash2 className="size-4" /> Löschen
+              </Button>
+            ) : null}
+            <Button type="submit" disabled={isSubmitting || formLoading}>
+              <Save className="size-4" />
+              {isSubmitting ? 'Speichern …' : 'Speichern'}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <Card>
