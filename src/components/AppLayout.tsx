@@ -2,6 +2,7 @@ import { useMenu } from '@refinedev/core';
 import { Link, useLocation } from 'react-router';
 import * as Icons from 'lucide-react';
 
+import { FloatingTimer } from '@/components/FloatingTimer';
 import { UserMenu } from '@/components/UserMenu';
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher';
 import {
@@ -88,6 +89,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </SidebarInset>
+      <FloatingTimer />
     </SidebarProvider>
   );
 }
