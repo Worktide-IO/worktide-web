@@ -12,6 +12,7 @@ export const taskSchema = z.object({
 "description": z.string().nullish(),
 "status": z.optional(z.string()),
 "tracker": z.string().describe("Issue-type classification (Bug / Feature / Story / Support / …).").nullish(),
+"fixedVersion": z.string().describe("The Release/ProjectVersion this task is targeted at. Nullable —\ntasks not yet scheduled into a release stay unset.").nullish(),
 "priority": z.optional(z.enum(["low", "normal", "high", "urgent"]).default("normal")),
 "assignedPrincipals": z.optional(z.array(z.string()).describe("Polymorphic assignment principals — a mix of Users and Teams.")),
 "createdBy": z.string().nullish(),

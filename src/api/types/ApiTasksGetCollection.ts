@@ -95,6 +95,14 @@ export type ApiTasksGetCollectionQueryParams = {
     /**
      * @type string | undefined
     */
+    fixedVersion?: string;
+    /**
+     * @type array | undefined
+    */
+    "fixedVersion[]"?: string[];
+    /**
+     * @type string | undefined
+    */
     "assignedPrincipals.principalId"?: string;
     /**
      * @type array | undefined

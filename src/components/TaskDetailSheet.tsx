@@ -35,6 +35,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TagPicker } from '@/components/TagPicker';
 import { TrackerChip } from '@/components/TrackerChip';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
+import { VersionBadge } from '@/components/VersionBadge';
+import { useProjectVersions } from '@/hooks/useProjectVersions';
 import { useTrackers } from '@/hooks/useTrackers';
 import { api } from '@/lib/api';
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
@@ -110,6 +112,8 @@ function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () 
   const navigate = useNavigate();
   const { byIri: trackerByIri } = useTrackers();
   const tracker = task.tracker ? trackerByIri[task.tracker] : null;
+  const { byIri: versionByIri } = useProjectVersions(task.project ?? null);
+  const fixedVersion = task.fixedVersion ? versionByIri[task.fixedVersion] : null;
 
   return (
     <div className="space-y-5">
@@ -134,6 +138,7 @@ function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () 
             </span>
           ) : null}
           <UserAvatarStack iris={task.assignees ?? []} size="sm" max={3} />
+          <VersionBadge version={fixedVersion} />
           {task.project ? (
             <Button
               variant="ghost"
@@ -158,6 +163,7 @@ function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () 
         ) : null}
 
         <TagsSection task={task} />
+        <VersionSection task={task} />
         <SubtasksSection parent={task} />
         <DependenciesSection task={task} />
       </div>
@@ -197,6 +203,64 @@ function TagsSection({ task }: { task: Row<TaskJsonld> }) {
         scope="task"
         className={saving ? 'opacity-60' : undefined}
       />
+    </section>
+  );
+}
+
+// ----- Version (Release-Target) -----------------------------------------
+
+function VersionSection({ task }: { task: Row<TaskJsonld> }) {
+  const invalidate = useInvalidate();
+  const { forProject } = useProjectVersions(task.project ?? null);
+  const current = task.fixedVersion ?? '';
+
+  // No project context → no versions can be set; hide the section.
+  if (!task.project) return null;
+
+  const updateVersion = async (iri: string) => {
+    if (!task.id) return;
+    try {
+      await api.patch(
+        `/tasks/${task.id}`,
+        { fixedVersion: iri === '__none__' ? null : iri },
+        { headers: { 'Content-Type': 'application/merge-patch+json' } },
+      );
+      void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: task.id });
+      toast.success('Release aktualisiert.');
+    } catch {
+      toast.error('Konnte Release nicht ändern.');
+    }
+  };
+
+  return (
+    <section className="space-y-2">
+      <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+        Release / Version
+      </Label>
+      {forProject.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          Noch keine Releases im Projekt — leg eine im Projekt-Tab an,
+          dann erscheinen sie hier.
+        </p>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={current || '__none__'} onValueChange={updateVersion}>
+            <SelectTrigger className="w-60">
+              <SelectValue placeholder="Keinem Release zugeordnet" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">— keinem Release —</SelectItem>
+              {forProject.map((v) => (
+                <SelectItem key={v['@id']} value={v['@id'] ?? ''}>
+                  {v.name}
+                  {v.effectiveDate ? ` · ${new Date(v.effectiveDate).toLocaleDateString()}` : ''}
+                  {v.status && v.status !== 'open' ? ` (${v.status})` : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
     </section>
   );
 }

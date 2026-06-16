@@ -24,6 +24,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TagChips } from '@/components/TagChips';
 import { TrackerChip } from '@/components/TrackerChip';
+import { VersionBadge } from '@/components/VersionBadge';
+import { useProjectVersions } from '@/hooks/useProjectVersions';
 import { useTrackers } from '@/hooks/useTrackers';
 import { TaskDetailSheet } from '@/components/TaskDetailSheet';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
@@ -291,6 +293,7 @@ function TaskCard({
     disabled: dragging,
   });
   const { byIri: trackerByIri } = useTrackers();
+  const { byIri: versionByIri } = useProjectVersions(task.project ?? null);
 
   return (
     <Card
@@ -341,6 +344,9 @@ function TaskCard({
         <p className="text-sm font-medium leading-snug">{task.title}</p>
         {task.tags && task.tags.length > 0 ? (
           <TagChips iris={task.tags} size="sm" max={4} />
+        ) : null}
+        {task.fixedVersion ? (
+          <VersionBadge version={versionByIri[task.fixedVersion] ?? null} />
         ) : null}
         <div className="flex items-center justify-between gap-2 pt-0.5">
           <div className="flex flex-wrap items-center gap-1.5">

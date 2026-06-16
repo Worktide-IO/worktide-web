@@ -25,6 +25,8 @@ export const apiTasksGetCollectionQueryParamsSchema = z.object({
 "priority[]": z.optional(z.array(z.string())),
 "tracker": z.optional(z.string()),
 "tracker[]": z.optional(z.array(z.string())),
+"fixedVersion": z.optional(z.string()),
+"fixedVersion[]": z.optional(z.array(z.string())),
 "assignedPrincipals.principalId": z.optional(z.string()),
 "assignedPrincipals.principalId[]": z.optional(z.array(z.string())),
 "createdBy": z.optional(z.string()),

@@ -37,6 +37,11 @@ export type TaskJsonld = (HydraItemBaseSchema & {
     */
     tracker?: string | null;
     /**
+     * @description The Release/ProjectVersion this task is targeted at. Nullable —\ntasks not yet scheduled into a release stay unset.
+     * @type string,null, iri-reference
+    */
+    fixedVersion?: string | null;
+    /**
      * @default "normal"
      * @type string | undefined
     */
