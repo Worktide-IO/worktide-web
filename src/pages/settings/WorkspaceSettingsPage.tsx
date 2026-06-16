@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { WorkspaceTagsCard } from '@/components/WorkspaceTagsCard';
+import { WorkspaceChannelsCard } from '@/components/WorkspaceChannelsCard';
 import { WorkspaceTrackersCard } from '@/components/WorkspaceTrackersCard';
 import { WorkspaceWorkflowsCard } from '@/components/WorkspaceWorkflowsCard';
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
@@ -68,6 +69,7 @@ export function WorkspaceSettingsPage() {
       <WorkspaceTagsCard />
       <WorkspaceTrackersCard />
       <WorkspaceWorkflowsCard />
+      <WorkspaceChannelsCard />
       <WorkspaceStats />
     </SettingsLayout>
   );

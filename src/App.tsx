@@ -18,6 +18,8 @@ import { ImportPage } from '@/pages/imports/ImportPage';
 import { AccessTokensPage } from '@/pages/access-tokens/AccessTokensPage';
 import { DocumentsPage } from '@/pages/documents/DocumentsPage';
 import { PermissionsMatrixPage } from '@/pages/permissions/PermissionsMatrixPage';
+import { ConversationDetailPage } from '@/pages/inbox/ConversationDetailPage';
+import { ConversationsListPage } from '@/pages/inbox/ConversationsListPage';
 import { ReportsPage } from '@/pages/reports/ReportsPage';
 import { TeamMembersListPage } from '@/pages/team-members/TeamMembersListPage';
 import { ContactCreatePage } from '@/pages/contacts/ContactCreatePage';
@@ -113,6 +115,12 @@ export default function App() {
               list: '/auswertungen',
               meta: { label: 'Auswertungen', icon: 'BarChart3', category: 'Arbeit' },
             },
+            {
+              name: 'conversations',
+              list: '/inbox',
+              show: '/inbox/:id',
+              meta: { label: 'Inbox', icon: 'Inbox', category: 'Arbeit' },
+            },
 
             // ---- CRM -------------------------------------------------------
             {
@@ -205,6 +213,8 @@ export default function App() {
               <Route path="/documents" element={<DocumentsPage />} />
               <Route path="/personen" element={<TeamMembersListPage />} />
               <Route path="/auswertungen" element={<ReportsPage />} />
+              <Route path="/inbox" element={<ConversationsListPage />} />
+              <Route path="/inbox/:id" element={<ConversationDetailPage />} />
               <Route path="/customers" element={<CustomersListPage />} />
               <Route path="/customers/create" element={<CustomerCreatePage />} />
               <Route path="/customers/:id" element={<CustomerDetailPage />} />
