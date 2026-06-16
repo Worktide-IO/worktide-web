@@ -14,6 +14,7 @@ import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { ActivityPage } from '@/pages/activity/ActivityPage';
 import { CalendarPage } from '@/pages/calendar/CalendarPage';
 import { ImportPage } from '@/pages/imports/ImportPage';
+import { AccessTokensPage } from '@/pages/access-tokens/AccessTokensPage';
 import { ReportsPage } from '@/pages/reports/ReportsPage';
 import { TeamMembersListPage } from '@/pages/team-members/TeamMembersListPage';
 import { ContactCreatePage } from '@/pages/contacts/ContactCreatePage';
@@ -214,7 +215,7 @@ export default function App() {
               <Route path="/workspace-members" element={<PlaceholderPage resource="workspace_members" />} />
               <Route path="/permissions" element={<PlaceholderPage resource="role_permission_overrides" />} />
               <Route path="/webhooks" element={<PlaceholderPage resource="webhooks" />} />
-              <Route path="/access-tokens" element={<PlaceholderPage resource="personal_access_tokens" />} />
+              <Route path="/access-tokens" element={<AccessTokensPage />} />
               <Route path="/imports" element={<ImportPage />} />
               <Route path="/settings/profile" element={<ProfileSettingsPage />} />
               <Route path="/settings/security" element={<SecuritySettingsPage />} />
