@@ -1,6 +1,7 @@
 import { useList, useTable } from '@refinedev/core';
 import { Plus, Search, Wifi, WifiOff } from 'lucide-react';
 import { ProjectStarButton } from '@/components/ProjectStarButton';
+import { TagChips } from '@/components/TagChips';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -186,7 +187,14 @@ export function ProjectsListPage() {
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         {(p as { number?: string | null }).number ?? '—'}
                       </TableCell>
-                      <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="space-y-1">
+                          <div>{p.name}</div>
+                          {p.tags && p.tags.length > 0 ? (
+                            <TagChips iris={p.tags} size="sm" max={5} />
+                          ) : null}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         {status ? (
                           <Badge

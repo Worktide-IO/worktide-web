@@ -1,6 +1,7 @@
 import { useOne } from '@refinedev/core';
 import { ArrowLeft, Pencil, Wifi, WifiOff } from 'lucide-react';
 import { ProjectStarButton } from '@/components/ProjectStarButton';
+import { TagChips } from '@/components/TagChips';
 import { useNavigate, useParams } from 'react-router';
 
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
@@ -134,6 +135,7 @@ export function ProjectDetailPage() {
             {p.isPrivate ? (
               <Badge variant="outline" className="text-xs">privat</Badge>
             ) : null}
+            {p.tags && p.tags.length > 0 ? <TagChips iris={p.tags} /> : null}
           </div>
         </div>
       </div>

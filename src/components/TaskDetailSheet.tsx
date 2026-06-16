@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TagPicker } from '@/components/TagPicker';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
 import { api } from '@/lib/api';
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
@@ -151,10 +152,47 @@ function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () 
           </div>
         ) : null}
 
+        <TagsSection task={task} />
         <SubtasksSection parent={task} />
         <DependenciesSection task={task} />
       </div>
     </div>
+  );
+}
+
+// ----- Tags --------------------------------------------------------------
+
+function TagsSection({ task }: { task: Row<TaskJsonld> }) {
+  const invalidate = useInvalidate();
+  const [saving, setSaving] = useState(false);
+
+  const handle = async (next: string[]) => {
+    if (!task.id) return;
+    setSaving(true);
+    try {
+      await api.patch(
+        `/tasks/${task.id}`,
+        { tags: next },
+        { headers: { 'Content-Type': 'application/merge-patch+json' } },
+      );
+      void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: task.id });
+    } catch {
+      toast.error('Konnte Tags nicht speichern.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section className="space-y-2">
+      <h3 className="text-sm font-medium">Tags</h3>
+      <TagPicker
+        value={task.tags ?? []}
+        onChange={handle}
+        scope="task"
+        className={saving ? 'opacity-60' : undefined}
+      />
+    </section>
   );
 }
 

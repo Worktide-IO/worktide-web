@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TagChips } from '@/components/TagChips';
 import { TaskDetailSheet } from '@/components/TaskDetailSheet';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
 
@@ -332,6 +333,9 @@ function TaskCard({
           </div>
         </div>
         <p className="text-sm font-medium leading-snug">{task.title}</p>
+        {task.tags && task.tags.length > 0 ? (
+          <TagChips iris={task.tags} size="sm" max={4} />
+        ) : null}
         <div className="flex items-center justify-between gap-2 pt-0.5">
           <div className="flex flex-wrap items-center gap-1.5">
             {task.priority ? (

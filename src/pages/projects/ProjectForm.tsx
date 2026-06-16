@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { TagPicker } from '@/components/TagPicker';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api';
 
@@ -310,6 +311,20 @@ export function ProjectForm(props: Mode) {
                       value={field.value ?? '#6366f1'}
                       onChange={field.onChange}
                       className="h-9 w-24 cursor-pointer"
+                    />
+                  )}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Tags</Label>
+                <Controller
+                  name="tags"
+                  control={control}
+                  render={({ field }) => (
+                    <TagPicker
+                      value={(field.value as string[] | undefined) ?? []}
+                      onChange={field.onChange}
+                      scope="project"
                     />
                   )}
                 />
