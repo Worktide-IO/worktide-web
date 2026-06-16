@@ -26,7 +26,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/lib/api';
+
+import { BurndownTab } from './tabs/BurndownTab';
+import { CreatedVsResolvedTab } from './tabs/CreatedVsResolvedTab';
+import { CycleTimeTab } from './tabs/CycleTimeTab';
+import { MrrTab } from './tabs/MrrTab';
 
 type ReportGroup = {
   key: string | null;
@@ -89,7 +95,52 @@ const PIE_COLORS = [
  *   3. Stunden pro Projekt (Donut) und pro typeOfWork (vertikale Bars)
  *      side-by-side
  */
+/**
+ * Top-level Reports route — orchestrates the analytics tabs. The
+ * existing TimeReport (the most-used view) stays the default tab so
+ * the URL `/reports` doesn't break any saved-link behaviour.
+ *
+ * Each child tab manages its own filters + queries; the parent only
+ * provides the tab chrome.
+ */
 export function ReportsPage() {
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-2xl">Auswertungen</h2>
+        <p className="text-sm text-muted-foreground">
+          Zeiterfassung, Burndown, Created-vs-Resolved, Cycle-Time und MRR.
+        </p>
+      </div>
+      <Tabs defaultValue="time">
+        <TabsList>
+          <TabsTrigger value="time">Zeit</TabsTrigger>
+          <TabsTrigger value="burndown">Burndown</TabsTrigger>
+          <TabsTrigger value="cvr">Created vs. Resolved</TabsTrigger>
+          <TabsTrigger value="cycle">Cycle-Time</TabsTrigger>
+          <TabsTrigger value="mrr">MRR</TabsTrigger>
+        </TabsList>
+        <TabsContent value="time" className="pt-4">
+          <TimeReportTab />
+        </TabsContent>
+        <TabsContent value="burndown" className="pt-4">
+          <BurndownTab />
+        </TabsContent>
+        <TabsContent value="cvr" className="pt-4">
+          <CreatedVsResolvedTab />
+        </TabsContent>
+        <TabsContent value="cycle" className="pt-4">
+          <CycleTimeTab />
+        </TabsContent>
+        <TabsContent value="mrr" className="pt-4">
+          <MrrTab />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function TimeReportTab() {
   const [from, setFrom] = useState(() => isoDaysAgo(30));
   const [to, setTo] = useState(() => todayIso());
 
@@ -162,13 +213,7 @@ export function ReportsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="text-2xl">Auswertungen</h2>
-          <p className="text-sm text-muted-foreground">
-            Zeiterfassung über alle Projekte, User und Tätigkeitsarten.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-end justify-end gap-4">
         <div className="flex items-end gap-3">
           <div className="space-y-1">
             <Label htmlFor="from" className="text-xs">Von</Label>
