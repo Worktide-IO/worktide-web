@@ -77,12 +77,17 @@ export function MyProjectsSidebar() {
   }, [customers]);
 
   // Bucket projects into "no customer" (Sammelprojekte) and a per-
-  // customer map ordered by customer name.
+  // customer map ordered by customer name. Favorites are deliberately
+  // EXCLUDED here — they get their own group at the top of the
+  // sidebar, and showing the same project in two groups makes the
+  // list noisy and the "favourite" status feel meaningless.
+  const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
   const buckets = useMemo(() => {
     const rows = projects?.data ?? [];
     const internal: Row<ProjectJsonld>[] = [];
     const byCustomer = new Map<string, { customer: Row<CustomerJsonld>; items: Row<ProjectJsonld>[] }>();
     for (const p of rows) {
+      if (p.id && favoritesSet.has(p.id)) continue;
       if (!p.customer) {
         internal.push(p);
         continue;
@@ -99,7 +104,7 @@ export function MyProjectsSidebar() {
         (a.customer.name ?? '').localeCompare(b.customer.name ?? ''),
       ),
     };
-  }, [projects, customerByIri]);
+  }, [projects, customerByIri, favoritesSet]);
 
   // Favoriten in der vom User gesetzten Reihenfolge anordnen — die
   // Query-Antwort kommt sortiert nach updatedAt, wir mappen das gegen
