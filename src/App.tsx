@@ -31,6 +31,7 @@ import { SubscriptionsListPage } from '@/pages/subscriptions/SubscriptionsListPa
 import { ProjectDetailPage } from '@/pages/projects/ProjectDetailPage';
 import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
 import { ProfileSettingsPage } from '@/pages/settings/ProfileSettingsPage';
+import { SecuritySettingsPage } from '@/pages/settings/SecuritySettingsPage';
 import { WorkspaceSettingsPage } from '@/pages/settings/WorkspaceSettingsPage';
 import { WallPage } from '@/pages/wall/WallPage';
 import { TasksListPage } from '@/pages/tasks/TasksListPage';
@@ -210,6 +211,7 @@ export default function App() {
               <Route path="/access-tokens" element={<PlaceholderPage resource="personal_access_tokens" />} />
               <Route path="/imports" element={<ImportPage />} />
               <Route path="/settings/profile" element={<ProfileSettingsPage />} />
+              <Route path="/settings/security" element={<SecuritySettingsPage />} />
               <Route path="/settings/workspace" element={<WorkspaceSettingsPage />} />
             </Route>
             <Route path="/login" element={<LoginPage />} />

@@ -1,4 +1,5 @@
 import { useMenu } from '@refinedev/core';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import * as Icons from 'lucide-react';
 
@@ -8,6 +9,8 @@ import { MyProjectsSidebar } from '@/components/MyProjectsSidebar';
 import { QuickAddDialog } from '@/components/QuickAddDialog';
 import { UserMenu } from '@/components/UserMenu';
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher';
+import { useIdleLogout } from '@/hooks/useIdleLogout';
+import { api } from '@/lib/api';
 import {
   Sidebar,
   SidebarContent,
@@ -45,6 +48,28 @@ type Resource = ReturnType<typeof useMenu>['menuItems'][number];
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { menuItems } = useMenu();
   const grouped = groupByCategory(menuItems);
+
+  // Idle-logout reads the user's setting on first mount and re-syncs
+  // whenever SecuritySettingsPage saves a new value (Mercure push on
+  // /users/<me>/preferences would close the loop better; for now the
+  // settings page reloads on save which re-renders this).
+  const [idleMinutes, setIdleMinutes] = useState<number | null>(null);
+  useEffect(() => {
+    let alive = true;
+    api
+      .get<{ idleTimeoutMinutes: number | null }>('/me/preferences')
+      .then(({ data }) => {
+        if (alive) setIdleMinutes(data.idleTimeoutMinutes ?? null);
+      })
+      .catch(() => {
+        // Silent — the loop falls back to "disabled" which is the
+        // safer default if /me/preferences is unreachable.
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  useIdleLogout(idleMinutes);
 
   return (
     <SidebarProvider>
