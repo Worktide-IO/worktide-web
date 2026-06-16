@@ -4,7 +4,7 @@
 */
 
 
-export type TaskDependencyJsonMergePatchTypeEnum = "finish_to_start" | "start_to_start" | "finish_to_finish" | "start_to_finish";
+export type TaskDependencyJsonMergePatchTypeEnum = "finish_to_start" | "start_to_start" | "finish_to_finish" | "start_to_finish" | "blocks" | "precedes" | "duplicates" | "relates" | "follows";
 
 /**
  * @description Directional precedence relation between two tasks within the same project.\n\nBeyond awork: we keep `type` (the four classic PM dependency variants) and\n`lagMinutes` so Gantt-style scheduling has the data it needs without a\nschema change later. Cycle detection runs in the controller before persist.

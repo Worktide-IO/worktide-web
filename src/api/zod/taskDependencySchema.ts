@@ -11,7 +11,7 @@ import { z } from "zod/v4";
 export const taskDependencySchema = z.object({
     "predecessor": z.optional(z.string()),
 "successor": z.optional(z.string()),
-"type": z.optional(z.enum(["finish_to_start", "start_to_start", "finish_to_finish", "start_to_finish"]).default("finish_to_start")),
+"type": z.optional(z.enum(["finish_to_start", "start_to_start", "finish_to_finish", "start_to_finish", "blocks", "precedes", "duplicates", "relates", "follows"]).default("finish_to_start")),
 "lagMinutes": z.optional(z.int().default(0).describe("Delay (positive) or lead (negative) in minutes between the linked endpoints.")),
 "id": z.uuid().nullish(),
 "createdAt": z.optional(z.iso.datetime()),

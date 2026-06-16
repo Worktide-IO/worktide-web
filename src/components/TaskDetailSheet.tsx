@@ -56,12 +56,22 @@ const TYPE_LABEL: Record<TaskDependencyJsonldTypeEnum, string> = {
   start_to_start: 'Start → Start',
   finish_to_finish: 'Finish → Finish',
   start_to_finish: 'Start → Finish',
+  blocks: 'Blockiert',
+  precedes: 'Geht voraus',
+  duplicates: 'Dupliziert',
+  relates: 'Bezieht sich auf',
+  follows: 'Folgt auf',
 };
 const TYPE_SHORT: Record<TaskDependencyJsonldTypeEnum, string> = {
   finish_to_start: 'FS',
   start_to_start: 'SS',
   finish_to_finish: 'FF',
   start_to_finish: 'SF',
+  blocks: 'BLK',
+  precedes: 'PRE',
+  duplicates: 'DUP',
+  relates: 'REL',
+  follows: 'FOL',
 };
 
 /**

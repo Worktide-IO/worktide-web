@@ -111,8 +111,14 @@ export function ProjectBoardTab({ projectIri }: Props) {
     for (const t of tasks?.data ?? []) {
       if (t['@id']) taskByIri.set(t['@id'], t);
     }
+    // Blocking-style relations stop the successor from moving forward
+    // while the predecessor is still in an open status. The set lives
+    // in BLOCKING_TYPES so the UI stays in sync with the backend's
+    // TaskDependencyType::isBlocking() — see that PHP file for why
+    // these three count and the others don't.
+    const BLOCKING_TYPES = new Set(['finish_to_start', 'blocks', 'precedes']);
     for (const d of dependencies?.data ?? []) {
-      if (d.type !== 'finish_to_start') continue;
+      if (!d.type || !BLOCKING_TYPES.has(d.type)) continue;
       const pred = d.predecessor ? taskByIri.get(d.predecessor) : null;
       if (!pred || !pred.status) continue;
       if (openStatusIris.has(pred.status) && d.successor) {
