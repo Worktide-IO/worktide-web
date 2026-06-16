@@ -1,10 +1,11 @@
 import { useGetIdentity, useList } from '@refinedev/core';
-import { FolderKanban } from 'lucide-react';
+import { FolderKanban, Star } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link, useLocation } from 'react-router';
 
 import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
+import { useFavoriteProjects } from '@/hooks/useFavoriteProjects';
 import type { Row } from '@/lib/refine';
 import { cn } from '@/lib/utils';
 import {
@@ -35,6 +36,7 @@ type Identity = { id?: string };
 export function MyProjectsSidebar() {
   const { data: identity } = useGetIdentity<Identity>();
   const userIri = identity?.id ? `/v1/users/${identity.id}` : null;
+  const { favorites } = useFavoriteProjects();
 
   const { result: projects } = useList<Row<ProjectJsonld>>({
     resource: 'projects',
@@ -47,6 +49,18 @@ export function MyProjectsSidebar() {
         ]
       : [],
     queryOptions: { enabled: Boolean(userIri) },
+  });
+
+  // Favoriten brauchen auch Projekte, in denen man nicht Mitglied ist
+  // (Owner kann jedes Workspace-Projekt favorisieren). Zweite Query mit
+  // dem gefilterten ID-Set, nur wenn überhaupt Favoriten existieren.
+  const { result: favoriteProjects } = useList<Row<ProjectJsonld>>({
+    resource: 'projects',
+    pagination: { mode: 'off' },
+    filters: favorites.length > 0
+      ? [{ field: 'id', operator: 'in', value: favorites.join(',') }]
+      : [],
+    queryOptions: { enabled: favorites.length > 0 },
   });
 
   const { result: customers } = useList<Row<CustomerJsonld>>({
@@ -87,8 +101,23 @@ export function MyProjectsSidebar() {
     };
   }, [projects, customerByIri]);
 
+  // Favoriten in der vom User gesetzten Reihenfolge anordnen — die
+  // Query-Antwort kommt sortiert nach updatedAt, wir mappen das gegen
+  // die persistierte Liste.
+  const favoritesOrdered = useMemo(() => {
+    const byId = new Map<string, Row<ProjectJsonld>>();
+    for (const p of favoriteProjects?.data ?? []) {
+      if (p.id) byId.set(p.id, p);
+    }
+    return favorites.map((id) => byId.get(id)).filter(Boolean) as Row<ProjectJsonld>[];
+  }, [favorites, favoriteProjects]);
+
   if (!userIri) return null;
-  if (buckets.internal.length === 0 && buckets.customerGroups.length === 0) {
+  if (
+    favoritesOrdered.length === 0 &&
+    buckets.internal.length === 0 &&
+    buckets.customerGroups.length === 0
+  ) {
     return null;
   }
 
@@ -97,9 +126,25 @@ export function MyProjectsSidebar() {
       <SidebarGroupLabel>Meine Projekte</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
+          {favoritesOrdered.length > 0 ? (
+            <>
+              <div className="px-2 pb-1 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
+                <Star className="size-3 fill-amber-400 text-amber-500" />
+                Favoriten
+              </div>
+              {favoritesOrdered.map((p) => (
+                <ProjectRow key={p['@id']} project={p} />
+              ))}
+            </>
+          ) : null}
           {buckets.internal.length > 0 ? (
             <>
-              <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
+              <div
+                className={cn(
+                  'px-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70',
+                  favoritesOrdered.length > 0 && 'mt-2',
+                )}
+              >
                 Eigene
               </div>
               {buckets.internal.map((p) => (

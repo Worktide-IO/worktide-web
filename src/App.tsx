@@ -28,7 +28,9 @@ import { CustomerDetailPage } from '@/pages/customers/CustomerDetailPage';
 import { SubscriptionCreatePage } from '@/pages/subscriptions/SubscriptionCreatePage';
 import { SubscriptionEditPage } from '@/pages/subscriptions/SubscriptionEditPage';
 import { SubscriptionsListPage } from '@/pages/subscriptions/SubscriptionsListPage';
+import { ProjectCreatePage } from '@/pages/projects/ProjectCreatePage';
 import { ProjectDetailPage } from '@/pages/projects/ProjectDetailPage';
+import { ProjectEditPage } from '@/pages/projects/ProjectEditPage';
 import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
 import { ProfileSettingsPage } from '@/pages/settings/ProfileSettingsPage';
 import { SecuritySettingsPage } from '@/pages/settings/SecuritySettingsPage';
@@ -67,8 +69,10 @@ export default function App() {
             {
               name: 'projects',
               list: '/projects',
+              create: '/projects/create',
+              edit: '/projects/:id/edit',
               show: '/projects/:id',
-              meta: { label: 'Projekte', icon: 'FolderKanban', category: 'Arbeit', canDelete: false },
+              meta: { label: 'Projekte', icon: 'FolderKanban', category: 'Arbeit' },
             },
             {
               name: 'tasks',
@@ -183,7 +187,9 @@ export default function App() {
               <Route index element={<DashboardPage />} />
               <Route path="/wall" element={<WallPage />} />
               <Route path="/projects" element={<ProjectsListPage />} />
+              <Route path="/projects/create" element={<ProjectCreatePage />} />
               <Route path="/projects/:id" element={<ProjectDetailPage />} />
+              <Route path="/projects/:id/edit" element={<ProjectEditPage />} />
               <Route path="/tasks" element={<TasksListPage />} />
               {/* Until each resource has its own page, the placeholder
                   acknowledges the navigation without breaking the layout. */}

@@ -1,5 +1,6 @@
 import { useOne } from '@refinedev/core';
-import { ArrowLeft, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Pencil, Wifi, WifiOff } from 'lucide-react';
+import { ProjectStarButton } from '@/components/ProjectStarButton';
 import { useNavigate, useParams } from 'react-router';
 
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
@@ -105,6 +106,14 @@ export function ProjectDetailPage() {
               </Badge>
             )}
             <WatchButton target="project" targetId={p.id} className="ml-2" />
+            <ProjectStarButton projectId={p.id} variant="full" className="ml-auto" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => p.id && navigate(`/projects/${p.id}/edit`)}
+            >
+              <Pencil className="size-4" /> Bearbeiten
+            </Button>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             {status ? (

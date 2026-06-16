@@ -1,5 +1,6 @@
 import { useList, useTable } from '@refinedev/core';
-import { Search, Wifi, WifiOff } from 'lucide-react';
+import { Plus, Search, Wifi, WifiOff } from 'lucide-react';
+import { ProjectStarButton } from '@/components/ProjectStarButton';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -9,6 +10,7 @@ import type { ProjectStatusJsonld } from '@/api/types/projectStatus/Jsonld';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
@@ -99,6 +101,9 @@ export function ProjectsListPage() {
           </div>
           <p className="text-sm text-muted-foreground">{total} Projekte im Workspace</p>
         </div>
+        <Button onClick={() => navigate('/projects/create')}>
+          <Plus className="size-4" /> Neues Projekt
+        </Button>
       </div>
 
       <Card>
@@ -155,6 +160,7 @@ export function ProjectsListPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10" aria-label="Favorit" />
                   <TableHead className="w-24">Key</TableHead>
                   <TableHead className="w-32">Nummer</TableHead>
                   <TableHead>Name</TableHead>
@@ -173,6 +179,9 @@ export function ProjectsListPage() {
                       className="cursor-pointer"
                       onClick={() => p.id && navigate(`/projects/${p.id}`)}
                     >
+                      <TableCell className="p-1 text-center">
+                        <ProjectStarButton projectId={p.id} />
+                      </TableCell>
                       <TableCell className="font-mono text-xs">{p.key}</TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         {(p as { number?: string | null }).number ?? '—'}
