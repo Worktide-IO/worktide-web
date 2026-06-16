@@ -10,7 +10,6 @@ import {
   Loader2,
   Plus,
   Trash2,
-  X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -31,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
 import { api } from '@/lib/api';
@@ -87,10 +86,10 @@ export function TaskDetailSheet({ taskId, onOpenChange }: Props) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-xl overflow-y-auto"
+        className="w-full sm:max-w-xl overflow-y-auto sm:!max-w-xl"
       >
         {query.isLoading || !task ? (
-          <div className="space-y-3 p-2">
+          <div className="space-y-3 p-4">
             <Skeleton className="h-6 w-2/3" />
             <Skeleton className="h-4 w-1/2" />
             <Skeleton className="h-24 w-full" />
@@ -110,25 +109,20 @@ function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () 
   return (
     <div className="space-y-5">
       <SheetHeader className="space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <SheetTitle className="text-lg leading-tight">
-            <span className="font-mono text-xs text-muted-foreground mr-2">
-              {task.identifier}
-            </span>
-            {task.title}
-          </SheetTitle>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Schließen">
-            <X className="size-4" />
-          </Button>
-        </div>
-        <SheetDescription className="flex flex-wrap items-center gap-3 text-xs">
+        <SheetTitle className="text-lg leading-tight pr-9">
+          <span className="font-mono text-xs text-muted-foreground mr-2">
+            {task.identifier}
+          </span>
+          {task.title}
+        </SheetTitle>
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           {task.priority ? (
             <Badge variant="outline" className="text-[10px]">
               Priorität: {task.priority}
             </Badge>
           ) : null}
           {task.dueOn ? (
-            <span className="inline-flex items-center gap-1 text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
               <CalendarDays className="size-3" />
               {new Date(task.dueOn).toLocaleDateString()}
             </span>
@@ -147,17 +141,19 @@ function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () 
               Projekt öffnen
             </Button>
           ) : null}
-        </SheetDescription>
+        </div>
       </SheetHeader>
 
-      {task.description ? (
-        <div className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
-          {task.description}
-        </div>
-      ) : null}
+      <div className="px-4 pb-6 space-y-5">
+        {task.description ? (
+          <div className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
+            {task.description}
+          </div>
+        ) : null}
 
-      <SubtasksSection parent={task} />
-      <DependenciesSection task={task} />
+        <SubtasksSection parent={task} />
+        <DependenciesSection task={task} />
+      </div>
     </div>
   );
 }
