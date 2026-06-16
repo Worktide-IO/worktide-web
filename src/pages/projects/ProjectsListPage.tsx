@@ -156,6 +156,7 @@ export function ProjectsListPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-24">Key</TableHead>
+                  <TableHead className="w-32">Nummer</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead className="w-40">Status</TableHead>
                   <TableHead className="w-56">Kunde</TableHead>
@@ -173,6 +174,9 @@ export function ProjectsListPage() {
                       onClick={() => p.id && navigate(`/projects/${p.id}`)}
                     >
                       <TableCell className="font-mono text-xs">{p.key}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {(p as { number?: string | null }).number ?? '—'}
+                      </TableCell>
                       <TableCell className="font-medium">{p.name}</TableCell>
                       <TableCell>
                         {status ? (

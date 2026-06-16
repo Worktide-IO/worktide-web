@@ -61,6 +61,7 @@ export function WorkspaceSettingsPage() {
       </div>
       <WorkspaceForm />
       <WorkspaceSecurityCard />
+      <WorkspaceProjectNumberCard />
       <WorkspaceStats />
     </SettingsLayout>
   );
@@ -331,6 +332,131 @@ function WorkspaceSecurityCard() {
           </Label>
           <p className="text-sm">
             30 Tage <span className="text-xs text-muted-foreground">— global, in <code className="font-mono">gesdinet_jwt_refresh_token.yaml</code></span>
+          </p>
+        </div>
+        <div>
+          <Button type="button" onClick={handleSave} disabled={saving || !dirty}>
+            {saving ? 'Speichere…' : 'Speichern'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * "Projektnummer" card — workspace-wide template for auto-filled
+ * Project.number values. Leer = kein Auto-Fill, Admins müssen pro
+ * Projekt selbst eine Nummer eingeben (oder nicht). Manuelle Override
+ * funktioniert weiterhin, Pattern ist Convenience.
+ */
+function WorkspaceProjectNumberCard() {
+  const stored = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
+  const { result: workspaces } = useList<Row<WorkspaceJsonld>>({
+    resource: 'workspaces',
+    pagination: { mode: 'off' },
+    queryOptions: { enabled: !stored },
+  });
+  const id = stored ?? workspaces?.data?.[0]?.id ?? null;
+  const { result: workspace, query } = useOne<Row<WorkspaceJsonld> & { settings?: Record<string, unknown> | null }>({
+    resource: 'workspaces',
+    id: id ?? '',
+    queryOptions: { enabled: Boolean(id) },
+  });
+  const { mutate: update, mutation } = useUpdate<Row<WorkspaceJsonld>>();
+  const saving = mutation.isPending;
+
+  const initial = (() => {
+    const s = workspace?.settings as { projectNumber?: { pattern?: string | null } } | null | undefined;
+    return s?.projectNumber?.pattern ?? '';
+  })();
+  const [pattern, setPattern] = useState<string>('');
+
+  useEffect(() => {
+    setPattern(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspace?.id]);
+
+  if (!id || query.isLoading || !workspace) {
+    return null;
+  }
+
+  const dirty = pattern !== initial;
+  const handleSave = () => {
+    const value = pattern.trim() === '' ? null : pattern.trim();
+    const prev = (workspace.settings as Record<string, unknown> | null | undefined) ?? {};
+    const prevPn = (prev['projectNumber'] as Record<string, unknown> | undefined) ?? {};
+    const nextSettings = {
+      ...prev,
+      projectNumber: { ...prevPn, pattern: value },
+    };
+    update(
+      {
+        resource: 'workspaces',
+        id,
+        values: { settings: nextSettings },
+        successNotification: false,
+      },
+      {
+        onSuccess: () =>
+          toast.success(
+            value
+              ? `Pattern gespeichert: "${value}".`
+              : 'Pattern entfernt — neue Projekte bekommen keine Auto-Nummer mehr.',
+          ),
+        onError: (err) => {
+          const status = (err as { response?: { status?: number } })?.response?.status;
+          toast.error(
+            status === 403
+              ? 'Keine Berechtigung — nur Admins können dieses Pattern ändern.'
+              : 'Konnte nicht speichern.',
+          );
+        },
+      },
+    );
+  };
+
+  // Live preview using "now" for date placeholders + a faux seq=42.
+  const preview = (() => {
+    if (pattern.trim() === '') return '— (Auto-Fill deaktiviert)';
+    const now = new Date();
+    return pattern
+      .replace(/\{YEAR\}/g, String(now.getFullYear()))
+      .replace(/\{YEAR2\}/g, String(now.getFullYear()).slice(-2))
+      .replace(/\{MONTH\}/g, String(now.getMonth() + 1).padStart(2, '0'))
+      .replace(/\{CUSTOMER_KEY\}/g, 'ACME')
+      .replace(/\{SEQ(?::(\d+))?\}/g, (_, w?: string) =>
+        w ? '42'.padStart(Number(w), '0') : '42',
+      );
+  })();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Projektnummer</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="ws-project-number-pattern">Pattern</Label>
+          <Input
+            id="ws-project-number-pattern"
+            value={pattern}
+            onChange={(e) => setPattern(e.target.value)}
+            placeholder="Leer = kein Auto-Fill"
+            className="font-mono max-w-md"
+          />
+          <p className="text-xs text-muted-foreground">
+            Platzhalter:{' '}
+            <code className="font-mono">{'{YEAR}'}</code>,{' '}
+            <code className="font-mono">{'{YEAR2}'}</code>,{' '}
+            <code className="font-mono">{'{MONTH}'}</code>,{' '}
+            <code className="font-mono">{'{SEQ}'}</code> oder{' '}
+            <code className="font-mono">{'{SEQ:3}'}</code> mit Breite,{' '}
+            <code className="font-mono">{'{CUSTOMER_KEY}'}</code>.
+          </p>
+          <p className="text-xs">
+            <span className="text-muted-foreground">Vorschau: </span>
+            <code className="font-mono text-foreground">{preview}</code>
           </p>
         </div>
         <div>

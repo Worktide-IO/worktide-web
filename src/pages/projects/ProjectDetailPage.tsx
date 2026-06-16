@@ -79,6 +79,14 @@ export function ProjectDetailPage() {
             </Button>
             <span>/</span>
             <span className="font-mono">{p.key}</span>
+            {(p as { number?: string | null }).number ? (
+              <>
+                <span>·</span>
+                <span className="font-mono">
+                  Nr. {(p as { number?: string | null }).number}
+                </span>
+              </>
+            ) : null}
           </div>
           <div className="flex items-center gap-3">
             <span
