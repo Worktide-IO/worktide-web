@@ -9,6 +9,7 @@ import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { BulkActionsBar } from '@/components/BulkActionsBar';
 import { SavedViewsBar } from '@/components/SavedViewsBar';
+import { TagPicker } from '@/components/TagPicker';
 import { TaskDetailSheet } from '@/components/TaskDetailSheet';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,6 +63,7 @@ export function TasksListPage() {
   const [search, setSearch] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
 
   const { tableQuery, filters, setFilters, setCurrentPage } = useTable<Row<TaskJsonld>>({
     resource: 'tasks',
@@ -122,11 +124,16 @@ export function TasksListPage() {
     return map;
   }, [projects]);
 
-  const applyFilters = (s: string, status: string, prio: string) => {
+  const applyFilters = (s: string, status: string, prio: string, tags: string[]) => {
     const filters = [];
     if (s) filters.push({ field: 'title', operator: 'contains' as const, value: s });
     if (status !== 'all') filters.push({ field: 'status', operator: 'eq' as const, value: status });
     if (prio !== 'all') filters.push({ field: 'priority', operator: 'eq' as const, value: prio });
+    if (tags.length > 0) {
+      // SearchFilter on a ManyToMany with multiple values accepts a
+      // comma-separated list ("OR"); workspace IRIs go through verbatim.
+      filters.push({ field: 'tags', operator: 'eq' as const, value: tags.join(',') });
+    }
     setFilters(filters, 'replace');
     setCurrentPage(1);
   };
@@ -187,7 +194,7 @@ export function TasksListPage() {
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
-                  applyFilters(e.target.value, statusFilter, priorityFilter);
+                  applyFilters(e.target.value, statusFilter, priorityFilter, tagFilter);
                 }}
                 className="pl-8"
               />
@@ -196,7 +203,7 @@ export function TasksListPage() {
               value={statusFilter}
               onValueChange={(v) => {
                 setStatusFilter(v);
-                applyFilters(search, v, priorityFilter);
+                applyFilters(search, v, priorityFilter, tagFilter);
               }}
             >
               <SelectTrigger className="w-48">
@@ -215,7 +222,7 @@ export function TasksListPage() {
               value={priorityFilter}
               onValueChange={(v) => {
                 setPriorityFilter(v);
-                applyFilters(search, statusFilter, v);
+                applyFilters(search, statusFilter, v, tagFilter);
               }}
             >
               <SelectTrigger className="w-40">
@@ -229,6 +236,16 @@ export function TasksListPage() {
                 <SelectItem value="urgent">Dringend</SelectItem>
               </SelectContent>
             </Select>
+            <TagPicker
+              value={tagFilter}
+              onChange={(next) => {
+                setTagFilter(next);
+                applyFilters(search, statusFilter, priorityFilter, next);
+              }}
+              scope="task"
+              disableCreate
+              placeholder="Nach Tags filtern…"
+            />
           </div>
         </CardHeader>
         <CardContent>
