@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useList } from '@refinedev/core';
 import { Check, ChevronsUpDown, Settings } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import type { Row } from '@/lib/refine';
@@ -38,6 +38,7 @@ import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
 export function WorkspaceSwitcher() {
   const [open, setOpen] = useState(false);
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const activeId = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
 
   const { result: workspaces, query } = useList<Row<WorkspaceJsonld>>({
@@ -123,14 +124,22 @@ export function WorkspaceSwitcher() {
               ))}
             </CommandGroup>
             <CommandGroup>
-              <CommandItem asChild value="settings">
-                <Link
-                  to="/settings/workspace"
-                  className="flex items-center gap-2"
-                  onClick={() => setOpen(false)}
-                >
-                  <Settings className="size-4" /> Workspace-Einstellungen
-                </Link>
+              {/*
+                Navigate via onSelect, NOT asChild + <Link>. Wrapping a
+                Link that holds multiple children inside Radix's Slot
+                throws "Primitive.div failed to slot onto its children"
+                synchronously during render — the Popover portal then
+                crashes the whole app tree (no error boundary above it).
+              */}
+              <CommandItem
+                value="settings"
+                onSelect={() => {
+                  setOpen(false);
+                  navigate('/settings/workspace');
+                }}
+              >
+                <Settings className="size-4 mr-2" />
+                Workspace-Einstellungen
               </CommandItem>
             </CommandGroup>
           </CommandList>

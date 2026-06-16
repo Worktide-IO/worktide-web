@@ -3,6 +3,7 @@ import { DevtoolsPanel, DevtoolsProvider } from '@refinedev/devtools';
 import routerProvider from '@refinedev/react-router';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router';
 
+import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { AppLayout } from '@/components/AppLayout';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -182,7 +183,9 @@ export default function App() {
               element={
                 <Authenticated key="auth" fallback={<Navigate to="/login" replace />}>
                   <AppLayout>
-                    <Outlet />
+                    <AppErrorBoundary>
+                      <Outlet />
+                    </AppErrorBoundary>
                   </AppLayout>
                 </Authenticated>
               }
