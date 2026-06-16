@@ -17,6 +17,8 @@ export const timeEntryJsonMergePatchSchema = z.object({
 "note": z.string().nullish(),
 "isBillable": z.optional(z.boolean().default(true)),
 "isLocked": z.optional(z.boolean().default(false)),
+"isExternal": z.optional(z.boolean().default(false).describe("Entry created via an external integration (Connect-Mailbox, awork\nimport, public API). Mirrors Project.isExternal so cross-workspace\nreports can filter integration noise out.")),
+"timezone": z.string().describe("IANA timezone identifier at the moment of capture\n(e.g. `Europe/Berlin`, `America/New_York`). Lets the UI render the\nentry in its original local time even after the user travelled or\nDST flipped between save and read.").nullish(),
 "id": z.uuid().nullish(),
 "createdAt": z.optional(z.iso.datetime()),
 "updatedAt": z.optional(z.iso.datetime()),
@@ -29,6 +31,7 @@ export const timeEntryJsonMergePatchSchema = z.object({
 "billed": z.optional(z.boolean()),
 "billable": z.optional(z.boolean()),
 "locked": z.optional(z.boolean()),
+"external": z.optional(z.boolean()),
 "running": z.optional(z.boolean()),
 "externalRef": z.string().nullish()
     })

@@ -25,6 +25,7 @@ export const apiTimeEntriesGetCollectionQueryParamsSchema = z.object({
 "isBillable": z.optional(z.boolean()),
 "isBilled": z.optional(z.boolean()),
 "isLocked": z.optional(z.boolean()),
+"isExternal": z.optional(z.boolean()),
 "startsAt[before]": z.optional(z.string()),
 "startsAt[strictly_before]": z.optional(z.string()),
 "startsAt[after]": z.optional(z.string()),

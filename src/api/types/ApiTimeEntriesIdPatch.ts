@@ -44,7 +44,7 @@ export type ApiTimeEntriesIdPatch422 = ConstraintViolationJsonld;
 /**
  * @description The updated TimeEntry resource
 */
-export type ApiTimeEntriesIdPatchMutationRequest = Omit<NonNullable<TimeEntryJsonMergePatch>, "id" | "createdAt" | "updatedAt" | "version" | "billed" | "billable" | "locked" | "running" | "externalRef">;
+export type ApiTimeEntriesIdPatchMutationRequest = Omit<NonNullable<TimeEntryJsonMergePatch>, "id" | "createdAt" | "updatedAt" | "version" | "billed" | "billable" | "locked" | "external" | "running" | "externalRef">;
 
 export type ApiTimeEntriesIdPatchMutationResponse = ApiTimeEntriesIdPatch200;
 

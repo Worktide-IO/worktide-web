@@ -31,7 +31,7 @@ export type ApiDocumentsPost422 = ConstraintViolationJsonld;
 /**
  * @description The new Document resource
 */
-export type ApiDocumentsPostMutationRequest = Omit<NonNullable<Document>, "contributors" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "private" | "hiddenForConnectUsers" | "archived" | "deleted">;
+export type ApiDocumentsPostMutationRequest = Omit<NonNullable<Document>, "contributors" | "revisions" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "private" | "hiddenForConnectUsers" | "archived" | "deleted">;
 
 export type ApiDocumentsPostMutationResponse = ApiDocumentsPost201;
 

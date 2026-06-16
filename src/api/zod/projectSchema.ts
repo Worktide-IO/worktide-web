@@ -8,6 +8,7 @@ import { z } from "zod/v4";
 export const projectSchema = z.object({
     "name": z.optional(z.string()),
 "key": z.optional(z.string()),
+"number": z.string().describe("Human-readable, individuell vergebene Projektnummer (z. B.").nullish(),
 "description": z.string().nullish(),
 "color": z.optional(z.string().default("#6366f1")),
 "status": z.optional(z.string()),
@@ -22,6 +23,8 @@ export const projectSchema = z.object({
 "hasImage": z.optional(z.boolean().default(false)),
 "isRetainer": z.optional(z.boolean().default(false)),
 "isMultiAssignmentAllowed": z.optional(z.boolean().default(true)),
+"isExternal": z.optional(z.boolean().default(false).describe("Connect-Project: visible to external (cross-workspace) members and\nthe upcoming Customer-Portal. Hidden tasks\n(Task.isHiddenForConnectUsers) stay invisible regardless.")),
+"isProjectKeyVisible": z.optional(z.boolean().default(true).describe("Controls whether the human-readable key (`ACME-123`) renders on\ntask cards and lists. Some teams find it noisy.")),
 "workflow": z.string().nullish(),
 "startsOn": z.iso.datetime().nullish(),
 "dueOn": z.iso.datetime().nullish(),
@@ -47,6 +50,8 @@ export const projectSchema = z.object({
 "image": z.optional(z.boolean()),
 "retainer": z.optional(z.boolean()),
 "multiAssignmentAllowed": z.optional(z.boolean()),
+"external": z.optional(z.boolean()),
+"projectKeyVisible": z.optional(z.boolean()),
 "deleted": z.optional(z.boolean()),
 "externalRef": z.string().nullish()
     })

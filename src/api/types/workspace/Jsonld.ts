@@ -25,6 +25,13 @@ export type WorkspaceJsonld = (HydraItemBaseSchema & {
     */
     timezone?: string;
     /**
+     * @description Free-form workspace settings as JSON. Currently holds:
+     * @type object,null
+    */
+    settings?: {
+        [key: string]: string | null;
+    } | null;
+    /**
      * @type array | undefined
     */
     readonly members?: string[];
@@ -65,6 +72,11 @@ export type WorkspaceJsonld = (HydraItemBaseSchema & {
      * @type string,null
     */
     externalId?: string | null;
+    /**
+     * @description Access-token TTL in seconds, or null if this workspace inherits the\nLexik default. Walks the JSON tree defensively because the JSON\nshape is free-form by design.
+     * @type integer,null
+    */
+    readonly sessionAccessTtl?: number | null;
     /**
      * @type boolean | undefined
     */

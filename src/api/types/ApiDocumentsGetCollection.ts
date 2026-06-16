@@ -31,47 +31,11 @@ export type ApiDocumentsGetCollectionQueryParams = {
     /**
      * @type string | undefined
     */
-    workspace?: string;
+    workflowState?: string;
     /**
      * @type array | undefined
     */
-    "workspace[]"?: string[];
-    /**
-     * @type string | undefined
-    */
-    space?: string;
-    /**
-     * @type array | undefined
-    */
-    "space[]"?: string[];
-    /**
-     * @type string | undefined
-    */
-    parent?: string;
-    /**
-     * @type array | undefined
-    */
-    "parent[]"?: string[];
-    /**
-     * @type string | undefined
-    */
-    project?: string;
-    /**
-     * @type array | undefined
-    */
-    "project[]"?: string[];
-    /**
-     * @type string | undefined
-    */
-    task?: string;
-    /**
-     * @type array | undefined
-    */
-    "task[]"?: string[];
-    /**
-     * @type string | undefined
-    */
-    name?: string;
+    "workflowState[]"?: string[];
     /**
      * @type boolean | undefined
     */

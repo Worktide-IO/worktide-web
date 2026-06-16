@@ -10,6 +10,9 @@ export const workspaceSchema = z.object({
 "slug": z.optional(z.string()),
 "locale": z.optional(z.string().default("de")),
 "timezone": z.optional(z.string().default("Europe/Berlin")),
+"settings": z.object({
+    
+    }).catchall(z.string().nullable()).describe("Free-form workspace settings as JSON. Currently holds:").nullish(),
 "members": z.optional(z.array(z.string())),
 "id": z.uuid().nullish(),
 "createdAt": z.optional(z.iso.datetime()),
@@ -20,6 +23,7 @@ export const workspaceSchema = z.object({
 "updatedByUser": z.string().nullish(),
 "externalSource": z.string().nullish(),
 "externalId": z.string().nullish(),
+"sessionAccessTtl": z.int().describe("Access-token TTL in seconds, or null if this workspace inherits the\nLexik default. Walks the JSON tree defensively because the JSON\nshape is free-form by design.").nullish(),
 "deleted": z.optional(z.boolean()),
 "externalRef": z.string().nullish()
     })

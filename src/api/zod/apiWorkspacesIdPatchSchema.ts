@@ -41,6 +41,6 @@ export const apiWorkspacesIdPatch422Schema = z.lazy(() => constraintViolationJso
 /**
  * @description The updated Workspace resource
  */
-export const apiWorkspacesIdPatchMutationRequestSchema = z.lazy(() => workspaceJsonMergePatchSchema).unwrap().omit({ 'members': true,'id': true,'createdAt': true,'updatedAt': true,'deletedAt': true,'version': true,'deleted': true,'externalRef': true })
+export const apiWorkspacesIdPatchMutationRequestSchema = z.lazy(() => workspaceJsonMergePatchSchema).unwrap().omit({ 'members': true,'id': true,'createdAt': true,'updatedAt': true,'deletedAt': true,'version': true,'sessionAccessTtl': true,'deleted': true,'externalRef': true })
 
 export const apiWorkspacesIdPatchMutationResponseSchema = z.lazy(() => apiWorkspacesIdPatch200Schema)

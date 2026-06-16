@@ -31,7 +31,7 @@ export type ApiWorkspacesPost422 = ConstraintViolationJsonld;
 /**
  * @description The new Workspace resource
 */
-export type ApiWorkspacesPostMutationRequest = Omit<NonNullable<Workspace>, "members" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "deleted" | "externalRef">;
+export type ApiWorkspacesPostMutationRequest = Omit<NonNullable<Workspace>, "members" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "sessionAccessTtl" | "deleted" | "externalRef">;
 
 export type ApiWorkspacesPostMutationResponse = ApiWorkspacesPost201;
 

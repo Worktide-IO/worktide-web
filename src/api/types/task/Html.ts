@@ -6,6 +6,8 @@
 
 export type TaskHtmlPriorityEnum = "low" | "normal" | "high" | "urgent";
 
+export type TaskHtmlCreatedViaEnum = "created" | "import" | "email" | "automation" | "api" | "recurring" | "template";
+
 export type TaskHtml = {
     /**
      * @description Tasks without a project (\"private tasks\") are personal todos that belong\nto a workspace but don\'t show up in any project board. They follow the\nsame auth rules — owner-only visibility — via the Voter, and let users\ntrack miscellaneous work alongside structured project tasks.
@@ -29,14 +31,20 @@ export type TaskHtml = {
     */
     status?: string;
     /**
+     * @description Issue-type classification (Bug / Feature / Story / Support / …).
+     * @type string,null, iri-reference
+    */
+    tracker?: string | null;
+    /**
      * @default "normal"
      * @type string | undefined
     */
     priority?: TaskHtmlPriorityEnum;
     /**
+     * @description Polymorphic assignment principals — a mix of Users and Teams.
      * @type array | undefined
     */
-    assignees?: string[];
+    assignedPrincipals?: string[];
     /**
      * @type string,null, iri-reference
     */
@@ -46,6 +54,11 @@ export type TaskHtml = {
     */
     dueOn?: string | null;
     /**
+     * @description Planned start (Soll). Used by Gantt and the AI auto-scheduler in\nPhase D — separate from `startedOn` (Ist, set when work begins).
+     * @type string,null, date-time
+    */
+    startOn?: string | null;
+    /**
      * @type string,null, date-time
     */
     startedOn?: string | null;
@@ -53,6 +66,17 @@ export type TaskHtml = {
      * @type integer,null
     */
     estimatedMinutes?: number | null;
+    /**
+     * @description Idempotency anchor for inbound channels (CSV-Import, Mail-Inbound,\nWebhook-Replay, AI-Breakdown). Indexed but not unique — multiple\nchannels can collide deliberately on the same external reference.
+     * @type string,null, uuid
+    */
+    correlationId?: string | null;
+    /**
+     * @description How this task entered Worktide. Default is direct creation through\nthe UI; importers, mail handlers, and automations stamp their own\nvalue so the activity feed and reports can attribute volume.
+     * @default "created"
+     * @type string | undefined
+    */
+    createdVia?: TaskHtmlCreatedViaEnum;
     /**
      * @type string,null, iri-reference
     */
@@ -145,10 +169,15 @@ export type TaskHtml = {
     */
     readonly checklistItemsDoneCount?: number;
     /**
-     * @description Convenience for the common single-assignee case.
-     * @type string,null, iri-reference
+     * @description Backwards-compatible flat list of *directly* assigned user IRIs.
+     * @type array | undefined
     */
-    readonly primaryAssignee?: string | null;
+    readonly assignees?: string[];
+    /**
+     * @description Team IRIs directly assigned to this task. The SPA may render\nthese as a separate \"team chip\" group or expand via a parallel\n/v1/teams fetch.
+     * @type array | undefined
+    */
+    readonly assignedTeams?: string[];
     /**
      * @type boolean | undefined
     */

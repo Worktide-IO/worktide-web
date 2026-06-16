@@ -7,7 +7,7 @@ import type { CustomFieldOption } from "../CustomFieldOption.ts";
 
 export type CustomFieldDefinitionJsonMergePatchTargetEnum = "project" | "task" | "time_entry";
 
-export type CustomFieldDefinitionJsonMergePatchTypeEnum = "text" | "long_text" | "number" | "date" | "date_time" | "boolean" | "select" | "multi_select" | "url" | "email" | "user";
+export type CustomFieldDefinitionJsonMergePatchTypeEnum = "text" | "long_text" | "number" | "date" | "date_time" | "boolean" | "select" | "multi_select" | "url" | "email" | "user" | "customer";
 
 /**
  * @description Workspace-scoped definition of a user-defined field that can be attached to\nProject / Task / TimeEntry (extensible via CustomFieldTarget enum).\n\n`target` controls which entity types may carry a value of this field.\n`key` is the stable machine identifier used in API payloads and integrations.

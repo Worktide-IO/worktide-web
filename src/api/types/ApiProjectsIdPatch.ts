@@ -44,7 +44,7 @@ export type ApiProjectsIdPatch422 = ConstraintViolationJsonld;
 /**
  * @description The updated Project resource
 */
-export type ApiProjectsIdPatchMutationRequest = Omit<NonNullable<ProjectJsonMergePatch>, "members" | "tasks" | "taskLists" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "archived" | "private" | "billableByDefault" | "image" | "retainer" | "multiAssignmentAllowed" | "deleted" | "externalRef">;
+export type ApiProjectsIdPatchMutationRequest = Omit<NonNullable<ProjectJsonMergePatch>, "members" | "tasks" | "taskLists" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "archived" | "private" | "billableByDefault" | "image" | "retainer" | "multiAssignmentAllowed" | "external" | "projectKeyVisible" | "deleted" | "externalRef">;
 
 export type ApiProjectsIdPatchMutationResponse = ApiProjectsIdPatch200;
 

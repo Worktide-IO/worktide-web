@@ -87,11 +87,19 @@ export type ApiTasksGetCollectionQueryParams = {
     /**
      * @type string | undefined
     */
-    assignees?: string;
+    tracker?: string;
     /**
      * @type array | undefined
     */
-    "assignees[]"?: string[];
+    "tracker[]"?: string[];
+    /**
+     * @type string | undefined
+    */
+    "assignedPrincipals.principalId"?: string;
+    /**
+     * @type array | undefined
+    */
+    "assignedPrincipals.principalId[]"?: string[];
     /**
      * @type string | undefined
     */

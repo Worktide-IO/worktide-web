@@ -14,6 +14,11 @@ export type ProjectHtml = {
     */
     key?: string;
     /**
+     * @description Human-readable, individuell vergebene Projektnummer (z. B.
+     * @type string,null
+    */
+    number?: string | null;
+    /**
      * @type string,null
     */
     description?: string | null;
@@ -77,6 +82,18 @@ export type ProjectHtml = {
      * @type boolean | undefined
     */
     isMultiAssignmentAllowed?: boolean;
+    /**
+     * @description Connect-Project: visible to external (cross-workspace) members and\nthe upcoming Customer-Portal. Hidden tasks\n(Task.isHiddenForConnectUsers) stay invisible regardless.
+     * @default false
+     * @type boolean | undefined
+    */
+    isExternal?: boolean;
+    /**
+     * @description Controls whether the human-readable key (`ACME-123`) renders on\ntask cards and lists. Some teams find it noisy.
+     * @default true
+     * @type boolean | undefined
+    */
+    isProjectKeyVisible?: boolean;
     /**
      * @type string,null, iri-reference
     */
@@ -179,6 +196,14 @@ export type ProjectHtml = {
      * @type boolean | undefined
     */
     readonly multiAssignmentAllowed?: boolean;
+    /**
+     * @type boolean | undefined
+    */
+    readonly external?: boolean;
+    /**
+     * @type boolean | undefined
+    */
+    readonly projectKeyVisible?: boolean;
     /**
      * @type boolean | undefined
     */

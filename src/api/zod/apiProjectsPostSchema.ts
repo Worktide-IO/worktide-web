@@ -32,6 +32,6 @@ export const apiProjectsPost422Schema = z.lazy(() => constraintViolationJsonldSc
 /**
  * @description The new Project resource
  */
-export const apiProjectsPostMutationRequestSchema = z.lazy(() => projectSchema).unwrap().omit({ 'members': true,'tasks': true,'taskLists': true,'id': true,'createdAt': true,'updatedAt': true,'deletedAt': true,'version': true,'archived': true,'private': true,'billableByDefault': true,'image': true,'retainer': true,'multiAssignmentAllowed': true,'deleted': true,'externalRef': true })
+export const apiProjectsPostMutationRequestSchema = z.lazy(() => projectSchema).unwrap().omit({ 'members': true,'tasks': true,'taskLists': true,'id': true,'createdAt': true,'updatedAt': true,'deletedAt': true,'version': true,'archived': true,'private': true,'billableByDefault': true,'image': true,'retainer': true,'multiAssignmentAllowed': true,'external': true,'projectKeyVisible': true,'deleted': true,'externalRef': true })
 
 export const apiProjectsPostMutationResponseSchema = z.lazy(() => apiProjectsPost201Schema)

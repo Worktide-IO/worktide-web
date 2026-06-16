@@ -56,6 +56,17 @@ export type TimeEntryJsonMergePatch = {
     */
     isLocked?: boolean;
     /**
+     * @description Entry created via an external integration (Connect-Mailbox, awork\nimport, public API). Mirrors Project.isExternal so cross-workspace\nreports can filter integration noise out.
+     * @default false
+     * @type boolean | undefined
+    */
+    isExternal?: boolean;
+    /**
+     * @description IANA timezone identifier at the moment of capture\n(e.g. `Europe/Berlin`, `America/New_York`). Lets the UI render the\nentry in its original local time even after the user travelled or\nDST flipped between save and read.
+     * @type string,null
+    */
+    timezone?: string | null;
+    /**
      * @type string,null, uuid
     */
     readonly id?: string | null;
@@ -104,6 +115,10 @@ export type TimeEntryJsonMergePatch = {
      * @type boolean | undefined
     */
     readonly locked?: boolean;
+    /**
+     * @type boolean | undefined
+    */
+    readonly external?: boolean;
     /**
      * @type boolean | undefined
     */

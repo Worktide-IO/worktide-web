@@ -44,7 +44,7 @@ export type ApiTasksIdPatch422 = ConstraintViolationJsonld;
 /**
  * @description The updated Task resource
 */
-export type ApiTasksIdPatchMutationRequest = Omit<NonNullable<TaskJsonMergePatch>, "listEntries" | "checklistItems" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "checklistItemsCount" | "checklistItemsDoneCount" | "primaryAssignee" | "prio" | "hiddenForConnectUsers" | "deleted" | "externalRef">;
+export type ApiTasksIdPatchMutationRequest = Omit<NonNullable<TaskJsonMergePatch>, "listEntries" | "checklistItems" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "checklistItemsCount" | "checklistItemsDoneCount" | "assignees" | "assignedTeams" | "prio" | "hiddenForConnectUsers" | "deleted" | "externalRef">;
 
 export type ApiTasksIdPatchMutationResponse = ApiTasksIdPatch200;
 

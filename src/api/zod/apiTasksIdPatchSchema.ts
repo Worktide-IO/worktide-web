@@ -41,6 +41,6 @@ export const apiTasksIdPatch422Schema = z.lazy(() => constraintViolationJsonldSc
 /**
  * @description The updated Task resource
  */
-export const apiTasksIdPatchMutationRequestSchema = z.lazy(() => taskJsonMergePatchSchema).unwrap().omit({ 'listEntries': true,'checklistItems': true,'id': true,'createdAt': true,'updatedAt': true,'deletedAt': true,'version': true,'checklistItemsCount': true,'checklistItemsDoneCount': true,'primaryAssignee': true,'prio': true,'hiddenForConnectUsers': true,'deleted': true,'externalRef': true })
+export const apiTasksIdPatchMutationRequestSchema = z.lazy(() => taskJsonMergePatchSchema).unwrap().omit({ 'listEntries': true,'checklistItems': true,'id': true,'createdAt': true,'updatedAt': true,'deletedAt': true,'version': true,'checklistItemsCount': true,'checklistItemsDoneCount': true,'assignees': true,'assignedTeams': true,'prio': true,'hiddenForConnectUsers': true,'deleted': true,'externalRef': true })
 
 export const apiTasksIdPatchMutationResponseSchema = z.lazy(() => apiTasksIdPatch200Schema)

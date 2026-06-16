@@ -87,6 +87,10 @@ export type ApiTimeEntriesGetCollectionQueryParams = {
     */
     isLocked?: boolean;
     /**
+     * @type boolean | undefined
+    */
+    isExternal?: boolean;
+    /**
      * @type string | undefined
     */
     "startsAt[before]"?: string;

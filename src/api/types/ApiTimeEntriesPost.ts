@@ -31,7 +31,7 @@ export type ApiTimeEntriesPost422 = ConstraintViolationJsonld;
 /**
  * @description The new TimeEntry resource
 */
-export type ApiTimeEntriesPostMutationRequest = Omit<NonNullable<TimeEntry>, "id" | "createdAt" | "updatedAt" | "version" | "billed" | "billable" | "locked" | "running" | "externalRef">;
+export type ApiTimeEntriesPostMutationRequest = Omit<NonNullable<TimeEntry>, "id" | "createdAt" | "updatedAt" | "version" | "billed" | "billable" | "locked" | "external" | "running" | "externalRef">;
 
 export type ApiTimeEntriesPostMutationResponse = ApiTimeEntriesPost201;
 

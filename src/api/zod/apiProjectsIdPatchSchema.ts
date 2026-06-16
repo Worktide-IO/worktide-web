@@ -41,6 +41,6 @@ export const apiProjectsIdPatch422Schema = z.lazy(() => constraintViolationJsonl
 /**
  * @description The updated Project resource
  */
-export const apiProjectsIdPatchMutationRequestSchema = z.lazy(() => projectJsonMergePatchSchema).unwrap().omit({ 'members': true,'tasks': true,'taskLists': true,'id': true,'createdAt': true,'updatedAt': true,'deletedAt': true,'version': true,'archived': true,'private': true,'billableByDefault': true,'image': true,'retainer': true,'multiAssignmentAllowed': true,'deleted': true,'externalRef': true })
+export const apiProjectsIdPatchMutationRequestSchema = z.lazy(() => projectJsonMergePatchSchema).unwrap().omit({ 'members': true,'tasks': true,'taskLists': true,'id': true,'createdAt': true,'updatedAt': true,'deletedAt': true,'version': true,'archived': true,'private': true,'billableByDefault': true,'image': true,'retainer': true,'multiAssignmentAllowed': true,'external': true,'projectKeyVisible': true,'deleted': true,'externalRef': true })
 
 export const apiProjectsIdPatchMutationResponseSchema = z.lazy(() => apiProjectsIdPatch200Schema)

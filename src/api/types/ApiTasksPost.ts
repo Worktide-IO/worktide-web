@@ -31,7 +31,7 @@ export type ApiTasksPost422 = ConstraintViolationJsonld;
 /**
  * @description The new Task resource
 */
-export type ApiTasksPostMutationRequest = Omit<NonNullable<Task>, "listEntries" | "checklistItems" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "checklistItemsCount" | "checklistItemsDoneCount" | "primaryAssignee" | "prio" | "hiddenForConnectUsers" | "deleted" | "externalRef">;
+export type ApiTasksPostMutationRequest = Omit<NonNullable<Task>, "listEntries" | "checklistItems" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "checklistItemsCount" | "checklistItemsDoneCount" | "assignees" | "assignedTeams" | "prio" | "hiddenForConnectUsers" | "deleted" | "externalRef">;
 
 export type ApiTasksPostMutationResponse = ApiTasksPost201;
 

@@ -7,6 +7,8 @@ import type { HydraItemBaseSchema } from "../HydraItemBaseSchema.ts";
 
 export type DocumentJsonldBodyFormatEnum = "markdown" | "html" | "richtext";
 
+export type DocumentJsonldWorkflowStateEnum = "draft" | "review" | "published";
+
 /**
  * @description Wiki-style document — rich-text body, hierarchical via parent self-FK,\ngrouped into a DocumentSpace OR attached to a Project / Task.\n\nSoft-delete + workspace scope + versioning all standard. Content lives\nin `body` as text; `bodyFormat` tells clients how to render it. For the\nMVP we ship markdown; richtext (JSON tree) is reserved for when we\npick a structured editor.\n\nPrivacy & sharing:\n  isPrivate=true  → only the author + explicit DocumentContributors see it\n  isPrivate=false → workspace members see it (additionally restricted by\n                    isHiddenForConnectUsers for external Project members)\n  Contributors via DocumentContributor entity grant read/manage to specific\n  users beyond the default rules.
 */
@@ -69,6 +71,36 @@ export type DocumentJsonld = (HydraItemBaseSchema & {
      * @type array | undefined
     */
     readonly contributors?: string[];
+    /**
+     * @type array | undefined
+    */
+    readonly revisions?: string[];
+    /**
+     * @default "draft"
+     * @type string | undefined
+    */
+    workflowState?: DocumentJsonldWorkflowStateEnum;
+    /**
+     * @description Users assigned to review the document while it sits in the `review`\nstate. Assignment is independent of contributors (reviewers may\nread-only) — when the state is `draft` or `published`, this list\nis informational only.
+     * @type array | undefined
+    */
+    reviewers?: string[];
+    /**
+     * @type string,null, date-time
+    */
+    submittedAt?: string | null;
+    /**
+     * @type string,null, iri-reference
+    */
+    submittedBy?: string | null;
+    /**
+     * @type string,null, date-time
+    */
+    publishedAt?: string | null;
+    /**
+     * @type string,null, iri-reference
+    */
+    publishedBy?: string | null;
     /**
      * @type string,null, uuid
     */

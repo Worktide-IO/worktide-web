@@ -32,6 +32,6 @@ export const apiWorkspacesPost422Schema = z.lazy(() => constraintViolationJsonld
 /**
  * @description The new Workspace resource
  */
-export const apiWorkspacesPostMutationRequestSchema = z.lazy(() => workspaceSchema).unwrap().omit({ 'members': true,'id': true,'createdAt': true,'updatedAt': true,'deletedAt': true,'version': true,'deleted': true,'externalRef': true })
+export const apiWorkspacesPostMutationRequestSchema = z.lazy(() => workspaceSchema).unwrap().omit({ 'members': true,'id': true,'createdAt': true,'updatedAt': true,'deletedAt': true,'version': true,'sessionAccessTtl': true,'deleted': true,'externalRef': true })
 
 export const apiWorkspacesPostMutationResponseSchema = z.lazy(() => apiWorkspacesPost201Schema)

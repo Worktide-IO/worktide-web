@@ -31,7 +31,7 @@ export type ApiProjectsPost422 = ConstraintViolationJsonld;
 /**
  * @description The new Project resource
 */
-export type ApiProjectsPostMutationRequest = Omit<NonNullable<Project>, "members" | "tasks" | "taskLists" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "archived" | "private" | "billableByDefault" | "image" | "retainer" | "multiAssignmentAllowed" | "deleted" | "externalRef">;
+export type ApiProjectsPostMutationRequest = Omit<NonNullable<Project>, "members" | "tasks" | "taskLists" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "archived" | "private" | "billableByDefault" | "image" | "retainer" | "multiAssignmentAllowed" | "external" | "projectKeyVisible" | "deleted" | "externalRef">;
 
 export type ApiProjectsPostMutationResponse = ApiProjectsPost201;
 

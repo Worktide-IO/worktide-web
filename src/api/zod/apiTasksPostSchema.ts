@@ -32,6 +32,6 @@ export const apiTasksPost422Schema = z.lazy(() => constraintViolationJsonldSchem
 /**
  * @description The new Task resource
  */
-export const apiTasksPostMutationRequestSchema = z.lazy(() => taskSchema).unwrap().omit({ 'listEntries': true,'checklistItems': true,'id': true,'createdAt': true,'updatedAt': true,'deletedAt': true,'version': true,'checklistItemsCount': true,'checklistItemsDoneCount': true,'primaryAssignee': true,'prio': true,'hiddenForConnectUsers': true,'deleted': true,'externalRef': true })
+export const apiTasksPostMutationRequestSchema = z.lazy(() => taskSchema).unwrap().omit({ 'listEntries': true,'checklistItems': true,'id': true,'createdAt': true,'updatedAt': true,'deletedAt': true,'version': true,'checklistItemsCount': true,'checklistItemsDoneCount': true,'assignees': true,'assignedTeams': true,'prio': true,'hiddenForConnectUsers': true,'deleted': true,'externalRef': true })
 
 export const apiTasksPostMutationResponseSchema = z.lazy(() => apiTasksPost201Schema)

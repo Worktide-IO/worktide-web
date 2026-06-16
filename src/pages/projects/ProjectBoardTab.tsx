@@ -23,6 +23,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TagChips } from '@/components/TagChips';
+import { TrackerChip } from '@/components/TrackerChip';
+import { useTrackers } from '@/hooks/useTrackers';
 import { TaskDetailSheet } from '@/components/TaskDetailSheet';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
 
@@ -288,6 +290,7 @@ function TaskCard({
     id: task['@id'] ?? '',
     disabled: dragging,
   });
+  const { byIri: trackerByIri } = useTrackers();
 
   return (
     <Card
@@ -310,7 +313,10 @@ function TaskCard({
     >
       <CardContent className="space-y-1.5 px-3">
         <div className="flex items-start justify-between gap-2">
-          <span className="font-mono text-[10px] text-muted-foreground">{task.identifier}</span>
+          <div className="flex items-center gap-1.5">
+            <TrackerChip tracker={task.tracker ? trackerByIri[task.tracker] : null} variant="icon" />
+            <span className="font-mono text-[10px] text-muted-foreground">{task.identifier}</span>
+          </div>
           <div className="flex items-center gap-1.5">
             {isBlocked ? (
               <Ban

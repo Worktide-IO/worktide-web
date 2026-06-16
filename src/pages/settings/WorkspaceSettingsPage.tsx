@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { WorkspaceTagsCard } from '@/components/WorkspaceTagsCard';
+import { WorkspaceTrackersCard } from '@/components/WorkspaceTrackersCard';
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 
@@ -64,6 +65,7 @@ export function WorkspaceSettingsPage() {
       <WorkspaceSecurityCard />
       <WorkspaceProjectNumberCard />
       <WorkspaceTagsCard />
+      <WorkspaceTrackersCard />
       <WorkspaceStats />
     </SettingsLayout>
   );

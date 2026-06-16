@@ -32,6 +32,6 @@ export const apiTimeEntriesPost422Schema = z.lazy(() => constraintViolationJsonl
 /**
  * @description The new TimeEntry resource
  */
-export const apiTimeEntriesPostMutationRequestSchema = z.lazy(() => timeEntrySchema).unwrap().omit({ 'id': true,'createdAt': true,'updatedAt': true,'version': true,'billed': true,'billable': true,'locked': true,'running': true,'externalRef': true })
+export const apiTimeEntriesPostMutationRequestSchema = z.lazy(() => timeEntrySchema).unwrap().omit({ 'id': true,'createdAt': true,'updatedAt': true,'version': true,'billed': true,'billable': true,'locked': true,'external': true,'running': true,'externalRef': true })
 
 export const apiTimeEntriesPostMutationResponseSchema = z.lazy(() => apiTimeEntriesPost201Schema)

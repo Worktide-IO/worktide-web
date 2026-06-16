@@ -33,7 +33,9 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TagPicker } from '@/components/TagPicker';
+import { TrackerChip } from '@/components/TrackerChip';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
+import { useTrackers } from '@/hooks/useTrackers';
 import { api } from '@/lib/api';
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import { useLiveResource } from '@/lib/mercure';
@@ -106,12 +108,15 @@ export function TaskDetailSheet({ taskId, onOpenChange }: Props) {
 
 function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () => void }) {
   const navigate = useNavigate();
+  const { byIri: trackerByIri } = useTrackers();
+  const tracker = task.tracker ? trackerByIri[task.tracker] : null;
 
   return (
     <div className="space-y-5">
       <SheetHeader className="space-y-2">
-        <SheetTitle className="text-lg leading-tight pr-9">
-          <span className="font-mono text-xs text-muted-foreground mr-2">
+        <SheetTitle className="text-lg leading-tight pr-9 flex items-baseline gap-2">
+          <TrackerChip tracker={tracker} variant="icon" />
+          <span className="font-mono text-xs text-muted-foreground">
             {task.identifier}
           </span>
           {task.title}

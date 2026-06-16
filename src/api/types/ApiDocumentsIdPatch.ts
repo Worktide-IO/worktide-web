@@ -44,7 +44,7 @@ export type ApiDocumentsIdPatch422 = ConstraintViolationJsonld;
 /**
  * @description The updated Document resource
 */
-export type ApiDocumentsIdPatchMutationRequest = Omit<NonNullable<DocumentJsonMergePatch>, "contributors" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "private" | "hiddenForConnectUsers" | "archived" | "deleted">;
+export type ApiDocumentsIdPatchMutationRequest = Omit<NonNullable<DocumentJsonMergePatch>, "contributors" | "revisions" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "private" | "hiddenForConnectUsers" | "archived" | "deleted">;
 
 export type ApiDocumentsIdPatchMutationResponse = ApiDocumentsIdPatch200;
 

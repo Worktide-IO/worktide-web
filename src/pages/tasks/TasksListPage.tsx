@@ -11,6 +11,8 @@ import { BulkActionsBar } from '@/components/BulkActionsBar';
 import { SavedViewsBar } from '@/components/SavedViewsBar';
 import { TagPicker } from '@/components/TagPicker';
 import { TaskDetailSheet } from '@/components/TaskDetailSheet';
+import { TrackerChip } from '@/components/TrackerChip';
+import { useTrackers } from '@/hooks/useTrackers';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -107,6 +109,7 @@ export function TasksListPage() {
     resource: 'projects',
     pagination: { mode: 'off' },
   });
+  const { byIri: trackerByIri } = useTrackers();
 
   const statusByIri = useMemo<Record<string, Row<TaskStatusJsonld>>>(() => {
     const map: Record<string, Row<TaskStatusJsonld>> = {};
@@ -275,6 +278,7 @@ export function TasksListPage() {
                     />
                   </TableHead>
                   <TableHead className="w-24">ID</TableHead>
+                  <TableHead className="w-8" />
                   <TableHead>Titel</TableHead>
                   <TableHead className="w-32">Status</TableHead>
                   <TableHead className="w-28">Prio</TableHead>
@@ -286,6 +290,7 @@ export function TasksListPage() {
                 {rows.map((t) => {
                   const status = t.status ? statusByIri[t.status] : null;
                   const project = t.project ? projectByIri[t.project] : null;
+                  const tracker = t.tracker ? trackerByIri[t.tracker] : null;
                   const iri = t['@id'] ?? '';
                   const isChecked = selected.has(iri);
                   return (
@@ -308,6 +313,9 @@ export function TasksListPage() {
                         />
                       </TableCell>
                       <TableCell className="font-mono text-xs">{t.identifier}</TableCell>
+                      <TableCell className="p-0 pr-2">
+                        <TrackerChip tracker={tracker} variant="icon" />
+                      </TableCell>
                       <TableCell className="font-medium">{t.title}</TableCell>
                       <TableCell>
                         {status ? (

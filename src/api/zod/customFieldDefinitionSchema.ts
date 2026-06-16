@@ -11,7 +11,7 @@ import { z } from "zod/v4";
  */
 export const customFieldDefinitionSchema = z.object({
     "target": z.optional(z.enum(["project", "task", "time_entry"])),
-"type": z.optional(z.enum(["text", "long_text", "number", "date", "date_time", "boolean", "select", "multi_select", "url", "email", "user"])),
+"type": z.optional(z.enum(["text", "long_text", "number", "date", "date_time", "boolean", "select", "multi_select", "url", "email", "user", "customer"])),
 "key": z.optional(z.string()),
 "label": z.optional(z.string()),
 "description": z.string().nullish(),

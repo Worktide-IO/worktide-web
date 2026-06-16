@@ -41,6 +41,6 @@ export const apiTimeEntriesIdPatch422Schema = z.lazy(() => constraintViolationJs
 /**
  * @description The updated TimeEntry resource
  */
-export const apiTimeEntriesIdPatchMutationRequestSchema = z.lazy(() => timeEntryJsonMergePatchSchema).unwrap().omit({ 'id': true,'createdAt': true,'updatedAt': true,'version': true,'billed': true,'billable': true,'locked': true,'running': true,'externalRef': true })
+export const apiTimeEntriesIdPatchMutationRequestSchema = z.lazy(() => timeEntryJsonMergePatchSchema).unwrap().omit({ 'id': true,'createdAt': true,'updatedAt': true,'version': true,'billed': true,'billable': true,'locked': true,'external': true,'running': true,'externalRef': true })
 
 export const apiTimeEntriesIdPatchMutationResponseSchema = z.lazy(() => apiTimeEntriesIdPatch200Schema)

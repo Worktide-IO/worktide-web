@@ -11,6 +11,8 @@ export type ApiProjectsGetCollectionQueryParamsOrdernameEnum = "asc" | "desc";
 
 export type ApiProjectsGetCollectionQueryParamsOrderkeyEnum = "asc" | "desc";
 
+export type ApiProjectsGetCollectionQueryParamsOrdernumberEnum = "asc" | "desc";
+
 export type ApiProjectsGetCollectionQueryParamsOrdercreatedAtEnum = "asc" | "desc";
 
 export type ApiProjectsGetCollectionQueryParamsOrderupdatedAtEnum = "asc" | "desc";
@@ -46,6 +48,10 @@ export type ApiProjectsGetCollectionQueryParams = {
      * @type array | undefined
     */
     "key[]"?: string[];
+    /**
+     * @type string | undefined
+    */
+    number?: string;
     /**
      * @type string | undefined
     */
@@ -91,6 +97,22 @@ export type ApiProjectsGetCollectionQueryParams = {
     */
     "tags[]"?: string[];
     /**
+     * @type string | undefined
+    */
+    customer?: string;
+    /**
+     * @type array | undefined
+    */
+    "customer[]"?: string[];
+    /**
+     * @type string | undefined
+    */
+    "members.user"?: string;
+    /**
+     * @type array | undefined
+    */
+    "members.user[]"?: string[];
+    /**
      * @type boolean | undefined
     */
     isArchived?: boolean;
@@ -110,6 +132,14 @@ export type ApiProjectsGetCollectionQueryParams = {
      * @type boolean | undefined
     */
     isBillableByDefault?: boolean;
+    /**
+     * @type boolean | undefined
+    */
+    isExternal?: boolean;
+    /**
+     * @type boolean | undefined
+    */
+    isProjectKeyVisible?: boolean;
     /**
      * @type string | undefined
     */
@@ -187,6 +217,10 @@ export type ApiProjectsGetCollectionQueryParams = {
     */
     "exists[dueOn]"?: boolean;
     /**
+     * @type boolean | undefined
+    */
+    "exists[customer]"?: boolean;
+    /**
      * @default "asc"
      * @type string | undefined
     */
@@ -196,6 +230,11 @@ export type ApiProjectsGetCollectionQueryParams = {
      * @type string | undefined
     */
     "order[key]"?: ApiProjectsGetCollectionQueryParamsOrderkeyEnum;
+    /**
+     * @default "asc"
+     * @type string | undefined
+    */
+    "order[number]"?: ApiProjectsGetCollectionQueryParamsOrdernumberEnum;
     /**
      * @default "asc"
      * @type string | undefined

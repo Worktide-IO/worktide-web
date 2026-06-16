@@ -44,7 +44,7 @@ export type ApiWorkspacesIdPatch422 = ConstraintViolationJsonld;
 /**
  * @description The updated Workspace resource
 */
-export type ApiWorkspacesIdPatchMutationRequest = Omit<NonNullable<WorkspaceJsonMergePatch>, "members" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "deleted" | "externalRef">;
+export type ApiWorkspacesIdPatchMutationRequest = Omit<NonNullable<WorkspaceJsonMergePatch>, "members" | "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "sessionAccessTtl" | "deleted" | "externalRef">;
 
 export type ApiWorkspacesIdPatchMutationResponse = ApiWorkspacesIdPatch200;
 
