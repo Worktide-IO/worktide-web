@@ -60,6 +60,7 @@ export function WorkspaceSettingsPage() {
         </p>
       </div>
       <WorkspaceForm />
+      <WorkspaceSecurityCard />
       <WorkspaceStats />
     </SettingsLayout>
   );
@@ -206,6 +207,131 @@ function WorkspaceForm() {
               </SelectContent>
             </Select>
           </div>
+        </div>
+        <div>
+          <Button type="button" onClick={handleSave} disabled={saving || !dirty}>
+            {saving ? 'Speichere…' : 'Speichern'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * "Sicherheit" card — workspace-admin override for the access-token
+ * TTL. Empty input means "inherit Lexik default (3600s)". Backend's
+ * JwtWorkspaceTtlSubscriber walks every workspace a user belongs to and
+ * picks the strictest value, so even users in multiple workspaces are
+ * covered safely.
+ *
+ * Refresh-token TTL stays workspace-agnostic (gesdinet wires it as a
+ * service constructor arg; runtime override would be a bigger change).
+ * We show it read-only with a hint.
+ */
+function WorkspaceSecurityCard() {
+  const stored = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
+  const { result: workspaces } = useList<Row<WorkspaceJsonld>>({
+    resource: 'workspaces',
+    pagination: { mode: 'off' },
+    queryOptions: { enabled: !stored },
+  });
+  const id = stored ?? workspaces?.data?.[0]?.id ?? null;
+  const { result: workspace, query } = useOne<Row<WorkspaceJsonld> & { settings?: Record<string, unknown> | null }>({
+    resource: 'workspaces',
+    id: id ?? '',
+    queryOptions: { enabled: Boolean(id) },
+  });
+  const { mutate: update, mutation } = useUpdate<Row<WorkspaceJsonld>>();
+  const saving = mutation.isPending;
+
+  const [accessSeconds, setAccessSeconds] = useState<string>('');
+  const initial = (() => {
+    const s = workspace?.settings as { sessionTtl?: { access?: number | null } } | null | undefined;
+    const v = s?.sessionTtl?.access;
+    return typeof v === 'number' && v > 0 ? String(v) : '';
+  })();
+
+  useEffect(() => {
+    setAccessSeconds(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspace?.id]);
+
+  if (!id || query.isLoading || !workspace) {
+    return null;
+  }
+
+  const dirty = accessSeconds !== initial;
+  const handleSave = () => {
+    const parsed = accessSeconds.trim() === '' ? null : Number(accessSeconds);
+    if (parsed !== null && (!Number.isInteger(parsed) || parsed < 60 || parsed > 3600)) {
+      toast.error('Access-TTL muss zwischen 60 und 3600 Sekunden liegen.');
+      return;
+    }
+    const prev = (workspace.settings as Record<string, unknown> | null | undefined) ?? {};
+    const prevTtl = (prev['sessionTtl'] as Record<string, unknown> | undefined) ?? {};
+    const nextSettings = {
+      ...prev,
+      sessionTtl: { ...prevTtl, access: parsed },
+    };
+    update(
+      {
+        resource: 'workspaces',
+        id,
+        values: { settings: nextSettings },
+        successNotification: false,
+      },
+      {
+        onSuccess: () =>
+          toast.success(
+            parsed
+              ? `Access-Token-Lifetime auf ${parsed}s gesetzt.`
+              : 'Workspace-Override entfernt — Lexik-Default (1 h) gilt wieder.',
+          ),
+        onError: (err) => {
+          const status = (err as { response?: { status?: number } })?.response?.status;
+          toast.error(
+            status === 403
+              ? 'Keine Berechtigung — nur Admins können Sicherheits-Einstellungen ändern.'
+              : 'Konnte nicht speichern.',
+          );
+        },
+      },
+    );
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Sicherheit</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="ws-access-ttl">Access-Token-Lifetime (Sekunden)</Label>
+          <Input
+            id="ws-access-ttl"
+            type="number"
+            min={60}
+            max={3600}
+            step={60}
+            placeholder="Leer = 3600 (1 h, Standard)"
+            value={accessSeconds}
+            onChange={(e) => setAccessSeconds(e.target.value)}
+            className="max-w-xs"
+          />
+          <p className="text-xs text-muted-foreground">
+            Strikter (kleiner) als die globale 1-Stunde-Vorgabe — höhere
+            Werte werden ignoriert. Bei mehreren Workspaces gewinnt das
+            kürzeste TTL pro User.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-muted-foreground">
+            Refresh-Token-Lifetime (Tage)
+          </Label>
+          <p className="text-sm">
+            30 Tage <span className="text-xs text-muted-foreground">— global, in <code className="font-mono">gesdinet_jwt_refresh_token.yaml</code></span>
+          </p>
         </div>
         <div>
           <Button type="button" onClick={handleSave} disabled={saving || !dirty}>
