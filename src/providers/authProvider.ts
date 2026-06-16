@@ -1,5 +1,14 @@
 import type { AuthProvider } from '@refinedev/core';
-import { api, JWT_STORAGE_KEY, REFRESH_STORAGE_KEY, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import {
+  api,
+  clearAuth,
+  JWT_STORAGE_KEY,
+  readAuth,
+  REFRESH_STORAGE_KEY,
+  REMEMBER_STORAGE_KEY,
+  WORKSPACE_STORAGE_KEY,
+  writeAuth,
+} from '@/lib/api';
 import { clearMercureToken } from '@/lib/mercure';
 
 /**
@@ -18,27 +27,31 @@ import { clearMercureToken } from '@/lib/mercure';
  * workspace membership and persist its UUID under wt.workspace so future
  * requests carry X-Workspace-Id automatically (see lib/api.ts).
  */
-type LoginInput = { email?: string; password?: string };
+type LoginInput = { email?: string; password?: string; remember?: boolean };
 
 export const authProvider: AuthProvider = {
   async login(params) {
-    const { email, password } = params as LoginInput;
+    const { email, password, remember = true } = params as LoginInput;
     if (!email || !password) {
       return { success: false, error: { name: 'Missing', message: 'Email + Passwort erforderlich' } };
     }
     try {
+      // Persist the choice BEFORE writing tokens so writeAuth picks the
+      // right bucket on the very first call.
+      localStorage.setItem(REMEMBER_STORAGE_KEY, remember ? '1' : '0');
+
       const { data } = await api.post<{ token: string; refresh_token: string }>(
         '/auth/login',
         { email, password },
         { headers: { Authorization: '' } }, // suppress any stale JWT
       );
-      localStorage.setItem(JWT_STORAGE_KEY, data.token);
-      localStorage.setItem(REFRESH_STORAGE_KEY, data.refresh_token);
+      writeAuth(JWT_STORAGE_KEY, data.token);
+      writeAuth(REFRESH_STORAGE_KEY, data.refresh_token);
 
       const me = await api.get('/auth/me');
       const workspaceId = me.data?.workspaces?.[0]?.id ?? me.data?.workspaceId;
       if (workspaceId) {
-        localStorage.setItem(WORKSPACE_STORAGE_KEY, workspaceId);
+        writeAuth(WORKSPACE_STORAGE_KEY, workspaceId);
       }
       return { success: true, redirectTo: '/' };
     } catch (e) {
@@ -55,15 +68,15 @@ export const authProvider: AuthProvider = {
     } catch {
       // intentional: even if revocation fails, drop the local creds
     }
-    localStorage.removeItem(JWT_STORAGE_KEY);
-    localStorage.removeItem(REFRESH_STORAGE_KEY);
-    localStorage.removeItem(WORKSPACE_STORAGE_KEY);
+    clearAuth(JWT_STORAGE_KEY);
+    clearAuth(REFRESH_STORAGE_KEY);
+    clearAuth(WORKSPACE_STORAGE_KEY);
     clearMercureToken();
     return { success: true, redirectTo: '/login' };
   },
 
   async check() {
-    const jwt = localStorage.getItem(JWT_STORAGE_KEY);
+    const jwt = readAuth(JWT_STORAGE_KEY);
     if (!jwt) {
       return { authenticated: false, redirectTo: '/login' };
     }
@@ -74,7 +87,7 @@ export const authProvider: AuthProvider = {
     if ((error as { response?: { status?: number } })?.response?.status !== 401) {
       return {};
     }
-    const refresh = localStorage.getItem(REFRESH_STORAGE_KEY);
+    const refresh = readAuth(REFRESH_STORAGE_KEY);
     if (!refresh) {
       return { logout: true, redirectTo: '/login' };
     }
@@ -84,8 +97,8 @@ export const authProvider: AuthProvider = {
         { refresh_token: refresh },
         { headers: { Authorization: '' } },
       );
-      localStorage.setItem(JWT_STORAGE_KEY, data.token);
-      localStorage.setItem(REFRESH_STORAGE_KEY, data.refresh_token);
+      writeAuth(JWT_STORAGE_KEY, data.token);
+      writeAuth(REFRESH_STORAGE_KEY, data.refresh_token);
       return {};
     } catch {
       return { logout: true, redirectTo: '/login' };

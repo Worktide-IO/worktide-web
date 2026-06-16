@@ -1,16 +1,18 @@
 import { useLogin } from '@refinedev/core';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 const loginSchema = z.object({
   email: z.string().email('Bitte gültige Email-Adresse eingeben'),
   password: z.string().min(1, 'Passwort erforderlich'),
+  remember: z.boolean(),
 });
 type LoginValues = z.infer<typeof loginSchema>;
 
@@ -18,11 +20,15 @@ export function LoginPage() {
   const { mutate: login, isPending, error } = useLogin<LoginValues>();
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
+  } = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '', remember: true },
+  });
 
-  const onSubmit = handleSubmit((values) => login(values));
+  const onSubmit = handleSubmit((values) => login(values as LoginValues));
 
   return (
     <div className="min-h-screen grid place-items-center bg-muted/40 p-6">
@@ -64,6 +70,28 @@ export function LoginPage() {
                 <p className="text-xs text-destructive">{errors.password.message}</p>
               ) : null}
             </div>
+
+            <Controller
+              control={control}
+              name="remember"
+              render={({ field }) => (
+                <label
+                  htmlFor="remember"
+                  className="flex items-center gap-2 text-sm select-none cursor-pointer"
+                >
+                  <Checkbox
+                    id="remember"
+                    checked={!!field.value}
+                    onCheckedChange={(checked) => field.onChange(!!checked)}
+                  />
+                  Auf diesem Gerät angemeldet bleiben
+                </label>
+              )}
+            />
+            <p className="text-xs text-muted-foreground -mt-2">
+              Aus = Sitzung wird beendet, wenn das Browserfenster
+              geschlossen wird. Für geteilte Rechner empfohlen.
+            </p>
 
             {error?.message ? (
               <p className="text-sm text-destructive" role="alert">
