@@ -1,10 +1,12 @@
 import { useForm } from '@refinedev/react-hook-form';
-import { useList, useNavigation } from '@refinedev/core';
-import { ArrowLeft, Save, Trash2 } from 'lucide-react';
+import { useInvalidate, useList, useNavigation } from '@refinedev/core';
+import { ArrowLeft, FolderKanban, Loader2, Plus, Save, Trash2 } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { useState } from 'react';
 import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
+import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
 
 import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
@@ -32,6 +34,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { TagPicker } from '@/components/TagPicker';
@@ -61,12 +71,14 @@ export function ProjectForm(props: Mode) {
   const { list } = useNavigation();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
 
   const {
     refineCore: { onFinish, formLoading, query },
     register,
     control,
     handleSubmit,
+    setValue,
     formState: { isSubmitting },
   } = useForm<Row<ProjectJsonld>>({
     refineCoreProps: {
@@ -250,7 +262,18 @@ export function ProjectForm(props: Mode) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Kunde</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Kunde</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCustomerDialogOpen(true)}
+                    className="h-6 gap-1 px-2 text-xs"
+                  >
+                    <Plus className="size-3" /> Neuer Kunde
+                  </Button>
+                </div>
                 <Controller
                   name="customer"
                   control={control}
@@ -291,7 +314,10 @@ export function ProjectForm(props: Mode) {
                         <SelectItem value="__none__">— Ohne Typ</SelectItem>
                         {(projectTypes?.data ?? []).map((t) => (
                           <SelectItem key={t['@id']} value={t['@id'] ?? ''}>
-                            {t.name}
+                            <span className="inline-flex items-center gap-2">
+                              <ProjectTypeIcon name={t.icon} />
+                              {t.name}
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -378,6 +404,12 @@ export function ProjectForm(props: Mode) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <NewCustomerInlineDialog
+        open={customerDialogOpen}
+        onOpenChange={setCustomerDialogOpen}
+        onCreated={(iri) => setValue('customer', iri, { shouldDirty: true })}
+      />
     </form>
   );
 }
@@ -424,3 +456,106 @@ const SwitchRow = ({ control, name, label, hint }: SwitchRowProps) => (
     />
   </div>
 );
+
+/**
+ * Resolves a Lucide icon by name (the `icon` field on ProjectType is a
+ * string like "FolderKanban", "Leaf", "Settings"). Falls back to a
+ * generic folder when missing or unknown so the row layout stays
+ * stable.
+ */
+function ProjectTypeIcon({ name }: { name?: string | null }) {
+  const Resolved = name
+    ? (Icons[name as keyof typeof Icons] as React.ElementType | undefined)
+    : undefined;
+  const Icon = Resolved ?? FolderKanban;
+  return <Icon className="size-3.5 text-muted-foreground" />;
+}
+
+/**
+ * Mini-form for "+ Neuer Kunde" — name only. Mirrors awork's
+ * inline-create flow so users don't lose form context. On success
+ * the customer cache is invalidated AND the new IRI is handed back so
+ * the parent can auto-select it.
+ */
+function NewCustomerInlineDialog({
+  open,
+  onOpenChange,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: (customerIri: string) => void;
+}) {
+  const invalidate = useInvalidate();
+  const [name, setName] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setSaving(true);
+    try {
+      const workspaceId =
+        typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
+      const { data } = await api.post<{ '@id'?: string }>('/customers', {
+        name: trimmed,
+        status: 'active',
+        isCompany: true,
+        country: 'DE',
+        workspace: workspaceId ? `/v1/workspaces/${workspaceId}` : undefined,
+      });
+      void invalidate({ resource: 'customers', invalidates: ['list'] });
+      if (data['@id']) onCreated(data['@id']);
+      onOpenChange(false);
+      setName('');
+      toast.success(`Kunde "${trimmed}" angelegt — Stammdaten kannst du jederzeit unter Kunden ergänzen.`);
+    } catch (err) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      toast.error(detail ?? 'Konnte Kunde nicht anlegen.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="sm:max-w-sm"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !saving && name.trim()) {
+            e.preventDefault();
+            submit();
+          }
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle>Neuer Kunde</DialogTitle>
+          <DialogDescription>
+            Schneller Anlegen — nur der Name reicht. Restliche Stammdaten
+            (Email, Adresse, USt-ID …) kannst du später unter Kunden
+            nachpflegen.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1.5">
+          <Label htmlFor="quick-customer-name">Name</Label>
+          <Input
+            id="quick-customer-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoFocus
+            placeholder="Firmenname"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
+            Abbrechen
+          </Button>
+          <Button onClick={submit} disabled={saving || !name.trim()}>
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+            Anlegen
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

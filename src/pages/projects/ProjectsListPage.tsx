@@ -1,14 +1,19 @@
 import { useList, useTable } from '@refinedev/core';
-import { Plus, Search, Wifi, WifiOff } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { CalendarDays, CheckSquare, Plus, Search, Timer, Wifi, WifiOff } from 'lucide-react';
 import { ProjectStarButton } from '@/components/ProjectStarButton';
 import { TagChips } from '@/components/TagChips';
 import { TagPicker } from '@/components/TagPicker';
+import { UserAvatarStack } from '@/components/UserAvatarStack';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
+import type { ProjectMemberJsonld } from '@/api/types/projectMember/Jsonld';
 import type { ProjectStatusJsonld } from '@/api/types/projectStatus/Jsonld';
+import type { TaskJsonld } from '@/api/types/task/Jsonld';
+import { api } from '@/lib/api';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { Badge } from '@/components/ui/badge';
@@ -81,6 +86,60 @@ export function ProjectsListPage() {
     }
     return map;
   }, [customers]);
+
+  // Aggregates that drive the new columns. Three single requests vs
+  // per-row fetches:
+  //  - All tasks in the workspace → group by project for counts.
+  //  - /v1/reports/time over the last year, groupBy=project → minutes
+  //    per project IRI.
+  //  - All project_members → user-IRI lists per project.
+  const { result: allTasks } = useList<Row<TaskJsonld>>({
+    resource: 'tasks',
+    pagination: { mode: 'off' },
+    filters: [{ field: 'exists[closedOn]', operator: 'eq', value: 'false' }],
+  });
+
+  const { data: hoursPerProject } = useQuery({
+    queryKey: ['projects-hours'],
+    queryFn: async () => {
+      const from = new Date();
+      from.setFullYear(from.getFullYear() - 1);
+      const to = new Date();
+      to.setDate(to.getDate() + 1);
+      const { data } = await api.get<{
+        groups: { key: string; minutes: number }[];
+      }>('/reports/time', {
+        params: { from: from.toISOString(), to: to.toISOString(), groupBy: 'project' },
+      });
+      const map: Record<string, number> = {};
+      for (const g of data.groups ?? []) {
+        if (g.key) map[g.key] = g.minutes;
+      }
+      return map;
+    },
+    staleTime: 60_000,
+  });
+
+  const { result: projectMembers } = useList<Row<ProjectMemberJsonld>>({
+    resource: 'project_members',
+    pagination: { mode: 'off' },
+  });
+
+  const openTasksByProject = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const t of allTasks?.data ?? []) {
+      if (t.project) counts[t.project] = (counts[t.project] ?? 0) + 1;
+    }
+    return counts;
+  }, [allTasks]);
+
+  const membersByProject = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const m of projectMembers?.data ?? []) {
+      if (m.project && m.user) (map[m.project] ??= []).push(m.user);
+    }
+    return map;
+  }, [projectMembers]);
 
   const applyFilters = (s: string, status: string, tags: string[]) => {
     const filters = [];
@@ -178,11 +237,14 @@ export function ProjectsListPage() {
                 <TableRow>
                   <TableHead className="w-10" aria-label="Favorit" />
                   <TableHead className="w-24">Key</TableHead>
-                  <TableHead className="w-32">Nummer</TableHead>
+                  <TableHead className="w-28">Nummer</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead className="w-40">Status</TableHead>
-                  <TableHead className="w-56">Kunde</TableHead>
-                  <TableHead className="w-32 text-right">Aktualisiert</TableHead>
+                  <TableHead className="w-36">Status</TableHead>
+                  <TableHead className="w-48">Kunde</TableHead>
+                  <TableHead className="w-24 text-right">Fällig</TableHead>
+                  <TableHead className="w-20 text-right">Tasks</TableHead>
+                  <TableHead className="w-24 text-right">Aufwand</TableHead>
+                  <TableHead className="w-32">Team</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -224,7 +286,41 @@ export function ProjectsListPage() {
                         {customer ? customer.name : '— Intern —'}
                       </TableCell>
                       <TableCell className="text-right text-xs text-muted-foreground">
-                        {p.updatedAt ? new Date(p.updatedAt).toLocaleDateString() : '—'}
+                        {p.dueOn ? (
+                          <span className="inline-flex items-center gap-1">
+                            <CalendarDays className="size-3" />
+                            {new Date(p.dueOn).toLocaleDateString()}
+                          </span>
+                        ) : (
+                          '—'
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right text-xs">
+                        {p['@id'] && openTasksByProject[p['@id']] ? (
+                          <span className="inline-flex items-center gap-1">
+                            <CheckSquare className="size-3 text-muted-foreground" />
+                            {openTasksByProject[p['@id']]}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right text-xs">
+                        {p.id && hoursPerProject?.[p.id] ? (
+                          <span className="inline-flex items-center gap-1">
+                            <Timer className="size-3 text-muted-foreground" />
+                            {Math.round((hoursPerProject[p.id] / 60) * 10) / 10} h
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <UserAvatarStack
+                          iris={(p['@id'] ? membersByProject[p['@id']] : null) ?? []}
+                          size="sm"
+                          max={3}
+                        />
                       </TableCell>
                     </TableRow>
                   );
