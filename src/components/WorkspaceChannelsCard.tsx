@@ -1,5 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
-import { CheckCircle2, Loader2, Mailbox, Pencil, Plus, Power, Trash2 } from 'lucide-react';
+import { CheckCircle2, Link2, Loader2, Mailbox, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -35,6 +35,73 @@ import {
 } from '@/components/ui/table';
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
+
+const ADAPTER_PROVIDER_LABEL: Record<string, string> = {
+  email_graph: 'Microsoft 365',
+  email_gmail: 'Google Workspace',
+};
+
+/**
+ * Helper for the two OAuth-flavoured adapters. The channel has to be
+ * SAVED first (we need a real channel UUID to put in the OAuth state
+ * blob); only then does the "Mit ... anmelden" button appear.
+ *
+ * Clicking the button asks the backend for the provider authorize URL
+ * and redirects the top-level window. After provider consent the
+ * callback at /v1/channels/oauth/callback bounces the user back to
+ * /inbox?oauth=ok|err.
+ */
+function OAuthConnectBlock({ channelId, adapterCode, hasToken }: { channelId: string | null; adapterCode: string; hasToken: boolean }) {
+  const [busy, setBusy] = useState(false);
+  const providerLabel = ADAPTER_PROVIDER_LABEL[adapterCode] ?? 'Provider';
+  const startConnect = async () => {
+    if (!channelId) {
+      toast.error('Channel erst speichern, danach OAuth-Login starten.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data } = await api.get<{ authorizeUrl: string }>(`/channels/${channelId}/oauth/start`);
+      window.location.href = data.authorizeUrl;
+    } catch (err) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      toast.error(detail ?? 'Konnte OAuth-Login nicht starten.');
+      setBusy(false);
+    }
+  };
+  return (
+    <fieldset className="space-y-2 rounded-md border p-3">
+      <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">OAuth</legend>
+      <p className="text-xs text-muted-foreground">
+        Für {providerLabel} ist keine Passwort-Eingabe nötig. Klicke unten,
+        um Worktide bei {providerLabel} freizugeben — Du wirst auf
+        deren Anmelde-Seite weitergeleitet und kommst nach Bestätigung
+        hierher zurück.
+      </p>
+      {hasToken ? (
+        <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          <CheckCircle2 className="mr-1 inline size-4" />
+          Verbunden — Token gespeichert.
+        </div>
+      ) : (
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Noch nicht verbunden.
+        </div>
+      )}
+      <Button
+        size="sm"
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={startConnect}
+        disabled={busy || !channelId}
+      >
+        {busy ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}
+        {hasToken ? `Mit ${providerLabel} neu verbinden` : `Mit ${providerLabel} anmelden`}
+      </Button>
+    </fieldset>
+  );
+}
 
 const ADAPTER_LABEL: Record<string, string> = {
   email_imap: 'E-Mail (IMAP/SMTP)',
@@ -332,8 +399,8 @@ function ChannelDialog(props: DialogProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="email_imap">E-Mail (IMAP/SMTP)</SelectItem>
-                  <SelectItem value="email_graph" disabled>E-Mail (MS 365 — Phase C.5)</SelectItem>
-                  <SelectItem value="email_gmail" disabled>E-Mail (Gmail — Phase C.5)</SelectItem>
+                  <SelectItem value="email_graph">E-Mail (Microsoft 365)</SelectItem>
+                  <SelectItem value="email_gmail">E-Mail (Google Workspace / Gmail)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -346,63 +413,69 @@ function ChannelDialog(props: DialogProps) {
           <div className="grid grid-cols-2 gap-2 rounded-md border bg-muted/30 p-3">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={inboundEnabled} onChange={(e) => setInboundEnabled(e.target.checked)} />
-              Eingehend (IMAP)
+              Eingehend
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={outboundEnabled} onChange={(e) => setOutboundEnabled(e.target.checked)} />
-              Ausgehend (SMTP)
+              Ausgehend
             </label>
           </div>
 
-          {inboundEnabled ? (
-            <fieldset className="space-y-2 rounded-md border p-3">
-              <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">IMAP</legend>
-              <div className="grid grid-cols-[1fr_100px_120px] gap-2">
-                <Input value={imapHost} onChange={(e) => setImapHost(e.target.value)} placeholder="Host (imap.firma.de)" />
-                <Input value={imapPort} onChange={(e) => setImapPort(e.target.value)} placeholder="Port" />
-                <Select value={imapEnc} onValueChange={setImapEnc}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ssl">SSL</SelectItem>
-                    <SelectItem value="tls">TLS</SelectItem>
-                    <SelectItem value="">keine</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Input value={imapFolder} onChange={(e) => setImapFolder(e.target.value)} placeholder="Folder (INBOX)" />
-            </fieldset>
-          ) : null}
+          {adapterCode === 'email_imap' ? (
+            <>
+              {inboundEnabled ? (
+                <fieldset className="space-y-2 rounded-md border p-3">
+                  <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">IMAP</legend>
+                  <div className="grid grid-cols-[1fr_100px_120px] gap-2">
+                    <Input value={imapHost} onChange={(e) => setImapHost(e.target.value)} placeholder="Host (imap.firma.de)" />
+                    <Input value={imapPort} onChange={(e) => setImapPort(e.target.value)} placeholder="Port" />
+                    <Select value={imapEnc} onValueChange={setImapEnc}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ssl">SSL</SelectItem>
+                        <SelectItem value="tls">TLS</SelectItem>
+                        <SelectItem value="">keine</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Input value={imapFolder} onChange={(e) => setImapFolder(e.target.value)} placeholder="Folder (INBOX)" />
+                </fieldset>
+              ) : null}
 
-          {outboundEnabled ? (
-            <fieldset className="space-y-2 rounded-md border p-3">
-              <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">SMTP</legend>
-              <div className="grid grid-cols-[1fr_100px_120px] gap-2">
-                <Input value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} placeholder="Host (smtp.firma.de)" />
-                <Input value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} placeholder="Port" />
-                <Select value={smtpEnc} onValueChange={setSmtpEnc}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ssl">SSL</SelectItem>
-                    <SelectItem value="tls">STARTTLS</SelectItem>
-                    <SelectItem value="">keine</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Input value={smtpFrom} onChange={(e) => setSmtpFrom(e.target.value)} placeholder="From-Adresse (sonst = Adresse oben)" />
-            </fieldset>
-          ) : null}
+              {outboundEnabled ? (
+                <fieldset className="space-y-2 rounded-md border p-3">
+                  <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">SMTP</legend>
+                  <div className="grid grid-cols-[1fr_100px_120px] gap-2">
+                    <Input value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} placeholder="Host (smtp.firma.de)" />
+                    <Input value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} placeholder="Port" />
+                    <Select value={smtpEnc} onValueChange={setSmtpEnc}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ssl">SSL</SelectItem>
+                        <SelectItem value="tls">STARTTLS</SelectItem>
+                        <SelectItem value="">keine</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Input value={smtpFrom} onChange={(e) => setSmtpFrom(e.target.value)} placeholder="From-Adresse (sonst = Adresse oben)" />
+                </fieldset>
+              ) : null}
 
-          <fieldset className="space-y-2 rounded-md border p-3">
-            <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Auth</legend>
-            <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Benutzername" />
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={isEdit ? 'Passwort (leer = unverändert)' : 'Passwort'}
-              autoComplete="new-password"
-            />
-          </fieldset>
+              <fieldset className="space-y-2 rounded-md border p-3">
+                <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Auth</legend>
+                <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Benutzername" />
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={isEdit ? 'Passwort (leer = unverändert)' : 'Passwort'}
+                  autoComplete="new-password"
+                />
+              </fieldset>
+            </>
+          ) : (
+            <OAuthConnectBlock channelId={isEdit ? props.channel.id ?? null : null} adapterCode={adapterCode} hasToken={Boolean(((initial?.authConfig ?? {}) as Record<string, unknown>).accessToken)} />
+          )}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={props.onClose} disabled={saving}>Abbrechen</Button>
