@@ -1,4 +1,6 @@
 import { useLogin } from '@refinedev/core';
+import { AlertCircle } from 'lucide-react';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,7 +19,13 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
-  const { mutate: login, isPending, error } = useLogin<LoginValues>();
+  const { mutate: login, isPending } = useLogin<LoginValues>();
+  // Refine's useLogin().error doesn't surface auth-provider failures that
+  // return { success: false, error: ... } — those just show a toast. So
+  // we track the message ourselves via the onError callback to keep a
+  // visible red banner inside the form.
+  const [loginError, setLoginError] = useState<string | null>(null);
+
   const {
     register,
     control,
@@ -28,7 +36,25 @@ export function LoginPage() {
     defaultValues: { email: '', password: '', remember: true },
   });
 
-  const onSubmit = handleSubmit((values) => login(values as LoginValues));
+  const onSubmit = handleSubmit((values) => {
+    setLoginError(null);
+    login(values as LoginValues, {
+      onError: (err) => {
+        const msg =
+          (err as { message?: string } | undefined)?.message ??
+          'Ungültige Zugangsdaten.';
+        setLoginError(msg);
+      },
+      onSuccess: (data) => {
+        // Refine packs a non-throwing auth-provider failure as a
+        // resolved value with `success: false` — surface those too.
+        if (data && typeof data === 'object' && 'success' in data && data.success === false) {
+          const errObj = (data as { error?: { message?: string } }).error;
+          setLoginError(errObj?.message ?? 'Ungültige Zugangsdaten.');
+        }
+      },
+    });
+  });
 
   return (
     <div className="min-h-screen grid place-items-center bg-muted/40 p-6">
@@ -93,10 +119,14 @@ export function LoginPage() {
               geschlossen wird. Für geteilte Rechner empfohlen.
             </p>
 
-            {error?.message ? (
-              <p className="text-sm text-destructive" role="alert">
-                {error.message}
-              </p>
+            {loginError ? (
+              <div
+                role="alert"
+                className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
+                <AlertCircle className="size-4 shrink-0 mt-0.5" />
+                <span>{loginError}</span>
+              </div>
             ) : null}
 
             <Button type="submit" className="w-full" disabled={isPending}>
