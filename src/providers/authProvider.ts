@@ -47,19 +47,25 @@ export const authProvider: AuthProvider = {
       );
       writeAuth(JWT_STORAGE_KEY, data.token);
       writeAuth(REFRESH_STORAGE_KEY, data.refresh_token);
-
-      const me = await api.get('/auth/me');
-      const workspaceId = me.data?.workspaces?.[0]?.id ?? me.data?.workspaceId;
-      if (workspaceId) {
-        writeAuth(WORKSPACE_STORAGE_KEY, workspaceId);
-      }
-      return { success: true, redirectTo: '/' };
-    } catch (e) {
+    } catch {
+      // Only the credentials-check is allowed to fail with "LoginFailed".
       return {
         success: false,
         error: { name: 'LoginFailed', message: 'Ungültige Zugangsdaten.' },
       };
     }
+    // Workspace bootstrap is best-effort and must NOT roll back the login.
+    // If /auth/me throws transiently, check() will retry on next nav.
+    try {
+      const me = await api.get('/auth/me');
+      const workspaceId = me.data?.workspaces?.[0]?.id ?? me.data?.workspaceId;
+      if (workspaceId) {
+        writeAuth(WORKSPACE_STORAGE_KEY, workspaceId);
+      }
+    } catch {
+      // intentional fallthrough
+    }
+    return { success: true, redirectTo: '/' };
   },
 
   async logout() {
@@ -79,6 +85,24 @@ export const authProvider: AuthProvider = {
     const jwt = readAuth(JWT_STORAGE_KEY);
     if (!jwt) {
       return { authenticated: false, redirectTo: '/login' };
+    }
+    // Bootstrap wt.workspace if missing. Two real causes:
+    //  - The JWT is older than the workspace-persistence code (legacy
+    //    session from before that ship).
+    //  - The original login picked up the JWT successfully but /auth/me
+    //    threw transiently and we never reached the workspace-set step.
+    // Either way, requests that need X-Workspace-Id (PAT-creates,
+    // workspace-scoped PATCH, etc.) silently fail until the user
+    // re-logs in — fix that here once per affected boot.
+    if (!readAuth(WORKSPACE_STORAGE_KEY)) {
+      try {
+        const me = await api.get('/auth/me');
+        const ws = me.data?.workspaces?.[0]?.id ?? me.data?.workspaceId;
+        if (ws) writeAuth(WORKSPACE_STORAGE_KEY, ws);
+      } catch {
+        // /auth/me itself failed — let the request that revealed this
+        // surface its own error; we'll get another chance next nav.
+      }
     }
     return { authenticated: true };
   },
