@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useUserDirectory, userDisplayName } from '@/hooks/useUserDirectory';
 import { DocumentBacklinksPanel } from './DocumentBacklinksPanel';
 import { DocumentHistoryDrawer } from './DocumentHistoryDrawer';
+import { detectWorktideLink } from './linkCard';
 import { documentSchema } from './mention';
 import { api } from '@/lib/api';
 import type { Row } from '@/lib/refine';
@@ -110,6 +111,33 @@ function EditorBody({
     }, 200);
     return () => window.clearTimeout(t);
   }, []);
+
+  // Paste-handler: if the user pastes plain text that looks like a
+  // Worktide reference (URL, IRI, or task identifier like WORK-12),
+  // intercept and insert a `linkcard` inline content instead of the
+  // raw text. ProseMirror's view has its own paste-pipeline so we
+  // hook on the `clipboardTextParser` slot.
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const view = (editor as any).prosemirrorView;
+    if (!view) return;
+    const dom = view.dom as HTMLElement;
+    const onPaste = (e: ClipboardEvent) => {
+      const text = e.clipboardData?.getData('text/plain') ?? '';
+      const detected = detectWorktideLink(text);
+      if (!detected) return;
+      e.preventDefault();
+      editor.insertInlineContent([
+        {
+          type: 'linkcard',
+          props: { url: detected, fallback: detected },
+        },
+        ' ',
+      ]);
+    };
+    dom.addEventListener('paste', onPaste);
+    return () => dom.removeEventListener('paste', onPaste);
+  }, [editor]);
 
   const persist = async (body: string) => {
     setSavingBody(true);

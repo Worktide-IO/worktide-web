@@ -5,6 +5,8 @@ import {
 } from '@blocknote/core';
 import { createReactInlineContentSpec } from '@blocknote/react';
 
+import { LinkCard } from './linkCard';
+
 /**
  * Custom inline content for `@user`-mentions in BlockNote.
  *
@@ -50,5 +52,6 @@ export const documentSchema = BlockNoteSchema.create({
   inlineContentSpecs: {
     ...defaultInlineContentSpecs,
     mention: Mention,
+    linkcard: LinkCard,
   },
 });
