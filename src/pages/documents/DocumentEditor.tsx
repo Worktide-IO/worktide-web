@@ -3,7 +3,7 @@ import { BlockNoteSchema, defaultBlockSpecs } from '@blocknote/core';
 import { useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import '@blocknote/shadcn/style.css';
-import { Loader2, Trash2 } from 'lucide-react';
+import { History, Loader2, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -11,6 +11,7 @@ import type { DocumentJsonld } from '@/api/types/document/Jsonld';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DocumentHistoryDrawer } from './DocumentHistoryDrawer';
 import { api } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 
@@ -72,6 +73,7 @@ function EditorBody({
   const [title, setTitle] = useState(doc.name ?? '');
   const [savingTitle, setSavingTitle] = useState(false);
   const [savingBody, setSavingBody] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const bodyDebounce = useRef<number | null>(null);
   // Guard against the editor's first onChange (fired while applying
   // initialContent) overwriting persisted content with an empty doc.
@@ -206,6 +208,16 @@ function EditorBody({
           ) : (
             <span>gespeichert</span>
           )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            onClick={() => setHistoryOpen(true)}
+            aria-label="Versionsverlauf"
+            title="Versionsverlauf"
+          >
+            <History className="size-4 text-muted-foreground" />
+          </Button>
           <Button variant="ghost" size="icon" className="size-8" onClick={remove} aria-label="Löschen">
             <Trash2 className="size-4 text-muted-foreground" />
           </Button>
@@ -214,6 +226,19 @@ function EditorBody({
       <div className="flex-1 overflow-y-auto">
         <BlockNoteView editor={editor} theme="light" />
       </div>
+      <DocumentHistoryDrawer
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        documentId={documentId}
+        onRestored={() => {
+          setHistoryOpen(false);
+          void invalidate({ resource: 'documents', invalidates: ['list', 'detail'], id: documentId });
+          // Force a key-swap-style remount by reloading via the URL —
+          // easier than fiddling with editor.replaceBlocks here.
+          window.location.reload();
+        }}
+      />
     </>
   );
 }
+
