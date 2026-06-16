@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { WorkspaceTagsCard } from '@/components/WorkspaceTagsCard';
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 
@@ -62,6 +63,7 @@ export function WorkspaceSettingsPage() {
       <WorkspaceForm />
       <WorkspaceSecurityCard />
       <WorkspaceProjectNumberCard />
+      <WorkspaceTagsCard />
       <WorkspaceStats />
     </SettingsLayout>
   );
