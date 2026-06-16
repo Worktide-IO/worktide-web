@@ -12,6 +12,7 @@ import {
 import { useList, useUpdate } from '@refinedev/core';
 import { Ban, Flag, ListTree } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import type { TaskDependencyJsonld } from '@/api/types/taskDependency/Jsonld';
@@ -27,6 +28,7 @@ import { TrackerChip } from '@/components/TrackerChip';
 import { VersionBadge } from '@/components/VersionBadge';
 import { useProjectVersions } from '@/hooks/useProjectVersions';
 import { useTrackers } from '@/hooks/useTrackers';
+import { useWorkflowTransitions } from '@/hooks/useWorkflowTransitions';
 import { TaskDetailSheet } from '@/components/TaskDetailSheet';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
 
@@ -91,6 +93,10 @@ export function ProjectBoardTab({ projectIri }: Props) {
     pagination: { mode: 'off' },
     queryOptions: { enabled: Boolean(projectIri) },
   });
+
+  // Pre-check workflow rules client-side so a forbidden DnD shows a
+  // useful toast instead of silently snapping back after a 403.
+  const { allowedToStatuses } = useWorkflowTransitions();
 
   const subtaskCountByParent = useMemo(() => {
     const m: Record<string, number> = {};
@@ -168,6 +174,18 @@ export function ProjectBoardTab({ projectIri }: Props) {
 
     const task = (tasks?.data ?? []).find((t) => t['@id'] === taskIri);
     if (!task || !task.id || task.status === newStatusIri) return;
+
+    // Pre-check the workflow gate so we can show a useful "this move
+    // isn't part of the workflow" toast instead of the bare 403 the
+    // backend would throw. Role-based 403s still surface from the
+    // server because the SPA does NOT replicate role-filtering.
+    const allowed = allowedToStatuses(task.tracker ?? null, task.status ?? null);
+    if (allowed && !allowed.has(newStatusIri)) {
+      toast.error(
+        `Statuswechsel nicht im Workflow erlaubt — siehe Workspace-Einstellungen → Workflows.`,
+      );
+      return;
+    }
 
     updateTask({
       resource: 'tasks',
