@@ -1,5 +1,4 @@
-import { useGetIdentity, useList, useOne } from '@refinedev/core';
-import { useQueryClient } from '@tanstack/react-query';
+import { useGetIdentity, useInvalidate, useList, useOne } from '@refinedev/core';
 import {
   ArrowDown,
   ArrowRight,
@@ -166,7 +165,7 @@ function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () 
 // ----- Subtasks ----------------------------------------------------------
 
 function SubtasksSection({ parent }: { parent: Row<TaskJsonld> }) {
-  const qc = useQueryClient();
+  const invalidate = useInvalidate();
   const { data: identity } = useGetIdentity<Identity>();
   const [draft, setDraft] = useState('');
   const [creating, setCreating] = useState(false);
@@ -222,7 +221,7 @@ function SubtasksSection({ parent }: { parent: Row<TaskJsonld> }) {
         createdBy: identity?.id ? `/v1/users/${identity.id}` : undefined,
       });
       setDraft('');
-      void qc.invalidateQueries({ queryKey: ['tasks'] });
+      void invalidate({ resource: 'tasks', invalidates: ['list'] });
     } catch {
       toast.error('Konnte Subtask nicht anlegen.');
     } finally {
@@ -298,7 +297,7 @@ function SubtasksSection({ parent }: { parent: Row<TaskJsonld> }) {
 
 function DependenciesSection({ task }: { task: Row<TaskJsonld> }) {
   const taskIri = task['@id'] ?? '';
-  const qc = useQueryClient();
+  const invalidate = useInvalidate();
   const [showAdd, setShowAdd] = useState(false);
 
   // "Wird blockiert von" = wir sind successor — der predecessor blockiert uns.
@@ -323,7 +322,7 @@ function DependenciesSection({ task }: { task: Row<TaskJsonld> }) {
     if (!window.confirm('Dependency wirklich entfernen?')) return;
     try {
       await api.delete(`/task_dependencies/${id}`);
-      void qc.invalidateQueries({ queryKey: ['task_dependencies'] });
+      void invalidate({ resource: 'task_dependencies', invalidates: ['list'] });
     } catch {
       toast.error('Konnte Dependency nicht entfernen.');
     }
@@ -346,7 +345,7 @@ function DependenciesSection({ task }: { task: Row<TaskJsonld> }) {
         <AddDependencyForm
           task={task}
           onClose={() => setShowAdd(false)}
-          onCreated={() => qc.invalidateQueries({ queryKey: ['task_dependencies'] })}
+          onCreated={() => invalidate({ resource: 'task_dependencies', invalidates: ['list'] })}
         />
       ) : null}
 
