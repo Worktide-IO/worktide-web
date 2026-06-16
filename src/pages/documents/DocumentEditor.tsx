@@ -11,6 +11,7 @@ import type { DocumentJsonld } from '@/api/types/document/Jsonld';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DocumentBacklinksPanel } from './DocumentBacklinksPanel';
 import { DocumentHistoryDrawer } from './DocumentHistoryDrawer';
 import { api } from '@/lib/api';
 import type { Row } from '@/lib/refine';
@@ -19,6 +20,7 @@ type Props = {
   documentId: string;
   onRenamed?: () => void;
   onDeleted?: () => void;
+  onNavigate?: (documentId: string) => void;
 };
 
 const schema = BlockNoteSchema.create({
@@ -32,7 +34,7 @@ const schema = BlockNoteSchema.create({
  * (on mount); creating the editor before the body arrives would lock
  * us to an empty paragraph forever.
  */
-export function DocumentEditor({ documentId, onRenamed, onDeleted }: Props) {
+export function DocumentEditor({ documentId, onRenamed, onDeleted, onNavigate }: Props) {
   const { result: doc, query } = useOne<Row<DocumentJsonld>>({
     resource: 'documents',
     id: documentId,
@@ -54,6 +56,7 @@ export function DocumentEditor({ documentId, onRenamed, onDeleted }: Props) {
       documentId={documentId}
       onRenamed={onRenamed}
       onDeleted={onDeleted}
+      onNavigate={onNavigate}
     />
   );
 }
@@ -63,11 +66,13 @@ function EditorBody({
   documentId,
   onRenamed,
   onDeleted,
+  onNavigate,
 }: {
   doc: Row<DocumentJsonld>;
   documentId: string;
   onRenamed?: () => void;
   onDeleted?: () => void;
+  onNavigate?: (id: string) => void;
 }) {
   const invalidate = useInvalidate();
   const [title, setTitle] = useState(doc.name ?? '');
@@ -225,6 +230,9 @@ function EditorBody({
       </div>
       <div className="flex-1 overflow-y-auto">
         <BlockNoteView editor={editor} theme="light" />
+        {onNavigate ? (
+          <DocumentBacklinksPanel documentId={documentId} onOpen={onNavigate} />
+        ) : null}
       </div>
       <DocumentHistoryDrawer
         open={historyOpen}
