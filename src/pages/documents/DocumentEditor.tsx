@@ -1,6 +1,5 @@
 import { useInvalidate, useOne } from '@refinedev/core';
-import { BlockNoteSchema, defaultBlockSpecs } from '@blocknote/core';
-import { useCreateBlockNote } from '@blocknote/react';
+import { useCreateBlockNote, SuggestionMenuController } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import '@blocknote/shadcn/style.css';
 import { History, Loader2, Trash2 } from 'lucide-react';
@@ -11,8 +10,10 @@ import type { DocumentJsonld } from '@/api/types/document/Jsonld';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserDirectory, userDisplayName } from '@/hooks/useUserDirectory';
 import { DocumentBacklinksPanel } from './DocumentBacklinksPanel';
 import { DocumentHistoryDrawer } from './DocumentHistoryDrawer';
+import { documentSchema } from './mention';
 import { api } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 
@@ -23,9 +24,7 @@ type Props = {
   onNavigate?: (documentId: string) => void;
 };
 
-const schema = BlockNoteSchema.create({
-  blockSpecs: defaultBlockSpecs,
-});
+const schema = documentSchema;
 
 /**
  * Top-level wrapper — fetches the document and only mounts the inner
@@ -229,7 +228,9 @@ function EditorBody({
         </div>
       </div>
       <div className="flex-1 overflow-y-auto">
-        <BlockNoteView editor={editor} theme="light" />
+        <BlockNoteView editor={editor} theme="light">
+          <MentionSuggestionController editor={editor} />
+        </BlockNoteView>
         {onNavigate ? (
           <DocumentBacklinksPanel documentId={documentId} onOpen={onNavigate} />
         ) : null}
@@ -247,6 +248,54 @@ function EditorBody({
         }}
       />
     </>
+  );
+}
+
+/**
+ * Wires `@`-mentions into the editor. Typing `@` opens a floating
+ * menu fed by the shared user directory; picking a user inserts a
+ * `mention` inline-content block that the DocumentSchema renders as
+ * a coloured chip. The chip stores both the user IRI and the
+ * display-name-at-time-of-mention so deleted users still read
+ * sensibly. Suggestions are filtered against the typed query
+ * client-side — the user directory is small (workspace members) so
+ * this never needs server-side search.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function MentionSuggestionController({ editor }: { editor: any }) {
+  const { users } = useUserDirectory();
+  return (
+    <SuggestionMenuController
+      triggerCharacter="@"
+      getItems={async (query) => {
+        const q = (query ?? '').trim().toLowerCase();
+        const matches = users
+          .filter((u) => {
+            if (!q) return true;
+            const name = userDisplayName(u).toLowerCase();
+            const mail = (u.email ?? '').toLowerCase();
+            return name.includes(q) || mail.includes(q);
+          })
+          .slice(0, 8);
+        return matches.map((u) => {
+          const title = userDisplayName(u);
+          const userIri = u['@id'] ?? '';
+          return {
+            title,
+            subtext: u.email ?? undefined,
+            onItemClick: () => {
+              editor.insertInlineContent([
+                {
+                  type: 'mention',
+                  props: { userIri, name: title },
+                },
+                ' ',
+              ]);
+            },
+          };
+        });
+      }}
+    />
   );
 }
 
