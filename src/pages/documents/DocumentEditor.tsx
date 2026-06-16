@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useUserDirectory, userDisplayName } from '@/hooks/useUserDirectory';
 import { DocumentBacklinksPanel } from './DocumentBacklinksPanel';
 import { DocumentHistoryDrawer } from './DocumentHistoryDrawer';
+import { DocumentWorkflowPanel } from './DocumentWorkflowPanel';
 import { detectWorktideLink } from './linkCard';
 import { documentSchema } from './mention';
 import { api } from '@/lib/api';
@@ -230,6 +231,11 @@ function EditorBody({
           }}
           placeholder="Untitled"
           className="border-none bg-transparent px-0 text-2xl font-semibold shadow-none focus-visible:ring-0"
+        />
+        <DocumentWorkflowPanel
+          documentId={documentId}
+          state={((doc as unknown as { workflowState?: string }).workflowState ?? 'draft') as 'draft' | 'review' | 'published'}
+          reviewers={((doc as unknown as { reviewers?: string[] }).reviewers) ?? []}
         />
         <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
           {savingTitle || savingBody ? (
