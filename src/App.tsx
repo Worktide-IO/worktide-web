@@ -15,6 +15,7 @@ import { ActivityPage } from '@/pages/activity/ActivityPage';
 import { CalendarPage } from '@/pages/calendar/CalendarPage';
 import { ImportPage } from '@/pages/imports/ImportPage';
 import { AccessTokensPage } from '@/pages/access-tokens/AccessTokensPage';
+import { DocumentsPage } from '@/pages/documents/DocumentsPage';
 import { PermissionsMatrixPage } from '@/pages/permissions/PermissionsMatrixPage';
 import { ReportsPage } from '@/pages/reports/ReportsPage';
 import { TeamMembersListPage } from '@/pages/team-members/TeamMembersListPage';
@@ -198,7 +199,7 @@ export default function App() {
               <Route path="/time-entries" element={<TimeEntriesListPage />} />
               <Route path="/activity" element={<ActivityPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
-              <Route path="/documents" element={<PlaceholderPage resource="documents" />} />
+              <Route path="/documents" element={<DocumentsPage />} />
               <Route path="/personen" element={<TeamMembersListPage />} />
               <Route path="/auswertungen" element={<ReportsPage />} />
               <Route path="/customers" element={<CustomersListPage />} />
