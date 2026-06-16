@@ -2,6 +2,7 @@ import { useList, useTable } from '@refinedev/core';
 import { Plus, Search, Wifi, WifiOff } from 'lucide-react';
 import { ProjectStarButton } from '@/components/ProjectStarButton';
 import { TagChips } from '@/components/TagChips';
+import { TagPicker } from '@/components/TagPicker';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -46,6 +47,7 @@ export function ProjectsListPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
 
   const { tableQuery, setFilters, setCurrentPage } = useTable<Row<ProjectJsonld>>({
     resource: 'projects',
@@ -80,10 +82,13 @@ export function ProjectsListPage() {
     return map;
   }, [customers]);
 
-  const applyFilters = (s: string, status: string) => {
+  const applyFilters = (s: string, status: string, tags: string[]) => {
     const filters = [];
     if (s) filters.push({ field: 'name', operator: 'contains' as const, value: s });
     if (status !== 'all') filters.push({ field: 'status', operator: 'eq' as const, value: status });
+    if (tags.length > 0) {
+      filters.push({ field: 'tags', operator: 'eq' as const, value: tags.join(',') });
+    }
     setFilters(filters, 'replace');
     setCurrentPage(1);
   };
@@ -118,7 +123,7 @@ export function ProjectsListPage() {
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
-                  applyFilters(e.target.value, statusFilter);
+                  applyFilters(e.target.value, statusFilter, tagFilter);
                 }}
                 className="pl-8"
               />
@@ -127,7 +132,7 @@ export function ProjectsListPage() {
               value={statusFilter}
               onValueChange={(v) => {
                 setStatusFilter(v);
-                applyFilters(search, v);
+                applyFilters(search, v, tagFilter);
               }}
             >
               <SelectTrigger className="w-56">
@@ -142,6 +147,16 @@ export function ProjectsListPage() {
                 ))}
               </SelectContent>
             </Select>
+            <TagPicker
+              value={tagFilter}
+              onChange={(next) => {
+                setTagFilter(next);
+                applyFilters(search, statusFilter, next);
+              }}
+              scope="project"
+              disableCreate
+              placeholder="Nach Tags filtern…"
+            />
           </div>
         </CardHeader>
         <CardContent>
