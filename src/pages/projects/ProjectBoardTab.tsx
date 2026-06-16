@@ -10,10 +10,11 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useList, useUpdate } from '@refinedev/core';
-import { Flag } from 'lucide-react';
+import { Ban, Flag, ListTree } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
+import type { TaskDependencyJsonld } from '@/api/types/taskDependency/Jsonld';
 import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TaskDetailSheet } from '@/components/TaskDetailSheet';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
 
 const PRIORITY_VARIANT: Record<string, 'outline' | 'secondary' | 'default' | 'destructive'> = {
@@ -75,6 +77,47 @@ export function ProjectBoardTab({ projectIri }: Props) {
   // Live updates on either tasks or statuses re-render the board.
   useLiveResource('tasks');
   useLiveResource('task_statuses');
+
+  // Subtask counts + "is blocked" lookup powered by the dependency
+  // table. We pull dependencies once per project — cheap because they
+  // stay rare per board.
+  const { result: dependencies } = useList<Row<TaskDependencyJsonld>>({
+    resource: 'task_dependencies',
+    pagination: { mode: 'off' },
+    queryOptions: { enabled: Boolean(projectIri) },
+  });
+
+  const subtaskCountByParent = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const t of tasks?.data ?? []) {
+      if (t.parent) m[t.parent] = (m[t.parent] ?? 0) + 1;
+    }
+    return m;
+  }, [tasks]);
+
+  const blockedTaskIris = useMemo(() => {
+    const open = new Set<string>();
+    const openStatusIris = new Set<string>();
+    for (const s of statuses?.data ?? []) {
+      const done = (s as { completed?: boolean }).completed ?? s.isCompleted ?? false;
+      if (!done && s['@id']) openStatusIris.add(s['@id']);
+    }
+    const taskByIri = new Map<string, Row<TaskJsonld>>();
+    for (const t of tasks?.data ?? []) {
+      if (t['@id']) taskByIri.set(t['@id'], t);
+    }
+    for (const d of dependencies?.data ?? []) {
+      if (d.type !== 'finish_to_start') continue;
+      const pred = d.predecessor ? taskByIri.get(d.predecessor) : null;
+      if (!pred || !pred.status) continue;
+      if (openStatusIris.has(pred.status) && d.successor) {
+        open.add(d.successor);
+      }
+    }
+    return open;
+  }, [dependencies, statuses, tasks]);
+
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
   const { mutate: updateTask } = useUpdate<Row<TaskJsonld>>();
 
@@ -156,12 +199,19 @@ export function ProjectBoardTab({ projectIri }: Props) {
             key={status['@id']}
             status={status}
             tasks={tasksByStatus[status['@id'] ?? ''] ?? []}
+            subtaskCountByParent={subtaskCountByParent}
+            blockedTaskIris={blockedTaskIris}
+            onOpenTask={(iri) => setOpenTaskId(iri)}
           />
         ))}
       </div>
       <DragOverlay>
         {activeTask ? <TaskCard task={activeTask} dragging /> : null}
       </DragOverlay>
+      <TaskDetailSheet
+        taskId={openTaskId?.split('/').pop() ?? null}
+        onOpenChange={(o) => !o && setOpenTaskId(null)}
+      />
     </DndContext>
   );
 }
@@ -169,9 +219,15 @@ export function ProjectBoardTab({ projectIri }: Props) {
 function BoardColumn({
   status,
   tasks,
+  subtaskCountByParent,
+  blockedTaskIris,
+  onOpenTask,
 }: {
   status: Row<TaskStatusJsonld>;
   tasks: Row<TaskJsonld>[];
+  subtaskCountByParent: Record<string, number>;
+  blockedTaskIris: Set<string>;
+  onOpenTask: (iri: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status['@id'] ?? '' });
   return (
@@ -199,14 +255,34 @@ function BoardColumn({
             Keine Aufgaben
           </p>
         ) : (
-          tasks.map((t) => <TaskCard key={t['@id']} task={t} />)
+          tasks.map((t) => (
+            <TaskCard
+              key={t['@id']}
+              task={t}
+              subtaskCount={t['@id'] ? subtaskCountByParent[t['@id']] ?? 0 : 0}
+              isBlocked={t['@id'] ? blockedTaskIris.has(t['@id']) : false}
+              onOpen={() => t['@id'] && onOpenTask(t['@id'])}
+            />
+          ))
         )}
       </div>
     </div>
   );
 }
 
-function TaskCard({ task, dragging = false }: { task: Row<TaskJsonld>; dragging?: boolean }) {
+function TaskCard({
+  task,
+  dragging = false,
+  subtaskCount = 0,
+  isBlocked = false,
+  onOpen,
+}: {
+  task: Row<TaskJsonld>;
+  dragging?: boolean;
+  subtaskCount?: number;
+  isBlocked?: boolean;
+  onOpen?: () => void;
+}) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: task['@id'] ?? '',
     disabled: dragging,
@@ -217,18 +293,43 @@ function TaskCard({ task, dragging = false }: { task: Row<TaskJsonld>; dragging?
       ref={dragging ? undefined : setNodeRef}
       {...(dragging ? {} : attributes)}
       {...(dragging ? {} : listeners)}
+      onClick={(e) => {
+        // dnd-kit fires PointerDown→Move on drag-start; a plain click
+        // (no drag) is what we want to convert into an open-action.
+        if (dragging || isDragging) return;
+        e.stopPropagation();
+        onOpen?.();
+      }}
       className={cn(
-        'cursor-grab select-none border bg-background py-2 shadow-sm transition',
+        'cursor-pointer select-none border bg-background py-2 shadow-sm transition',
         isDragging && !dragging && 'opacity-30',
         dragging && 'shadow-lg ring-2 ring-primary/30',
+        isBlocked && 'ring-1 ring-orange-300 dark:ring-orange-700',
       )}
     >
       <CardContent className="space-y-1.5 px-3">
         <div className="flex items-start justify-between gap-2">
           <span className="font-mono text-[10px] text-muted-foreground">{task.identifier}</span>
-          {task.isPrio ? (
-            <Flag className="size-3 text-orange-500" aria-label="Priorisiert" />
-          ) : null}
+          <div className="flex items-center gap-1.5">
+            {isBlocked ? (
+              <Ban
+                className="size-3 text-orange-500"
+                aria-label="Blockiert durch andere Aufgabe"
+              />
+            ) : null}
+            {subtaskCount > 0 ? (
+              <span
+                className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground"
+                aria-label={`${subtaskCount} Subtasks`}
+              >
+                <ListTree className="size-3" />
+                {subtaskCount}
+              </span>
+            ) : null}
+            {task.isPrio ? (
+              <Flag className="size-3 text-orange-500" aria-label="Priorisiert" />
+            ) : null}
+          </div>
         </div>
         <p className="text-sm font-medium leading-snug">{task.title}</p>
         <div className="flex items-center justify-between gap-2 pt-0.5">

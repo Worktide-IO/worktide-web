@@ -9,6 +9,7 @@ import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { BulkActionsBar } from '@/components/BulkActionsBar';
 import { SavedViewsBar } from '@/components/SavedViewsBar';
+import { TaskDetailSheet } from '@/components/TaskDetailSheet';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -136,6 +137,7 @@ export function TasksListPage() {
 
   // Bulk-edit selection state — set of task IRIs.
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const allSelected = rows.length > 0 && rows.every((r) => r['@id'] && selected.has(r['@id']));
   const someSelected = rows.some((r) => r['@id'] && selected.has(r['@id']));
 
@@ -273,6 +275,13 @@ export function TasksListPage() {
                     <TableRow
                       key={t['@id']}
                       data-state={isChecked ? 'selected' : undefined}
+                      className="cursor-pointer"
+                      onClick={(e) => {
+                        // Clicking the checkbox shouldn't open the sheet.
+                        const target = e.target as HTMLElement;
+                        if (target.closest('[role=checkbox]') || target.tagName === 'INPUT') return;
+                        if (t.id) setOpenTaskId(t.id);
+                      }}
                     >
                       <TableCell>
                         <Checkbox
@@ -328,6 +337,11 @@ export function TasksListPage() {
       <BulkActionsBar
         selectedIris={Array.from(selected)}
         onClear={() => setSelected(new Set())}
+      />
+
+      <TaskDetailSheet
+        taskId={openTaskId}
+        onOpenChange={(o) => !o && setOpenTaskId(null)}
       />
     </div>
   );
