@@ -151,6 +151,38 @@ export type ApiTasksGetCollectionQueryParams = {
     /**
      * @type string | undefined
     */
+    "startOn[before]"?: string;
+    /**
+     * @type string | undefined
+    */
+    "startOn[strictly_before]"?: string;
+    /**
+     * @type string | undefined
+    */
+    "startOn[after]"?: string;
+    /**
+     * @type string | undefined
+    */
+    "startOn[strictly_after]"?: string;
+    /**
+     * @type string | undefined
+    */
+    "scheduledEnd[before]"?: string;
+    /**
+     * @type string | undefined
+    */
+    "scheduledEnd[strictly_before]"?: string;
+    /**
+     * @type string | undefined
+    */
+    "scheduledEnd[after]"?: string;
+    /**
+     * @type string | undefined
+    */
+    "scheduledEnd[strictly_after]"?: string;
+    /**
+     * @type string | undefined
+    */
     "startedOn[before]"?: string;
     /**
      * @type string | undefined
@@ -220,6 +252,14 @@ export type ApiTasksGetCollectionQueryParams = {
      * @type boolean | undefined
     */
     "exists[dueOn]"?: boolean;
+    /**
+     * @type boolean | undefined
+    */
+    "exists[startOn]"?: boolean;
+    /**
+     * @type boolean | undefined
+    */
+    "exists[scheduledEnd]"?: boolean;
     /**
      * @type boolean | undefined
     */

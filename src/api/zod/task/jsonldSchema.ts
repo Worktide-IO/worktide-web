@@ -19,6 +19,7 @@ export const taskJsonldSchema = z.lazy(() => hydraItemBaseSchemaSchema).and(z.ob
 "createdBy": z.string().nullish(),
 "dueOn": z.iso.datetime().nullish(),
 "startOn": z.iso.datetime().describe("Planned start (Soll). Used by Gantt and the AI auto-scheduler in\nPhase D — separate from `startedOn` (Ist, set when work begins).").nullish(),
+"scheduledEnd": z.iso.datetime().describe("Planned end (Soll) — companion to `startOn` for the Team-Planner.").nullish(),
 "startedOn": z.iso.datetime().nullish(),
 "estimatedMinutes": z.int().nullish(),
 "correlationId": z.uuid().describe("Idempotency anchor for inbound channels (CSV-Import, Mail-Inbound,\nWebhook-Replay, AI-Breakdown). Indexed but not unique — multiple\nchannels can collide deliberately on the same external reference.").nullish(),

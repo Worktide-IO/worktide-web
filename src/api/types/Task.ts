@@ -64,6 +64,11 @@ export type Task = {
     */
     startOn?: string | null;
     /**
+     * @description Planned end (Soll) — companion to `startOn` for the Team-Planner.
+     * @type string,null, date-time
+    */
+    scheduledEnd?: string | null;
+    /**
      * @type string,null, date-time
     */
     startedOn?: string | null;
