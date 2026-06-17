@@ -1,5 +1,6 @@
 import { useInvalidate, useList } from '@refinedev/core';
 import type { EventChangeArg, EventClickArg, EventDropArg, EventInput } from '@fullcalendar/core';
+import type { EventReceiveArg } from '@fullcalendar/interaction';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import resourceTimeGridPlugin from '@fullcalendar/resource-timegrid';
@@ -17,7 +18,9 @@ import { useLiveResource } from '@/lib/mercure';
 import { api } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 
+import { BacklogTray } from './BacklogTray';
 import { PlannerSidebar } from './PlannerSidebar';
+import { WorkloadOverlay } from './WorkloadOverlay';
 
 import '../calendar/calendar.css';
 
@@ -198,6 +201,58 @@ export function TeamPlannerPage() {
     }
   };
 
+  /**
+   * Drop from the BacklogTray onto the grid → schedule the task into
+   * the dropped slot under the dropped user. FullCalendar fires this
+   * for external draggables (tray items registered via the
+   * Draggable() helper).
+   */
+  const onEventReceive = async (arg: EventReceiveArg) => {
+    const taskIri = arg.event.id;
+    if (!taskIri) {
+      arg.event.remove();
+      return;
+    }
+    const taskId = taskIri.split('/').pop();
+    const start = arg.event.start;
+    const end = arg.event.end;
+    const newResource = arg.event.getResources()[0];
+    const newAssigneeIri = newResource?.id ?? null;
+    if (!taskId || !start) {
+      arg.event.remove();
+      return;
+    }
+    try {
+      const patch: Record<string, unknown> = {
+        startOn: start.toISOString(),
+        scheduledEnd: end ? end.toISOString() : null,
+      };
+      if (newAssigneeIri) {
+        // Drop-onto-user-column implicitly sets the assignee. The
+        // existing /v1/tasks/{id}/assignees endpoint owns the
+        // polymorphic TaskAssignee shape; this in-row patch carries
+        // a flat list so the simple case still works through PATCH.
+        patch.assignees = [newAssigneeIri];
+      }
+      await api.patch(`/tasks/${taskId}`, patch, {
+        headers: { 'Content-Type': 'application/merge-patch+json' },
+      });
+      void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: taskId });
+      toast.success('Aufgabe geplant.');
+    } catch (e) {
+      const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      toast.error(detail ?? 'Konnte Aufgabe nicht einplanen.');
+      // Remove the tray-spawned event so the next render re-pulls the
+      // task from the unscheduled list — keeping the tray correct.
+      arg.event.remove();
+    }
+  };
+
+  // Track current visible range so the WorkloadOverlay can query the
+  // right window. Populated from FullCalendar's datesSet callback so
+  // the overlay only re-queries when the range actually changes.
+  const [visibleRange, setVisibleRange] = useState<{ start: Date; end: Date } | null>(null);
+
   return (
     <div className="space-y-3">
       <div>
@@ -211,7 +266,7 @@ export function TeamPlannerPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-[260px_1fr] gap-3">
+      <div className="grid grid-cols-[260px_1fr_260px] gap-3">
         <PlannerSidebar
           users={users?.data ?? []}
           projects={projects?.data ?? []}
@@ -256,6 +311,18 @@ export function TeamPlannerPage() {
               </div>
             </div>
 
+            {/* Workload-Overlay strip — one line per user, day-cells
+                colour-coded by utilisation. Sits between the toolbar
+                and the calendar grid so it aligns with the user
+                columns once the layout settles. */}
+            {visibleRange ? (
+              <WorkloadOverlay
+                userIris={visibleResources.map((r) => r.id)}
+                from={visibleRange.start}
+                to={visibleRange.end}
+              />
+            ) : null}
+
             <FullCalendar
               ref={calRef}
               plugins={[resourceTimeGridPlugin, interactionPlugin]}
@@ -268,19 +335,30 @@ export function TeamPlannerPage() {
               slotMaxTime="20:00:00"
               nowIndicator
               editable
+              droppable
               eventResizableFromStart
               resources={visibleResources}
               events={events}
               eventClick={onEventClick}
               eventDrop={onEventChange}
               eventResize={onEventChange}
-              datesSet={updatePeriodLabel}
+              eventReceive={onEventReceive}
+              datesSet={(arg) => {
+                updatePeriodLabel();
+                setVisibleRange({ start: arg.start, end: arg.end });
+              }}
               height="auto"
               expandRows
               allDaySlot={false}
             />
           </CardContent>
         </Card>
+
+        <BacklogTray
+          tasks={tasks?.data ?? []}
+          projects={projects?.data ?? []}
+          activeProjectIris={activeProjectIris}
+        />
       </div>
     </div>
   );
