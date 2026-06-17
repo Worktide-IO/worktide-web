@@ -21,6 +21,7 @@ import { PermissionsMatrixPage } from '@/pages/permissions/PermissionsMatrixPage
 import { ConversationDetailPage } from '@/pages/inbox/ConversationDetailPage';
 import { ConversationsListPage } from '@/pages/inbox/ConversationsListPage';
 import { ReportsPage } from '@/pages/reports/ReportsPage';
+import { SourcesPage } from '@/pages/sources/SourcesPage';
 import { TeamMembersListPage } from '@/pages/team-members/TeamMembersListPage';
 import { ContactCreatePage } from '@/pages/contacts/ContactCreatePage';
 import { ContactEditPage } from '@/pages/contacts/ContactEditPage';
@@ -121,6 +122,11 @@ export default function App() {
               show: '/inbox/:id',
               meta: { label: 'Inbox', icon: 'Inbox', category: 'Arbeit' },
             },
+            {
+              name: 'sources',
+              list: '/sources',
+              meta: { label: 'Quellen', icon: 'Plug', category: 'Admin' },
+            },
 
             // ---- CRM -------------------------------------------------------
             {
@@ -215,6 +221,7 @@ export default function App() {
               <Route path="/auswertungen" element={<ReportsPage />} />
               <Route path="/inbox" element={<ConversationsListPage />} />
               <Route path="/inbox/:id" element={<ConversationDetailPage />} />
+              <Route path="/sources" element={<SourcesPage />} />
               <Route path="/customers" element={<CustomersListPage />} />
               <Route path="/customers/create" element={<CustomerCreatePage />} />
               <Route path="/customers/:id" element={<CustomerDetailPage />} />
