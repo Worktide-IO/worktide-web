@@ -103,6 +103,17 @@ export function SourceWizard({
       username: String(ac.username ?? ''),
       password: '',
       token: String(ic.token ?? ''),
+      // Redmine + Jira pre-fills. `baseUrl` is shared across both;
+      // adapter-specific keys never collide because we namespace the
+      // password-style fields (apiKey vs jiraPat etc.).
+      baseUrl: String(ic.baseUrl ?? ''),
+      projectId: String(ic.projectId ?? ''),
+      projectKey: String(ic.projectKey ?? ''),
+      jiraApiVersion: String(ic.apiVersion ?? '2'),
+      apiKey: '',
+      jiraPat: '',
+      jiraEmail: String(ac.email ?? ''),
+      jiraApiToken: '',
     };
   }, [existing]);
   useEffect(() => {
@@ -201,6 +212,27 @@ export function SourceWizard({
         if (Object.keys(authPatch).length || !isEdit) body.authConfig = authPatch;
       } else if (def.code === 'webhook_generic') {
         body.inboundConfig = { token: cfg.token };
+      } else if (def.code === 'redmine') {
+        body.inboundConfig = {
+          baseUrl: (cfg.baseUrl ?? '').replace(/\/$/, ''),
+          projectId: cfg.projectId || undefined,
+        };
+        if (cfg.apiKey) {
+          body.authConfig = { apiKey: cfg.apiKey };
+        }
+        body.entityTypes = ['task'];
+      } else if (def.code === 'jira') {
+        body.inboundConfig = {
+          baseUrl: (cfg.baseUrl ?? '').replace(/\/$/, ''),
+          apiVersion: cfg.jiraApiVersion || '2',
+          projectKey: cfg.projectKey || undefined,
+        };
+        const authPatch: Record<string, unknown> = {};
+        if (cfg.jiraPat) authPatch.personalAccessToken = cfg.jiraPat;
+        if (cfg.jiraEmail) authPatch.email = cfg.jiraEmail;
+        if (cfg.jiraApiToken) authPatch.apiToken = cfg.jiraApiToken;
+        if (Object.keys(authPatch).length) body.authConfig = authPatch;
+        body.entityTypes = ['task'];
       }
       // OAuth adapters don't need a configure PATCH — the OAuth flow
       // populates authConfig directly via the callback.
@@ -280,6 +312,14 @@ export function SourceWizard({
 
           {step === 'configure' && def.code === 'webhook_generic' ? (
             <WebhookConfigure token={cfg.token ?? ''} />
+          ) : null}
+
+          {step === 'configure' && def.code === 'redmine' ? (
+            <RedmineConfigure cfg={cfg} setField={setField} isEdit={isEdit} />
+          ) : null}
+
+          {step === 'configure' && def.code === 'jira' ? (
+            <JiraConfigure cfg={cfg} setField={setField} isEdit={isEdit} />
           ) : null}
 
           {step === 'configure' && def.auth === 'oauth' ? (
@@ -554,4 +594,105 @@ function generateToken(): string {
   const bytes = new Uint8Array(24);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function RedmineConfigure({
+  cfg, setField, isEdit,
+}: { cfg: Record<string, string>; setField: (k: string, v: string) => void; isEdit: boolean }) {
+  return (
+    <>
+      <fieldset className="space-y-2 rounded-md border p-3">
+        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Redmine-Server</legend>
+        <Input
+          value={cfg.baseUrl ?? ''}
+          onChange={(e) => setField('baseUrl', e.target.value)}
+          placeholder="https://projects.example.com"
+        />
+        <Input
+          value={cfg.projectId ?? ''}
+          onChange={(e) => setField('projectId', e.target.value)}
+          placeholder="Redmine-Projekt-ID oder -Key (optional, leer = alle)"
+        />
+      </fieldset>
+      <fieldset className="space-y-2 rounded-md border p-3">
+        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">API-Key</legend>
+        <Input
+          type="password"
+          value={cfg.apiKey ?? ''}
+          onChange={(e) => setField('apiKey', e.target.value)}
+          placeholder={isEdit ? 'API-Key (leer = unverändert)' : 'API-Key aus Redmine-Profil'}
+          autoComplete="new-password"
+        />
+        <p className="text-xs text-muted-foreground">
+          Profil → „API-Zugriffsschlüssel anzeigen". Wird X-Redmine-API-Key
+          Header gesendet, nicht in URL (sicher in Access-Logs).
+        </p>
+      </fieldset>
+    </>
+  );
+}
+
+function JiraConfigure({
+  cfg, setField, isEdit,
+}: { cfg: Record<string, string>; setField: (k: string, v: string) => void; isEdit: boolean }) {
+  const apiVersion = cfg.jiraApiVersion ?? '2';
+  return (
+    <>
+      <fieldset className="space-y-2 rounded-md border p-3">
+        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Jira-Server</legend>
+        <Input
+          value={cfg.baseUrl ?? ''}
+          onChange={(e) => setField('baseUrl', e.target.value)}
+          placeholder="https://jira.firma.de"
+        />
+        <div className="grid grid-cols-[150px_1fr] gap-2">
+          <Select value={apiVersion} onValueChange={(v) => setField('jiraApiVersion', v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2">API v2 (Server / DC)</SelectItem>
+              <SelectItem value="3">API v3 (Cloud)</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input
+            value={cfg.projectKey ?? ''}
+            onChange={(e) => setField('projectKey', e.target.value)}
+            placeholder="Projekt-Key (LW, PROJ ...) — optional"
+          />
+        </div>
+      </fieldset>
+      {apiVersion === '2' ? (
+        <fieldset className="space-y-2 rounded-md border p-3">
+          <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">PAT</legend>
+          <Input
+            type="password"
+            value={cfg.jiraPat ?? ''}
+            onChange={(e) => setField('jiraPat', e.target.value)}
+            placeholder={isEdit ? 'PAT (leer = unverändert)' : 'Personal Access Token'}
+            autoComplete="new-password"
+          />
+          <p className="text-xs text-muted-foreground">
+            Bei Jira Server/DC: Profil → Persönliche Zugangstokens → Token
+            anlegen mit Scope "Read + Write Issues". Wird als
+            Authorization: Bearer Header gesendet.
+          </p>
+        </fieldset>
+      ) : (
+        <fieldset className="space-y-2 rounded-md border p-3">
+          <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Cloud-Auth</legend>
+          <Input
+            value={cfg.jiraEmail ?? ''}
+            onChange={(e) => setField('jiraEmail', e.target.value)}
+            placeholder="Atlassian-Account-Email"
+          />
+          <Input
+            type="password"
+            value={cfg.jiraApiToken ?? ''}
+            onChange={(e) => setField('jiraApiToken', e.target.value)}
+            placeholder={isEdit ? 'API-Token (leer = unverändert)' : 'API-Token (id.atlassian.com → Security → Create API token)'}
+            autoComplete="new-password"
+          />
+        </fieldset>
+      )}
+    </>
+  );
 }

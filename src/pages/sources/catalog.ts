@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Bell, Bot, Cpu, Globe, Inbox, Mail, MessageSquare, Phone, Webhook } from 'lucide-react';
+import { Bell, Bot, Cpu, Globe, Inbox, Mail, MessageSquare, Phone, Ticket, Webhook } from 'lucide-react';
 
 /**
  * Statically-defined catalog of source types the SPA can offer.
@@ -13,7 +13,7 @@ import { Bell, Bot, Cpu, Globe, Inbox, Mail, MessageSquare, Phone, Webhook } fro
  * AdapterRegistry already knows what to do at runtime; this catalog
  * is just the marketing-y front face.
  */
-export type SourceCategory = 'mail' | 'chat' | 'monitoring' | 'webhook' | 'voice' | 'ai';
+export type SourceCategory = 'mail' | 'chat' | 'monitoring' | 'webhook' | 'voice' | 'ai' | 'ticketing';
 
 export type SourceTypeDef = {
   code: string;
@@ -23,10 +23,17 @@ export type SourceTypeDef = {
   icon: LucideIcon;
   available: boolean;
   /** Authentication flavor — drives which wizard step renders. */
-  auth: 'password' | 'oauth' | 'token' | 'none';
+  auth: 'password' | 'oauth' | 'token' | 'apikey_pat' | 'none';
   /** Hint shown in the empty-config form ("How to set this up"). */
   setupHint?: string;
 };
+
+/**
+ * Tag the auth flavour beyond the original four — `apikey_pat`
+ * covers Redmine API-keys and Jira PATs which look almost identical
+ * (single bearer string, base URL needed for the API host). The
+ * wizard renders a baseUrl + token-style form for both.
+ */
 
 export const SOURCE_CATALOG: SourceTypeDef[] = [
   {
@@ -66,6 +73,28 @@ export const SOURCE_CATALOG: SourceTypeDef[] = [
     available: true,
     auth: 'token',
     setupHint: 'Sender POSTet an die generierte URL — ein zufälliger Token in der URL authentifiziert.',
+  },
+
+  // --- Ticket-Systeme (live entity-sync, bidirektional) -----------
+  {
+    code: 'redmine',
+    label: 'Redmine',
+    description: 'Bidirectional Live-Sync: Worktide-Tasks ↔ Redmine-Issues. Title + Description, mehr Felder folgen.',
+    category: 'ticketing',
+    icon: Ticket,
+    available: true,
+    auth: 'apikey_pat',
+    setupHint: 'API-Key aus Deinem Redmine-Account (Profil → API-Zugriffsschlüssel anzeigen) + Server-URL.',
+  },
+  {
+    code: 'jira',
+    label: 'Jira',
+    description: 'Bidirectional Live-Sync mit Jira Server / DC oder Cloud. PAT (Server) oder Email + API-Token (Cloud).',
+    category: 'ticketing',
+    icon: Ticket,
+    available: true,
+    auth: 'apikey_pat',
+    setupHint: 'Jira-Server-URL + PAT (Personal Access Token). Optional projectKey um Sync auf ein Projekt zu beschränken.',
   },
 
   // Coming-soon — visible-but-disabled. Their adapterCode strings
@@ -161,6 +190,7 @@ export const CATEGORY_LABEL: Record<SourceCategory, string> = {
   webhook: 'Webhooks',
   voice: 'Sprache & Telefonie',
   ai: 'KI / Automation',
+  ticketing: 'Ticket-Systeme',
 };
 
 export const CATEGORY_ICON: Record<SourceCategory, LucideIcon> = {
@@ -170,6 +200,7 @@ export const CATEGORY_ICON: Record<SourceCategory, LucideIcon> = {
   webhook: Webhook,
   voice: Phone,
   ai: Bot,
+  ticketing: Ticket,
 };
 
 export function findSourceType(code: string | null | undefined): SourceTypeDef | null {

@@ -92,6 +92,14 @@ export type { ApiDocumentsIdPatch200, ApiDocumentsIdPatch400, ApiDocumentsIdPatc
 export type { ApiDocumentsPost201, ApiDocumentsPost400, ApiDocumentsPost403, ApiDocumentsPost422, ApiDocumentsPostMutation, ApiDocumentsPostMutationRequest, ApiDocumentsPostMutationResponse } from "./ApiDocumentsPost.ts";
 export type { ApiDomainEventsGetCollection200, ApiDomainEventsGetCollectionQuery, ApiDomainEventsGetCollectionQueryParams, ApiDomainEventsGetCollectionQueryParamsOrderoccurredAtEnum, ApiDomainEventsGetCollectionQueryResponse } from "./ApiDomainEventsGetCollection.ts";
 export type { ApiDomainEventsIdGet200, ApiDomainEventsIdGet404, ApiDomainEventsIdGetPathParams, ApiDomainEventsIdGetQuery, ApiDomainEventsIdGetQueryResponse } from "./ApiDomainEventsIdGet.ts";
+export type { ApiEntityChangeOutboxesGetCollection200, ApiEntityChangeOutboxesGetCollectionQuery, ApiEntityChangeOutboxesGetCollectionQueryParams, ApiEntityChangeOutboxesGetCollectionQueryParamsOrdercreatedAtEnum, ApiEntityChangeOutboxesGetCollectionQueryParamsOrdernextAttemptAtEnum, ApiEntityChangeOutboxesGetCollectionQueryResponse } from "./ApiEntityChangeOutboxesGetCollection.ts";
+export type { ApiEntityChangeOutboxesIdDelete204, ApiEntityChangeOutboxesIdDelete404, ApiEntityChangeOutboxesIdDeleteMutation, ApiEntityChangeOutboxesIdDeleteMutationResponse, ApiEntityChangeOutboxesIdDeletePathParams } from "./ApiEntityChangeOutboxesIdDelete.ts";
+export type { ApiEntityChangeOutboxesIdGet200, ApiEntityChangeOutboxesIdGet404, ApiEntityChangeOutboxesIdGetPathParams, ApiEntityChangeOutboxesIdGetQuery, ApiEntityChangeOutboxesIdGetQueryResponse } from "./ApiEntityChangeOutboxesIdGet.ts";
+export type { ApiEntityChangeOutboxesIdPatch200, ApiEntityChangeOutboxesIdPatch400, ApiEntityChangeOutboxesIdPatch404, ApiEntityChangeOutboxesIdPatch422, ApiEntityChangeOutboxesIdPatchMutation, ApiEntityChangeOutboxesIdPatchMutationRequest, ApiEntityChangeOutboxesIdPatchMutationResponse, ApiEntityChangeOutboxesIdPatchPathParams } from "./ApiEntityChangeOutboxesIdPatch.ts";
+export type { ApiEntitySyncsGetCollection200, ApiEntitySyncsGetCollectionQuery, ApiEntitySyncsGetCollectionQueryParams, ApiEntitySyncsGetCollectionQueryResponse } from "./ApiEntitySyncsGetCollection.ts";
+export type { ApiEntitySyncsIdDelete204, ApiEntitySyncsIdDelete404, ApiEntitySyncsIdDeleteMutation, ApiEntitySyncsIdDeleteMutationResponse, ApiEntitySyncsIdDeletePathParams } from "./ApiEntitySyncsIdDelete.ts";
+export type { ApiEntitySyncsIdGet200, ApiEntitySyncsIdGet404, ApiEntitySyncsIdGetPathParams, ApiEntitySyncsIdGetQuery, ApiEntitySyncsIdGetQueryResponse } from "./ApiEntitySyncsIdGet.ts";
+export type { ApiEntitySyncsIdPatch200, ApiEntitySyncsIdPatch400, ApiEntitySyncsIdPatch404, ApiEntitySyncsIdPatch422, ApiEntitySyncsIdPatchMutation, ApiEntitySyncsIdPatchMutationRequest, ApiEntitySyncsIdPatchMutationResponse, ApiEntitySyncsIdPatchPathParams } from "./ApiEntitySyncsIdPatch.ts";
 export type { ApiFilesGetCollection200, ApiFilesGetCollection403, ApiFilesGetCollectionQuery, ApiFilesGetCollectionQueryParams, ApiFilesGetCollectionQueryParamsOrdercreatedAtEnum, ApiFilesGetCollectionQueryParamsOrdernameEnum, ApiFilesGetCollectionQueryResponse } from "./ApiFilesGetCollection.ts";
 export type { ApiFilesIdDelete204, ApiFilesIdDelete403, ApiFilesIdDelete404, ApiFilesIdDeleteMutation, ApiFilesIdDeleteMutationResponse, ApiFilesIdDeletePathParams } from "./ApiFilesIdDelete.ts";
 export type { ApiFilesIdGet200, ApiFilesIdGet403, ApiFilesIdGet404, ApiFilesIdGetPathParams, ApiFilesIdGetQuery, ApiFilesIdGetQueryResponse } from "./ApiFilesIdGet.ts";
@@ -306,6 +314,8 @@ export type { DocumentContributor, DocumentContributorAccessEnum } from "./Docum
 export type { DocumentRevision, DocumentRevisionBodyFormatEnum } from "./DocumentRevision.ts";
 export type { DocumentSpace } from "./DocumentSpace.ts";
 export type { DomainEvent } from "./DomainEvent.ts";
+export type { EntityChangeOutbox, EntityChangeOutboxStatusEnum } from "./EntityChangeOutbox.ts";
+export type { EntitySync, EntitySyncConflictPolicyEnum, EntitySyncSyncModeEnum } from "./EntitySync.ts";
 export type { Error } from "./Error.ts";
 export type { File, FileTargetEnum } from "./File.ts";
 export type { FileVersion } from "./FileVersion.ts";
@@ -415,6 +425,12 @@ export type { DocumentSpaceJsonMergePatch } from "./documentSpace/JsonMergePatch
 export type { DocumentSpaceJsonld } from "./documentSpace/Jsonld.ts";
 export type { DomainEventHtml } from "./domainEvent/Html.ts";
 export type { DomainEventJsonld } from "./domainEvent/Jsonld.ts";
+export type { EntityChangeOutboxHtml, EntityChangeOutboxHtmlStatusEnum } from "./entityChangeOutbox/Html.ts";
+export type { EntityChangeOutboxJsonMergePatch, EntityChangeOutboxJsonMergePatchStatusEnum } from "./entityChangeOutbox/JsonMergePatch.ts";
+export type { EntityChangeOutboxJsonld, EntityChangeOutboxJsonldStatusEnum } from "./entityChangeOutbox/Jsonld.ts";
+export type { EntitySyncHtml, EntitySyncHtmlConflictPolicyEnum, EntitySyncHtmlSyncModeEnum } from "./entitySync/Html.ts";
+export type { EntitySyncJsonMergePatch, EntitySyncJsonMergePatchConflictPolicyEnum, EntitySyncJsonMergePatchSyncModeEnum } from "./entitySync/JsonMergePatch.ts";
+export type { EntitySyncJsonld, EntitySyncJsonldConflictPolicyEnum, EntitySyncJsonldSyncModeEnum } from "./entitySync/Jsonld.ts";
 export type { ErrorJsonld } from "./error/Jsonld.ts";
 export type { FileHtml, FileHtmlTargetEnum } from "./file/Html.ts";
 export type { FileJsonMergePatch, FileJsonMergePatchTargetEnum } from "./file/JsonMergePatch.ts";

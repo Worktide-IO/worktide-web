@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TagChips } from '@/components/TagChips';
+import { EntitySyncBadgeStack } from '@/components/EntitySyncBadgeStack';
 import { TrackerChip } from '@/components/TrackerChip';
 import { VersionBadge } from '@/components/VersionBadge';
 import { useProjectVersions } from '@/hooks/useProjectVersions';
@@ -343,6 +344,7 @@ function TaskCard({
           <div className="flex items-center gap-1.5">
             <TrackerChip tracker={task.tracker ? trackerByIri[task.tracker] : null} variant="icon" />
             <span className="font-mono text-[10px] text-muted-foreground">{task.identifier}</span>
+            <EntitySyncBadgeStack entityId={task.id} variant="compact" />
           </div>
           <div className="flex items-center gap-1.5">
             {isBlocked ? (

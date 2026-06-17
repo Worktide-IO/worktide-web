@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { CATEGORY_ICON, CATEGORY_LABEL, findSourceType, SOURCE_CATALOG, type SourceCategory } from './catalog';
 import { SourceWizard } from './SourceWizard';
 
-const CATEGORIES: SourceCategory[] = ['mail', 'chat', 'monitoring', 'webhook', 'voice'];
+const CATEGORIES: SourceCategory[] = ['mail', 'ticketing', 'chat', 'monitoring', 'webhook', 'voice'];
 
 /**
  * Top-level Quellen-Page. Two-pane layout:
@@ -40,7 +40,7 @@ export function SourcesPage() {
 
   const tilesByCategory = useMemo(() => {
     const map: Record<SourceCategory, typeof SOURCE_CATALOG> = {
-      mail: [], chat: [], monitoring: [], webhook: [], voice: [], ai: [],
+      mail: [], chat: [], monitoring: [], webhook: [], voice: [], ai: [], ticketing: [],
     };
     for (const t of SOURCE_CATALOG) {
       map[t.category].push(t);

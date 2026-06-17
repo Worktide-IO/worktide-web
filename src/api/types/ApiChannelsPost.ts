@@ -26,7 +26,7 @@ export type ApiChannelsPost422 = ConstraintViolationJsonld;
 /**
  * @description The new Channel resource
 */
-export type ApiChannelsPostMutationRequest = Omit<NonNullable<Channel>, "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "shared" | "enabled" | "deleted">;
+export type ApiChannelsPostMutationRequest = Omit<NonNullable<Channel>, "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "entitySyncEnabled" | "shared" | "enabled" | "deleted">;
 
 export type ApiChannelsPostMutationResponse = ApiChannelsPost201;
 

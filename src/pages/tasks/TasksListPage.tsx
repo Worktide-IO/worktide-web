@@ -9,6 +9,7 @@ import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { BulkActionsBar } from '@/components/BulkActionsBar';
 import { SavedViewsBar } from '@/components/SavedViewsBar';
+import { EntitySyncBadgeStack } from '@/components/EntitySyncBadgeStack';
 import { TagPicker } from '@/components/TagPicker';
 import { TaskDetailSheet } from '@/components/TaskDetailSheet';
 import { TrackerChip } from '@/components/TrackerChip';
@@ -316,7 +317,12 @@ export function TasksListPage() {
                       <TableCell className="p-0 pr-2">
                         <TrackerChip tracker={tracker} variant="icon" />
                       </TableCell>
-                      <TableCell className="font-medium">{t.title}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate">{t.title}</span>
+                          <EntitySyncBadgeStack entityId={t.id} variant="compact" />
+                        </div>
+                      </TableCell>
                       <TableCell>
                         {status ? (
                           <Badge

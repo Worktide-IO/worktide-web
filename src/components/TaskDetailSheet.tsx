@@ -33,6 +33,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TagPicker } from '@/components/TagPicker';
+import { EntitySyncBadgeStack } from '@/components/EntitySyncBadgeStack';
 import { TrackerChip } from '@/components/TrackerChip';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
 import { VersionBadge } from '@/components/VersionBadge';
@@ -149,6 +150,7 @@ function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () 
           ) : null}
           <UserAvatarStack iris={task.assignees ?? []} size="sm" max={3} />
           <VersionBadge version={fixedVersion} />
+          <EntitySyncBadgeStack entityId={task.id} variant="full" />
           {task.project ? (
             <Button
               variant="ghost"

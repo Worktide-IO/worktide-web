@@ -39,7 +39,7 @@ export type ApiChannelsIdPatch422 = ConstraintViolationJsonld;
 /**
  * @description The updated Channel resource
 */
-export type ApiChannelsIdPatchMutationRequest = Omit<NonNullable<ChannelJsonMergePatch>, "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "shared" | "enabled" | "deleted">;
+export type ApiChannelsIdPatchMutationRequest = Omit<NonNullable<ChannelJsonMergePatch>, "id" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "entitySyncEnabled" | "shared" | "enabled" | "deleted">;
 
 export type ApiChannelsIdPatchMutationResponse = ApiChannelsIdPatch200;
 

@@ -23,6 +23,11 @@ export type ChannelHtml = {
     */
     capabilities?: string[];
     /**
+     * @description Worktide entity-type slugs this channel can sync — empty\narray (the default) means the channel is event-stream-only.
+     * @type array | undefined
+    */
+    entityTypes?: string[];
+    /**
      * @description Per-channel address used by the AI / threading code to\ndecide which Customer / Contact a message belongs to.
      * @type string,null
     */
@@ -97,6 +102,10 @@ export type ChannelHtml = {
      * @type string,null, iri-reference
     */
     updatedByUser?: string | null;
+    /**
+     * @type boolean | undefined
+    */
+    readonly entitySyncEnabled?: boolean;
     /**
      * @type boolean | undefined
     */

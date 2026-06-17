@@ -12,6 +12,7 @@ export const channelHtmlSchema = z.object({
     "name": z.optional(z.string()),
 "adapterCode": z.optional(z.string().describe("Identifies the adapter class that handles this channel —\n`email_imap`, `email_graph`, `email_gmail`, `slack_bot`,\n`zabbix_webhook`, …")),
 "capabilities": z.optional(z.array(z.string()).describe("Capabilities this channel exposes. JSON list of\n{@see ChannelCapability} values.")),
+"entityTypes": z.optional(z.array(z.string()).describe("Worktide entity-type slugs this channel can sync — empty\narray (the default) means the channel is event-stream-only.")),
 "address": z.string().describe("Per-channel address used by the AI / threading code to\ndecide which Customer / Contact a message belongs to.").nullish(),
 "inboundConfig": z.optional(z.array(z.string().nullable()).describe("Adapter-specific inbound configuration (host, port, folder, …).")),
 "outboundConfig": z.optional(z.array(z.string().nullable()).describe("Adapter-specific outbound configuration (smtp host, from, …).")),
@@ -30,6 +31,7 @@ export const channelHtmlSchema = z.object({
 "version": z.optional(z.int().default(1)),
 "createdByUser": z.string().nullish(),
 "updatedByUser": z.string().nullish(),
+"entitySyncEnabled": z.optional(z.boolean()),
 "shared": z.optional(z.boolean()),
 "enabled": z.optional(z.boolean()),
 "deleted": z.optional(z.boolean())
