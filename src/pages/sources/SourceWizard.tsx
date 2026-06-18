@@ -114,6 +114,7 @@ export function SourceWizard({
       jiraPat: '',
       jiraEmail: String(ac.email ?? ''),
       jiraApiToken: '',
+      webhookToken: String(ic.webhookToken ?? ''),
     };
   }, [existing]);
   useEffect(() => {
@@ -156,6 +157,14 @@ export function SourceWizard({
       const inboundConfig: Record<string, unknown> = {};
       if (def.auth === 'token') {
         inboundConfig.token = generateToken();
+      }
+      // For ticket-system adapters (Redmine, Jira) — auto-generate a
+      // separate `webhookToken` so the admin can paste the
+      // entity-webhook URL into the third-party admin UI right away.
+      // Even before the operator wires it up, having the token in
+      // place means the push subscription "just works" when they do.
+      if (def.code === 'redmine' || def.code === 'jira') {
+        inboundConfig.webhookToken = generateToken();
       }
 
       const payload = {
@@ -216,6 +225,10 @@ export function SourceWizard({
         body.inboundConfig = {
           baseUrl: (cfg.baseUrl ?? '').replace(/\/$/, ''),
           projectId: cfg.projectId || undefined,
+          // Preserve the webhookToken minted at create-time so the
+          // operator's existing webhook config keeps working after
+          // every edit.
+          webhookToken: cfg.webhookToken || undefined,
         };
         if (cfg.apiKey) {
           body.authConfig = { apiKey: cfg.apiKey };
@@ -226,6 +239,7 @@ export function SourceWizard({
           baseUrl: (cfg.baseUrl ?? '').replace(/\/$/, ''),
           apiVersion: cfg.jiraApiVersion || '2',
           projectKey: cfg.projectKey || undefined,
+          webhookToken: cfg.webhookToken || undefined,
         };
         const authPatch: Record<string, unknown> = {};
         if (cfg.jiraPat) authPatch.personalAccessToken = cfg.jiraPat;
@@ -596,6 +610,37 @@ function generateToken(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+function WebhookUrlBlock({ token, providerHint }: { token: string; providerHint: string }) {
+  const apiHost = window.location.origin.replace('worktide-web', 'api.worktide');
+  const url = `${apiHost}/v1/inbound/entity-webhooks/${token}`;
+  return (
+    <fieldset className="space-y-2 rounded-md border p-3">
+      <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Push-URL (Webhook)
+      </legend>
+      <p className="text-xs text-muted-foreground">
+        {providerHint} Klick auf Kopieren, dann im jeweiligen
+        Admin-Backend als Webhook-URL eintragen.
+      </p>
+      <div className="flex items-center gap-2">
+        <code className="flex-1 truncate rounded border bg-muted px-2 py-1 text-xs">{url}</code>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            navigator.clipboard.writeText(url);
+            toast.success('Webhook-URL kopiert.');
+          }}
+        >
+          <Copy className="size-3" />
+          Kopieren
+        </Button>
+      </div>
+    </fieldset>
+  );
+}
+
 function RedmineConfigure({
   cfg, setField, isEdit,
 }: { cfg: Record<string, string>; setField: (k: string, v: string) => void; isEdit: boolean }) {
@@ -628,6 +673,12 @@ function RedmineConfigure({
           Header gesendet, nicht in URL (sicher in Access-Logs).
         </p>
       </fieldset>
+      {cfg.webhookToken ? (
+        <WebhookUrlBlock
+          token={cfg.webhookToken}
+          providerHint="Optional: installiere das redmine_webhook-Plugin und trage die folgende URL in Verwaltung → Einstellungen → Webhooks ein, damit Worktide live über Änderungen informiert wird (statt 60s-Pull)."
+        />
+      ) : null}
     </>
   );
 }
@@ -693,6 +744,12 @@ function JiraConfigure({
           />
         </fieldset>
       )}
+      {cfg.webhookToken ? (
+        <WebhookUrlBlock
+          token={cfg.webhookToken}
+          providerHint="Trage die folgende URL in Jira → Administration → System → WebHooks ein und aktiviere die Events Issue Created / Updated / Deleted, damit Worktide live über Änderungen informiert wird (statt 60s-Pull)."
+        />
+      ) : null}
     </>
   );
 }
