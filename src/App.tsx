@@ -21,6 +21,7 @@ import { PermissionsMatrixPage } from '@/pages/permissions/PermissionsMatrixPage
 import { ConversationDetailPage } from '@/pages/inbox/ConversationDetailPage';
 import { ConversationsListPage } from '@/pages/inbox/ConversationsListPage';
 import { TeamPlannerPage } from '@/pages/planner/TeamPlannerPage';
+import { SprintsPage } from '@/pages/sprints/SprintsPage';
 import { ReportsPage } from '@/pages/reports/ReportsPage';
 import { SourcesPage } from '@/pages/sources/SourcesPage';
 import { TeamMembersListPage } from '@/pages/team-members/TeamMembersListPage';
@@ -106,6 +107,11 @@ export default function App() {
               name: 'planner',
               list: '/planner',
               meta: { label: 'Planer', icon: 'CalendarRange', category: 'Arbeit' },
+            },
+            {
+              name: 'sprints',
+              list: '/sprints',
+              meta: { label: 'Sprints', icon: 'Zap', category: 'Arbeit' },
             },
             {
               name: 'documents',
@@ -223,6 +229,7 @@ export default function App() {
               <Route path="/activity" element={<ActivityPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/planner" element={<TeamPlannerPage />} />
+              <Route path="/sprints" element={<SprintsPage />} />
               <Route path="/documents" element={<DocumentsPage />} />
               <Route path="/personen" element={<TeamMembersListPage />} />
               <Route path="/auswertungen" element={<ReportsPage />} />
