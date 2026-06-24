@@ -31,6 +31,7 @@ import { api } from '@/lib/api';
 
 import { BurndownTab } from './tabs/BurndownTab';
 import { CreatedVsResolvedTab } from './tabs/CreatedVsResolvedTab';
+import { CumulativeFlowTab } from './tabs/CumulativeFlowTab';
 import { CycleTimeTab } from './tabs/CycleTimeTab';
 import { MrrTab } from './tabs/MrrTab';
 
@@ -116,6 +117,7 @@ export function ReportsPage() {
         <TabsList>
           <TabsTrigger value="time">Zeit</TabsTrigger>
           <TabsTrigger value="burndown">Burndown</TabsTrigger>
+          <TabsTrigger value="cfd">Cumulative Flow</TabsTrigger>
           <TabsTrigger value="cvr">Created vs. Resolved</TabsTrigger>
           <TabsTrigger value="cycle">Cycle-Time</TabsTrigger>
           <TabsTrigger value="mrr">MRR</TabsTrigger>
@@ -125,6 +127,9 @@ export function ReportsPage() {
         </TabsContent>
         <TabsContent value="burndown" className="pt-4">
           <BurndownTab />
+        </TabsContent>
+        <TabsContent value="cfd" className="pt-4">
+          <CumulativeFlowTab />
         </TabsContent>
         <TabsContent value="cvr" className="pt-4">
           <CreatedVsResolvedTab />
