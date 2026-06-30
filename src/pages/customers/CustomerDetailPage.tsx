@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+import { CustomerAgreementsTab } from './CustomerAgreementsTab';
 import { CustomerForm } from './CustomerForm';
 import {
   CustomerContactsTab,
@@ -152,6 +153,7 @@ export function CustomerDetailPage() {
           <TabsTrigger value="contacts">Kontakte</TabsTrigger>
           <TabsTrigger value="systems">Systeme</TabsTrigger>
           <TabsTrigger value="subscriptions">Abos</TabsTrigger>
+          <TabsTrigger value="agreements">Verträge</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="pt-4">
           <CustomerForm action="edit" id={id} embedded />
@@ -164,6 +166,9 @@ export function CustomerDetailPage() {
         </TabsContent>
         <TabsContent value="subscriptions" className="pt-4">
           <CustomerSubscriptionsTab customerIri={iri} />
+        </TabsContent>
+        <TabsContent value="agreements" className="pt-4">
+          {id ? <CustomerAgreementsTab customerId={id} customerIri={iri} /> : null}
         </TabsContent>
       </Tabs>
     </div>
