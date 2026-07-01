@@ -3,12 +3,12 @@ import { ListChecks } from 'lucide-react';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
 
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
+import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,10 +42,6 @@ export function OpenCustomerTasksWidget() {
     resource: 'projects',
     pagination: { mode: 'off' },
   });
-  const { result: customers } = useList<Row<CustomerJsonld>>({
-    resource: 'customers',
-    pagination: { mode: 'off' },
-  });
   const { result: statuses } = useList<Row<TaskStatusJsonld>>({
     resource: 'task_statuses',
     pagination: { mode: 'off' },
@@ -57,11 +53,7 @@ export function OpenCustomerTasksWidget() {
     for (const p of projects?.data ?? []) if (p['@id']) m[p['@id']] = p;
     return m;
   }, [projects]);
-  const customerByIri = useMemo(() => {
-    const m: Record<string, Row<CustomerJsonld>> = {};
-    for (const c of customers?.data ?? []) if (c['@id']) m[c['@id']] = c;
-    return m;
-  }, [customers]);
+  const customerByIri = useCustomerLookup((projects?.data ?? []).map((p) => p.customer));
   const openStatusIris = useMemo(() => {
     const set = new Set<string>();
     for (const s of statuses?.data ?? []) {

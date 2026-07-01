@@ -3,12 +3,13 @@ import { CalendarDays, Plus, Search, Wifi, WifiOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { CustomerSystemJsonld } from '@/api/types/customerSystem/Jsonld';
 import type { ServiceSubscriptionJsonld } from '@/api/types/serviceSubscription/Jsonld';
 import { useLiveResource } from '@/lib/mercure';
 import { formatMoney } from '@/lib/money';
+import { CustomerCombobox } from '@/components/CustomerCombobox';
 import type { Row } from '@/lib/refine';
+import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,22 +73,10 @@ export function SubscriptionsListPage() {
   });
   const { connected: liveConnected } = useLiveResource('service_subscriptions');
 
-  const { result: customers } = useList<Row<CustomerJsonld>>({
-    resource: 'customers',
-    pagination: { mode: 'off' },
-  });
   const { result: systems } = useList<Row<CustomerSystemJsonld>>({
     resource: 'customer_systems',
     pagination: { mode: 'off' },
   });
-
-  const customerByIri = useMemo<Record<string, Row<CustomerJsonld>>>(() => {
-    const map: Record<string, Row<CustomerJsonld>> = {};
-    for (const c of customers?.data ?? []) {
-      if (c['@id']) map[c['@id']] = c;
-    }
-    return map;
-  }, [customers]);
 
   const systemByIri = useMemo<Record<string, Row<CustomerSystemJsonld>>>(() => {
     const map: Record<string, Row<CustomerSystemJsonld>> = {};
@@ -108,6 +97,7 @@ export function SubscriptionsListPage() {
 
   const rows = tableQuery.data?.data ?? [];
   const total = tableQuery.data?.total ?? 0;
+  const customerByIri = useCustomerLookup(rows.map((r) => r.customer));
   const isLoading = tableQuery.isLoading;
 
   // Monthly-equivalent MRR estimate across active subscriptions — quick
@@ -162,25 +152,16 @@ export function SubscriptionsListPage() {
                 className="pl-8"
               />
             </div>
-            <Select
-              value={customerFilter}
-              onValueChange={(v) => {
-                setCustomerFilter(v);
-                applyFilters(search, v, statusFilter);
+            <CustomerCombobox
+              className="w-56"
+              placeholder="Alle Kunden"
+              value={customerFilter === 'all' ? null : customerFilter}
+              onChange={(v) => {
+                const next = v ?? 'all';
+                setCustomerFilter(next);
+                applyFilters(search, next, statusFilter);
               }}
-            >
-              <SelectTrigger className="w-56">
-                <SelectValue placeholder="Kunde" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Kunden</SelectItem>
-                {(customers?.data ?? []).map((c) => (
-                  <SelectItem key={c['@id']} value={c['@id'] ?? ''}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
             <Select
               value={statusFilter}
               onValueChange={(v) => {

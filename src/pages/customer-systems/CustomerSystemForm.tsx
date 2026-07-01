@@ -1,11 +1,11 @@
-import { useList, useNavigation } from '@refinedev/core';
+import { useNavigation } from '@refinedev/core';
 import { useForm } from '@refinedev/react-hook-form';
 import { ArrowLeft, ExternalLink, Save, Trash2 } from 'lucide-react';
 import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { CustomerSystemJsonld } from '@/api/types/customerSystem/Jsonld';
+import { CustomerCombobox } from '@/components/CustomerCombobox';
 import type { Row } from '@/lib/refine';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -79,10 +79,6 @@ export function CustomerSystemForm(props: Mode) {
     } as Partial<Row<CustomerSystemJsonld>> as FieldValues,
   });
 
-  const { result: customers } = useList<Row<CustomerJsonld>>({
-    resource: 'customers',
-    pagination: { mode: 'off' },
-  });
 
   const isLoading = props.action === 'edit' && query?.isLoading;
   const current = query?.data?.data;
@@ -256,18 +252,7 @@ export function CustomerSystemForm(props: Mode) {
                   rules={{ required: 'Pflichtfeld' }}
                   render={({ field, fieldState }) => (
                     <>
-                      <Select value={field.value ?? ''} onValueChange={field.onChange}>
-                        <SelectTrigger id="customer">
-                          <SelectValue placeholder="Kunde wählen…" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(customers?.data ?? []).map((c) => (
-                            <SelectItem key={c['@id']} value={c['@id'] ?? ''}>
-                              {c.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <CustomerCombobox value={field.value} onChange={field.onChange} />
                       {fieldState.error ? (
                         <p className="text-xs text-destructive">{fieldState.error.message}</p>
                       ) : null}

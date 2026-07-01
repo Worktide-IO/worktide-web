@@ -10,11 +10,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import type { ProjectStatusJsonld } from '@/api/types/projectStatus/Jsonld';
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
+import { CustomerCombobox } from '@/components/CustomerCombobox';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -101,11 +101,6 @@ export function QuickAddDialog() {
   });
   const { result: projectStatuses } = useList<Row<ProjectStatusJsonld>>({
     resource: 'project_statuses',
-    pagination: { mode: 'off' },
-    queryOptions: { enabled: open && mode === 'project' },
-  });
-  const { result: customers } = useList<Row<CustomerJsonld>>({
-    resource: 'customers',
     pagination: { mode: 'off' },
     queryOptions: { enabled: open && mode === 'project' },
   });
@@ -345,19 +340,10 @@ export function QuickAddDialog() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Kunde (optional)</Label>
-                  <Select value={projectCustomer} onValueChange={setProjectCustomer}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Kunde wählen…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">— Intern (kein Kunde)</SelectItem>
-                      {(customers?.data ?? []).map((c) => (
-                        <SelectItem key={c['@id']} value={c['@id'] ?? ''}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <CustomerCombobox
+                    value={projectCustomer === 'none' ? null : projectCustomer}
+                    onChange={(v) => setProjectCustomer(v ?? 'none')}
+                  />
                 </div>
               </>
             )}

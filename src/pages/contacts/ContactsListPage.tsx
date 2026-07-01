@@ -1,24 +1,18 @@
-import { useList, useTable } from '@refinedev/core';
+import { useTable } from '@refinedev/core';
 import { Mail, Phone, Plus, Search, Star, Wifi, WifiOff } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
 import type { ContactJsonld } from '@/api/types/contact/Jsonld';
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
+import { CustomerCombobox } from '@/components/CustomerCombobox';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
+import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -51,19 +45,6 @@ export function ContactsListPage() {
   });
   const { connected: liveConnected } = useLiveResource('contacts');
 
-  const { result: customers } = useList<Row<CustomerJsonld>>({
-    resource: 'customers',
-    pagination: { mode: 'off' },
-  });
-
-  const customerByIri = useMemo<Record<string, Row<CustomerJsonld>>>(() => {
-    const map: Record<string, Row<CustomerJsonld>> = {};
-    for (const c of customers?.data ?? []) {
-      if (c['@id']) map[c['@id']] = c;
-    }
-    return map;
-  }, [customers]);
-
   const applyFilters = (s: string, c: string) => {
     const f = [];
     if (s) f.push({ field: 'lastName', operator: 'contains' as const, value: s });
@@ -74,6 +55,7 @@ export function ContactsListPage() {
 
   const rows = tableQuery.data?.data ?? [];
   const total = tableQuery.data?.total ?? 0;
+  const customerByIri = useCustomerLookup(rows.map((r) => r.customer));
   const isLoading = tableQuery.isLoading;
 
   return (
@@ -117,25 +99,16 @@ export function ContactsListPage() {
                 className="pl-8"
               />
             </div>
-            <Select
-              value={customerFilter}
-              onValueChange={(v) => {
-                setCustomerFilter(v);
-                applyFilters(search, v);
+            <CustomerCombobox
+              className="w-64"
+              placeholder="Alle Kunden"
+              value={customerFilter === 'all' ? null : customerFilter}
+              onChange={(v) => {
+                const next = v ?? 'all';
+                setCustomerFilter(next);
+                applyFilters(search, next);
               }}
-            >
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="Kunde" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Kunden</SelectItem>
-                {(customers?.data ?? []).map((c) => (
-                  <SelectItem key={c['@id']} value={c['@id'] ?? ''}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
           </div>
         </CardHeader>
         <CardContent>

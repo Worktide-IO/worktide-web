@@ -5,10 +5,10 @@ import { useMemo } from 'react';
 import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { CustomerSystemJsonld } from '@/api/types/customerSystem/Jsonld';
 import type { ServiceSubscriptionJsonld } from '@/api/types/serviceSubscription/Jsonld';
 import { formatMoney } from '@/lib/money';
+import { CustomerCombobox } from '@/components/CustomerCombobox';
 import type { Row } from '@/lib/refine';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -94,10 +94,6 @@ export function SubscriptionForm(props: Mode) {
     } as Partial<Row<ServiceSubscriptionJsonld>> as FieldValues,
   });
 
-  const { result: customers } = useList<Row<CustomerJsonld>>({
-    resource: 'customers',
-    pagination: { mode: 'off' },
-  });
   const { result: systems } = useList<Row<CustomerSystemJsonld>>({
     resource: 'customer_systems',
     pagination: { mode: 'off' },
@@ -305,25 +301,14 @@ export function SubscriptionForm(props: Mode) {
                   rules={{ required: 'Pflichtfeld' }}
                   render={({ field, fieldState }) => (
                     <>
-                      <Select
-                        value={field.value ?? ''}
-                        onValueChange={(v) => {
+                      <CustomerCombobox
+                        value={field.value}
+                        onChange={(v) => {
                           field.onChange(v);
                           // Customer change invalidates the system FK.
                           setValue('system', null);
                         }}
-                      >
-                        <SelectTrigger id="customer">
-                          <SelectValue placeholder="Kunde wählen…" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(customers?.data ?? []).map((c) => (
-                            <SelectItem key={c['@id']} value={c['@id'] ?? ''}>
-                              {c.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
                       {fieldState.error ? (
                         <p className="text-xs text-destructive">{fieldState.error.message}</p>
                       ) : null}
