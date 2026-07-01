@@ -53,6 +53,7 @@ import { SocialPostEditPage } from '@/pages/social/SocialPostEditPage';
 import { ProductsListPage } from '@/pages/products/ProductsListPage';
 import { ProductCreatePage } from '@/pages/products/ProductCreatePage';
 import { ProductEditPage } from '@/pages/products/ProductEditPage';
+import { IndustriesPage } from '@/pages/industries/IndustriesPage';
 import { TasksListPage } from '@/pages/tasks/TasksListPage';
 import { TimeEntriesListPage } from '@/pages/timeEntries/TimeEntriesListPage';
 
@@ -213,6 +214,11 @@ export default function App() {
               edit: '/produkte/:id',
               meta: { label: 'Produkte', icon: 'Boxes', category: 'CRM' },
             },
+            {
+              name: 'industries',
+              list: '/branchen',
+              meta: { label: 'Branchen', icon: 'Building', category: 'CRM' },
+            },
 
             // ---- Admin -----------------------------------------------------
             {
@@ -297,6 +303,7 @@ export default function App() {
               <Route path="/produkte" element={<ProductsListPage />} />
               <Route path="/produkte/create" element={<ProductCreatePage />} />
               <Route path="/produkte/:id" element={<ProductEditPage />} />
+              <Route path="/branchen" element={<IndustriesPage />} />
               <Route path="/workspace-members" element={<PlaceholderPage resource="workspace_members" />} />
               <Route path="/permissions" element={<PermissionsMatrixPage />} />
               <Route path="/webhooks" element={<PlaceholderPage resource="webhooks" />} />

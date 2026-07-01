@@ -1,10 +1,11 @@
-import { useTable } from '@refinedev/core';
+import { useList, useTable } from '@refinedev/core';
 import { Link } from 'react-router';
 import { Plus, Search, Wifi, WifiOff } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import type { Row } from '@/lib/refine';
 import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
+import type { IndustryJsonld } from '@/lib/industry';
 import { useLiveResource } from '@/lib/mercure';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -69,6 +70,17 @@ export function CustomersListPage() {
     pagination: { currentPage: 1, pageSize: 25 },
     syncWithLocation: true,
   });
+
+  // Resolve the industry relation (IRI) to its name for display.
+  const { result: industries } = useList<Row<IndustryJsonld>>({
+    resource: 'industries',
+    pagination: { mode: 'off' },
+  });
+  const industryByIri = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const i of industries?.data ?? []) if (i['@id']) m[i['@id']] = i.name;
+    return m;
+  }, [industries]);
 
   const applyFilters = (newSearch: string, newStatus: string) => {
     const filters = [];
@@ -190,7 +202,7 @@ export function CustomersListPage() {
                           </Badge>
                         ) : null}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{c.industry ?? '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.industry ? (industryByIri[c.industry] ?? '—') : '—'}</TableCell>
                       <TableCell className="text-muted-foreground">{c.city ?? '—'}</TableCell>
                       <TableCell className="text-right text-muted-foreground">
                         {c.contacts?.length ?? 0}

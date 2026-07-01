@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router';
 
 import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { Row } from '@/lib/refine';
+import { IndustryCombobox } from '@/components/IndustryCombobox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 
 /**
@@ -42,6 +43,12 @@ import { Textarea } from '@/components/ui/textarea';
  */
 type Mode = { action: 'create' } | { action: 'edit'; id: string };
 
+/** Form values widen the (stale) generated Customer type with person fields. */
+type CustomerFormValues = Row<CustomerJsonld> & {
+  firstName?: string | null;
+  lastName?: string | null;
+};
+
 type Props = Mode & {
   /**
    * Drop the form's title/back-arrow header so the form can be embedded
@@ -59,9 +66,10 @@ export function CustomerForm(props: Props) {
     refineCore: { onFinish, formLoading, query },
     register,
     control,
+    watch,
     handleSubmit,
     formState: { isSubmitting },
-  } = useForm<Row<CustomerJsonld>>({
+  } = useForm<CustomerFormValues>({
     refineCoreProps: {
       resource: 'customers',
       action: props.action,
@@ -77,9 +85,27 @@ export function CustomerForm(props: Props) {
 
   const isLoading = props.action === 'edit' && query?.isLoading;
   const current = query?.data?.data;
+  const isCompany = watch('isCompany') ?? true;
 
   return (
-    <form onSubmit={handleSubmit((values) => onFinish(values))} className="space-y-4">
+    <form
+      onSubmit={handleSubmit((values) => {
+        const v = { ...values };
+        if (!v.isCompany) {
+          // Persons: derive the display name from Vor-/Nachname; drop company-only fields.
+          const fn = (v.firstName ?? '').trim();
+          const ln = (v.lastName ?? '').trim();
+          v.name = [ln, fn].filter(Boolean).join(', ') || fn || ln;
+          v.legalName = null;
+          v.vatId = null;
+        } else {
+          v.firstName = null;
+          v.lastName = null;
+        }
+        return onFinish(v);
+      })}
+      className="space-y-4"
+    >
       {props.embedded ? (
         <div className="flex items-center justify-end gap-2">
           {props.action === 'edit' ? (
@@ -141,33 +167,71 @@ export function CustomerForm(props: Props) {
               <CardTitle>Stammdaten</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Field
-                id="name"
-                label="Name"
-                required
-                {...register('name', { required: 'Pflichtfeld' })}
+              <Controller
+                name="isCompany"
+                control={control}
+                render={({ field }) => (
+                  <div className="inline-flex rounded-md border border-input p-0.5 text-sm">
+                    <button
+                      type="button"
+                      onClick={() => field.onChange(true)}
+                      className={cn(
+                        'rounded px-4 py-1.5 transition-colors',
+                        field.value
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      Firma
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => field.onChange(false)}
+                      className={cn(
+                        'rounded px-4 py-1.5 transition-colors',
+                        !field.value
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      Person
+                    </button>
+                  </div>
+                )}
               />
-              <Field id="legalName" label="Firmen-Langname (für Rechnungen)" {...register('legalName')} />
-              <div className="grid grid-cols-2 gap-4">
-                <Field id="vatId" label="USt-ID" {...register('vatId')} />
-                <Field id="industry" label="Branche" {...register('industry')} />
-              </div>
 
-              <div className="flex items-center justify-between rounded-md border border-input p-3">
-                <div className="space-y-0.5">
-                  <Label htmlFor="isCompany">Firma</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Aus für Privatkunden. Beeinflusst die Rechnungs-Adressierung.
-                  </p>
+              {isCompany ? (
+                <>
+                  <Field
+                    id="name"
+                    label="Firmenname"
+                    required
+                    {...register('name', { required: 'Pflichtfeld' })}
+                  />
+                  <Field id="legalName" label="Firmen-Langname (für Rechnungen)" {...register('legalName')} />
+                  <Field id="vatId" label="USt-ID" {...register('vatId')} />
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <Field id="firstName" label="Vorname" {...register('firstName')} />
+                  <Field
+                    id="lastName"
+                    label="Nachname"
+                    required
+                    {...register('lastName', { required: 'Pflichtfeld' })}
+                  />
                 </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label htmlFor="industry">Branche</Label>
                 <Controller
-                  name="isCompany"
                   control={control}
+                  name="industry"
                   render={({ field }) => (
-                    <Switch
-                      id="isCompany"
-                      checked={!!field.value}
-                      onCheckedChange={field.onChange}
+                    <IndustryCombobox
+                      value={(field.value as string | null | undefined) ?? null}
+                      onChange={field.onChange}
                     />
                   )}
                 />
