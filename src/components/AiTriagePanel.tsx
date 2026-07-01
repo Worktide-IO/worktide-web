@@ -1,11 +1,13 @@
 import { Check, Loader2, RefreshCw, Sparkles, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { aiErrorMessage, aiTriage, type AiRecommendation, type AiTriageTarget } from '@/lib/ai';
+import { readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { useMercureTopic } from '@/lib/mercure';
 
 type Props = {
   target: AiTriageTarget;
@@ -14,41 +16,56 @@ type Props = {
   onApplied?: () => void;
 };
 
-const POLL_INTERVAL_MS = 2500;
-const POLL_MAX_ATTEMPTS = 12; // ~30s
+const RESULT_FALLBACK_MS = 12000; // safety re-fetch if the Mercure ping is missed
 
 /**
  * On-demand AI triage for a ticket (Task or Conversation), human-in-the-loop.
  *
- * A "KI-Triage" button queues a suggestion on the backend; the result arrives
- * as a Pending AIRecommendation which we poll for and render as a card the user
- * can accept (applies tracker/priority/tags or conversation status + adds an
- * internal summary note) or reject. Nothing on the ticket changes until accept.
+ * A "KI-Triage" button queues a suggestion on the backend; when the worker has
+ * produced it, a minimal Mercure ping on the workspace topic triggers a re-fetch
+ * (a single delayed re-fetch is kept as a fallback if the push is missed). The
+ * Pending AIRecommendation renders as a card the user can accept (applies
+ * tracker/priority/tags or conversation status + adds an internal summary note)
+ * or reject. Nothing on the ticket changes until accept.
  */
 export function AiTriagePanel({ target, targetId, onApplied }: Props) {
   const [reco, setReco] = useState<AiRecommendation | null>(null);
   const [loading, setLoading] = useState(false); // triage requested, awaiting result
   const [busy, setBusy] = useState(false); // accept/reject in flight
-  const pollRef = useRef<number | null>(null);
-
-  const stopPolling = useCallback(() => {
-    if (pollRef.current !== null) {
-      window.clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
-  }, []);
 
   const refetch = useCallback(async (): Promise<AiRecommendation | null> => {
     if (!targetId) return null;
     const r = await aiTriage.fetchPending(target, targetId).catch(() => null);
     setReco(r);
+    if (r) setLoading(false);
     return r;
   }, [target, targetId]);
 
   useEffect(() => {
-    void refetch();
-    return () => stopPolling();
-  }, [refetch, stopPolling]);
+    let active = true;
+    if (!targetId) return;
+    void aiTriage.fetchPending(target, targetId).then((r) => {
+      if (active) {
+        setReco(r);
+        if (r) setLoading(false);
+      }
+    }).catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [target, targetId]);
+
+  // Live: the backend publishes a minimal ping to the workspace topic when a
+  // recommendation lands; we re-fetch (content comes over the REST API, not the
+  // hub). Same opaque topic string as the backend handler.
+  const workspaceId = readAuth(WORKSPACE_STORAGE_KEY);
+  const topic = workspaceId ? `worktide:workspace:${workspaceId}:ai-recommendations` : null;
+  useMercureTopic<{ targetId?: string }>(topic, {
+    enabled: Boolean(topic && targetId),
+    onMessage: (msg) => {
+      if (!targetId || msg.data?.targetId === targetId) void refetch();
+    },
+  });
 
   const requestTriage = async () => {
     if (!targetId) return;
@@ -56,22 +73,13 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
     try {
       await aiTriage.request(target, targetId);
       toast.info('KI-Analyse gestartet …');
-
-      let attempts = 0;
-      stopPolling();
-      pollRef.current = window.setInterval(() => {
-        void (async () => {
-          attempts += 1;
-          const r = await refetch();
-          if (r || attempts >= POLL_MAX_ATTEMPTS) {
-            stopPolling();
-            setLoading(false);
-            if (!r) {
-              toast.warning('Noch kein Ergebnis — läuft der ai_agents-Worker?');
-            }
-          }
-        })();
-      }, POLL_INTERVAL_MS);
+      // The Mercure ping normally delivers the result; this only catches a
+      // missed push (e.g. hub outage) — the worker persists it regardless.
+      window.setTimeout(() => {
+        void refetch().then((r) => {
+          if (!r) setLoading(false);
+        });
+      }, RESULT_FALLBACK_MS);
     } catch (err) {
       setLoading(false);
       toast.error(aiErrorMessage(err, 'KI-Analyse konnte nicht gestartet werden.'));
