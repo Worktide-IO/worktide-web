@@ -9,6 +9,7 @@ import type { Row } from '@/lib/refine';
 import { IndustryCombobox } from '@/components/IndustryCombobox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,10 +44,12 @@ import { Textarea } from '@/components/ui/textarea';
  */
 type Mode = { action: 'create' } | { action: 'edit'; id: string };
 
-/** Form values widen the (stale) generated Customer type with person fields. */
+/** Form values widen the (stale) generated Customer type with person + type fields. */
 type CustomerFormValues = Row<CustomerJsonld> & {
   firstName?: string | null;
   lastName?: string | null;
+  isCustomer?: boolean | null;
+  isVendor?: boolean | null;
 };
 
 type Props = Mode & {
@@ -78,6 +81,8 @@ export function CustomerForm(props: Props) {
     },
     defaultValues: {
       isCompany: true,
+      isCustomer: true,
+      isVendor: false,
       status: 'active',
       country: 'DE',
     } as Partial<Row<CustomerJsonld>> as FieldValues,
@@ -270,6 +275,38 @@ export function CustomerForm(props: Props) {
                     </Select>
                   )}
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Typ</Label>
+                <div className="flex flex-col gap-2 pt-1">
+                  <Controller
+                    name="isCustomer"
+                    control={control}
+                    render={({ field }) => (
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={field.value ?? false}
+                          onCheckedChange={(v) => field.onChange(v === true)}
+                        />
+                        Kunde
+                      </label>
+                    )}
+                  />
+                  <Controller
+                    name="isVendor"
+                    control={control}
+                    render={({ field }) => (
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={field.value ?? false}
+                          onCheckedChange={(v) => field.onChange(v === true)}
+                        />
+                        Lieferant
+                      </label>
+                    )}
+                  />
+                </div>
               </div>
 
               {props.action === 'edit' && current?.id ? (

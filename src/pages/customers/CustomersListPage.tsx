@@ -58,9 +58,13 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | '
   archived: 'outline',
 };
 
+/** Widen the (stale) generated Customer type with the relationship-type flags. */
+type CustomerRow = Row<CustomerJsonld> & { isCustomer?: boolean; isVendor?: boolean };
+
 export function CustomersListPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
 
   const { tableQuery, setFilters, setCurrentPage, setPageSize, currentPage, pageSize } = useTable<
     Row<CustomerJsonld>
@@ -82,10 +86,12 @@ export function CustomersListPage() {
     return m;
   }, [industries]);
 
-  const applyFilters = (newSearch: string, newStatus: string) => {
+  const applyFilters = (newSearch: string, newStatus: string, newType: string) => {
     const filters = [];
     if (newSearch) filters.push({ field: 'name', operator: 'contains' as const, value: newSearch });
     if (newStatus !== 'all') filters.push({ field: 'status', operator: 'eq' as const, value: newStatus });
+    if (newType === 'customer') filters.push({ field: 'isCustomer', operator: 'eq' as const, value: true });
+    if (newType === 'vendor') filters.push({ field: 'isVendor', operator: 'eq' as const, value: true });
     setFilters(filters, 'replace');
     setCurrentPage(1);
   };
@@ -130,16 +136,32 @@ export function CustomersListPage() {
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
-                  applyFilters(e.target.value, statusFilter);
+                  applyFilters(e.target.value, statusFilter, typeFilter);
                 }}
                 className="pl-8"
               />
             </div>
             <Select
+              value={typeFilter}
+              onValueChange={(v) => {
+                setTypeFilter(v);
+                applyFilters(search, statusFilter, v);
+              }}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Typen</SelectItem>
+                <SelectItem value="customer">Kunde</SelectItem>
+                <SelectItem value="vendor">Lieferant</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
               value={statusFilter}
               onValueChange={(v) => {
                 setStatusFilter(v);
-                applyFilters(search, v);
+                applyFilters(search, v, typeFilter);
               }}
             >
               <SelectTrigger className="w-48">
@@ -175,6 +197,7 @@ export function CustomersListPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
+                    <TableHead className="w-28">Typ</TableHead>
                     <TableHead className="w-32">Status</TableHead>
                     <TableHead className="w-48">Branche</TableHead>
                     <TableHead className="w-40">Stadt</TableHead>
@@ -194,6 +217,16 @@ export function CustomersListPage() {
                         {c.legalName && c.legalName !== c.name ? (
                           <div className="text-xs text-muted-foreground">{c.legalName}</div>
                         ) : null}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {(c as CustomerRow).isCustomer ? (
+                            <Badge variant="secondary">Kunde</Badge>
+                          ) : null}
+                          {(c as CustomerRow).isVendor ? (
+                            <Badge variant="outline">Lieferant</Badge>
+                          ) : null}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {c.status ? (
