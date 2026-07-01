@@ -8,11 +8,11 @@ import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
 
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import type { ProjectStatusJsonld } from '@/api/types/projectStatus/Jsonld';
 import type { ProjectTypeJsonld } from '@/api/types/projectType/Jsonld';
 import type { Row } from '@/lib/refine';
+import { CustomerCombobox } from '@/components/CustomerCombobox';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -96,10 +96,6 @@ export function ProjectForm(props: Mode) {
     } as Partial<Row<ProjectJsonld>> as FieldValues,
   });
 
-  const { result: customers } = useList<Row<CustomerJsonld>>({
-    resource: 'customers',
-    pagination: { mode: 'off' },
-  });
   const { result: statuses } = useList<Row<ProjectStatusJsonld>>({
     resource: 'project_statuses',
     pagination: { mode: 'off' },
@@ -278,22 +274,7 @@ export function ProjectForm(props: Mode) {
                   name="customer"
                   control={control}
                   render={({ field }) => (
-                    <Select
-                      value={field.value ?? '__none__'}
-                      onValueChange={(v) => field.onChange(v === '__none__' ? null : v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Kunde wählen…" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">— Intern (kein Kunde)</SelectItem>
-                        {(customers?.data ?? []).map((c) => (
-                          <SelectItem key={c['@id']} value={c['@id'] ?? ''}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <CustomerCombobox value={field.value} onChange={field.onChange} />
                   )}
                 />
               </div>
