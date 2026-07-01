@@ -8,6 +8,7 @@ import type { ChannelJsonld } from '@/api/types/channel/Jsonld';
 import type { ConversationJsonld } from '@/api/types/conversation/Jsonld';
 import type { InboundEventJsonld } from '@/api/types/inboundEvent/Jsonld';
 import type { OutboundMessageJsonld } from '@/api/types/outboundMessage/Jsonld';
+import { AiTriagePanel } from '@/components/AiTriagePanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -168,6 +169,12 @@ export function ConversationDetailPage() {
           </SelectContent>
         </Select>
       </div>
+
+      <AiTriagePanel
+        target="conversation"
+        targetId={id}
+        onApplied={() => void invalidate({ resource: 'conversations', invalidates: ['list', 'detail'], id })}
+      />
 
       <div className="flex-1 overflow-y-auto space-y-3 px-1">
         {bubbles.map((b, i) => (

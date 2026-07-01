@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AiTriagePanel } from '@/components/AiTriagePanel';
 import { TagPicker } from '@/components/TagPicker';
 import { EntitySyncBadgeStack } from '@/components/EntitySyncBadgeStack';
 import { TrackerChip } from '@/components/TrackerChip';
@@ -121,6 +122,7 @@ export function TaskDetailSheet({ taskId, onOpenChange }: Props) {
 
 function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () => void }) {
   const navigate = useNavigate();
+  const invalidate = useInvalidate();
   const { byIri: trackerByIri } = useTrackers();
   const tracker = task.tracker ? trackerByIri[task.tracker] : null;
   const { byIri: versionByIri } = useProjectVersions(task.project ?? null);
@@ -173,6 +175,12 @@ function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () 
             {task.description}
           </div>
         ) : null}
+
+        <AiTriagePanel
+          target="task"
+          targetId={task.id}
+          onApplied={() => void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: task.id })}
+        />
 
         <TagsSection task={task} />
         <VersionSection task={task} />
