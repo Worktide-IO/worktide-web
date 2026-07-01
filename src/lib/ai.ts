@@ -43,22 +43,31 @@ export const aiTriage = {
   request: (target: AiTriageTarget, targetId: string): Promise<unknown> =>
     api.post(`/${segment(target)}/${targetId}/ai-triage`).then((r) => r.data),
 
-  /** The newest still-pending recommendation for a ticket, or null. */
+  /**
+   * The newest still-pending recommendation for a ticket, or null.
+   *
+   * Filtered client-side: API-Platform's SearchFilter does not match the
+   * native-enum `status` nor the binary `uuid` `targetId` columns, so we fetch
+   * the workspace's newest recommendations (auto-scoped server-side) and match
+   * target + targetId + status here. Pending recommendations are rare (they get
+   * accepted/rejected/superseded), so the recent window is sufficient.
+   */
   fetchPending: async (target: AiTriageTarget, targetId: string): Promise<AiRecommendation | null> => {
     const { data } = await api.get('/ai_recommendations', {
       params: {
-        target,
-        targetId,
-        status: 'pending',
         'order[createdAt]': 'desc',
-        itemsPerPage: 1,
+        itemsPerPage: 50,
       },
     });
     const members: AiRecommendation[] =
       (data as Record<string, unknown>)['hydra:member'] as AiRecommendation[] ??
       (data as Record<string, unknown>).member as AiRecommendation[] ??
       [];
-    return members[0] ?? null;
+    return (
+      members.find(
+        (m) => m.status === 'pending' && m.target === target && m.targetId === targetId,
+      ) ?? null
+    );
   },
 
   /** Apply the suggestion to the ticket. */
