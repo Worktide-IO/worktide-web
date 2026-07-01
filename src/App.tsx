@@ -10,6 +10,8 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { authProvider } from '@/providers/authProvider';
 import { dataProvider } from '@/providers/dataProvider';
 import { LoginPage } from '@/pages/LoginPage';
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { ActivityPage } from '@/pages/activity/ActivityPage';
@@ -45,6 +47,12 @@ import { ProfileSettingsPage } from '@/pages/settings/ProfileSettingsPage';
 import { SecuritySettingsPage } from '@/pages/settings/SecuritySettingsPage';
 import { WorkspaceSettingsPage } from '@/pages/settings/WorkspaceSettingsPage';
 import { WallPage } from '@/pages/wall/WallPage';
+import { SocialPostsListPage } from '@/pages/social/SocialPostsListPage';
+import { SocialPostCreatePage } from '@/pages/social/SocialPostCreatePage';
+import { SocialPostEditPage } from '@/pages/social/SocialPostEditPage';
+import { ProductsListPage } from '@/pages/products/ProductsListPage';
+import { ProductCreatePage } from '@/pages/products/ProductCreatePage';
+import { ProductEditPage } from '@/pages/products/ProductEditPage';
 import { TasksListPage } from '@/pages/tasks/TasksListPage';
 import { TimeEntriesListPage } from '@/pages/timeEntries/TimeEntriesListPage';
 
@@ -59,11 +67,32 @@ import { TimeEntriesListPage } from '@/pages/timeEntries/TimeEntriesListPage';
  * change needed. Each entry needs a matching <Route> down below until its
  * dedicated page lands; until then the PlaceholderPage carries the load.
  */
+/**
+ * Refine DevTools open a WebSocket to the local devtools server (localhost:5001,
+ * started via `refine devtools`). That server isn't running in the ddev setup,
+ * so mounting it unconditionally floods the console with ERR_CONNECTION_REFUSED
+ * retries. Gate it behind an explicit opt-in: only in a dev build AND when
+ * VITE_REFINE_DEVTOOLS=true. Production never ships it; everyday dev is quiet.
+ */
+function DevtoolsGate({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const enabled =
+    import.meta.env.DEV && import.meta.env.VITE_REFINE_DEVTOOLS === 'true';
+  if (!enabled) {
+    return <>{children}</>;
+  }
+  return (
+    <DevtoolsProvider>
+      {children}
+      <DevtoolsPanel />
+    </DevtoolsProvider>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <TooltipProvider delayDuration={300}>
-      <DevtoolsProvider>
+      <DevtoolsGate>
         <Refine
           dataProvider={dataProvider}
           authProvider={authProvider}
@@ -170,6 +199,20 @@ export default function App() {
               edit: '/subscriptions/:id',
               meta: { label: 'Abos', icon: 'Receipt', category: 'CRM' },
             },
+            {
+              name: 'social_posts',
+              list: '/social',
+              create: '/social/create',
+              edit: '/social/:id',
+              meta: { label: 'Social Posts', icon: 'Megaphone', category: 'CRM' },
+            },
+            {
+              name: 'products',
+              list: '/produkte',
+              create: '/produkte/create',
+              edit: '/produkte/:id',
+              meta: { label: 'Produkte', icon: 'Boxes', category: 'CRM' },
+            },
 
             // ---- Admin -----------------------------------------------------
             {
@@ -248,6 +291,12 @@ export default function App() {
               <Route path="/subscriptions" element={<SubscriptionsListPage />} />
               <Route path="/subscriptions/create" element={<SubscriptionCreatePage />} />
               <Route path="/subscriptions/:id" element={<SubscriptionEditPage />} />
+              <Route path="/social" element={<SocialPostsListPage />} />
+              <Route path="/social/create" element={<SocialPostCreatePage />} />
+              <Route path="/social/:id" element={<SocialPostEditPage />} />
+              <Route path="/produkte" element={<ProductsListPage />} />
+              <Route path="/produkte/create" element={<ProductCreatePage />} />
+              <Route path="/produkte/:id" element={<ProductEditPage />} />
               <Route path="/workspace-members" element={<PlaceholderPage resource="workspace_members" />} />
               <Route path="/permissions" element={<PermissionsMatrixPage />} />
               <Route path="/webhooks" element={<PlaceholderPage resource="webhooks" />} />
@@ -258,11 +307,12 @@ export default function App() {
               <Route path="/settings/workspace" element={<WorkspaceSettingsPage />} />
             </Route>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
           </Routes>
         </Refine>
         <Toaster richColors closeButton position="top-right" />
-        <DevtoolsPanel />
-      </DevtoolsProvider>
+      </DevtoolsGate>
       </TooltipProvider>
     </BrowserRouter>
   );
