@@ -2,7 +2,6 @@ import { useList } from '@refinedev/core';
 import { Wifi, WifiOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import type { ProjectMemberJsonld } from '@/api/types/projectMember/Jsonld';
 import type { ProjectStatusJsonld } from '@/api/types/projectStatus/Jsonld';
@@ -10,6 +9,7 @@ import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
+import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,10 +42,6 @@ export function WallPage() {
     sorters: [{ field: 'updatedAt', order: 'desc' }],
     filters: [{ field: 'isArchived', operator: 'eq', value: 'false' }],
   });
-  const { result: customers } = useList<Row<CustomerJsonld>>({
-    resource: 'customers',
-    pagination: { mode: 'off' },
-  });
   const { result: taskStatuses } = useList<Row<TaskStatusJsonld>>({
     resource: 'task_statuses',
     pagination: { mode: 'off' },
@@ -67,13 +63,7 @@ export function WallPage() {
   useLiveResource('project_members');
   useLiveResource('project_statuses');
 
-  const customerByIri = useMemo(() => {
-    const map: Record<string, Row<CustomerJsonld>> = {};
-    for (const c of customers?.data ?? []) {
-      if (c['@id']) map[c['@id']] = c;
-    }
-    return map;
-  }, [customers]);
+  const customerByIri = useCustomerLookup((projects?.data ?? []).map((p) => p.customer));
 
   const openTaskStatusIris = useMemo(() => {
     const set = new Set<string>();

@@ -60,7 +60,8 @@ export function CustomerCombobox({ value, onChange, placeholder = 'Kunde wählen
     id: selectedId ?? '',
     queryOptions: { enabled: Boolean(selectedId) },
   });
-  const selectedName = selectedOne?.data?.name;
+  // In this Refine version useOne's `result` is the record itself, not `{ data }`.
+  const selectedName = selectedOne?.name;
 
   const pick = (iri: string | null) => {
     onChange(iri);

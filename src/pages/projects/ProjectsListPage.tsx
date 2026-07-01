@@ -8,7 +8,6 @@ import { UserAvatarStack } from '@/components/UserAvatarStack';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import type { ProjectMemberJsonld } from '@/api/types/projectMember/Jsonld';
 import type { ProjectStatusJsonld } from '@/api/types/projectStatus/Jsonld';
@@ -16,6 +15,7 @@ import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import { api } from '@/lib/api';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
+import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,11 +66,6 @@ export function ProjectsListPage() {
     resource: 'project_statuses',
     pagination: { mode: 'off' },
   });
-  const { result: customers } = useList<Row<CustomerJsonld>>({
-    resource: 'customers',
-    pagination: { mode: 'off' },
-  });
-
   const statusByIri = useMemo<Record<string, Row<ProjectStatusJsonld>>>(() => {
     const map: Record<string, Row<ProjectStatusJsonld>> = {};
     for (const s of statuses?.data ?? []) {
@@ -78,14 +73,6 @@ export function ProjectsListPage() {
     }
     return map;
   }, [statuses]);
-
-  const customerByIri = useMemo<Record<string, Row<CustomerJsonld>>>(() => {
-    const map: Record<string, Row<CustomerJsonld>> = {};
-    for (const c of customers?.data ?? []) {
-      if (c['@id']) map[c['@id']] = c;
-    }
-    return map;
-  }, [customers]);
 
   // Aggregates that drive the new columns. Three single requests vs
   // per-row fetches:
@@ -155,6 +142,7 @@ export function ProjectsListPage() {
   const isLoading = tableQuery.isLoading;
   const rows = tableQuery.data?.data ?? [];
   const total = tableQuery.data?.total ?? 0;
+  const customerByIri = useCustomerLookup(rows.map((p) => p.customer));
 
   return (
     <div className="space-y-4">

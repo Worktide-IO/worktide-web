@@ -6,9 +6,9 @@ import { useNavigate, useParams } from 'react-router';
 
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import type { ProjectStatusJsonld } from '@/api/types/projectStatus/Jsonld';
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
+import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -45,10 +45,7 @@ export function ProjectDetailPage() {
     resource: 'project_statuses',
     pagination: { mode: 'off' },
   });
-  const { result: customers } = useList<Row<CustomerJsonld>>({
-    resource: 'customers',
-    pagination: { mode: 'off' },
-  });
+  const customerByIri = useCustomerLookup([project?.customer]);
 
   if (!id) {
     return <p className="text-sm text-destructive">Keine Projekt-ID in der URL.</p>;
@@ -64,7 +61,7 @@ export function ProjectDetailPage() {
 
   const p = project;
   const status = (statuses?.data ?? []).find((s) => s['@id'] === p.status);
-  const customer = (customers?.data ?? []).find((c) => c['@id'] === p.customer);
+  const customer = p.customer ? customerByIri[p.customer] : undefined;
 
   return (
     <div className="space-y-6">

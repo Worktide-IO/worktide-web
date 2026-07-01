@@ -3,10 +3,11 @@ import { FolderKanban, Star } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link, useLocation } from 'react-router';
 
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import { useFavoriteProjects } from '@/hooks/useFavoriteProjects';
+import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { Row } from '@/lib/refine';
+import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { cn } from '@/lib/utils';
 import {
   SidebarGroup,
@@ -63,18 +64,10 @@ export function MyProjectsSidebar() {
     queryOptions: { enabled: favorites.length > 0 },
   });
 
-  const { result: customers } = useList<Row<CustomerJsonld>>({
-    resource: 'customers',
-    pagination: { mode: 'off' },
-  });
-
-  const customerByIri = useMemo(() => {
-    const map: Record<string, Row<CustomerJsonld>> = {};
-    for (const c of customers?.data ?? []) {
-      if (c['@id']) map[c['@id']] = c;
-    }
-    return map;
-  }, [customers]);
+  const customerByIri = useCustomerLookup([
+    ...(projects?.data ?? []).map((p) => p.customer),
+    ...(favoriteProjects?.data ?? []).map((p) => p.customer),
+  ]);
 
   // Bucket projects into "no customer" (Sammelprojekte) and a per-
   // customer map ordered by customer name. Favorites are deliberately

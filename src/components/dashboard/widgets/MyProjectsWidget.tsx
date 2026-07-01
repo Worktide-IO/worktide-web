@@ -2,10 +2,10 @@ import { useGetIdentity, useList } from '@refinedev/core';
 import { FolderKanban } from 'lucide-react';
 import { useNavigate } from 'react-router';
 
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
+import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -40,16 +40,8 @@ export function MyProjectsWidget() {
 
   // Render customer names alongside the row — IRI → row lookup, single
   // workspace-wide fetch shared with other widgets via tanstack cache.
-  const { result: customers } = useList<Row<CustomerJsonld>>({
-    resource: 'customers',
-    pagination: { mode: 'off' },
-  });
-  const customerByIri: Record<string, Row<CustomerJsonld>> = {};
-  for (const c of customers?.data ?? []) {
-    if (c['@id']) customerByIri[c['@id']] = c;
-  }
-
   const rows = projects?.data ?? [];
+  const customerByIri = useCustomerLookup(rows.map((p) => p.customer));
 
   return (
     <Card className="h-full overflow-hidden">
