@@ -35,7 +35,7 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
 
   const refetch = useCallback(async (): Promise<AiRecommendation | null> => {
     if (!targetId) return null;
-    const r = await aiTriage.fetchPending(target, targetId).catch(() => null);
+    const r = await aiTriage.fetchPending(target, targetId, 'triage').catch(() => null);
     setReco(r);
     if (r) setLoading(false);
     return r;
@@ -44,7 +44,7 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
   useEffect(() => {
     let active = true;
     if (!targetId) return;
-    void aiTriage.fetchPending(target, targetId).then((r) => {
+    void aiTriage.fetchPending(target, targetId, 'triage').then((r) => {
       if (active) {
         setReco(r);
         if (r) setLoading(false);

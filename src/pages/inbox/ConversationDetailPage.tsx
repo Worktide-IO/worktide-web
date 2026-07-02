@@ -8,6 +8,7 @@ import type { ChannelJsonld } from '@/api/types/channel/Jsonld';
 import type { ConversationJsonld } from '@/api/types/conversation/Jsonld';
 import type { InboundEventJsonld } from '@/api/types/inboundEvent/Jsonld';
 import type { OutboundMessageJsonld } from '@/api/types/outboundMessage/Jsonld';
+import { AiTicketSuggestionPanel } from '@/components/AiTicketSuggestionPanel';
 import { AiTriagePanel } from '@/components/AiTriagePanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -186,11 +187,17 @@ export function ConversationDetailPage() {
         </Select>
       </div>
 
-      <AiTriagePanel
-        target="conversation"
-        targetId={id}
-        onApplied={() => void invalidate({ resource: 'conversations', invalidates: ['list', 'detail'], id })}
-      />
+      <div className="space-y-2">
+        <AiTriagePanel
+          target="conversation"
+          targetId={id}
+          onApplied={() => void invalidate({ resource: 'conversations', invalidates: ['list', 'detail'], id })}
+        />
+        <AiTicketSuggestionPanel
+          conversationId={id}
+          onApplied={() => void invalidate({ resource: 'conversations', invalidates: ['list', 'detail'], id })}
+        />
+      </div>
 
       <div className="flex-1 overflow-y-auto space-y-3 px-1">
         {hasOlder ? (

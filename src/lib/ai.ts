@@ -20,8 +20,12 @@ export type AiSuggestion = {
   priority?: string | null;
   tags?: string[];
   suggestedNewTags?: string[];
-  // Conversation-shaped
+  // Conversation-shaped (triage)
   status?: string | null;
+  // Ticket-from-conversation-shaped
+  title?: string;
+  shouldCreateTicket?: boolean;
+  suggestedProject?: string | null; // project uuid, or null when none could be inferred
 };
 
 export type AiRecommendation = {
@@ -43,13 +47,26 @@ export const aiTriage = {
   request: (target: AiTriageTarget, targetId: string): Promise<unknown> =>
     api.post(`/${segment(target)}/${targetId}/ai-triage`).then((r) => r.data),
 
-  /** The newest still-pending recommendation for a ticket, or null. */
-  fetchPending: async (target: AiTriageTarget, targetId: string): Promise<AiRecommendation | null> => {
+  /** Queue an on-demand "create ticket?" suggestion for a conversation (202). */
+  suggestTicket: (conversationId: string): Promise<unknown> =>
+    api.post(`/conversations/${conversationId}/suggest-ticket`).then((r) => r.data),
+
+  /**
+   * The newest still-pending recommendation for a target, optionally narrowed to
+   * a kind (e.g. 'triage' vs 'ticket_from_conversation' so the two panels don't
+   * pick up each other's suggestions).
+   */
+  fetchPending: async (
+    target: AiTriageTarget,
+    targetId: string,
+    kind?: string,
+  ): Promise<AiRecommendation | null> => {
     const { data } = await api.get('/ai_recommendations', {
       params: {
         target,
         targetId,
         status: 'pending',
+        ...(kind ? { kind } : {}),
         'order[createdAt]': 'desc',
         itemsPerPage: 1,
       },
@@ -61,9 +78,15 @@ export const aiTriage = {
     return members[0] ?? null;
   },
 
-  /** Apply the suggestion to the ticket. */
-  accept: (id: string): Promise<unknown> =>
-    api.post(`/ai_recommendations/${id}/accept`).then((r) => r.data),
+  /**
+   * Apply the suggestion. For ticket-from-conversation an optional project
+   * (IRI or uuid) is sent; the server 409s if none is supplied and none was
+   * suggested.
+   */
+  accept: (id: string, project?: string): Promise<unknown> =>
+    api
+      .post(`/ai_recommendations/${id}/accept`, project ? { project } : {})
+      .then((r) => r.data),
 
   /** Dismiss the suggestion. */
   reject: (id: string): Promise<unknown> =>
