@@ -1,20 +1,18 @@
-import { useList } from '@refinedev/core';
 import {
   Building2,
   CheckSquare,
   Contact,
   FileText,
   FolderKanban,
+  Inbox,
+  Loader2,
+  Mail,
   Search,
+  Send,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import type { ContactJsonld } from '@/api/types/contact/Jsonld';
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
-import type { DocumentJsonld } from '@/api/types/document/Jsonld';
-import type { ProjectJsonld } from '@/api/types/project/Jsonld';
-import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import {
   CommandDialog,
   CommandEmpty,
@@ -25,24 +23,67 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from '@/components/ui/command';
-import type { Row } from '@/lib/refine';
+import { api } from '@/lib/api';
 
 /**
- * Cross-resource global search — mounted once in AppLayout next to the
- * QuickAddDialog. Toggle via Cmd+/ (Ctrl+/) so it doesn't clash with
- * Cmd+K (Quick-Add). The split is intentional: Cmd+K = create, Cmd+/ =
- * find.
+ * Cross-entity global search — mounted once in AppLayout next to QuickAddDialog.
+ * Toggle via Cmd+/ (Ctrl+/); Cmd+K stays Quick-Add. Cmd+/ = find.
  *
- * Strategy: typing fires five parallel Refine `useList` calls — one per
- * resource — with the appropriate `contains` filter. Results are paginated
- * to 5 rows each so the dropdown stays under one screen even at "a"-only
- * queries.
- *
- * The five hooks live in a child component (SearchBody) that only mounts
- * once the user actually opens the dialog — otherwise the hook-count
- * would change between renders, which React (rightly) crashes on
- * ("Rules of Hooks").
+ * Backed by the server's ranked /v1/search (SEARCH_PROVIDER=mysql|meilisearch):
+ * one debounced call returns hits across mail, tasks, CRM, projects and
+ * documents. cmdk's client-side filtering is disabled (shouldFilter=false) — the
+ * server already ranked + filtered, so we render its order verbatim.
  */
+
+type SearchHit = {
+  type: string;
+  id: string;
+  iri: string;
+  title: string;
+  snippet: string;
+  updatedAt: number | null;
+  parentType: string | null;
+  parentId: string | null;
+};
+
+// Only types with a sensible destination are requested (comment has none).
+const TYPES = 'task,project,conversation,inbound_event,outbound_message,customer,contact,document';
+
+const GROUPS: { type: string; label: string; icon: typeof CheckSquare }[] = [
+  { type: 'task', label: 'Aufgaben', icon: CheckSquare },
+  { type: 'project', label: 'Projekte', icon: FolderKanban },
+  { type: 'conversation', label: 'Konversationen', icon: Inbox },
+  { type: 'inbound_event', label: 'Mail — eingehend', icon: Mail },
+  { type: 'outbound_message', label: 'Mail — ausgehend', icon: Send },
+  { type: 'customer', label: 'Kunden', icon: Building2 },
+  { type: 'contact', label: 'Kontakte', icon: Contact },
+  { type: 'document', label: 'Dokumente', icon: FileText },
+];
+
+const stripHighlight = (s: string): string => s.replace(/<\/?em>/g, '');
+
+function routeFor(hit: SearchHit): string | null {
+  switch (hit.type) {
+    case 'project':
+      return `/projects/${hit.id}`;
+    case 'conversation':
+      return `/inbox/${hit.id}`;
+    case 'inbound_event':
+    case 'outbound_message':
+      return hit.parentId ? `/inbox/${hit.parentId}` : null;
+    case 'customer':
+      return `/customers/${hit.id}`;
+    case 'contact':
+      return `/contacts/${hit.id}`;
+    case 'task':
+      return '/tasks';
+    case 'document':
+      return '/documents';
+    default:
+      return null;
+  }
+}
+
 export function GlobalSearchDialog() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -58,21 +99,20 @@ export function GlobalSearchDialog() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  useEffect(() => {
-    if (!open) setQuery('');
-  }, [open]);
+  const handleOpenChange = (v: boolean) => {
+    setOpen(v);
+    if (!v) setQuery('');
+  };
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
+    <CommandDialog open={open} onOpenChange={handleOpenChange} shouldFilter={false}>
       <CommandInput
-        placeholder="Suche Tasks, Projekte, Kunden, Kontakte, Dokumente…"
+        placeholder="Suche Mail, Aufgaben, Kunden, Kontakte, Projekte, Dokumente…"
         value={query}
         onValueChange={setQuery}
       />
       <CommandList>
-        {open ? (
-          <SearchBody query={query} onPick={() => setOpen(false)} />
-        ) : null}
+        {open ? <SearchBody query={query} onPick={() => setOpen(false)} /> : null}
         <CommandSeparator />
         <CommandGroup heading="Hint">
           <div className="px-2 py-1.5 text-xs text-muted-foreground inline-flex items-center gap-2">
@@ -86,193 +126,94 @@ export function GlobalSearchDialog() {
   );
 }
 
-function SearchBody({
-  query,
-  onPick,
-}: {
-  query: string;
-  onPick: () => void;
-}) {
+function SearchBody({ query, onPick }: { query: string; onPick: () => void }) {
   const navigate = useNavigate();
-  const enabled = query.trim().length >= 2;
+  const [debounced, setDebounced] = useState('');
+  const [hits, setHits] = useState<SearchHit[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { result: tasks } = useList<Row<TaskJsonld>>({
-    resource: 'tasks',
-    pagination: { currentPage: 1, pageSize: 5 },
-    sorters: [{ field: 'updatedAt', order: 'desc' }],
-    filters: [{ field: 'title', operator: 'contains', value: query }],
-    queryOptions: { enabled },
-  });
-  const { result: projects } = useList<Row<ProjectJsonld>>({
-    resource: 'projects',
-    pagination: { currentPage: 1, pageSize: 5 },
-    sorters: [{ field: 'updatedAt', order: 'desc' }],
-    filters: [{ field: 'name', operator: 'contains', value: query }],
-    queryOptions: { enabled },
-  });
-  const { result: customers } = useList<Row<CustomerJsonld>>({
-    resource: 'customers',
-    pagination: { currentPage: 1, pageSize: 5 },
-    filters: [{ field: 'name', operator: 'contains', value: query }],
-    queryOptions: { enabled },
-  });
-  const { result: contacts } = useList<Row<ContactJsonld>>({
-    resource: 'contacts',
-    pagination: { currentPage: 1, pageSize: 5 },
-    sorters: [{ field: 'lastName', order: 'asc' }],
-    filters: [{ field: 'lastName', operator: 'contains', value: query }],
-    queryOptions: { enabled },
-  });
-  const { result: documents } = useList<Row<DocumentJsonld>>({
-    resource: 'documents',
-    pagination: { currentPage: 1, pageSize: 5 },
-    sorters: [{ field: 'updatedAt', order: 'desc' }],
-    filters: [{ field: 'name', operator: 'contains', value: query }],
-    queryOptions: { enabled },
-  });
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(query.trim()), 250);
+    return () => clearTimeout(t);
+  }, [query]);
 
-  const go = (path: string) => {
+  useEffect(() => {
+    if (debounced.length < 2) {
+      return;
+    }
+    let active = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- brief loading flag for the debounced fetch
+    setIsLoading(true);
+    api
+      .get<{ hits: SearchHit[] }>('/search', { params: { q: debounced, types: TYPES, limit: 20 } })
+      .then(({ data }) => {
+        if (active) setHits(Array.isArray(data.hits) ? data.hits : []);
+      })
+      .catch(() => {
+        if (active) setHits([]);
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [debounced]);
+
+  const go = (path: string | null) => {
+    if (!path) return;
     onPick();
     navigate(path);
   };
 
-  const tasksRows = tasks?.data ?? [];
-  const projectsRows = projects?.data ?? [];
-  const customersRows = customers?.data ?? [];
-  const contactsRows = contacts?.data ?? [];
-  const documentsRows = documents?.data ?? [];
-  const totalHits =
-    tasksRows.length +
-    projectsRows.length +
-    customersRows.length +
-    contactsRows.length +
-    documentsRows.length;
-
-  if (!enabled) {
+  if (debounced.length < 2) {
     return <CommandEmpty>Mindestens 2 Zeichen eingeben.</CommandEmpty>;
   }
-  if (totalHits === 0) {
+  if (isLoading && hits.length === 0) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-6 text-xs text-muted-foreground">
+        <Loader2 className="size-3.5 animate-spin" /> Suche läuft …
+      </div>
+    );
+  }
+  if (hits.length === 0) {
     return <CommandEmpty>Keine Treffer.</CommandEmpty>;
   }
 
+  const groups = GROUPS.map((g) => ({ ...g, rows: hits.filter((h) => h.type === g.type) })).filter(
+    (g) => g.rows.length > 0,
+  );
+
   return (
     <>
-      {tasksRows.length > 0 ? (
-        <CommandGroup heading="Aufgaben">
-          {tasksRows.map((t) => (
-            <CommandItem
-              key={t['@id']}
-              value={`task ${t.identifier} ${t.title}`}
-              onSelect={() =>
-                t.project
-                  ? go(`/projects/${t.project.split('/').pop()}?tab=board`)
-                  : go(`/tasks`)
-              }
-            >
-              <CheckSquare className="size-4 text-muted-foreground" />
-              <span className="font-mono text-[10px] text-muted-foreground">
-                {t.identifier}
-              </span>
-              <span className="truncate">{t.title}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      ) : null}
-
-      {projectsRows.length > 0 ? (
-        <>
-          {tasksRows.length > 0 ? <CommandSeparator /> : null}
-          <CommandGroup heading="Projekte">
-            {projectsRows.map((p) => (
-              <CommandItem
-                key={p['@id']}
-                value={`project ${p.key} ${p.name}`}
-                onSelect={() => p.id && go(`/projects/${p.id}`)}
-              >
-                <FolderKanban
-                  className="size-4"
-                  style={{ color: p.color ?? undefined }}
-                />
-                <span className="font-mono text-[10px] text-muted-foreground">
-                  {p.key}
-                </span>
-                <span className="truncate">{p.name}</span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </>
-      ) : null}
-
-      {customersRows.length > 0 ? (
-        <>
-          {tasksRows.length + projectsRows.length > 0 ? (
-            <CommandSeparator />
-          ) : null}
-          <CommandGroup heading="Kunden">
-            {customersRows.map((c) => (
-              <CommandItem
-                key={c['@id']}
-                value={`customer ${c.name}`}
-                onSelect={() => c.id && go(`/customers/${c.id}`)}
-              >
-                <Building2 className="size-4 text-muted-foreground" />
-                <span className="truncate">{c.name}</span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </>
-      ) : null}
-
-      {contactsRows.length > 0 ? (
-        <>
-          {tasksRows.length + projectsRows.length + customersRows.length > 0 ? (
-            <CommandSeparator />
-          ) : null}
-          <CommandGroup heading="Kontakte">
-            {contactsRows.map((c) => (
-              <CommandItem
-                key={c['@id']}
-                value={`contact ${c.firstName} ${c.lastName}`}
-                onSelect={() => c.id && go(`/contacts/${c.id}`)}
-              >
-                <Contact className="size-4 text-muted-foreground" />
-                <span className="truncate">
-                  {c.firstName} {c.lastName}
-                </span>
-                {c.position ? (
-                  <span className="text-xs text-muted-foreground">
-                    {c.position}
-                  </span>
-                ) : null}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </>
-      ) : null}
-
-      {documentsRows.length > 0 ? (
-        <>
-          {tasksRows.length +
-            projectsRows.length +
-            customersRows.length +
-            contactsRows.length >
-          0 ? (
-            <CommandSeparator />
-          ) : null}
-          <CommandGroup heading="Dokumente">
-            {documentsRows.map((d) => (
-              <CommandItem
-                key={d['@id']}
-                value={`document ${d.name}`}
-                onSelect={() => go('/documents')}
-              >
-                <FileText className="size-4 text-muted-foreground" />
-                <span className="truncate">{d.name}</span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </>
-      ) : null}
+      {groups.map((group, idx) => {
+        const Icon = group.icon;
+        return (
+          <div key={group.type}>
+            {idx > 0 ? <CommandSeparator /> : null}
+            <CommandGroup heading={group.label}>
+              {group.rows.map((hit) => (
+                <CommandItem
+                  key={`${hit.type}-${hit.id}`}
+                  value={`${hit.type}-${hit.id}`}
+                  disabled={routeFor(hit) === null}
+                  onSelect={() => go(routeFor(hit))}
+                >
+                  <Icon className="size-4 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0">
+                    <div className="truncate">{stripHighlight(hit.title) || '(ohne Titel)'}</div>
+                    {hit.snippet ? (
+                      <div className="truncate text-xs text-muted-foreground">
+                        {stripHighlight(hit.snippet)}
+                      </div>
+                    ) : null}
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </div>
+        );
+      })}
     </>
   );
 }
