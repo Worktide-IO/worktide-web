@@ -1,5 +1,5 @@
-import { useInvalidate, useList, useOne } from '@refinedev/core';
-import { ArrowLeft, ChevronDown, Mail, Paperclip, Send } from 'lucide-react';
+import { useInvalidate, useOne } from '@refinedev/core';
+import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Mail, Paperclip, Send } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
@@ -22,9 +22,10 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { useLiveResource } from '@/lib/mercure';
+import { topicFor, useLiveResource, useMercureTopic } from '@/lib/mercure';
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
+import { useKeysetList } from '@/lib/useKeysetList';
 import { cn } from '@/lib/utils';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -69,29 +70,44 @@ export function ConversationDetailPage() {
   const invalidate = useInvalidate();
 
   useLiveResource('conversations');
-  useLiveResource('inbound_events');
-  useLiveResource('outbound_messages');
 
   const { result: convo, query: convoQuery } = useOne<Row<ConversationJsonld>>({
     resource: 'conversations',
     id: id ?? '',
   });
 
-  const { result: events } = useList<Row<InboundEventJsonld>>({
+  // Thread messages are loaded newest-first via keyset (order desc +
+  // receivedAt/createdAt[before]) — a huge thread (10k+ mails) no longer loads
+  // in one shot. "Load older" walks further back; both lists merge + sort asc
+  // for display.
+  const convoIri = id ? `/v1/conversations/${id}` : undefined;
+  const inbound = useKeysetList<Row<InboundEventJsonld>>({
     resource: 'inbound_events',
-    pagination: { mode: 'off' },
-    filters: id ? [{ field: 'conversation', operator: 'eq', value: `/v1/conversations/${id}` }] : [],
-    sorters: [{ field: 'receivedAt', order: 'asc' }],
-    queryOptions: { enabled: Boolean(id) },
+    orderField: 'receivedAt',
+    cursorOf: (e) => (e.receivedAt ? String(e.receivedAt) : undefined),
+    filters: { conversation: convoIri },
+    pageSize: 50,
+    enabled: Boolean(id),
+  });
+  const outboundList = useKeysetList<Row<OutboundMessageJsonld>>({
+    resource: 'outbound_messages',
+    orderField: 'createdAt',
+    cursorOf: (m) => (m.createdAt ? String(m.createdAt) : undefined),
+    filters: { conversation: convoIri },
+    pageSize: 50,
+    enabled: Boolean(id),
   });
 
-  const { result: outbound } = useList<Row<OutboundMessageJsonld>>({
-    resource: 'outbound_messages',
-    pagination: { mode: 'off' },
-    filters: id ? [{ field: 'conversation', operator: 'eq', value: `/v1/conversations/${id}` }] : [],
-    sorters: [{ field: 'createdAt', order: 'asc' }],
-    queryOptions: { enabled: Boolean(id) },
-  });
+  // Live: a new event on this (or any) thread reloads the newest page.
+  useMercureTopic(topicFor('inbound_events'), { onMessage: () => inbound.reset() });
+  useMercureTopic(topicFor('outbound_messages'), { onMessage: () => outboundList.reset() });
+
+  const hasOlder = inbound.hasMore || outboundList.hasMore;
+  const loadingOlder = inbound.isLoading || outboundList.isLoading;
+  const loadOlder = () => {
+    inbound.loadMore();
+    outboundList.loadMore();
+  };
 
   const { result: channelOne } = useOne<Row<ChannelJsonld>>({
     resource: 'channels',
@@ -102,22 +118,22 @@ export function ConversationDetailPage() {
 
   const bubbles = useMemo<Bubble[]>(() => {
     const out: Bubble[] = [];
-    for (const e of events?.data ?? []) {
+    for (const e of inbound.items) {
       out.push({
         kind: 'inbound',
-        at: new Date(e.receivedAt ?? e.createdAt ?? Date.now()),
+        at: new Date(e.receivedAt ?? e.createdAt ?? 0),
         event: e,
       });
     }
-    for (const m of outbound?.data ?? []) {
+    for (const m of outboundList.items) {
       out.push({
         kind: 'outbound',
-        at: new Date(m.sentAt ?? m.createdAt ?? Date.now()),
+        at: new Date(m.sentAt ?? m.createdAt ?? 0),
         message: m,
       });
     }
     return out.sort((a, b) => a.at.getTime() - b.at.getTime());
-  }, [events, outbound]);
+  }, [inbound.items, outboundList.items]);
 
   const setStatus = async (next: string) => {
     if (!id) return;
@@ -177,8 +193,23 @@ export function ConversationDetailPage() {
       />
 
       <div className="flex-1 overflow-y-auto space-y-3 px-1">
+        {hasOlder ? (
+          <div className="flex justify-center py-1">
+            <Button variant="outline" size="sm" onClick={loadOlder} disabled={loadingOlder}>
+              {loadingOlder ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <ChevronUp className="size-3.5" />
+              )}
+              Ältere Nachrichten laden
+            </Button>
+          </div>
+        ) : null}
         {bubbles.map((b, i) => (
-          <MessageBubble key={`${b.kind}-${i}`} bubble={b} />
+          <MessageBubble
+            key={b.event?.['@id'] ?? b.message?.['@id'] ?? `${b.kind}-${i}`}
+            bubble={b}
+          />
         ))}
       </div>
 

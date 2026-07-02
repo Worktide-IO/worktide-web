@@ -1,6 +1,7 @@
 import { useList } from '@refinedev/core';
-import { Inbox as InboxIcon, Mailbox } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { Inbox as InboxIcon, Loader2, Mailbox } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import type { ChannelJsonld } from '@/api/types/channel/Jsonld';
@@ -14,17 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { useLiveResource } from '@/lib/mercure';
+import { topicFor, useMercureTopic } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
+import { useKeysetList } from '@/lib/useKeysetList';
 
 const STATUS_LABEL: Record<string, string> = {
   open: 'Offen',
@@ -40,71 +33,75 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'dest
   spam: 'destructive',
 };
 
+const ROW = 'grid grid-cols-[7rem_11rem_14rem_1fr_9rem] items-center gap-3 px-3';
+const ROW_H = 52; // px — fixed row height drives the windowing math
+const OVERSCAN = 8;
+
 /**
- * Top-level Inbox — every conversation across every threading-capable
- * channel for the workspace. Default sort is most-recently-touched.
- *
- * Filter controls are intentionally minimal in the first iteration:
- * status (Open / Pending / Closed / Spam / Alle) and channel. Once we
- * have more channel types in play the channel filter switches to a
- * multi-select.
- *
- * Clicking a row opens the conversation detail at /inbox/<id>.
+ * Top-level Inbox. Scales to very large mailboxes: conversations load via a
+ * keyset cursor (order[lastEventAt]=desc + lastEventAt[before]) as you scroll,
+ * and the row list is windowed (only the visible slice is in the DOM) with a
+ * small dependency-free virtualizer.
  */
 export function ConversationsListPage() {
   const [statusFilter, setStatusFilter] = useState<string>('open');
   const [channelFilter, setChannelFilter] = useState<string>('all');
   const navigate = useNavigate();
 
-  // Live-refresh on Mercure updates so a newly arrived mail bubbles
-  // into the list without a manual refresh.
-  useLiveResource('conversations');
+  const filters = useMemo(
+    () => ({ status: statusFilter, channel: channelFilter }),
+    [statusFilter, channelFilter],
+  );
 
-  const filters = useMemo(() => {
-    const fs: Array<{ field: string; operator: 'eq'; value: string }> = [];
-    if (statusFilter !== 'all') fs.push({ field: 'status', operator: 'eq', value: statusFilter });
-    if (channelFilter !== 'all') fs.push({ field: 'channel', operator: 'eq', value: channelFilter });
-    return fs;
-  }, [statusFilter, channelFilter]);
-
-  const { result: conversations, query } = useList<Row<ConversationJsonld>>({
+  const { items, isLoading, hasMore, loadMore, reset } = useKeysetList<Row<ConversationJsonld>>({
     resource: 'conversations',
-    pagination: { pageSize: 50 },
-    sorters: [{ field: 'lastEventAt', order: 'desc' }],
+    orderField: 'lastEventAt',
+    cursorOf: (c) => (c.lastEventAt ? String(c.lastEventAt) : undefined),
     filters,
+    pageSize: 50,
   });
 
+  // New mail (Mercure) → reload the first page so it bubbles to the top.
+  useMercureTopic(topicFor('conversations'), { onMessage: () => reset() });
+
+  // Channels are few — one fetch feeds both the filter dropdown and row labels.
   const { result: channels } = useList<Row<ChannelJsonld>>({
     resource: 'channels',
     pagination: { mode: 'off' },
   });
-
   const channelByIri = useMemo(() => {
     const m: Record<string, Row<ChannelJsonld>> = {};
     for (const c of channels?.data ?? []) if (c['@id']) m[c['@id']] = c;
     return m;
   }, [channels]);
 
-  const rows = conversations?.data ?? [];
+  // --- virtualization (only the visible row slice is in the DOM) ---
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual returns non-memoizable fns; safe here
+  const virtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ROW_H,
+    overscan: OVERSCAN,
+  });
 
   return (
     <div className="space-y-4">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h2 className="text-2xl flex items-center gap-2">
-            <InboxIcon className="size-6 text-muted-foreground" />
-            Inbox
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Alle eingehenden Konversationen aus Mail-, Slack- und sonstigen Channels.
-          </p>
-        </div>
+      <div>
+        <h2 className="text-2xl flex items-center gap-2">
+          <InboxIcon className="size-6 text-muted-foreground" />
+          Inbox
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Alle eingehenden Konversationen aus Mail-, Slack- und sonstigen Channels.
+        </p>
       </div>
 
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center gap-3 space-y-0">
           <CardTitle className="text-base">
-            {rows.length} Konversation{rows.length === 1 ? '' : 'en'}
+            {items.length}
+            {hasMore ? '+' : ''} Konversation{items.length === 1 ? '' : 'en'}
           </CardTitle>
           <div className="ml-auto flex flex-wrap gap-2">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -135,43 +132,55 @@ export function ConversationsListPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {query.isLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ) : rows.length === 0 ? (
+          <div className={`${ROW} border-b pb-2 text-xs font-medium text-muted-foreground`}>
+            <span>Status</span>
+            <span>Channel</span>
+            <span>Absender</span>
+            <span>Betreff</span>
+            <span>Letzte Aktivität</span>
+          </div>
+
+          {items.length === 0 && !isLoading ? (
             <p className="py-12 text-center text-sm text-muted-foreground">
               Keine Konversationen — sobald ein Channel Events bringt, erscheinen sie hier.
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-28">Status</TableHead>
-                  <TableHead className="w-44">Channel</TableHead>
-                  <TableHead className="w-56">Absender</TableHead>
-                  <TableHead>Betreff</TableHead>
-                  <TableHead className="w-36">Letzte Aktivität</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((c) => {
+            <div
+              ref={scrollRef}
+              className="h-[calc(100vh-18rem)] overflow-auto"
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                if (hasMore && !isLoading && el.scrollHeight - el.scrollTop - el.clientHeight < 400) {
+                  loadMore();
+                }
+              }}
+            >
+              <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}>
+                {virtualizer.getVirtualItems().map((vi) => {
+                  const c = items[vi.index];
+                  if (!c) return null;
                   const status = (c.status as string) ?? 'open';
                   const ch = c.channel ? channelByIri[c.channel] : null;
                   return (
-                    <TableRow
-                      key={c['@id']}
-                      className="cursor-pointer"
+                    <div
+                      key={c['@id'] ?? vi.key}
+                      className={`${ROW} cursor-pointer border-b hover:bg-muted/50`}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: `${vi.size}px`,
+                        transform: `translateY(${vi.start}px)`,
+                      }}
                       onClick={() => c.id && navigate(`/inbox/${c.id}`)}
                     >
-                      <TableCell>
+                      <span>
                         <Badge variant={STATUS_VARIANT[status] ?? 'outline'} className="text-xs">
                           {STATUS_LABEL[status] ?? status}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground">
                         {ch ? (
                           <span className="inline-flex items-center gap-1">
                             <Mailbox className="size-3" />
@@ -180,19 +189,22 @@ export function ConversationsListPage() {
                         ) : (
                           '—'
                         )}
-                      </TableCell>
-                      <TableCell className="text-sm truncate max-w-[200px]">
-                        {c.senderRaw ?? '—'}
-                      </TableCell>
-                      <TableCell className="font-medium">{c.subject || '(no subject)'}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
+                      </span>
+                      <span className="truncate text-sm">{c.senderRaw ?? '—'}</span>
+                      <span className="truncate font-medium">{c.subject || '(no subject)'}</span>
+                      <span className="text-xs text-muted-foreground">
                         {c.lastEventAt ? new Date(c.lastEventAt).toLocaleString('de-DE') : '—'}
-                      </TableCell>
-                    </TableRow>
+                      </span>
+                    </div>
                   );
                 })}
-              </TableBody>
-            </Table>
+              </div>
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin" /> Lädt …
+                </div>
+              ) : null}
+            </div>
           )}
         </CardContent>
       </Card>
