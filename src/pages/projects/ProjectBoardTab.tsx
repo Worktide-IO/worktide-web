@@ -171,8 +171,14 @@ export function ProjectBoardTab({ projectIri }: Props) {
     id: wsId ?? '',
     queryOptions: { enabled: Boolean(wsId) },
   });
-  const boardConfig =
-    (workspace?.settings as { boardColumns?: BoardColumnConfig[] } | null | undefined)?.boardColumns ?? null;
+  const boardSettings = workspace?.settings as
+    | { boardColumns?: BoardColumnConfig[]; doneWindowDays?: number | null }
+    | null
+    | undefined;
+  const boardConfig = boardSettings?.boardColumns ?? null;
+  // Done columns only show tasks closed within this rolling window (0/undefined
+  // shows all). Default keeps the board focused on recent completions.
+  const doneWindowDays = boardSettings?.doneWindowDays ?? 30;
 
   const columns = useMemo(
     () => resolveBoardColumns(statuses?.data ?? [], boardConfig),
@@ -271,16 +277,30 @@ export function ProjectBoardTab({ projectIri }: Props) {
     return m;
   }, [columns]);
 
+  // Stable "now" for the whole board (aging + the done rolling window).
+  const [boardNowMs] = useState(() => Date.now());
+  const doneCutoffMs = doneWindowDays > 0 ? boardNowMs - doneWindowDays * 86_400_000 : null;
+
   const tasksByColumn = useMemo(() => {
-    const map: Record<string, Row<TaskJsonld>[]> = {};
+    const byColumn: Record<string, Row<TaskJsonld>[]> = {};
+    const hiddenOlder: Record<string, number> = {};
     for (const t of filteredTasks) {
       const colId = t.status ? statusToCol[t.status] : undefined;
       if (!colId) continue;
-      (map[colId] ??= []).push(t);
+      // Done columns: keep only tasks closed within the rolling window; older
+      // or undated completions are counted as hidden, not rendered.
+      if (doneColumnIds.has(colId) && doneCutoffMs !== null) {
+        const closed = t.closedOn ? Date.parse(t.closedOn) : Number.NaN;
+        if (!(Number.isFinite(closed) && closed >= doneCutoffMs)) {
+          hiddenOlder[colId] = (hiddenOlder[colId] ?? 0) + 1;
+          continue;
+        }
+      }
+      (byColumn[colId] ??= []).push(t);
     }
-    for (const list of Object.values(map)) sortTasks(list);
-    return map;
-  }, [filteredTasks, statusToCol]);
+    for (const list of Object.values(byColumn)) sortTasks(list);
+    return { byColumn, hiddenOlder };
+  }, [filteredTasks, statusToCol, doneColumnIds, doneCutoffMs]);
 
   const { byIri: trackerByIri } = useTrackers();
   // Assignee-lane labels resolve through the shared user directory (keyed by
@@ -310,6 +330,10 @@ export function ProjectBoardTab({ projectIri }: Props) {
     for (const t of filteredTasks) {
       const colId = t.status ? statusToCol[t.status] : undefined;
       if (!colId) continue;
+      if (doneColumnIds.has(colId) && doneCutoffMs !== null) {
+        const closed = t.closedOn ? Date.parse(t.closedOn) : Number.NaN;
+        if (!(Number.isFinite(closed) && closed >= doneCutoffMs)) continue; // outside done window
+      }
       const lk = keyOf(t);
       present.add(lk);
       ((byLaneCol[lk] ??= {})[colId] ??= []).push(t);
@@ -330,14 +354,13 @@ export function ProjectBoardTab({ projectIri }: Props) {
       count: Object.values(byLaneCol[key] ?? {}).reduce((n, l) => n + l.length, 0),
     }));
     return { lanes, byLaneCol };
-  }, [filter.swimlane, filteredTasks, statusToCol, userByIri, trackerByIri]);
+  }, [filter.swimlane, filteredTasks, statusToCol, userByIri, trackerByIri, doneColumnIds, doneCutoffMs]);
 
   const visibleColumns = columns.filter((c) => !(filter.hideDone && doneColumnIds.has(c.id)));
 
   // Flow-metrics strip. Computed over ALL project tasks (not the quick filter)
   // so the KPIs reflect real flow, not the current view. WIP = work that has
   // left the first (backlog) column but isn't done yet.
-  const [boardNowMs] = useState(() => Date.now());
   const flowMetrics = useMemo(() => {
     const firstColId = columns[0]?.id;
     let wip = 0;
@@ -576,7 +599,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
             lanes={swimlanes.lanes}
             byLaneCol={swimlanes.byLaneCol}
             columns={visibleColumns}
-            columnTotals={tasksByColumn}
+            columnTotals={tasksByColumn.byColumn}
             subtaskCountByParent={subtaskCountByParent}
             blockedTaskIris={blockedTaskIris}
             doneColumnIds={doneColumnIds}
@@ -588,7 +611,8 @@ export function ProjectBoardTab({ projectIri }: Props) {
               <BoardColumn
                 key={column.id}
                 column={column}
-                tasks={tasksByColumn[column.id] ?? []}
+                tasks={tasksByColumn.byColumn[column.id] ?? []}
+                hiddenOlder={tasksByColumn.hiddenOlder[column.id] ?? 0}
                 subtaskCountByParent={subtaskCountByParent}
                 blockedTaskIris={blockedTaskIris}
                 showAging={!doneColumnIds.has(column.id)}
@@ -622,6 +646,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
 function BoardColumn({
   column,
   tasks,
+  hiddenOlder = 0,
   subtaskCountByParent,
   blockedTaskIris,
   showAging = false,
@@ -629,6 +654,7 @@ function BoardColumn({
 }: {
   column: ResolvedColumn;
   tasks: Row<TaskJsonld>[];
+  hiddenOlder?: number;
   subtaskCountByParent: Record<string, number>;
   blockedTaskIris: Set<string>;
   showAging?: boolean;
@@ -687,7 +713,7 @@ function BoardColumn({
           <span className="text-xs text-muted-foreground">{tasks.length}</span>
         )}
       </div>
-      {tasks.length === 0 ? (
+      {tasks.length === 0 && hiddenOlder === 0 ? (
         <p className="text-center text-xs text-muted-foreground/70 py-6">Keine Aufgaben</p>
       ) : (
         <div ref={scrollRef} className="-mr-1 flex-1 overflow-y-auto pr-1">
@@ -715,6 +741,11 @@ function BoardColumn({
           </div>
         </div>
       )}
+      {hiddenOlder > 0 ? (
+        <p className="pt-2 text-center text-[11px] text-muted-foreground/70">
+          +{hiddenOlder} ältere ausgeblendet
+        </p>
+      ) : null}
     </div>
   );
 }

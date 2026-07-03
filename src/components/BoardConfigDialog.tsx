@@ -52,6 +52,10 @@ export function BoardConfigDialog({
   const [groups, setGroups] = useState<BoardColumnConfig[]>(() =>
     (columns ?? []).map((c) => ({ ...c, statusIds: [...c.statusIds] })),
   );
+  const [doneWindowDays, setDoneWindowDays] = useState<number>(() => {
+    const v = (settings as { doneWindowDays?: number } | null | undefined)?.doneWindowDays;
+    return typeof v === 'number' && v >= 0 ? v : 30;
+  });
   const { mutate: update, mutation } = useUpdate();
 
   const statusName = useMemo(() => {
@@ -122,7 +126,7 @@ export function BoardConfigDialog({
       {
         resource: 'workspaces',
         id: workspaceId,
-        values: { settings: { ...prev, boardColumns } },
+        values: { settings: { ...prev, boardColumns, doneWindowDays } },
         successNotification: false,
       },
       {
@@ -147,6 +151,21 @@ export function BoardConfigDialog({
             deren „primären" Status. Nicht zugeordnete Status erscheinen als eigene Spalten.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/20 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Erledigt-Spalten: nur der letzten</span>
+          <Input
+            type="number"
+            min={0}
+            value={doneWindowDays}
+            onChange={(e) => {
+              const n = Number.parseInt(e.target.value, 10);
+              setDoneWindowDays(Number.isFinite(n) && n >= 0 ? n : 0);
+            }}
+            className="h-8 w-20"
+          />
+          <span className="text-muted-foreground">Tage anzeigen (0 = alle)</span>
+        </div>
 
         <div className="max-h-[55vh] space-y-3 overflow-y-auto pr-1">
           {groups.length === 0 ? (
