@@ -1,15 +1,18 @@
-import { useList, useTable } from '@refinedev/core';
+import { useGetIdentity, useInvalidate, useList, useTable } from '@refinedev/core';
 import { Search, Wifi, WifiOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import type { TimeEntryJsonld } from '@/api/types/timeEntry/Jsonld';
 import type { TypeOfWorkJsonld } from '@/api/types/typeOfWork/Jsonld';
 import type { UserJsonld } from '@/api/types/user/Jsonld';
+import { useResilientMutation } from '@/hooks/useResilientMutation';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
@@ -55,10 +58,18 @@ function formatDuration(minutes: number): string {
   return `${h}h ${m}m`;
 }
 
+type Identity = { id?: string };
+
 export function TimeEntriesListPage() {
   const [search, setSearch] = useState('');
   const [billableFilter, setBillableFilter] = useState<string>('all');
   const [projectFilter, setProjectFilter] = useState<string>('all');
+
+  // Current user → IRI, so the billed-status toggle only renders on
+  // the rows this user actually owns. The backend voter + billed-guard
+  // listener are the real gate; this just keeps the UI honest.
+  const { data: identity } = useGetIdentity<Identity>();
+  const myIri = identity?.id ? `/v1/users/${identity.id}` : null;
 
   const { tableQuery, setFilters, setCurrentPage } = useTable<Row<TimeEntryJsonld>>({
     resource: 'time_entries',
@@ -298,17 +309,7 @@ export function TimeEntriesListPage() {
                         {e.note ?? ''}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          {e.isBilled ? (
-                            <Badge variant="secondary" className="text-xs">
-                              abgerechnet
-                            </Badge>
-                          ) : e.isBillable ? (
-                            <Badge variant="outline" className="text-xs">
-                              verrechenbar
-                            </Badge>
-                          ) : null}
-                        </div>
+                        <BilledCell entry={e} isOwn={!!myIri && e.user === myIri} />
                       </TableCell>
                     </TableRow>
                   );
@@ -318,6 +319,75 @@ export function TimeEntriesListPage() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+/**
+ * Status cell for a time entry.
+ *
+ *  - Own, non-running, non-locked entry → an interactive "abgerechnet"
+ *    Switch so the employee can flip the billed status themselves
+ *    (awork parity). Backend enforces the `time_entry.toggle_billed_own`
+ *    capability; a 403 here means the workspace reserved billing for
+ *    admins, so we surface that and leave the switch where it was.
+ *  - Everything else → the previous read-only badges.
+ *
+ * The PATCH goes through useResilientMutation, so a toggle made while
+ * offline is queued and replayed on reconnect instead of silently lost.
+ */
+function BilledCell({ entry, isOwn }: { entry: Row<TimeEntryJsonld>; isOwn: boolean }) {
+  const invalidate = useInvalidate();
+  const { mutate, isPending } = useResilientMutation();
+
+  const editable = isOwn && !entry.running && !entry.isLocked;
+
+  if (!editable) {
+    return (
+      <div className="flex justify-end gap-1">
+        {entry.isBilled ? (
+          <Badge variant="secondary" className="text-xs">
+            abgerechnet
+          </Badge>
+        ) : entry.isBillable ? (
+          <Badge variant="outline" className="text-xs">
+            verrechenbar
+          </Badge>
+        ) : null}
+      </div>
+    );
+  }
+
+  const onToggle = async (next: boolean) => {
+    try {
+      await mutate({
+        key: `timeentry-${entry.id}-isbilled`,
+        method: 'patch',
+        url: `/time_entries/${entry.id}`,
+        body: { isBilled: next },
+        contentType: 'application/merge-patch+json',
+        label: `Abrechnungsstatus für Eintrag`,
+      });
+      void invalidate({ resource: 'time_entries', invalidates: ['list'] });
+    } catch (err) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      toast.error(
+        status === 403
+          ? 'Keine Berechtigung — Abrechnungsstatus ist in diesem Workspace gesperrt.'
+          : 'Konnte den Abrechnungsstatus nicht ändern.',
+      );
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <span className="text-xs text-muted-foreground">abgerechnet</span>
+      <Switch
+        checked={!!entry.isBilled}
+        onCheckedChange={onToggle}
+        disabled={isPending}
+        aria-label="Abrechnungsstatus umschalten"
+      />
     </div>
   );
 }
