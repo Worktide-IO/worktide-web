@@ -85,6 +85,11 @@ const CAP_GROUPS: { label: string; caps: { key: Capability; label: string; hint?
       { key: 'time_entry.create', label: 'Eintrag anlegen' },
       { key: 'time_entry.update_own', label: 'Eigene bearbeiten' },
       { key: 'time_entry.update_others', label: 'Fremde bearbeiten' },
+      {
+        key: 'time_entry.toggle_billed_own',
+        label: 'Eigene abrechnen',
+        hint: 'Darf den „abgerechnet"-Status auf eigenen Einträgen setzen. Abschalten für Buchhaltungs-Trennung.',
+      },
       { key: 'time_entry.delete_own', label: 'Eigene löschen' },
       { key: 'time_entry.delete_others', label: 'Fremde löschen' },
     ],
