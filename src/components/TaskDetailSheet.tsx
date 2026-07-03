@@ -6,13 +6,13 @@ import {
   CalendarDays,
   CheckSquare,
   GitBranch,
+  Link2,
   ListTree,
   Loader2,
   Plus,
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
@@ -117,7 +117,7 @@ export function TaskDetailSheet({ taskId, onOpenChange }: Props) {
             <Skeleton className="h-24 w-full" />
           </div>
         ) : (
-          <TaskDetailBody task={task} onClose={() => onOpenChange(false)} />
+          <TaskDetailBody task={task} />
         )}
       </SheetContent>
     </Sheet>
@@ -328,8 +328,7 @@ function DescriptionEditor({ task }: { task: Row<TaskJsonld> }) {
   );
 }
 
-function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () => void }) {
-  const navigate = useNavigate();
+function TaskDetailBody({ task }: { task: Row<TaskJsonld> }) {
   const invalidate = useInvalidate();
   const { byIri: trackerByIri } = useTrackers();
   const tracker = task.tracker ? trackerByIri[task.tracker] : null;
@@ -361,17 +360,21 @@ function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () 
           <AssigneeEditor task={task} />
           <VersionBadge version={fixedVersion} />
           <EntitySyncBadgeStack entityId={task.id} variant="full" />
-          {task.project ? (
+          {task.project && task.id ? (
             <Button
               variant="ghost"
               size="sm"
+              title="Deeplink zu diesem Ticket kopieren"
               onClick={() => {
-                onClose();
-                navigate(`/projects/${task.project!.split('/').pop()}?tab=board`);
+                const link = `${window.location.origin}/projects/${task.project!.split('/').pop()}?task=${task.id}`;
+                void navigator.clipboard
+                  .writeText(link)
+                  .then(() => toast.success('Ticket-Link kopiert'))
+                  .catch(() => toast.error('Konnte Link nicht kopieren.'));
               }}
-              className="ml-auto h-6 px-2 text-xs"
+              className="ml-auto h-6 gap-1 px-2 text-xs"
             >
-              Projekt öffnen
+              <Link2 className="size-3.5" /> Link kopieren
             </Button>
           ) : null}
         </div>

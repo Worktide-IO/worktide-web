@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Ban, Clock, Flag, ListTree, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 
 import { BoardConfigDialog } from '@/components/BoardConfigDialog';
@@ -221,7 +222,19 @@ export function ProjectBoardTab({ projectIri }: Props) {
     return open;
   }, [dependencies, statuses, tasks]);
 
-  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  // The open ticket lives in the URL (?task=<uuid>) so it's deep-linkable and
+  // survives back/forward — no local state.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const openTaskUuid = searchParams.get('task');
+  const setOpenTask = (iri: string | null) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      const uuid = iri ? iri.split('/').pop() : null;
+      if (uuid) next.set('task', uuid);
+      else next.delete('task');
+      return next;
+    });
+  };
 
   const { mutate: updateTask } = useUpdate<Row<TaskJsonld>>();
   const invalidate = useInvalidate();
@@ -603,7 +616,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
             subtaskCountByParent={subtaskCountByParent}
             blockedTaskIris={blockedTaskIris}
             doneColumnIds={doneColumnIds}
-            onOpenTask={(iri) => setOpenTaskId(iri)}
+            onOpenTask={(iri) => setOpenTask(iri)}
           />
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-2">
@@ -616,7 +629,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
                 subtaskCountByParent={subtaskCountByParent}
                 blockedTaskIris={blockedTaskIris}
                 showAging={!doneColumnIds.has(column.id)}
-                onOpenTask={(iri) => setOpenTaskId(iri)}
+                onOpenTask={(iri) => setOpenTask(iri)}
               />
             ))}
           </div>
@@ -625,8 +638,10 @@ export function ProjectBoardTab({ projectIri }: Props) {
           {activeTask ? <TaskCard task={activeTask} dragging /> : null}
         </DragOverlay>
         <TaskDetailSheet
-          taskId={openTaskId?.split('/').pop() ?? null}
-          onOpenChange={(o) => !o && setOpenTaskId(null)}
+          taskId={openTaskUuid}
+          onOpenChange={(o) => {
+            if (!o) setOpenTask(null);
+          }}
         />
       </DndContext>
       {configOpen && wsId ? (
