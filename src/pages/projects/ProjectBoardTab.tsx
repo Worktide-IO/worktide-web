@@ -9,7 +9,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { useGetIdentity, useList, useOne, useUpdate } from '@refinedev/core';
+import { useGetIdentity, useList, useMany, useOne, useUpdate } from '@refinedev/core';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Ban, Clock, Flag, ListTree, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
@@ -62,17 +62,32 @@ const PRIORITY_LABEL: Record<string, string> = {
   urgent: 'Dringend',
 };
 
+type SwimlaneDim = 'none' | 'assignee' | 'priority' | 'tracker';
+const LANE_NONE = '__none__';
+const LANE_SEP = '~~'; // joins laneKey + columnId into a droppable id
+
 /** Per-user, per-project board quick-filter — persisted to localStorage. */
 type BoardFilter = {
   q: string;
   mine: boolean;
   priority: string; // '' = any
   hideDone: boolean;
+  swimlane: SwimlaneDim;
 };
 
-const EMPTY_FILTER: BoardFilter = { q: '', mine: false, priority: '', hideDone: false };
+const EMPTY_FILTER: BoardFilter = { q: '', mine: false, priority: '', hideDone: false, swimlane: 'none' };
 
 const boardFilterKey = (projectIri: string) => `worktide.boardFilter.${projectIri}`;
+
+/** Stable per-column card ordering: manual position, then identifier. */
+function sortTasks(list: Row<TaskJsonld>[]): Row<TaskJsonld>[] {
+  return list.sort((a, b) => {
+    const pa = a.position ?? 0;
+    const pb = b.position ?? 0;
+    if (pa !== pb) return pa - pb;
+    return (a.identifier ?? '').localeCompare(b.identifier ?? '');
+  });
+}
 
 function readBoardFilter(projectIri: string): BoardFilter {
   try {
@@ -209,7 +224,8 @@ export function ProjectBoardTab({ projectIri }: Props) {
       }
       return next;
     });
-  const filterActive = filter.q !== '' || filter.mine || filter.priority !== '' || filter.hideDone;
+  const filterActive =
+    filter.q !== '' || filter.mine || filter.priority !== '' || filter.hideDone || filter.swimlane !== 'none';
 
   // Columns whose every status is "completed" — hidden when "Erledigte ausblenden".
   const doneColumnIds = useMemo(() => {
@@ -225,31 +241,101 @@ export function ProjectBoardTab({ projectIri }: Props) {
     return ids;
   }, [statuses, columns]);
 
-  const tasksByColumn = useMemo(() => {
-    const statusToCol: Record<string, string> = {};
-    for (const c of columns) for (const iri of c.statusIris) statusToCol[iri] = c.id;
+  // Tasks passing the quick-filter (shared by the column grouping and swimlanes).
+  const filteredTasks = useMemo(() => {
     const q = filter.q.trim().toLowerCase();
+    return (tasks?.data ?? []).filter((t) => {
+      if (!t.status) return false;
+      if (filter.priority && t.priority !== filter.priority) return false;
+      if (filter.mine && myId && !(t.assignees ?? []).some((a) => a.endsWith(`/${myId}`))) return false;
+      if (q && !`${t.title ?? ''} ${t.identifier ?? ''}`.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [tasks, filter.q, filter.priority, filter.mine, myId]);
+
+  const statusToCol = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const c of columns) for (const iri of c.statusIris) m[iri] = c.id;
+    return m;
+  }, [columns]);
+
+  const tasksByColumn = useMemo(() => {
     const map: Record<string, Row<TaskJsonld>[]> = {};
-    for (const t of tasks?.data ?? []) {
-      if (!t.status) continue;
-      if (filter.priority && t.priority !== filter.priority) continue;
-      if (filter.mine && myId && !(t.assignees ?? []).some((a) => a.endsWith(`/${myId}`))) continue;
-      if (q && !`${t.title ?? ''} ${t.identifier ?? ''}`.toLowerCase().includes(q)) continue;
-      const colId = statusToCol[t.status];
+    for (const t of filteredTasks) {
+      const colId = t.status ? statusToCol[t.status] : undefined;
       if (!colId) continue;
       (map[colId] ??= []).push(t);
     }
-    // Stable per-column ordering: position then identifier.
-    for (const list of Object.values(map)) {
-      list.sort((a, b) => {
-        const pa = a.position ?? 0;
-        const pb = b.position ?? 0;
-        if (pa !== pb) return pa - pb;
-        return (a.identifier ?? '').localeCompare(b.identifier ?? '');
-      });
-    }
+    for (const list of Object.values(map)) sortTasks(list);
     return map;
-  }, [tasks, columns, filter, myId]);
+  }, [filteredTasks, statusToCol]);
+
+  const { byIri: trackerByIri } = useTrackers();
+
+  // Assignee-lane labels: resolve names of the users present on the board.
+  const assigneeIris = useMemo(() => {
+    if (filter.swimlane !== 'assignee') return [];
+    const s = new Set<string>();
+    for (const t of filteredTasks) for (const a of t.assignees ?? []) s.add(a);
+    return [...s];
+  }, [filter.swimlane, filteredTasks]);
+  const { result: laneUsers } = useMany<{ '@id'?: string; fullName?: string; email?: string }>({
+    resource: 'users',
+    ids: assigneeIris,
+    queryOptions: { enabled: assigneeIris.length > 0 },
+  });
+  const userName = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const u of laneUsers?.data ?? []) if (u['@id']) m[u['@id']] = u.fullName ?? u.email ?? '—';
+    return m;
+  }, [laneUsers]);
+
+  // Swimlanes (rows) for the selected dimension; null when grouping is off.
+  const swimlanes = useMemo(() => {
+    const dim = filter.swimlane;
+    if (dim === 'none') return null;
+    const label = (key: string) => {
+      if (key === LANE_NONE)
+        return dim === 'assignee' ? 'Nicht zugewiesen' : dim === 'tracker' ? 'Kein Tracker' : 'Ohne Priorität';
+      if (dim === 'priority') return PRIORITY_LABEL[key] ?? key;
+      if (dim === 'tracker') return trackerByIri[key]?.name ?? 'Tracker';
+      return userName[key] ?? 'Benutzer';
+    };
+    const keyOf = (t: Row<TaskJsonld>) =>
+      dim === 'assignee'
+        ? t.assignees?.[0] ?? LANE_NONE
+        : dim === 'priority'
+          ? t.priority ?? LANE_NONE
+          : t.tracker ?? LANE_NONE;
+
+    const byLaneCol: Record<string, Record<string, Row<TaskJsonld>[]>> = {};
+    const present = new Set<string>();
+    for (const t of filteredTasks) {
+      const colId = t.status ? statusToCol[t.status] : undefined;
+      if (!colId) continue;
+      const lk = keyOf(t);
+      present.add(lk);
+      ((byLaneCol[lk] ??= {})[colId] ??= []).push(t);
+    }
+    for (const cols of Object.values(byLaneCol)) for (const list of Object.values(cols)) sortTasks(list);
+
+    let keys: string[];
+    if (dim === 'priority') {
+      keys = (['urgent', 'high', 'normal', 'low'] as const).filter((p) => present.has(p));
+      if (present.has(LANE_NONE)) keys.push(LANE_NONE);
+    } else {
+      keys = [...present].filter((k) => k !== LANE_NONE).sort((a, b) => label(a).localeCompare(label(b)));
+      if (present.has(LANE_NONE)) keys.push(LANE_NONE);
+    }
+    const lanes = keys.map((key) => ({
+      key,
+      label: label(key),
+      count: Object.values(byLaneCol[key] ?? {}).reduce((n, l) => n + l.length, 0),
+    }));
+    return { lanes, byLaneCol };
+  }, [filter.swimlane, filteredTasks, statusToCol, userName, trackerByIri]);
+
+  const visibleColumns = columns.filter((c) => !(filter.hideDone && doneColumnIds.has(c.id)));
 
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
@@ -265,38 +351,59 @@ export function ProjectBoardTab({ projectIri }: Props) {
   function handleDragEnd(e: DragEndEvent) {
     setActiveTaskId(null);
     const taskIri = String(e.active.id);
-    const colId = e.over?.id ? String(e.over.id) : null;
-    if (!colId) return;
+    const overId = e.over?.id ? String(e.over.id) : null;
+    if (!overId) return;
+
+    // Droppable id is either a column id, or `laneKey~~columnId` in swimlane mode.
+    let laneKey: string | null = null;
+    let colId = overId;
+    const sep = overId.indexOf(LANE_SEP);
+    if (sep >= 0) {
+      laneKey = overId.slice(0, sep);
+      colId = overId.slice(sep + LANE_SEP.length);
+    }
     const column = columns.find((c) => c.id === colId);
     if (!column) return;
 
     const task = (tasks?.data ?? []).find((t) => t['@id'] === taskIri);
     if (!task || !task.id) return;
-    // Already in this column (its current status belongs to the group) → no-op.
-    if (task.status && column.statusIris.has(task.status)) return;
 
-    // Dropping onto a (possibly grouped) column moves the task to that column's
-    // primary status.
-    const newStatusIri = column.primaryStatusIri;
+    const values: Record<string, unknown> = {};
 
-    // Pre-check the workflow gate so we can show a useful "this move
-    // isn't part of the workflow" toast instead of the bare 403 the
-    // backend would throw. Role-based 403s still surface from the
-    // server because the SPA does NOT replicate role-filtering.
-    const allowed = allowedToStatuses(task.tracker ?? null, task.status ?? null);
-    if (allowed && !allowed.has(newStatusIri)) {
-      toast.error(
-        `Statuswechsel nicht im Workflow erlaubt — siehe Workspace-Einstellungen → Workflows.`,
-      );
-      return;
+    // Column → status. Skip when the card already sits in this column. The
+    // workflow gate is pre-checked so we show a useful toast instead of the
+    // bare 403 the backend would throw (role-based 403s still surface server-side).
+    if (!(task.status && column.statusIris.has(task.status))) {
+      const newStatusIri = column.primaryStatusIri;
+      const allowed = allowedToStatuses(task.tracker ?? null, task.status ?? null);
+      if (allowed && !allowed.has(newStatusIri)) {
+        toast.error(
+          `Statuswechsel nicht im Workflow erlaubt — siehe Workspace-Einstellungen → Workflows.`,
+        );
+        return;
+      }
+      values.status = newStatusIri;
     }
 
-    updateTask({
-      resource: 'tasks',
-      id: task.id,
-      values: { status: newStatusIri },
-      successNotification: false,
-    });
+    // Lane → dimension: dragging across a swimlane reassigns that dimension.
+    if (laneKey !== null && filter.swimlane !== 'none') {
+      if (filter.swimlane === 'priority') {
+        if (laneKey !== LANE_NONE && task.priority !== laneKey) values.priority = laneKey;
+      } else if (filter.swimlane === 'tracker') {
+        const next = laneKey === LANE_NONE ? null : laneKey;
+        if ((task.tracker ?? null) !== next) values.tracker = next;
+      } else {
+        const cur = task.assignees ?? [];
+        if (laneKey === LANE_NONE) {
+          if (cur.length > 0) values.assignees = [];
+        } else if (!(cur.length === 1 && cur[0] === laneKey)) {
+          values.assignees = [laneKey];
+        }
+      }
+    }
+
+    if (Object.keys(values).length === 0) return;
+    updateTask({ resource: 'tasks', id: task.id, values, successNotification: false });
   }
 
   const isLoading = statusesQuery.isLoading || tasksQuery.isLoading;
@@ -368,6 +475,20 @@ export function ProjectBoardTab({ projectIri }: Props) {
           >
             Erledigte ausblenden
           </Button>
+          <Select
+            value={filter.swimlane}
+            onValueChange={(v) => setFilter({ swimlane: v as SwimlaneDim })}
+          >
+            <SelectTrigger className="h-8 w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Keine Swimlanes</SelectItem>
+              <SelectItem value="assignee">Nach Zuständige:r</SelectItem>
+              <SelectItem value="priority">Nach Priorität</SelectItem>
+              <SelectItem value="tracker">Nach Tracker</SelectItem>
+            </SelectContent>
+          </Select>
           {filterActive ? (
             <Button type="button" size="sm" variant="ghost" onClick={() => setFilter(EMPTY_FILTER)}>
               <X className="size-4" /> Zurücksetzen
@@ -379,21 +500,32 @@ export function ProjectBoardTab({ projectIri }: Props) {
         </Button>
       </div>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {columns
-            .filter((c) => !(filter.hideDone && doneColumnIds.has(c.id)))
-            .map((column) => (
-            <BoardColumn
-              key={column.id}
-              column={column}
-              tasks={tasksByColumn[column.id] ?? []}
-              subtaskCountByParent={subtaskCountByParent}
-              blockedTaskIris={blockedTaskIris}
-              showAging={!doneColumnIds.has(column.id)}
-              onOpenTask={(iri) => setOpenTaskId(iri)}
-            />
-          ))}
-        </div>
+        {swimlanes ? (
+          <SwimlaneGrid
+            lanes={swimlanes.lanes}
+            byLaneCol={swimlanes.byLaneCol}
+            columns={visibleColumns}
+            columnTotals={tasksByColumn}
+            subtaskCountByParent={subtaskCountByParent}
+            blockedTaskIris={blockedTaskIris}
+            doneColumnIds={doneColumnIds}
+            onOpenTask={(iri) => setOpenTaskId(iri)}
+          />
+        ) : (
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {visibleColumns.map((column) => (
+              <BoardColumn
+                key={column.id}
+                column={column}
+                tasks={tasksByColumn[column.id] ?? []}
+                subtaskCountByParent={subtaskCountByParent}
+                blockedTaskIris={blockedTaskIris}
+                showAging={!doneColumnIds.has(column.id)}
+                onOpenTask={(iri) => setOpenTaskId(iri)}
+              />
+            ))}
+          </div>
+        )}
         <DragOverlay>
           {activeTask ? <TaskCard task={activeTask} dragging /> : null}
         </DragOverlay>
@@ -511,6 +643,127 @@ function BoardColumn({
             })}
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+type Lane = { key: string; label: string; count: number };
+
+/**
+ * Swimlane view: a lanes × columns grid. One shared column header row on top,
+ * then a bordered block per lane whose cells are droppables encoding both the
+ * lane and the column (`laneKey~~columnId`). Cells are not virtualized — cards
+ * are distributed across lanes, so each cell list stays short.
+ */
+function SwimlaneGrid({
+  lanes,
+  byLaneCol,
+  columns,
+  columnTotals,
+  subtaskCountByParent,
+  blockedTaskIris,
+  doneColumnIds,
+  onOpenTask,
+}: {
+  lanes: Lane[];
+  byLaneCol: Record<string, Record<string, Row<TaskJsonld>[]>>;
+  columns: ResolvedColumn[];
+  columnTotals: Record<string, Row<TaskJsonld>[]>;
+  subtaskCountByParent: Record<string, number>;
+  blockedTaskIris: Set<string>;
+  doneColumnIds: Set<string>;
+  onOpenTask: (iri: string) => void;
+}) {
+  return (
+    <div className="overflow-x-auto pb-2">
+      <div className="w-max space-y-3">
+        <div className="flex gap-4 border-b pb-1">
+          {columns.map((col) => {
+            const total = columnTotals[col.id]?.length ?? 0;
+            const wip = col.wipLimit ?? null;
+            const over = wip != null && total > wip;
+            return (
+              <div key={col.id} className="flex w-72 items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span aria-hidden className="size-2.5 rounded-full" style={{ backgroundColor: col.color }} />
+                  <h3 className="text-sm font-medium">{col.name}</h3>
+                </div>
+                <span
+                  className={cn(
+                    'text-xs tabular-nums',
+                    over ? 'font-medium text-red-600 dark:text-red-400' : 'text-muted-foreground',
+                  )}
+                >
+                  {wip != null ? `${total} / ${wip}` : total}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        {lanes.map((lane) => (
+          <div key={lane.key} className="rounded-lg border bg-muted/20">
+            <div className="flex items-center gap-2 border-b px-3 py-1.5">
+              <span className="text-sm font-medium">{lane.label}</span>
+              <span className="text-xs text-muted-foreground">{lane.count}</span>
+            </div>
+            <div className="flex gap-4 p-2">
+              {columns.map((col) => (
+                <SwimlaneCell
+                  key={col.id}
+                  droppableId={`${lane.key}${LANE_SEP}${col.id}`}
+                  tasks={byLaneCol[lane.key]?.[col.id] ?? []}
+                  showAging={!doneColumnIds.has(col.id)}
+                  subtaskCountByParent={subtaskCountByParent}
+                  blockedTaskIris={blockedTaskIris}
+                  onOpenTask={onOpenTask}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SwimlaneCell({
+  droppableId,
+  tasks,
+  showAging,
+  subtaskCountByParent,
+  blockedTaskIris,
+  onOpenTask,
+}: {
+  droppableId: string;
+  tasks: Row<TaskJsonld>[];
+  showAging: boolean;
+  subtaskCountByParent: Record<string, number>;
+  blockedTaskIris: Set<string>;
+  onOpenTask: (iri: string) => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: droppableId });
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'flex min-h-[3.5rem] w-72 shrink-0 flex-col gap-2 rounded-md p-1 transition-colors',
+        isOver && 'bg-primary/5 ring-1 ring-primary/40',
+      )}
+    >
+      {tasks.length === 0 ? (
+        <div className="py-4 text-center text-[11px] text-muted-foreground/40">—</div>
+      ) : (
+        tasks.map((t) => (
+          <TaskCard
+            key={t['@id']}
+            task={t}
+            subtaskCount={t['@id'] ? subtaskCountByParent[t['@id']] ?? 0 : 0}
+            isBlocked={t['@id'] ? blockedTaskIris.has(t['@id']) : false}
+            showAging={showAging}
+            onOpen={() => t['@id'] && onOpenTask(t['@id'])}
+          />
+        ))
       )}
     </div>
   );
