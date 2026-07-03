@@ -39,6 +39,17 @@
   html {
     @apply font-sans;
   }
+  /* Tailwind v4's preflight no longer sets cursor:pointer on buttons.
+     Restore it for interactive elements so links and buttons signal
+     clickability. Disabled buttons keep the browser default (and shadcn
+     adds pointer-events:none, so this rule can't reach them anyway). */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label[for],
+  a[href],
+  summary {
+    cursor: pointer;
+  }
 }
 
 @theme inline {
