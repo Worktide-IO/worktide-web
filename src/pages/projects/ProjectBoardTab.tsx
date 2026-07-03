@@ -9,14 +9,21 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { useList, useUpdate } from '@refinedev/core';
-import { Ban, Flag, ListTree } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useList, useOne, useUpdate } from '@refinedev/core';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { Ban, Flag, ListTree, SlidersHorizontal } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+
+import { BoardConfigDialog } from '@/components/BoardConfigDialog';
+import { Button } from '@/components/ui/button';
 
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import type { TaskDependencyJsonld } from '@/api/types/taskDependency/Jsonld';
 import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
+import type { WorkspaceJsonld } from '@/api/types/workspace/Jsonld';
+import { readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { resolveBoardColumns, type BoardColumnConfig, type ResolvedColumn } from '@/lib/boardColumns';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { cn } from '@/lib/utils';
@@ -99,6 +106,23 @@ export function ProjectBoardTab({ projectIri }: Props) {
   // useful toast instead of silently snapping back after a 403.
   const { allowedToStatuses } = useWorkflowTransitions();
 
+  // Board-column config lives in the workspace settings (grouping several
+  // statuses into one named column, each with a "primary" drop-target status).
+  // Absent → one column per status (original behaviour).
+  const wsId = readAuth(WORKSPACE_STORAGE_KEY);
+  const { result: workspace } = useOne<Row<WorkspaceJsonld> & { settings?: Record<string, unknown> | null }>({
+    resource: 'workspaces',
+    id: wsId ?? '',
+    queryOptions: { enabled: Boolean(wsId) },
+  });
+  const boardConfig =
+    (workspace?.settings as { boardColumns?: BoardColumnConfig[] } | null | undefined)?.boardColumns ?? null;
+
+  const columns = useMemo(
+    () => resolveBoardColumns(statuses?.data ?? [], boardConfig),
+    [statuses, boardConfig],
+  );
+
   const subtaskCountByParent = useMemo(() => {
     const m: Record<string, number> = {};
     for (const t of tasks?.data ?? []) {
@@ -139,11 +163,15 @@ export function ProjectBoardTab({ projectIri }: Props) {
 
   const { mutate: updateTask } = useUpdate<Row<TaskJsonld>>();
 
-  const tasksByStatus = useMemo(() => {
+  const tasksByColumn = useMemo(() => {
+    const statusToCol: Record<string, string> = {};
+    for (const c of columns) for (const iri of c.statusIris) statusToCol[iri] = c.id;
     const map: Record<string, Row<TaskJsonld>[]> = {};
     for (const t of tasks?.data ?? []) {
       if (!t.status) continue;
-      (map[t.status] ??= []).push(t);
+      const colId = statusToCol[t.status];
+      if (!colId) continue;
+      (map[colId] ??= []).push(t);
     }
     // Stable per-column ordering: position then identifier.
     for (const list of Object.values(map)) {
@@ -155,9 +183,10 @@ export function ProjectBoardTab({ projectIri }: Props) {
       });
     }
     return map;
-  }, [tasks]);
+  }, [tasks, columns]);
 
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [configOpen, setConfigOpen] = useState(false);
   const activeTask = useMemo(
     () => (tasks?.data ?? []).find((t) => t['@id'] === activeTaskId) ?? null,
     [tasks, activeTaskId],
@@ -170,11 +199,19 @@ export function ProjectBoardTab({ projectIri }: Props) {
   function handleDragEnd(e: DragEndEvent) {
     setActiveTaskId(null);
     const taskIri = String(e.active.id);
-    const newStatusIri = e.over?.id ? String(e.over.id) : null;
-    if (!newStatusIri) return;
+    const colId = e.over?.id ? String(e.over.id) : null;
+    if (!colId) return;
+    const column = columns.find((c) => c.id === colId);
+    if (!column) return;
 
     const task = (tasks?.data ?? []).find((t) => t['@id'] === taskIri);
-    if (!task || !task.id || task.status === newStatusIri) return;
+    if (!task || !task.id) return;
+    // Already in this column (its current status belongs to the group) → no-op.
+    if (task.status && column.statusIris.has(task.status)) return;
+
+    // Dropping onto a (possibly grouped) column moves the task to that column's
+    // primary status.
+    const newStatusIri = column.primaryStatusIri;
 
     // Pre-check the workflow gate so we can show a useful "this move
     // isn't part of the workflow" toast instead of the bare 403 the
@@ -212,8 +249,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
     );
   }
 
-  const cols = statuses?.data ?? [];
-  if (cols.length === 0) {
+  if (columns.length === 0) {
     return (
       <p className="text-center text-sm text-muted-foreground py-12">
         Keine Task-Status definiert.
@@ -222,49 +258,82 @@ export function ProjectBoardTab({ projectIri }: Props) {
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-2">
-        {cols.map((status) => (
-          <BoardColumn
-            key={status['@id']}
-            status={status}
-            tasks={tasksByStatus[status['@id'] ?? ''] ?? []}
-            subtaskCountByParent={subtaskCountByParent}
-            blockedTaskIris={blockedTaskIris}
-            onOpenTask={(iri) => setOpenTaskId(iri)}
-          />
-        ))}
+    <div className="space-y-3">
+      <div className="flex items-center justify-end">
+        <Button type="button" variant="outline" size="sm" onClick={() => setConfigOpen(true)}>
+          <SlidersHorizontal className="size-4" /> Board konfigurieren
+        </Button>
       </div>
-      <DragOverlay>
-        {activeTask ? <TaskCard task={activeTask} dragging /> : null}
-      </DragOverlay>
-      <TaskDetailSheet
-        taskId={openTaskId?.split('/').pop() ?? null}
-        onOpenChange={(o) => !o && setOpenTaskId(null)}
-      />
-    </DndContext>
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          {columns.map((column) => (
+            <BoardColumn
+              key={column.id}
+              column={column}
+              tasks={tasksByColumn[column.id] ?? []}
+              subtaskCountByParent={subtaskCountByParent}
+              blockedTaskIris={blockedTaskIris}
+              onOpenTask={(iri) => setOpenTaskId(iri)}
+            />
+          ))}
+        </div>
+        <DragOverlay>
+          {activeTask ? <TaskCard task={activeTask} dragging /> : null}
+        </DragOverlay>
+        <TaskDetailSheet
+          taskId={openTaskId?.split('/').pop() ?? null}
+          onOpenChange={(o) => !o && setOpenTaskId(null)}
+        />
+      </DndContext>
+      {configOpen && wsId ? (
+        <BoardConfigDialog
+          open
+          onOpenChange={setConfigOpen}
+          workspaceId={wsId}
+          settings={(workspace?.settings as Record<string, unknown> | null | undefined) ?? null}
+          columns={boardConfig}
+          statuses={statuses?.data ?? []}
+        />
+      ) : null}
+    </div>
   );
 }
 
 function BoardColumn({
-  status,
+  column,
   tasks,
   subtaskCountByParent,
   blockedTaskIris,
   onOpenTask,
 }: {
-  status: Row<TaskStatusJsonld>;
+  column: ResolvedColumn;
   tasks: Row<TaskJsonld>[];
   subtaskCountByParent: Record<string, number>;
   blockedTaskIris: Set<string>;
   onOpenTask: (iri: string) => void;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: status['@id'] ?? '' });
+  const { setNodeRef, isOver } = useDroppable({ id: column.id });
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Virtualize the card list so a column with hundreds of tasks (e.g. "Done")
+  // only mounts the visible rows. The scroll element is bounded in height, so
+  // short columns render fully (no windowing) and tall ones window on scroll.
+  // Cards are drag SOURCES only (the column is the drop target), so cards that
+  // scroll out of view can safely unmount without breaking drag & drop.
+  const virtualizer = useVirtualizer({
+    count: tasks.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 96,
+    overscan: 8,
+    getItemKey: (index) => tasks[index]['@id'] ?? index,
+  });
+  const virtualItems = virtualizer.getVirtualItems();
+
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        'w-72 shrink-0 rounded-lg border bg-muted/30 p-3 transition-colors',
+        'flex max-h-[calc(100vh-14rem)] w-72 shrink-0 flex-col rounded-lg border bg-muted/30 p-3 transition-colors',
         isOver && 'border-primary bg-primary/5',
       )}
     >
@@ -273,29 +342,39 @@ function BoardColumn({
           <span
             aria-hidden
             className="size-2.5 rounded-full"
-            style={{ backgroundColor: status.color ?? '#94a3b8' }}
+            style={{ backgroundColor: column.color }}
           />
-          <h3 className="text-sm font-medium">{status.name}</h3>
+          <h3 className="text-sm font-medium">{column.name}</h3>
         </div>
         <span className="text-xs text-muted-foreground">{tasks.length}</span>
       </div>
-      <div className="space-y-2">
-        {tasks.length === 0 ? (
-          <p className="text-center text-xs text-muted-foreground/70 py-6">
-            Keine Aufgaben
-          </p>
-        ) : (
-          tasks.map((t) => (
-            <TaskCard
-              key={t['@id']}
-              task={t}
-              subtaskCount={t['@id'] ? subtaskCountByParent[t['@id']] ?? 0 : 0}
-              isBlocked={t['@id'] ? blockedTaskIris.has(t['@id']) : false}
-              onOpen={() => t['@id'] && onOpenTask(t['@id'])}
-            />
-          ))
-        )}
-      </div>
+      {tasks.length === 0 ? (
+        <p className="text-center text-xs text-muted-foreground/70 py-6">Keine Aufgaben</p>
+      ) : (
+        <div ref={scrollRef} className="-mr-1 flex-1 overflow-y-auto pr-1">
+          <div style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
+            {virtualItems.map((vi) => {
+              const t = tasks[vi.index];
+              return (
+                <div
+                  key={vi.key}
+                  data-index={vi.index}
+                  ref={virtualizer.measureElement}
+                  className="absolute left-0 top-0 w-full pb-2"
+                  style={{ transform: `translateY(${vi.start}px)` }}
+                >
+                  <TaskCard
+                    task={t}
+                    subtaskCount={t['@id'] ? subtaskCountByParent[t['@id']] ?? 0 : 0}
+                    isBlocked={t['@id'] ? blockedTaskIris.has(t['@id']) : false}
+                    onOpen={() => t['@id'] && onOpenTask(t['@id'])}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
