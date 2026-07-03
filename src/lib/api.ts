@@ -1,4 +1,4 @@
-import axios, { type AxiosInstance } from 'axios';
+import axios, { AxiosError, type AxiosInstance } from 'axios';
 
 /**
  * Shared axios instance pointed at the Worktide REST API. Honors
@@ -54,6 +54,12 @@ export function clearAuth(key: string): void {
 
 export const api: AxiosInstance = axios.create({
   baseURL: API_BASE,
+  // 30s hard timeout — without this a wedged backend (slow load
+  // balancer, half-deployed pod) leaves Refine spinners on forever
+  // and the user can't tell the difference between "saving" and
+  // "your save will never come back". 30s is comfortably above
+  // every real request we serve.
+  timeout: 30_000,
   headers: {
     Accept: 'application/ld+json',
     'Content-Type': 'application/ld+json',
@@ -71,3 +77,112 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+/**
+ * Discriminated error-class — what the UI shows hinges on which
+ * bucket the axios failure falls into. `network` covers the
+ * "user can't trust the result" cases (offline, DNS, TCP RST,
+ * timeout). `server` covers "the API is up but broke" (5xx).
+ * `auth` covers the JWT lifecycle. `validation` is the bog-
+ * standard 4xx the calling component already handles.
+ */
+export type NetworkErrorKind = 'offline' | 'timeout' | 'server' | 'auth' | 'validation' | 'unknown';
+
+export function classifyError(error: unknown): NetworkErrorKind {
+  if (!axios.isAxiosError(error)) return 'unknown';
+  if (error.code === 'ECONNABORTED') return 'timeout';
+  // Either the browser knows it's offline, or axios got back nothing
+  // from the wire. Both render as 'offline' to the user — the banner
+  // doesn't try to distinguish DNS-fail from WLAN-drop.
+  if (error.code === 'ERR_NETWORK' || !error.response) return 'offline';
+  const status = error.response.status;
+  if (status === 401) return 'auth';
+  if (status >= 500) return 'server';
+  if (status >= 400) return 'validation';
+  return 'unknown';
+}
+
+/**
+ * CustomEvent the response interceptor emits on the window so the
+ * <NetworkStatusBanner /> and the useResilientMutation queue can
+ * react without a global state library. Detail carries the kind,
+ * the URL we were trying, and the human-formatted message.
+ */
+export type NetworkStatusEventDetail = {
+  kind: NetworkErrorKind;
+  url?: string;
+  status?: number;
+  message: string;
+  recovered?: boolean;
+};
+
+declare global {
+  interface WindowEventMap {
+    'wt-network-status': CustomEvent<NetworkStatusEventDetail>;
+  }
+}
+
+export function emitNetworkStatus(detail: NetworkStatusEventDetail): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('wt-network-status', { detail }));
+}
+
+// Track recently-emitted state so consecutive interceptor failures
+// from the same surface don't carpet-bomb the listener. The banner
+// uses this to debounce noisy bursts (e.g. The Wall fanout where
+// 6 queries fail in 50 ms during a tunnel reconnect).
+let lastEmittedKind: NetworkErrorKind | null = null;
+let recoveryTimer: number | null = null;
+
+api.interceptors.response.use(
+  (response) => {
+    // A successful response after a non-success means the link is
+    // back. Debounced so a single late success in a longer outage
+    // doesn't claim "recovered" prematurely.
+    if (lastEmittedKind !== null && lastEmittedKind !== 'auth' && lastEmittedKind !== 'validation') {
+      if (recoveryTimer !== null) {
+        window.clearTimeout(recoveryTimer);
+      }
+      recoveryTimer = window.setTimeout(() => {
+        emitNetworkStatus({ kind: 'unknown', message: 'Verbindung wiederhergestellt.', recovered: true });
+        lastEmittedKind = null;
+        recoveryTimer = null;
+      }, 400);
+    }
+    return response;
+  },
+  (error: AxiosError) => {
+    const kind = classifyError(error);
+    // 4xx + auth are component-owned (login form / voters); don't
+    // pollute the banner with them.
+    if (kind === 'offline' || kind === 'timeout' || kind === 'server') {
+      lastEmittedKind = kind;
+      emitNetworkStatus({
+        kind,
+        url: error.config?.url,
+        status: error.response?.status,
+        message: humanReadable(kind, error),
+      });
+    }
+    return Promise.reject(error);
+  },
+);
+
+function humanReadable(kind: NetworkErrorKind, error: AxiosError): string {
+  switch (kind) {
+    case 'offline':
+      return navigator.onLine === false
+        ? 'Keine Internetverbindung.'
+        : 'Worktide-Server nicht erreichbar.';
+    case 'timeout':
+      return 'Die Antwort dauerte zu lange (>30 s). Bitte erneut versuchen.';
+    case 'server':
+      return `Server-Fehler (${error.response?.status ?? '5xx'}). Wir prüfen das.`;
+    case 'auth':
+      return 'Sitzung abgelaufen — bitte erneut anmelden.';
+    case 'validation':
+      return error.response?.statusText ?? 'Eingabe nicht akzeptiert.';
+    default:
+      return error.message ?? 'Unbekannter Fehler.';
+  }
+}
