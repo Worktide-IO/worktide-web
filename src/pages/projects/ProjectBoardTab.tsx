@@ -10,12 +10,14 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useGetIdentity, useList, useMany, useOne, useUpdate } from '@refinedev/core';
+import { useQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Ban, Clock, Flag, ListTree, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { BoardConfigDialog } from '@/components/BoardConfigDialog';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -78,6 +80,14 @@ type BoardFilter = {
 const EMPTY_FILTER: BoardFilter = { q: '', mine: false, priority: '', hideDone: false, swimlane: 'none' };
 
 const boardFilterKey = (projectIri: string) => `worktide.boardFilter.${projectIri}`;
+
+/** Compact hours → "<1 h" / "N h" / "N.d d" for the flow-metrics strip. */
+function fmtHoursShort(h: number | null | undefined): string {
+  if (h == null) return '—';
+  if (h < 1) return '<1 h';
+  if (h < 48) return `${Math.round(h)} h`;
+  return `${(h / 24).toFixed(1)} d`;
+}
 
 /** Stable per-column card ordering: manual position, then identifier. */
 function sortTasks(list: Row<TaskJsonld>[]): Row<TaskJsonld>[] {
@@ -337,6 +347,48 @@ export function ProjectBoardTab({ projectIri }: Props) {
 
   const visibleColumns = columns.filter((c) => !(filter.hideDone && doneColumnIds.has(c.id)));
 
+  // Flow-metrics strip. Computed over ALL project tasks (not the quick filter)
+  // so the KPIs reflect real flow, not the current view. WIP = work that has
+  // left the first (backlog) column but isn't done yet.
+  const [boardNowMs] = useState(() => Date.now());
+  const flowMetrics = useMemo(() => {
+    const firstColId = columns[0]?.id;
+    let wip = 0;
+    let tp7 = 0;
+    let tp30 = 0;
+    let oldestOpenDays = 0;
+    for (const t of tasks?.data ?? []) {
+      const colId = t.status ? statusToCol[t.status] : undefined;
+      const isDone = colId ? doneColumnIds.has(colId) : false;
+      if (colId && !isDone && colId !== firstColId) wip += 1;
+      if (!isDone && t.updatedAt) {
+        const d = Math.floor((boardNowMs - Date.parse(t.updatedAt)) / 86_400_000);
+        if (d > oldestOpenDays) oldestOpenDays = d;
+      }
+      if (t.closedOn) {
+        const ageDays = (boardNowMs - Date.parse(t.closedOn)) / 86_400_000;
+        if (ageDays >= 0 && ageDays <= 7) tp7 += 1;
+        if (ageDays >= 0 && ageDays <= 30) tp30 += 1;
+      }
+    }
+    return { wip, tp7, tp30, oldestOpenDays };
+  }, [tasks, columns, statusToCol, doneColumnIds, boardNowMs]);
+
+  const projectUuid = projectIri.split('/').pop() ?? '';
+  const { data: cycleStat } = useQuery({
+    queryKey: ['board-cycle-p50', projectUuid],
+    enabled: Boolean(projectUuid),
+    queryFn: async () => {
+      const to = new Date(boardNowMs).toISOString().slice(0, 10);
+      const from = new Date(boardNowMs - 180 * 86_400_000).toISOString().slice(0, 10);
+      const { data } = await api.get<{ percentiles: { p50: number } | null; count: number }>(
+        '/reports/cycle-time',
+        { params: { from, to, project: projectUuid } },
+      );
+      return data;
+    },
+  });
+
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
   const activeTask = useMemo(
@@ -432,6 +484,20 @@ export function ProjectBoardTab({ projectIri }: Props) {
 
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        {[
+          { label: 'WIP', value: String(flowMetrics.wip) },
+          { label: 'Throughput 7 T', value: String(flowMetrics.tp7) },
+          { label: 'Throughput 30 T', value: String(flowMetrics.tp30) },
+          { label: 'Ø Cycle p50', value: fmtHoursShort(cycleStat?.percentiles?.p50) },
+          { label: 'Älteste offene', value: `${flowMetrics.oldestOpenDays} d` },
+        ].map((m) => (
+          <div key={m.label} className="rounded-md border bg-muted/30 px-2.5 py-1">
+            <span className="text-muted-foreground">{m.label}</span>{' '}
+            <span className="font-medium tabular-nums">{m.value}</span>
+          </div>
+        ))}
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
