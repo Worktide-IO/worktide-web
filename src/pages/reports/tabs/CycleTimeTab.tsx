@@ -2,13 +2,15 @@ import { useList } from '@refinedev/core';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
+  ReferenceLine,
   ResponsiveContainer,
+  Scatter,
+  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
+  ZAxis,
 } from 'recharts';
 
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
@@ -27,19 +29,15 @@ import type { Row } from '@/lib/refine';
 
 import { ReportShell } from './ReportShell';
 
-type Series = {
-  bucket: string;
-  resolved: number;
-  avgHours: number;
-  minHours: number;
-  maxHours: number;
-};
+type Point = { taskId: string; identifier: string | null; closedOn: string; hours: number; days: number };
 type Response = {
   from: string;
   to: string;
-  bucket: 'day' | 'week';
   project: string | null;
-  series: Series[];
+  count: number;
+  averageHours: number | null;
+  percentiles: { p50: number; p85: number; p95: number } | null;
+  points: Point[];
 };
 
 const ALL_PROJECTS = '__all__';
@@ -49,25 +47,36 @@ function isoDaysAgo(days: number) {
   d.setDate(d.getDate() - days);
   return d.toISOString().slice(0, 10);
 }
-function todayIso() { return new Date().toISOString().slice(0, 10); }
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
 
-function fmtHours(h: number): string {
+function fmtHours(h: number | null | undefined): string {
+  if (h == null) return '—';
   if (h < 1) return '<1 h';
   if (h < 48) return `${Math.round(h)} h`;
   return `${(h / 24).toFixed(1)} d`;
 }
 
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="rounded-md border px-3 py-2">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="font-mono text-lg">{value}</div>
+      {hint ? <div className="text-[10px] text-muted-foreground">{hint}</div> : null}
+    </div>
+  );
+}
+
 /**
- * "Wie lange dauert eine Aufgabe vom Anlegen bis zum Schließen?" —
- * Durchschnittliche Cycle-Time pro Bucket, mit Resolution-Count.
- *
- * Cycle-Time wird auf Stunden gerundet ausgegeben; im Chart als
- * "Tage" anzeigen für Lesbarkeit (1 d = 24 h).
+ * "Wie lange dauert die eigentliche Bearbeitung?" — Cycle-Time je erledigter
+ * Aufgabe (erster Statuswechsel → Abschluss) als Streudiagramm, plus die
+ * Verteilungs-Perzentile p50/p85/p95 (Kanban-Standard statt reinem Mittelwert).
+ * Punkte über der p85-Linie sind die Ausreißer, die den Fluss bremsen.
  */
 export function CycleTimeTab() {
   const [from, setFrom] = useState(() => isoDaysAgo(90));
   const [to, setTo] = useState(() => todayIso());
-  const [bucket, setBucket] = useState<'day' | 'week'>('week');
   const [projectId, setProjectId] = useState<string>(ALL_PROJECTS);
 
   const { result: projects } = useList<Row<ProjectJsonld>>({
@@ -77,91 +86,111 @@ export function CycleTimeTab() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ['reports/cycle-time', projectId, from, to, bucket],
+    queryKey: ['reports/cycle-time', projectId, from, to],
     queryFn: async (): Promise<Response> => {
-      const params: Record<string, string> = { from, to, bucket };
+      const params: Record<string, string> = { from, to };
       if (projectId !== ALL_PROJECTS) params.project = projectId;
       const { data } = await api.get<Response>('/reports/cycle-time', { params });
       return data;
     },
   });
 
-  const overallAvg = (() => {
-    const s = data?.series ?? [];
-    if (s.length === 0) return 0;
-    const weighted = s.reduce((acc, r) => acc + r.avgHours * r.resolved, 0);
-    const total = s.reduce((acc, r) => acc + r.resolved, 0);
-    return total === 0 ? 0 : weighted / total;
-  })();
+  const pct = data?.percentiles ?? null;
+  const points = (data?.points ?? []).map((p) => ({ ...p, x: Date.parse(p.closedOn) }));
 
   return (
     <ReportShell
       title="Cycle-Time"
-      description="Wie lange dauert eine Aufgabe vom Anlegen bis zum Schließen? Pro Bucket Durchschnitt aller geschlossenen Aufgaben."
+      description="Zeit von Arbeitsbeginn (erster Statuswechsel) bis Abschluss, je erledigter Aufgabe. Perzentile zeigen die Streuung — plane mit p85, nicht mit dem Mittelwert."
       from={from}
       to={to}
       onFromChange={setFrom}
       onToChange={setTo}
       extras={
-        <>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Bucket</Label>
-            <Select value={bucket} onValueChange={(v) => setBucket(v as 'day' | 'week')}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="day">Tag</SelectItem>
-                <SelectItem value="week">Woche</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Projekt</Label>
-            <Select value={projectId} onValueChange={setProjectId}>
-              <SelectTrigger className="w-56">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_PROJECTS}>Alle Projekte</SelectItem>
-                {(projects?.data ?? []).map((p) => (
-                  <SelectItem key={p['@id']} value={p.id ?? ''}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Projekt</Label>
+          <Select value={projectId} onValueChange={setProjectId}>
+            <SelectTrigger className="w-56">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_PROJECTS}>Alle Projekte</SelectItem>
+              {(projects?.data ?? []).map((p) => (
+                <SelectItem key={p['@id']} value={p.id ?? ''}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       }
     >
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            Ø Cycle-Time: <span className="font-mono">{fmtHours(overallAvg)}</span>
-          </CardTitle>
+          <CardTitle className="text-base">Cycle-Time-Verteilung</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {isLoading ? (
-            <Skeleton className="h-72 w-full" />
-          ) : (data?.series ?? []).length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Keine geschlossenen Aufgaben im Zeitraum.</p>
+            <Skeleton className="h-80 w-full" />
+          ) : (data?.count ?? 0) === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Keine geschlossenen Aufgaben im Zeitraum.
+            </p>
           ) : (
-            <div className="h-72 w-full">
-              <ResponsiveContainer>
-                <BarChart data={data!.series.map(s => ({ ...s, avgDays: +(s.avgHours / 24).toFixed(2) }))}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-40" />
-                  <XAxis dataKey="bucket" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} label={{ value: 'Tage', angle: -90, position: 'insideLeft', fontSize: 11 }} />
-                  <Tooltip
-                    formatter={(v, name) =>
-                      name === 'avgDays' ? [`${v} d`, 'Ø Tage'] : [String(v), String(name)]
-                    }
-                  />
-                  <Bar dataKey="avgDays" fill="#f59e0b" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <Stat label="Aufgaben" value={String(data?.count ?? 0)} />
+                <Stat label="Ø" value={fmtHours(data?.averageHours)} />
+                <Stat label="p50 (Median)" value={fmtHours(pct?.p50)} hint="50% schneller" />
+                <Stat label="p85" value={fmtHours(pct?.p85)} hint="Planungswert" />
+                <Stat label="p95" value={fmtHours(pct?.p95)} hint="Worst case" />
+              </div>
+              <div className="h-80 w-full">
+                <ResponsiveContainer>
+                  <ScatterChart margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-40" />
+                    <XAxis
+                      type="number"
+                      dataKey="x"
+                      domain={['dataMin', 'dataMax']}
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(t) => new Date(t).toLocaleDateString()}
+                      name="Abschluss"
+                    />
+                    <YAxis
+                      type="number"
+                      dataKey="days"
+                      tick={{ fontSize: 11 }}
+                      label={{ value: 'Tage', angle: -90, position: 'insideLeft', fontSize: 11 }}
+                    />
+                    <ZAxis range={[36, 36]} />
+                    {pct ? (
+                      <>
+                        <ReferenceLine y={pct.p50 / 24} stroke="#22c55e" strokeDasharray="4 4" label={{ value: 'p50', fontSize: 10, fill: '#22c55e', position: 'right' }} />
+                        <ReferenceLine y={pct.p85 / 24} stroke="#f59e0b" strokeDasharray="4 4" label={{ value: 'p85', fontSize: 10, fill: '#f59e0b', position: 'right' }} />
+                        <ReferenceLine y={pct.p95 / 24} stroke="#ef4444" strokeDasharray="4 4" label={{ value: 'p95', fontSize: 10, fill: '#ef4444', position: 'right' }} />
+                      </>
+                    ) : null}
+                    <Tooltip
+                      cursor={{ strokeDasharray: '3 3' }}
+                      content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null;
+                        const p = payload[0].payload as Point;
+                        return (
+                          <div className="rounded-md border bg-background px-2 py-1 text-xs shadow-sm">
+                            <div className="font-medium">{p.identifier ?? p.taskId.slice(0, 8)}</div>
+                            <div>
+                              {fmtHours(p.hours)} · {new Date(p.closedOn).toLocaleDateString()}
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                    <Scatter data={points} fill="#6366f1" fillOpacity={0.6} />
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
