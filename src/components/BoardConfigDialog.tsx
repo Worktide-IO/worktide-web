@@ -222,20 +222,36 @@ export function BoardConfigDialog({
               </div>
 
               {g.statusIds.length > 0 ? (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">Primärer Status (Drop-Ziel):</span>
-                  <Select value={g.primaryStatusId} onValueChange={(v) => patch(g.id, { primaryStatusId: v })}>
-                    <SelectTrigger className="h-8 w-56">
-                      <SelectValue placeholder="wählen…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {g.statusIds.map((iri) => (
-                        <SelectItem key={iri} value={iri}>
-                          {statusName[iri] ?? iri}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Primärer Status (Drop-Ziel):</span>
+                    <Select value={g.primaryStatusId} onValueChange={(v) => patch(g.id, { primaryStatusId: v })}>
+                      <SelectTrigger className="h-8 w-56">
+                        <SelectValue placeholder="wählen…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {g.statusIds.map((iri) => (
+                          <SelectItem key={iri} value={iri}>
+                            {statusName[iri] ?? iri}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">WIP-Limit:</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={g.wipLimit ?? ''}
+                      onChange={(e) => {
+                        const n = e.target.valueAsNumber;
+                        patch(g.id, { wipLimit: Number.isFinite(n) && n > 0 ? Math.floor(n) : null });
+                      }}
+                      placeholder="—"
+                      className="h-8 w-20"
+                    />
+                  </div>
                 </div>
               ) : null}
             </div>

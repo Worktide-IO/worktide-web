@@ -12,6 +12,7 @@ export type BoardColumnConfig = {
   color?: string;
   statusIds: string[]; // TaskStatus @id IRIs grouped into this column
   primaryStatusId: string; // drop target status IRI
+  wipLimit?: number | null; // soft WIP limit; null/absent = no limit
 };
 
 /** A column ready to render: statuses resolved to a fast lookup set. */
@@ -21,6 +22,7 @@ export type ResolvedColumn = {
   color: string;
   statusIris: Set<string>;
   primaryStatusIri: string;
+  wipLimit?: number | null;
 };
 
 const DEFAULT_COLOR = '#94a3b8';
@@ -65,6 +67,7 @@ export function resolveBoardColumns(
       color: g.color ?? DEFAULT_COLOR,
       statusIris: new Set(iris),
       primaryStatusIri: byIri.has(g.primaryStatusId) ? g.primaryStatusId : iris[0],
+      wipLimit: typeof g.wipLimit === 'number' && g.wipLimit > 0 ? g.wipLimit : null,
     });
   }
 

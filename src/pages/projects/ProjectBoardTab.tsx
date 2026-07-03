@@ -9,14 +9,22 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { useList, useOne, useUpdate } from '@refinedev/core';
+import { useGetIdentity, useList, useOne, useUpdate } from '@refinedev/core';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Ban, Flag, ListTree, SlidersHorizontal } from 'lucide-react';
+import { Ban, Clock, Flag, ListTree, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { BoardConfigDialog } from '@/components/BoardConfigDialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import type { TaskDependencyJsonld } from '@/api/types/taskDependency/Jsonld';
@@ -53,6 +61,28 @@ const PRIORITY_LABEL: Record<string, string> = {
   high: 'Hoch',
   urgent: 'Dringend',
 };
+
+/** Per-user, per-project board quick-filter — persisted to localStorage. */
+type BoardFilter = {
+  q: string;
+  mine: boolean;
+  priority: string; // '' = any
+  hideDone: boolean;
+};
+
+const EMPTY_FILTER: BoardFilter = { q: '', mine: false, priority: '', hideDone: false };
+
+const boardFilterKey = (projectIri: string) => `worktide.boardFilter.${projectIri}`;
+
+function readBoardFilter(projectIri: string): BoardFilter {
+  try {
+    const raw = localStorage.getItem(boardFilterKey(projectIri));
+    if (raw) return { ...EMPTY_FILTER, ...(JSON.parse(raw) as Partial<BoardFilter>) };
+  } catch {
+    /* ignore malformed storage */
+  }
+  return EMPTY_FILTER;
+}
 
 type Props = {
   projectIri: string;
@@ -163,12 +193,48 @@ export function ProjectBoardTab({ projectIri }: Props) {
 
   const { mutate: updateTask } = useUpdate<Row<TaskJsonld>>();
 
+  const { data: identity } = useGetIdentity<{ id?: string }>();
+  const myId = identity?.id ?? null;
+
+  // Quick-filter, persisted per user + project. Filtering the fetched task
+  // set client-side is cheap (a few hundred rows) and keeps the board snappy.
+  const [filter, setFilterState] = useState<BoardFilter>(() => readBoardFilter(projectIri));
+  const setFilter = (patch: Partial<BoardFilter>) =>
+    setFilterState((prev) => {
+      const next = { ...prev, ...patch };
+      try {
+        localStorage.setItem(boardFilterKey(projectIri), JSON.stringify(next));
+      } catch {
+        /* ignore storage failures (private mode etc.) */
+      }
+      return next;
+    });
+  const filterActive = filter.q !== '' || filter.mine || filter.priority !== '' || filter.hideDone;
+
+  // Columns whose every status is "completed" — hidden when "Erledigte ausblenden".
+  const doneColumnIds = useMemo(() => {
+    const completed = new Set<string>();
+    for (const s of statuses?.data ?? []) {
+      const done = s.completed ?? s.isCompleted ?? false;
+      if (done && s['@id']) completed.add(s['@id']);
+    }
+    const ids = new Set<string>();
+    for (const c of columns) {
+      if (c.statusIris.size > 0 && [...c.statusIris].every((iri) => completed.has(iri))) ids.add(c.id);
+    }
+    return ids;
+  }, [statuses, columns]);
+
   const tasksByColumn = useMemo(() => {
     const statusToCol: Record<string, string> = {};
     for (const c of columns) for (const iri of c.statusIris) statusToCol[iri] = c.id;
+    const q = filter.q.trim().toLowerCase();
     const map: Record<string, Row<TaskJsonld>[]> = {};
     for (const t of tasks?.data ?? []) {
       if (!t.status) continue;
+      if (filter.priority && t.priority !== filter.priority) continue;
+      if (filter.mine && myId && !(t.assignees ?? []).some((a) => a.endsWith(`/${myId}`))) continue;
+      if (q && !`${t.title ?? ''} ${t.identifier ?? ''}`.toLowerCase().includes(q)) continue;
       const colId = statusToCol[t.status];
       if (!colId) continue;
       (map[colId] ??= []).push(t);
@@ -183,7 +249,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
       });
     }
     return map;
-  }, [tasks, columns]);
+  }, [tasks, columns, filter, myId]);
 
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
@@ -259,20 +325,71 @@ export function ProjectBoardTab({ projectIri }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={filter.q}
+              onChange={(e) => setFilter({ q: e.target.value })}
+              placeholder="Suche…"
+              className="h-8 w-44 pl-7"
+            />
+          </div>
+          <Select
+            value={filter.priority || 'all'}
+            onValueChange={(v) => setFilter({ priority: v === 'all' ? '' : v })}
+          >
+            <SelectTrigger className="h-8 w-36">
+              <SelectValue placeholder="Priorität" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Prioritäten</SelectItem>
+              {(['urgent', 'high', 'normal', 'low'] as const).map((p) => (
+                <SelectItem key={p} value={p}>
+                  {PRIORITY_LABEL[p]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            size="sm"
+            variant={filter.mine ? 'default' : 'outline'}
+            onClick={() => setFilter({ mine: !filter.mine })}
+          >
+            Nur meine
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={filter.hideDone ? 'default' : 'outline'}
+            onClick={() => setFilter({ hideDone: !filter.hideDone })}
+          >
+            Erledigte ausblenden
+          </Button>
+          {filterActive ? (
+            <Button type="button" size="sm" variant="ghost" onClick={() => setFilter(EMPTY_FILTER)}>
+              <X className="size-4" /> Zurücksetzen
+            </Button>
+          ) : null}
+        </div>
         <Button type="button" variant="outline" size="sm" onClick={() => setConfigOpen(true)}>
           <SlidersHorizontal className="size-4" /> Board konfigurieren
         </Button>
       </div>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-2">
-          {columns.map((column) => (
+          {columns
+            .filter((c) => !(filter.hideDone && doneColumnIds.has(c.id)))
+            .map((column) => (
             <BoardColumn
               key={column.id}
               column={column}
               tasks={tasksByColumn[column.id] ?? []}
               subtaskCountByParent={subtaskCountByParent}
               blockedTaskIris={blockedTaskIris}
+              showAging={!doneColumnIds.has(column.id)}
               onOpenTask={(iri) => setOpenTaskId(iri)}
             />
           ))}
@@ -304,12 +421,14 @@ function BoardColumn({
   tasks,
   subtaskCountByParent,
   blockedTaskIris,
+  showAging = false,
   onOpenTask,
 }: {
   column: ResolvedColumn;
   tasks: Row<TaskJsonld>[];
   subtaskCountByParent: Record<string, number>;
   blockedTaskIris: Set<string>;
+  showAging?: boolean;
   onOpenTask: (iri: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
@@ -329,12 +448,17 @@ function BoardColumn({
   });
   const virtualItems = virtualizer.getVirtualItems();
 
+  const wip = column.wipLimit ?? null;
+  const overWip = wip != null && tasks.length > wip;
+  const atWip = wip != null && tasks.length === wip;
+
   return (
     <div
       ref={setNodeRef}
       className={cn(
         'flex max-h-[calc(100vh-14rem)] w-72 shrink-0 flex-col rounded-lg border bg-muted/30 p-3 transition-colors',
         isOver && 'border-primary bg-primary/5',
+        overWip && 'border-red-400/80 bg-red-500/5 dark:border-red-500/60',
       )}
     >
       <div className="mb-3 flex items-center justify-between">
@@ -346,7 +470,19 @@ function BoardColumn({
           />
           <h3 className="text-sm font-medium">{column.name}</h3>
         </div>
-        <span className="text-xs text-muted-foreground">{tasks.length}</span>
+        {wip != null ? (
+          <span
+            className={cn(
+              'text-xs font-medium tabular-nums',
+              overWip ? 'text-red-600 dark:text-red-400' : atWip ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground',
+            )}
+            title={overWip ? `WIP-Limit überschritten (${tasks.length}/${wip})` : `WIP ${tasks.length} von ${wip}`}
+          >
+            {tasks.length} / {wip}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">{tasks.length}</span>
+        )}
       </div>
       {tasks.length === 0 ? (
         <p className="text-center text-xs text-muted-foreground/70 py-6">Keine Aufgaben</p>
@@ -367,6 +503,7 @@ function BoardColumn({
                     task={t}
                     subtaskCount={t['@id'] ? subtaskCountByParent[t['@id']] ?? 0 : 0}
                     isBlocked={t['@id'] ? blockedTaskIris.has(t['@id']) : false}
+                    showAging={showAging}
                     onOpen={() => t['@id'] && onOpenTask(t['@id'])}
                   />
                 </div>
@@ -384,18 +521,34 @@ function TaskCard({
   dragging = false,
   subtaskCount = 0,
   isBlocked = false,
+  showAging = false,
   onOpen,
 }: {
   task: Row<TaskJsonld>;
   dragging?: boolean;
   subtaskCount?: number;
   isBlocked?: boolean;
+  showAging?: boolean;
   onOpen?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: task['@id'] ?? '',
     disabled: dragging,
   });
+  // "Card aging" — days since last update, a proxy for staleness (there is no
+  // dedicated time-in-column timestamp). Only surfaced in open columns.
+  // Capture "now" once per mount (useState initializer) so render stays pure.
+  const [nowMs] = useState(() => Date.now());
+  const agingDays =
+    showAging && task.updatedAt
+      ? Math.max(0, Math.floor((nowMs - Date.parse(task.updatedAt)) / 86_400_000))
+      : 0;
+  const agingColor =
+    agingDays >= 30
+      ? 'text-red-600 dark:text-red-400'
+      : agingDays >= 14
+        ? 'text-orange-500'
+        : 'text-amber-600 dark:text-amber-500';
   const { byIri: trackerByIri } = useTrackers();
   const { byIri: versionByIri } = useProjectVersions(task.project ?? null);
 
@@ -466,6 +619,15 @@ function TaskCard({
             {task.dueOn ? (
               <span className="text-[10px] text-muted-foreground">
                 {new Date(task.dueOn).toLocaleDateString()}
+              </span>
+            ) : null}
+            {agingDays >= 7 ? (
+              <span
+                className={cn('inline-flex items-center gap-0.5 text-[10px] font-medium', agingColor)}
+                title={`Seit ${agingDays} Tagen nicht aktualisiert`}
+              >
+                <Clock className="size-3" />
+                {agingDays}d
               </span>
             ) : null}
           </div>
