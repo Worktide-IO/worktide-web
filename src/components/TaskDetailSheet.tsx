@@ -170,6 +170,42 @@ function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () 
       </SheetHeader>
 
       <div className="px-4 pb-6 space-y-5">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border bg-muted/20 p-3 text-sm sm:grid-cols-3">
+          {task.startOn ? (
+            <div>
+              <dt className="text-xs text-muted-foreground">Beginn</dt>
+              <dd>{new Date(task.startOn).toLocaleDateString()}</dd>
+            </div>
+          ) : null}
+          {task.dueOn ? (
+            <div>
+              <dt className="text-xs text-muted-foreground">Fällig</dt>
+              <dd>{new Date(task.dueOn).toLocaleDateString()}</dd>
+            </div>
+          ) : null}
+          {task.estimatedMinutes ? (
+            <div>
+              <dt className="text-xs text-muted-foreground">Geschätzter Aufwand</dt>
+              <dd>
+                {Math.floor(task.estimatedMinutes / 60)}:
+                {String(task.estimatedMinutes % 60).padStart(2, '0')} h
+              </dd>
+            </div>
+          ) : null}
+          {task.createdAt ? (
+            <div>
+              <dt className="text-xs text-muted-foreground">Erstellt</dt>
+              <dd>{new Date(task.createdAt).toLocaleDateString()}</dd>
+            </div>
+          ) : null}
+          {task.updatedAt ? (
+            <div>
+              <dt className="text-xs text-muted-foreground">Aktualisiert</dt>
+              <dd>{new Date(task.updatedAt).toLocaleDateString()}</dd>
+            </div>
+          ) : null}
+        </dl>
+
         {task.description ? (
           <div className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
             {task.description}
