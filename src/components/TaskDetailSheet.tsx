@@ -120,6 +120,87 @@ export function TaskDetailSheet({ taskId, onOpenChange }: Props) {
   );
 }
 
+/**
+ * Editable schedule/effort block (Beginn / Fällig / Geschätzter Aufwand) plus
+ * read-only Erstellt/Aktualisiert. Saves each field on change via merge-patch,
+ * mirroring the tags/version sections. Effort is edited in hours (Redmine's
+ * unit) and stored as minutes.
+ */
+function ScheduleSection({ task }: { task: Row<TaskJsonld> }) {
+  const invalidate = useInvalidate();
+
+  const save = async (body: Record<string, unknown>) => {
+    if (!task.id) return;
+    try {
+      await api.patch(`/tasks/${task.id}`, body, {
+        headers: { 'Content-Type': 'application/merge-patch+json' },
+      });
+      void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: task.id });
+    } catch {
+      toast.error('Konnte nicht speichern.');
+    }
+  };
+
+  const dateInput = (iso?: string | null) => (iso ? new Date(iso).toISOString().slice(0, 10) : '');
+  const estHours = task.estimatedMinutes != null ? String(task.estimatedMinutes / 60) : '';
+
+  return (
+    <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-md border bg-muted/20 p-3 text-sm sm:grid-cols-3">
+      <div className="space-y-1">
+        <dt className="text-xs text-muted-foreground">Beginn</dt>
+        <dd>
+          <Input
+            type="date"
+            defaultValue={dateInput(task.startOn)}
+            onChange={(e) => void save({ startOn: e.target.value || null })}
+            className="h-8"
+          />
+        </dd>
+      </div>
+      <div className="space-y-1">
+        <dt className="text-xs text-muted-foreground">Fällig</dt>
+        <dd>
+          <Input
+            type="date"
+            defaultValue={dateInput(task.dueOn)}
+            onChange={(e) => void save({ dueOn: e.target.value || null })}
+            className="h-8"
+          />
+        </dd>
+      </div>
+      <div className="space-y-1">
+        <dt className="text-xs text-muted-foreground">Geschätzter Aufwand</dt>
+        <dd className="flex items-center gap-1.5">
+          <Input
+            type="number"
+            min={0}
+            step={0.25}
+            defaultValue={estHours}
+            onBlur={(e) => {
+              const h = Number.parseFloat(e.target.value);
+              void save({ estimatedMinutes: Number.isFinite(h) && h > 0 ? Math.round(h * 60) : null });
+            }}
+            className="h-8 w-20"
+          />
+          <span className="text-xs text-muted-foreground">Std.</span>
+        </dd>
+      </div>
+      {task.createdAt ? (
+        <div className="space-y-1">
+          <dt className="text-xs text-muted-foreground">Erstellt</dt>
+          <dd className="pt-1.5">{new Date(task.createdAt).toLocaleDateString()}</dd>
+        </div>
+      ) : null}
+      {task.updatedAt ? (
+        <div className="space-y-1">
+          <dt className="text-xs text-muted-foreground">Aktualisiert</dt>
+          <dd className="pt-1.5">{new Date(task.updatedAt).toLocaleDateString()}</dd>
+        </div>
+      ) : null}
+    </dl>
+  );
+}
+
 function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () => void }) {
   const navigate = useNavigate();
   const invalidate = useInvalidate();
@@ -170,41 +251,7 @@ function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () 
       </SheetHeader>
 
       <div className="px-4 pb-6 space-y-5">
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border bg-muted/20 p-3 text-sm sm:grid-cols-3">
-          {task.startOn ? (
-            <div>
-              <dt className="text-xs text-muted-foreground">Beginn</dt>
-              <dd>{new Date(task.startOn).toLocaleDateString()}</dd>
-            </div>
-          ) : null}
-          {task.dueOn ? (
-            <div>
-              <dt className="text-xs text-muted-foreground">Fällig</dt>
-              <dd>{new Date(task.dueOn).toLocaleDateString()}</dd>
-            </div>
-          ) : null}
-          {task.estimatedMinutes ? (
-            <div>
-              <dt className="text-xs text-muted-foreground">Geschätzter Aufwand</dt>
-              <dd>
-                {Math.floor(task.estimatedMinutes / 60)}:
-                {String(task.estimatedMinutes % 60).padStart(2, '0')} h
-              </dd>
-            </div>
-          ) : null}
-          {task.createdAt ? (
-            <div>
-              <dt className="text-xs text-muted-foreground">Erstellt</dt>
-              <dd>{new Date(task.createdAt).toLocaleDateString()}</dd>
-            </div>
-          ) : null}
-          {task.updatedAt ? (
-            <div>
-              <dt className="text-xs text-muted-foreground">Aktualisiert</dt>
-              <dd>{new Date(task.updatedAt).toLocaleDateString()}</dd>
-            </div>
-          ) : null}
-        </dl>
+        <ScheduleSection task={task} />
 
         {task.description ? (
           <div className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
