@@ -9,7 +9,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { useGetIdentity, useList, useMany, useOne, useUpdate } from '@refinedev/core';
+import { useGetIdentity, useInvalidate, useList, useOne, useUpdate } from '@refinedev/core';
 import { useQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Ban, Clock, Flag, ListTree, Search, SlidersHorizontal, X } from 'lucide-react';
@@ -49,6 +49,7 @@ import { useTrackers } from '@/hooks/useTrackers';
 import { useWorkflowTransitions } from '@/hooks/useWorkflowTransitions';
 import { TaskDetailSheet } from '@/components/TaskDetailSheet';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
+import { userDisplayName, useUserDirectory } from '@/hooks/useUserDirectory';
 
 const PRIORITY_VARIANT: Record<string, 'outline' | 'secondary' | 'default' | 'destructive'> = {
   low: 'outline',
@@ -217,6 +218,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
   const { mutate: updateTask } = useUpdate<Row<TaskJsonld>>();
+  const invalidate = useInvalidate();
 
   const { data: identity } = useGetIdentity<{ id?: string }>();
   const myId = identity?.id ?? null;
@@ -281,24 +283,9 @@ export function ProjectBoardTab({ projectIri }: Props) {
   }, [filteredTasks, statusToCol]);
 
   const { byIri: trackerByIri } = useTrackers();
-
-  // Assignee-lane labels: resolve names of the users present on the board.
-  const assigneeIris = useMemo(() => {
-    if (filter.swimlane !== 'assignee') return [];
-    const s = new Set<string>();
-    for (const t of filteredTasks) for (const a of t.assignees ?? []) s.add(a);
-    return [...s];
-  }, [filter.swimlane, filteredTasks]);
-  const { result: laneUsers } = useMany<{ '@id'?: string; fullName?: string; email?: string }>({
-    resource: 'users',
-    ids: assigneeIris,
-    queryOptions: { enabled: assigneeIris.length > 0 },
-  });
-  const userName = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const u of laneUsers?.data ?? []) if (u['@id']) m[u['@id']] = u.fullName ?? u.email ?? '—';
-    return m;
-  }, [laneUsers]);
+  // Assignee-lane labels resolve through the shared user directory (keyed by
+  // user IRI), which is already fetched once for avatars.
+  const { byIri: userByIri } = useUserDirectory();
 
   // Swimlanes (rows) for the selected dimension; null when grouping is off.
   const swimlanes = useMemo(() => {
@@ -309,7 +296,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
         return dim === 'assignee' ? 'Nicht zugewiesen' : dim === 'tracker' ? 'Kein Tracker' : 'Ohne Priorität';
       if (dim === 'priority') return PRIORITY_LABEL[key] ?? key;
       if (dim === 'tracker') return trackerByIri[key]?.name ?? 'Tracker';
-      return userName[key] ?? 'Benutzer';
+      return userByIri[key] ? userDisplayName(userByIri[key]) : 'Benutzer';
     };
     const keyOf = (t: Row<TaskJsonld>) =>
       dim === 'assignee'
@@ -343,7 +330,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
       count: Object.values(byLaneCol[key] ?? {}).reduce((n, l) => n + l.length, 0),
     }));
     return { lanes, byLaneCol };
-  }, [filter.swimlane, filteredTasks, statusToCol, userName, trackerByIri]);
+  }, [filter.swimlane, filteredTasks, statusToCol, userByIri, trackerByIri]);
 
   const visibleColumns = columns.filter((c) => !(filter.hideDone && doneColumnIds.has(c.id)));
 
@@ -438,6 +425,9 @@ export function ProjectBoardTab({ projectIri }: Props) {
     }
 
     // Lane → dimension: dragging across a swimlane reassigns that dimension.
+    // priority/tracker are PATCH-writable; assignees are NOT (read-only derived
+    // field) and go through the set-assignees action endpoint instead.
+    let assigneeUserIds: string[] | null = null; // null = leave assignees untouched
     if (laneKey !== null && filter.swimlane !== 'none') {
       if (filter.swimlane === 'priority') {
         if (laneKey !== LANE_NONE && task.priority !== laneKey) values.priority = laneKey;
@@ -447,15 +437,30 @@ export function ProjectBoardTab({ projectIri }: Props) {
       } else {
         const cur = task.assignees ?? [];
         if (laneKey === LANE_NONE) {
-          if (cur.length > 0) values.assignees = [];
+          if (cur.length > 0) assigneeUserIds = [];
         } else if (!(cur.length === 1 && cur[0] === laneKey)) {
-          values.assignees = [laneKey];
+          assigneeUserIds = [laneKey.split('/').pop() ?? ''].filter(Boolean);
         }
       }
     }
 
-    if (Object.keys(values).length === 0) return;
-    updateTask({ resource: 'tasks', id: task.id, values, successNotification: false });
+    if (Object.keys(values).length === 0 && assigneeUserIds === null) return;
+
+    if (Object.keys(values).length > 0) {
+      updateTask({ resource: 'tasks', id: task.id, values, successNotification: false });
+    }
+    if (assigneeUserIds !== null) {
+      const taskId = task.id;
+      const userIds = assigneeUserIds;
+      void (async () => {
+        try {
+          await api.post(`/tasks/${taskId}/set-assignees`, { userIds });
+          void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: taskId });
+        } catch {
+          toast.error('Zuweisung fehlgeschlagen.');
+        }
+      })();
+    }
   }
 
   const isLoading = statusesQuery.isLoading || tasksQuery.isLoading;
