@@ -37,15 +37,11 @@ export const dataProvider: DataProvider = {
   },
 
   async getList({ resource, pagination, sorters, filters }) {
-    const params: Record<string, unknown> = {};
-
-    if (pagination?.mode !== 'off') {
-      params.page = pagination?.currentPage ?? 1;
-      params.itemsPerPage = pagination?.pageSize ?? 25;
-    }
+    // Sorters + filters are shared by both the single-page and fetch-all paths.
+    const base: Record<string, unknown> = {};
 
     sorters?.forEach((s) => {
-      params[`order[${s.field}]`] = s.order;
+      base[`order[${s.field}]`] = s.order;
     });
 
     filters?.forEach((f) => {
@@ -54,28 +50,57 @@ export const dataProvider: DataProvider = {
       switch (f.operator) {
         case 'eq':
         case 'contains':
-          params[field] = f.value;
+          base[field] = f.value;
           break;
         case 'gte':
-          params[`${field}[after]`] = f.value;
+          base[`${field}[after]`] = f.value;
           break;
         case 'lte':
-          params[`${field}[before]`] = f.value;
+          base[`${field}[before]`] = f.value;
           break;
         case 'null':
-          params[`exists[${field}]`] = !f.value;
+          base[`exists[${field}]`] = !f.value;
           break;
         case 'nnull':
-          params[`exists[${field}]`] = !!f.value;
+          base[`exists[${field}]`] = !!f.value;
           break;
         default:
-          params[field] = f.value;
+          base[field] = f.value;
       }
     });
 
-    const { data } = await api.get(`/${resource}`, { params });
-    const members = (data.member ?? data['hydra:member'] ?? []) as unknown[];
-    const total = data.totalItems ?? data['hydra:totalItems'] ?? members.length;
+    const readPage = async (params: Record<string, unknown>) => {
+      const { data } = await api.get(`/${resource}`, { params });
+      const members = (data.member ?? data['hydra:member'] ?? []) as unknown[];
+      const total = (data.totalItems ?? data['hydra:totalItems'] ?? members.length) as number;
+      return { members, total };
+    };
+
+    // `pagination.mode: 'off'` means "give me the whole collection". API Platform
+    // still applies a default page size (and caps itemsPerPage), so a single
+    // param-less request silently returns only the first page (~30). Page through
+    // to the end instead — bounded by a hard cap so a runaway can't hang the UI.
+    if (pagination?.mode === 'off') {
+      const PAGE_SIZE = 100; // stay under the API's per-page cap (200)
+      const HARD_CAP = 5000; // safety valve against unbounded collections
+      const all: unknown[] = [];
+      let page = 1;
+      let total: number | undefined;
+      for (;;) {
+        const { members, total: t } = await readPage({ ...base, page, itemsPerPage: PAGE_SIZE });
+        total = t;
+        all.push(...members);
+        if (members.length < PAGE_SIZE || all.length >= (total ?? 0) || all.length >= HARD_CAP) break;
+        page += 1;
+      }
+      return { data: all as never, total: total ?? all.length };
+    }
+
+    const { members, total } = await readPage({
+      ...base,
+      page: pagination?.currentPage ?? 1,
+      itemsPerPage: pagination?.pageSize ?? 25,
+    });
     return { data: members as never, total };
   },
 
