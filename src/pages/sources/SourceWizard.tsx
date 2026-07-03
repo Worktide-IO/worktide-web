@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -108,6 +109,14 @@ export function SourceWizard({
       // password-style fields (apiKey vs jiraPat etc.).
       baseUrl: String(ic.baseUrl ?? ''),
       projectId: String(ic.projectId ?? ''),
+      trackerId: String(ic.trackerId ?? ''),
+      assignedToId: String(ic.assignedToId ?? ''),
+      // Read-only = no `outbound` capability, tracked as a '1'/'' string flag
+      // (cfg is string-typed). Default read-only for a fresh ticket source so
+      // nothing is pushed back until bidirectional sync is explicitly enabled.
+      readOnly: existing
+        ? (((existing.capabilities as string[] | undefined) ?? []).includes('outbound') ? '' : '1')
+        : '1',
       projectKey: String(ic.projectKey ?? ''),
       jiraApiVersion: String(ic.apiVersion ?? '2'),
       apiKey: '',
@@ -225,6 +234,8 @@ export function SourceWizard({
         body.inboundConfig = {
           baseUrl: (cfg.baseUrl ?? '').replace(/\/$/, ''),
           projectId: cfg.projectId || undefined,
+          trackerId: cfg.trackerId || undefined,
+          assignedToId: cfg.assignedToId || undefined,
           // Preserve the webhookToken minted at create-time so the
           // operator's existing webhook config keeps working after
           // every edit.
@@ -234,6 +245,9 @@ export function SourceWizard({
           body.authConfig = { apiKey: cfg.apiKey };
         }
         body.entityTypes = ['task'];
+        // Read-only = inbound capability only. Without `outbound`, imported
+        // mappings are created inbound-only and local edits never push back.
+        body.capabilities = cfg.readOnly ? ['inbound'] : ['inbound', 'outbound'];
       } else if (def.code === 'jira') {
         body.inboundConfig = {
           baseUrl: (cfg.baseUrl ?? '').replace(/\/$/, ''),
@@ -658,6 +672,41 @@ function RedmineConfigure({
           onChange={(e) => setField('projectId', e.target.value)}
           placeholder="Redmine-Projekt-ID oder -Key (optional, leer = alle)"
         />
+      </fieldset>
+      <fieldset className="space-y-2 rounded-md border p-3">
+        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter (optional)</legend>
+        <Input
+          value={cfg.trackerId ?? ''}
+          onChange={(e) => setField('trackerId', e.target.value)}
+          placeholder="Tracker-ID (optional, leer = alle Tracker)"
+        />
+        <Input
+          value={cfg.assignedToId ?? ''}
+          onChange={(e) => setField('assignedToId', e.target.value)}
+          placeholder="Zugewiesen an: me oder Benutzer-ID (optional)"
+        />
+        <p className="text-xs text-muted-foreground">
+          Nur Tickets eines Trackers und/oder bestimmter Zuweisung importieren.
+          „me" = der Benutzer des API-Keys. Tracker-ID findest Du in Redmine unter
+          Administration → Tracker (in der URL).
+        </p>
+      </fieldset>
+      <fieldset className="space-y-2 rounded-md border p-3">
+        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Synchronisation</legend>
+        <label className="flex items-start gap-2 text-sm">
+          <Checkbox
+            checked={cfg.readOnly === '1'}
+            onCheckedChange={(v) => setField('readOnly', v ? '1' : '')}
+            className="mt-0.5"
+          />
+          <span>
+            <span className="font-medium">Nur lesen (read-only)</span>
+            <span className="block text-xs text-muted-foreground">
+              Tickets werden nur importiert. Änderungen in Worktide werden NICHT nach
+              Redmine zurückgeschrieben. Später auf bidirektional umstellbar.
+            </span>
+          </span>
+        </label>
       </fieldset>
       <fieldset className="space-y-2 rounded-md border p-3">
         <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">API-Key</legend>
