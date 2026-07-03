@@ -1,12 +1,14 @@
 import { useList, useInvalidate } from '@refinedev/core';
 import { useForm } from '@refinedev/react-hook-form';
-import { ArrowLeft, Loader2, Plus, Save, Tag } from 'lucide-react';
+import { ArrowLeft, Check, Loader2, Plus, Save, Sparkles, Tag, X } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
-import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { aiMarketing, aiTriage, type AiRecommendation } from '@/lib/ai';
+import { readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { useMercureTopic } from '@/lib/mercure';
 import {
   releaseVersion,
   VERSION_STATUS_BADGE,
@@ -177,7 +179,140 @@ export function ProductForm(props: Mode) {
       {isEdit && type === 'service' ? (
         <p className="text-sm text-muted-foreground">Services sind versionslos.</p>
       ) : null}
+      {isEdit ? <ProductMarketingCard productId={props.id} /> : null}
     </div>
+  );
+}
+
+/**
+ * Marketing agent for one product/service: trigger a social-copy draft and
+ * review the resulting recommendations in place (accept → a Draft SocialPost).
+ * Mirrors AiTriagePanel; the full cross-workspace view lives under /ki-agenten.
+ */
+function ProductMarketingCard({ productId }: { productId: string }) {
+  const navigate = useNavigate();
+  const [requesting, setRequesting] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const { result, query } = useList<AiRecommendation>({
+    resource: 'ai_recommendations',
+    filters: [
+      { field: 'target', operator: 'eq', value: 'product' },
+      { field: 'targetId', operator: 'eq', value: productId },
+      { field: 'kind', operator: 'eq', value: 'marketing_social_draft' },
+    ],
+    sorters: [{ field: 'createdAt', order: 'desc' }],
+    pagination: { currentPage: 1, pageSize: 20 },
+  });
+  const recs = result?.data ?? [];
+
+  const workspaceId = readAuth(WORKSPACE_STORAGE_KEY);
+  const topic = workspaceId ? `worktide:workspace:${workspaceId}:ai-recommendations` : null;
+  useMercureTopic(topic, {
+    enabled: Boolean(topic),
+    onMessage: () => {
+      void query.refetch();
+    },
+  });
+
+  const request = async () => {
+    setRequesting(true);
+    try {
+      await aiMarketing.request(productId);
+      toast.success('Marketing-Entwurf angefordert – erscheint gleich als Empfehlung.');
+    } catch {
+      toast.error('Anfrage fehlgeschlagen (LLM/Egress prüfen).');
+    } finally {
+      setRequesting(false);
+    }
+  };
+
+  const accept = async (rec: AiRecommendation) => {
+    setBusyId(rec.id);
+    try {
+      await aiTriage.accept(rec.id);
+      toast.success('Entwurf übernommen – Social-Post-Draft erstellt.');
+      await query.refetch();
+      navigate('/social');
+    } catch {
+      toast.error('Übernehmen fehlgeschlagen.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const reject = async (rec: AiRecommendation) => {
+    setBusyId(rec.id);
+    try {
+      await aiTriage.reject(rec.id);
+      toast.success('Empfehlung verworfen.');
+      await query.refetch();
+    } catch {
+      toast.error('Verwerfen fehlgeschlagen.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Sparkles className="size-4" /> Marketing-Agent
+        </CardTitle>
+        <Button type="button" size="sm" onClick={() => void request()} disabled={requesting}>
+          {requesting ? <Loader2 className="size-4 animate-spin" /> : 'Marketing-Entwurf erzeugen'}
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {recs.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Noch keine Empfehlungen. Erzeuge einen Entwurf – der Agent schlägt pro Kanal einen Post
+            vor (Freigabe bleibt bei dir).
+          </p>
+        ) : (
+          recs.map((rec) => (
+            <div key={rec.id} className="rounded-md border p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant={rec.status === 'pending' ? 'default' : 'outline'} className="text-xs">
+                    {rec.status}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground line-clamp-1">
+                    {rec.suggestion?.summary ?? '(keine Zusammenfassung)'}
+                  </span>
+                </div>
+                {rec.status === 'pending' ? (
+                  <div className="flex shrink-0 gap-2">
+                    <Button size="sm" onClick={() => void accept(rec)} disabled={busyId === rec.id}>
+                      <Check className="size-4" /> Übernehmen
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => void reject(rec)}
+                      disabled={busyId === rec.id}
+                    >
+                      <X className="size-4" /> Verwerfen
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+              {(rec.suggestion?.variants ?? []).length > 0 ? (
+                <ul className="space-y-1">
+                  {(rec.suggestion?.variants ?? []).map((v, i) => (
+                    <li key={`${rec.id}-${i}`} className="text-sm">
+                      <span className="font-medium">{v.network ?? v.adapterCode}:</span>{' '}
+                      <span className="text-muted-foreground">{v.body}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

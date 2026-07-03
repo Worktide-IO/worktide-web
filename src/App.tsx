@@ -56,6 +56,7 @@ import { ProductEditPage } from '@/pages/products/ProductEditPage';
 import { IndustriesPage } from '@/pages/industries/IndustriesPage';
 import { TasksListPage } from '@/pages/tasks/TasksListPage';
 import { TimeEntriesListPage } from '@/pages/timeEntries/TimeEntriesListPage';
+import { AiAgentsOverviewPage } from '@/pages/ai-agents/AiAgentsOverviewPage';
 
 /**
  * Top-level wiring. Refine handles auth-gating + data-provider injection;
@@ -117,6 +118,11 @@ export default function App() {
               name: 'tasks',
               list: '/tasks',
               meta: { label: 'Aufgaben', icon: 'CheckSquare', category: 'Arbeit' },
+            },
+            {
+              name: 'ai_agents',
+              list: '/ki-agenten',
+              meta: { label: 'KI-Agenten', icon: 'Sparkles', category: 'Arbeit' },
             },
             {
               name: 'time_entries',
@@ -272,6 +278,7 @@ export default function App() {
               <Route path="/projects/:id" element={<ProjectDetailPage />} />
               <Route path="/projects/:id/edit" element={<ProjectEditPage />} />
               <Route path="/tasks" element={<TasksListPage />} />
+              <Route path="/ki-agenten" element={<AiAgentsOverviewPage />} />
               {/* Until each resource has its own page, the placeholder
                   acknowledges the navigation without breaking the layout. */}
               <Route path="/time-entries" element={<TimeEntriesListPage />} />

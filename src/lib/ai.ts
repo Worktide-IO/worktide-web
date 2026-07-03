@@ -10,7 +10,14 @@ import { api } from '@/lib/api';
  * pulling the full generated type, so the panel stays decoupled from `gen:api`.
  */
 
-export type AiTriageTarget = 'task' | 'conversation';
+export type AiTriageTarget = 'task' | 'conversation' | 'product' | 'customer';
+
+/** One per-network marketing post variant the agent drafted for a product. */
+export type AiSocialVariant = {
+  adapterCode: string;
+  network?: string;
+  body: string;
+};
 
 /** The validated proposal the agent produced. Shape depends on the target. */
 export type AiSuggestion = {
@@ -26,6 +33,12 @@ export type AiSuggestion = {
   title?: string;
   shouldCreateTicket?: boolean;
   suggestedProject?: string | null; // project uuid, or null when none could be inferred
+  // Product-shaped (marketing social draft)
+  variants?: AiSocialVariant[];
+  // Customer-shaped (upgrade outreach email)
+  subject?: string;
+  body?: string;
+  outdatedProducts?: { product: string; currentVersion: string; latestVersion: string }[];
 };
 
 export type AiRecommendation = {
@@ -91,6 +104,28 @@ export const aiTriage = {
   /** Dismiss the suggestion. */
   reject: (id: string): Promise<unknown> =>
     api.post(`/ai_recommendations/${id}/reject`).then((r) => r.data),
+};
+
+/** Marketing-agent triggers (human-in-the-loop): drafts, never auto-publishes. */
+export const aiMarketing = {
+  /**
+   * Queue a marketing social-copy draft for a product (202 Accepted). The worker
+   * produces a Pending recommendation; accepting it materialises a Draft social
+   * post that still goes through the normal approval gate.
+   */
+  request: (productId: string): Promise<unknown> =>
+    api.post(`/products/${productId}/ai-marketing-draft`).then((r) => r.data),
+};
+
+/** Customer-success agent: draft an upgrade/upsell outreach email (never auto-sends). */
+export const aiOutreach = {
+  /**
+   * Queue an upgrade-outreach draft for a customer (202 Accepted). Accepting the
+   * resulting recommendation materialises an OutboundMessage; the default-deny
+   * `email_outbound` egress gate is what holds actual sending back.
+   */
+  request: (customerId: string): Promise<unknown> =>
+    api.post(`/customers/${customerId}/ai-upgrade-outreach`).then((r) => r.data),
 };
 
 /** Best-effort extraction of a human-readable error from an axios failure. */
