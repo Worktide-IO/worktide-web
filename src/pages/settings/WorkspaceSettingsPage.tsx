@@ -21,6 +21,7 @@ import { WorkspaceTagsCard } from '@/components/WorkspaceTagsCard';
 import { WorkspaceChannelsCard } from '@/components/WorkspaceChannelsCard';
 import { WorkspaceTrackersCard } from '@/components/WorkspaceTrackersCard';
 import { WorkspaceWorkflowsCard } from '@/components/WorkspaceWorkflowsCard';
+import { WorkspacePriorityScoringCard } from '@/components/WorkspacePriorityScoringCard';
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 
@@ -69,6 +70,7 @@ export function WorkspaceSettingsPage() {
       <WorkspaceTagsCard />
       <WorkspaceTrackersCard />
       <WorkspaceWorkflowsCard />
+      <WorkspacePriorityScoringCard />
       <WorkspaceChannelsCard />
       <WorkspaceStats />
     </SettingsLayout>
