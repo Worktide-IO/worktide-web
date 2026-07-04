@@ -1,12 +1,10 @@
 import { useGetIdentity, useInvalidate, useList, useOne } from '@refinedev/core';
-import { useQuery } from '@tanstack/react-query';
 import {
   ArrowDown,
   ArrowRight,
   ArrowUp,
   CalendarDays,
   CheckSquare,
-  Gauge,
   GitBranch,
   Link2,
   ListTree,
@@ -40,6 +38,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AiTriagePanel } from '@/components/AiTriagePanel';
 import { TagPicker } from '@/components/TagPicker';
 import { EntitySyncBadgeStack } from '@/components/EntitySyncBadgeStack';
+import { PriorityScoreBadge, usePriorityScores } from '@/components/PriorityScoreBadge';
 import { TrackerChip } from '@/components/TrackerChip';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
 import { userDisplayName, useUserDirectory } from '@/hooks/useUserDirectory';
@@ -362,38 +361,9 @@ function PriorityEditor({ task }: { task: Row<TaskJsonld> }) {
 }
 
 /** Internal priority-score badge — a computed signal, complements the manual priority. */
-function PriorityScoreBadge({ task }: { task: Row<TaskJsonld> }) {
-  const projectUuid = task.project?.split('/').pop();
-  const { data } = useQuery({
-    queryKey: ['priority-scores', projectUuid],
-    enabled: Boolean(projectUuid),
-    staleTime: 60_000,
-    queryFn: async () => {
-      const { data } = await api.get<{
-        scores: Record<string, { score: number; blocked: boolean; parts: { label: string; contribution: number }[] }>;
-      }>('/reports/priority-scores', { params: { project: projectUuid } });
-      return data.scores;
-    },
-  });
-  const entry = task['@id'] ? data?.[task['@id']] : undefined;
-  if (!entry) return null;
-
-  const tone =
-    entry.score >= 70
-      ? 'text-red-600 dark:text-red-400'
-      : entry.score >= 40
-        ? 'text-amber-600 dark:text-amber-400'
-        : 'text-muted-foreground';
-  const title =
-    `Prioritäts-Score ${entry.score}/100 (interner Rechenwert)` +
-    (entry.blocked ? ' · blockiert' : '') +
-    (entry.parts.length ? '\n' + entry.parts.map((p) => `${p.label}: +${p.contribution}`).join('\n') : '');
-
-  return (
-    <Badge variant="outline" className={cn('cursor-help gap-1 text-[10px]', tone)} title={title}>
-      <Gauge className="size-3" /> Score {entry.score}
-    </Badge>
-  );
+function TaskScoreBadge({ task }: { task: Row<TaskJsonld> }) {
+  const { scoreFor } = usePriorityScores(task.project?.split('/').pop());
+  return <PriorityScoreBadge entry={scoreFor(task['@id'])} />;
 }
 
 /** Workflow-gated status dropdown for the header. */
@@ -461,7 +431,7 @@ function TaskDetailBody({ task }: { task: Row<TaskJsonld> }) {
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <StatusEditor task={task} />
           <PriorityEditor task={task} />
-          <PriorityScoreBadge task={task} />
+          <TaskScoreBadge task={task} />
           {task.dueOn ? (
             <span className="inline-flex items-center gap-1">
               <CalendarDays className="size-3" />
