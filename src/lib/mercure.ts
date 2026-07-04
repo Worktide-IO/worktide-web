@@ -76,6 +76,48 @@ export function clearMercureToken(): void {
   inflight = null;
 }
 
+/**
+ * Cross-component Mercure health signal — one number that the
+ * status pill renders directly. We count active subscriptions and
+ * the running tally of "any of them dropped". A dedicated
+ * CustomEvent keeps the pill decoupled from React state ownership.
+ *
+ *  - 'connected'    — at least one live subscription
+ *  - 'reconnecting' — one or more subscriptions are retrying
+ *  - 'offline'      — every subscription is errored out
+ *  - 'idle'         — no subscriptions registered yet (initial mount)
+ */
+export type MercureHealth = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'offline';
+
+let subscriptionCount = 0;
+let connectedCount = 0;
+let erroredCount = 0;
+
+function computeHealth(): MercureHealth {
+  if (subscriptionCount === 0) return 'idle';
+  if (connectedCount > 0 && erroredCount === 0) return 'connected';
+  if (connectedCount > 0 && erroredCount > 0) return 'reconnecting';
+  if (erroredCount > 0) return 'reconnecting';
+  return 'connecting';
+}
+
+declare global {
+  interface WindowEventMap {
+    'wt-mercure-status': CustomEvent<{ health: MercureHealth }>;
+  }
+}
+
+function publishMercureHealth(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent('wt-mercure-status', { detail: { health: computeHealth() } }),
+  );
+}
+
+export function readMercureHealth(): MercureHealth {
+  return computeHealth();
+}
+
 export type MercureMessage<T> = {
   /** Parsed JSON payload — usually the JSON-LD representation of the changed entity. */
   data: T;
@@ -141,6 +183,13 @@ export function useMercureTopic<T = unknown>(
 
     let cancelled = false;
     let controller: { abort: () => void } | null = null;
+    let registered = false;
+    let countedConnected = false;
+    let countedErrored = false;
+
+    subscriptionCount += 1;
+    registered = true;
+    publishMercureHealth();
 
     (async () => {
       let jwt: string;
@@ -148,6 +197,11 @@ export function useMercureTopic<T = unknown>(
         jwt = await getMercureToken();
       } catch (err) {
         console.warn('useMercureTopic: failed to fetch JWT, subscription skipped', err);
+        if (!cancelled) {
+          erroredCount += 1;
+          countedErrored = true;
+          publishMercureHealth();
+        }
         return;
       }
       if (cancelled) return;
@@ -163,10 +217,36 @@ export function useMercureTopic<T = unknown>(
         maxRetryInterval: 10_000,
       });
 
+      // Flip to "connected" bookkeeping. Mercure keeps the SSE stream alive
+      // with keepalive *comments* (`:`) that never trigger onMessage, so we
+      // must treat a healthy open response (2xx) as connected — otherwise an
+      // idle subscription sits on "connecting" until an entity actually
+      // changes, which is the "verbinde …" pill that never goes green.
+      const markConnected = () => {
+        if (cancelled) return;
+        setConnected(true);
+        if (!countedConnected) {
+          connectedCount += 1;
+          countedConnected = true;
+        }
+        if (countedErrored) {
+          erroredCount = Math.max(0, erroredCount - 1);
+          countedErrored = false;
+        }
+        publishMercureHealth();
+      };
+
       controller = es.listen({
+        onResponse({ response }) {
+          // The SSE stream is open as soon as the hub answers 2xx — the
+          // connection is live even before the first data frame arrives.
+          if (response.status >= 200 && response.status < 300) {
+            markConnected();
+          }
+        },
         onMessage(msg) {
           if (cancelled) return;
-          setConnected(true);
+          markConnected();
           let parsed: T;
           try {
             parsed = JSON.parse(msg.data) as T;
@@ -181,6 +261,15 @@ export function useMercureTopic<T = unknown>(
         onRequestError({ error }) {
           if (cancelled) return;
           setConnected(false);
+          if (countedConnected) {
+            connectedCount = Math.max(0, connectedCount - 1);
+            countedConnected = false;
+          }
+          if (!countedErrored) {
+            erroredCount += 1;
+            countedErrored = true;
+          }
+          publishMercureHealth();
           // 401 from the hub probably means the token expired; nudge a
           // refresh on the next read instead of failing silently.
           if (typeof error === 'object' && error && 'status' in error && error.status === 401) {
@@ -188,7 +277,17 @@ export function useMercureTopic<T = unknown>(
           }
         },
         onResponseError() {
+          if (cancelled) return;
           setConnected(false);
+          if (countedConnected) {
+            connectedCount = Math.max(0, connectedCount - 1);
+            countedConnected = false;
+          }
+          if (!countedErrored) {
+            erroredCount += 1;
+            countedErrored = true;
+          }
+          publishMercureHealth();
         },
       });
     })();
@@ -197,6 +296,16 @@ export function useMercureTopic<T = unknown>(
       cancelled = true;
       controller?.abort();
       setConnected(false);
+      if (registered) {
+        subscriptionCount = Math.max(0, subscriptionCount - 1);
+        if (countedConnected) {
+          connectedCount = Math.max(0, connectedCount - 1);
+        }
+        if (countedErrored) {
+          erroredCount = Math.max(0, erroredCount - 1);
+        }
+        publishMercureHealth();
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicKey, enabled]);

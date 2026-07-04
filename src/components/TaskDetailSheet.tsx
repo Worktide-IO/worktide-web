@@ -6,13 +6,13 @@ import {
   CalendarDays,
   CheckSquare,
   GitBranch,
+  Link2,
   ListTree,
   Loader2,
   Plus,
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
@@ -21,8 +21,11 @@ import type { TaskDependencyJsonld, TaskDependencyJsonldTypeEnum } from '@/api/t
 import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -35,11 +38,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AiTriagePanel } from '@/components/AiTriagePanel';
 import { TagPicker } from '@/components/TagPicker';
 import { EntitySyncBadgeStack } from '@/components/EntitySyncBadgeStack';
+import { PriorityScoreBadge, scoreEntryFromTask } from '@/components/PriorityScoreBadge';
 import { TrackerChip } from '@/components/TrackerChip';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
+import { userDisplayName, useUserDirectory } from '@/hooks/useUserDirectory';
 import { VersionBadge } from '@/components/VersionBadge';
 import { useProjectVersions } from '@/hooks/useProjectVersions';
 import { useTrackers } from '@/hooks/useTrackers';
+import { useWorkflowTransitions } from '@/hooks/useWorkflowTransitions';
 import { api } from '@/lib/api';
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import { useLiveResource } from '@/lib/mercure';
@@ -113,15 +119,298 @@ export function TaskDetailSheet({ taskId, onOpenChange }: Props) {
             <Skeleton className="h-24 w-full" />
           </div>
         ) : (
-          <TaskDetailBody task={task} onClose={() => onOpenChange(false)} />
+          <TaskDetailBody task={task} />
         )}
       </SheetContent>
     </Sheet>
   );
 }
 
-function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () => void }) {
-  const navigate = useNavigate();
+/**
+ * Editable schedule/effort block (Beginn / Fällig / Geschätzter Aufwand) plus
+ * read-only Erstellt/Aktualisiert. Saves each field on change via merge-patch,
+ * mirroring the tags/version sections. Effort is edited in hours (Redmine's
+ * unit) and stored as minutes.
+ */
+function ScheduleSection({ task }: { task: Row<TaskJsonld> }) {
+  const invalidate = useInvalidate();
+
+  const save = async (body: Record<string, unknown>) => {
+    if (!task.id) return;
+    try {
+      await api.patch(`/tasks/${task.id}`, body, {
+        headers: { 'Content-Type': 'application/merge-patch+json' },
+      });
+      void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: task.id });
+    } catch {
+      toast.error('Konnte nicht speichern.');
+    }
+  };
+
+  const dateInput = (iso?: string | null) => (iso ? new Date(iso).toISOString().slice(0, 10) : '');
+  const estHours = task.estimatedMinutes != null ? String(task.estimatedMinutes / 60) : '';
+
+  return (
+    <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-md border bg-muted/20 p-3 text-sm sm:grid-cols-3">
+      <div className="space-y-1">
+        <dt className="text-xs text-muted-foreground">Beginn</dt>
+        <dd>
+          <Input
+            type="date"
+            defaultValue={dateInput(task.startOn)}
+            onChange={(e) => void save({ startOn: e.target.value || null })}
+            className="h-8"
+          />
+        </dd>
+      </div>
+      <div className="space-y-1">
+        <dt className="text-xs text-muted-foreground">Fällig</dt>
+        <dd>
+          <Input
+            type="date"
+            defaultValue={dateInput(task.dueOn)}
+            onChange={(e) => void save({ dueOn: e.target.value || null })}
+            className="h-8"
+          />
+        </dd>
+      </div>
+      <div className="space-y-1">
+        <dt className="text-xs text-muted-foreground">Geschätzter Aufwand</dt>
+        <dd className="flex items-center gap-1.5">
+          <Input
+            type="number"
+            min={0}
+            step={0.25}
+            defaultValue={estHours}
+            onBlur={(e) => {
+              const h = Number.parseFloat(e.target.value);
+              void save({ estimatedMinutes: Number.isFinite(h) && h > 0 ? Math.round(h * 60) : null });
+            }}
+            className="h-8 w-20"
+          />
+          <span className="text-xs text-muted-foreground">Std.</span>
+        </dd>
+      </div>
+      {task.createdAt ? (
+        <div className="space-y-1">
+          <dt className="text-xs text-muted-foreground">Erstellt</dt>
+          <dd className="pt-1.5">{new Date(task.createdAt).toLocaleDateString()}</dd>
+        </div>
+      ) : null}
+      {task.updatedAt ? (
+        <div className="space-y-1">
+          <dt className="text-xs text-muted-foreground">Aktualisiert</dt>
+          <dd className="pt-1.5">{new Date(task.updatedAt).toLocaleDateString()}</dd>
+        </div>
+      ) : null}
+    </dl>
+  );
+}
+
+/** Shared merge-patch helper for the inline field editors. */
+async function patchTaskField(
+  id: string,
+  body: Record<string, unknown>,
+  invalidate: ReturnType<typeof useInvalidate>,
+): Promise<void> {
+  try {
+    await api.patch(`/tasks/${id}`, body, {
+      headers: { 'Content-Type': 'application/merge-patch+json' },
+    });
+    void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id });
+  } catch {
+    toast.error('Konnte nicht speichern.');
+  }
+}
+
+/** Inline-editable task title (saves on blur / Enter). */
+function TitleEditor({ task }: { task: Row<TaskJsonld> }) {
+  const invalidate = useInvalidate();
+  return (
+    <input
+      key={task.id}
+      defaultValue={task.title ?? ''}
+      aria-label="Titel"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+      }}
+      onBlur={(e) => {
+        const v = e.target.value.trim();
+        if (task.id && v !== '' && v !== (task.title ?? '')) {
+          void patchTaskField(task.id, { title: v }, invalidate);
+        }
+      }}
+      className="-mx-1 min-w-0 flex-1 rounded bg-transparent px-1 font-semibold outline-none hover:bg-muted/50 focus:bg-background focus:ring-1 focus:ring-ring"
+    />
+  );
+}
+
+/** Assignee editor: avatars open a checklist of workspace users. */
+function AssigneeEditor({ task }: { task: Row<TaskJsonld> }) {
+  const invalidate = useInvalidate();
+  const { users } = useUserDirectory();
+  const current = task.assignees ?? [];
+
+  // `assignees` is a read-only derived field — user assignment goes through a
+  // dedicated action endpoint that takes bare user UUIDs.
+  const toggle = (iri: string) => {
+    if (!task.id) return;
+    const nextIris = current.includes(iri) ? current.filter((a) => a !== iri) : [...current, iri];
+    const userIds = nextIris.map((i) => i.split('/').pop()).filter(Boolean);
+    void (async () => {
+      try {
+        await api.post(`/tasks/${task.id}/set-assignees`, { userIds });
+        void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: task.id });
+      } catch {
+        toast.error('Konnte nicht speichern.');
+      }
+    })();
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label="Zuständige bearbeiten"
+          className="inline-flex items-center gap-1 rounded px-1 hover:bg-muted/50"
+        >
+          {current.length > 0 ? (
+            <UserAvatarStack iris={current} size="sm" max={3} />
+          ) : (
+            <span className="text-xs text-muted-foreground">+ Zuweisen</span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-60 p-1">
+        <div className="max-h-64 overflow-y-auto">
+          {users.length === 0 ? (
+            <p className="px-2 py-1.5 text-xs text-muted-foreground">Keine Nutzer</p>
+          ) : (
+            users.map((u) => {
+              const iri = u['@id'];
+              if (!iri) return null;
+              return (
+                <label
+                  key={iri}
+                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted"
+                >
+                  <Checkbox checked={current.includes(iri)} onCheckedChange={() => toggle(iri)} />
+                  {userDisplayName(u)}
+                </label>
+              );
+            })
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/** Inline-editable description (saves on blur). */
+function DescriptionEditor({ task }: { task: Row<TaskJsonld> }) {
+  const invalidate = useInvalidate();
+  return (
+    <div className="space-y-1">
+      <div className="text-xs text-muted-foreground">Beschreibung</div>
+      <Textarea
+        key={task.id}
+        defaultValue={task.description ?? ''}
+        placeholder="Beschreibung hinzufügen …"
+        onBlur={(e) => {
+          const v = e.target.value;
+          const next = v.trim() === '' ? null : v;
+          if (task.id && next !== (task.description ?? null)) {
+            void patchTaskField(task.id, { description: next }, invalidate);
+          }
+        }}
+        className="min-h-24 text-sm"
+      />
+    </div>
+  );
+}
+
+const PRIORITY_LABEL: Record<string, string> = {
+  low: 'Niedrig',
+  normal: 'Normal',
+  high: 'Hoch',
+  urgent: 'Dringend',
+};
+
+/** Priority dropdown for the header (no workflow gate — free to change). */
+function PriorityEditor({ task }: { task: Row<TaskJsonld> }) {
+  const invalidate = useInvalidate();
+  const change = (p: string) => {
+    if (!task.id || p === task.priority) return;
+    void patchTaskField(task.id, { priority: p }, invalidate);
+  };
+  return (
+    <Select value={task.priority ?? 'normal'} onValueChange={change}>
+      <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
+        <SelectValue placeholder="Priorität" />
+      </SelectTrigger>
+      <SelectContent>
+        {(['urgent', 'high', 'normal', 'low'] as const).map((p) => (
+          <SelectItem key={p} value={p}>
+            {PRIORITY_LABEL[p]}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+/** Internal priority-score badge — a computed signal, complements the manual priority. */
+function TaskScoreBadge({ task }: { task: Row<TaskJsonld> }) {
+  return <PriorityScoreBadge entry={scoreEntryFromTask(task)} />;
+}
+
+/** Workflow-gated status dropdown for the header. */
+function StatusEditor({ task }: { task: Row<TaskJsonld> }) {
+  const invalidate = useInvalidate();
+  const { result: statuses } = useList<Row<TaskStatusJsonld>>({
+    resource: 'task_statuses',
+    pagination: { mode: 'off' },
+    sorters: [{ field: 'position', order: 'asc' }],
+  });
+  const { allowedToStatuses } = useWorkflowTransitions();
+  const list = statuses?.data ?? [];
+  if (list.length === 0) return null;
+
+  const change = (iri: string) => {
+    if (!task.id || iri === task.status) return;
+    const allowed = allowedToStatuses(task.tracker ?? null, task.status ?? null);
+    if (allowed && !allowed.has(iri)) {
+      toast.error('Statuswechsel nicht im Workflow erlaubt.');
+      return;
+    }
+    void patchTaskField(task.id, { status: iri }, invalidate);
+  };
+
+  return (
+    <Select value={task.status ?? ''} onValueChange={change}>
+      <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
+        <SelectValue placeholder="Status" />
+      </SelectTrigger>
+      <SelectContent>
+        {list.map((s) => (
+          <SelectItem key={s['@id']} value={s['@id'] ?? ''}>
+            <span className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="size-2 rounded-full"
+                style={{ backgroundColor: s.color ?? '#94a3b8' }}
+              />
+              {s.name}
+            </span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function TaskDetailBody({ task }: { task: Row<TaskJsonld> }) {
   const invalidate = useInvalidate();
   const { byIri: trackerByIri } = useTrackers();
   const tracker = task.tracker ? trackerByIri[task.tracker] : null;
@@ -136,45 +425,45 @@ function TaskDetailBody({ task, onClose }: { task: Row<TaskJsonld>; onClose: () 
           <span className="font-mono text-xs text-muted-foreground">
             {task.identifier}
           </span>
-          {task.title}
+          <TitleEditor task={task} />
         </SheetTitle>
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          {task.priority ? (
-            <Badge variant="outline" className="text-[10px]">
-              Priorität: {task.priority}
-            </Badge>
-          ) : null}
+          <StatusEditor task={task} />
+          <PriorityEditor task={task} />
+          <TaskScoreBadge task={task} />
           {task.dueOn ? (
             <span className="inline-flex items-center gap-1">
               <CalendarDays className="size-3" />
               {new Date(task.dueOn).toLocaleDateString()}
             </span>
           ) : null}
-          <UserAvatarStack iris={task.assignees ?? []} size="sm" max={3} />
+          <AssigneeEditor task={task} />
           <VersionBadge version={fixedVersion} />
           <EntitySyncBadgeStack entityId={task.id} variant="full" />
-          {task.project ? (
+          {task.project && task.id ? (
             <Button
               variant="ghost"
               size="sm"
+              title="Deeplink zu diesem Ticket kopieren"
               onClick={() => {
-                onClose();
-                navigate(`/projects/${task.project!.split('/').pop()}?tab=board`);
+                const link = `${window.location.origin}/projects/${task.project!.split('/').pop()}?task=${task.id}`;
+                void navigator.clipboard
+                  .writeText(link)
+                  .then(() => toast.success('Ticket-Link kopiert'))
+                  .catch(() => toast.error('Konnte Link nicht kopieren.'));
               }}
-              className="ml-auto h-6 px-2 text-xs"
+              className="ml-auto h-6 gap-1 px-2 text-xs"
             >
-              Projekt öffnen
+              <Link2 className="size-3.5" /> Link kopieren
             </Button>
           ) : null}
         </div>
       </SheetHeader>
 
       <div className="px-4 pb-6 space-y-5">
-        {task.description ? (
-          <div className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
-            {task.description}
-          </div>
-        ) : null}
+        <ScheduleSection task={task} />
+
+        <DescriptionEditor task={task} />
 
         <AiTriagePanel
           target="task"
