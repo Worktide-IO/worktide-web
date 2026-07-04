@@ -12,7 +12,7 @@ import {
 import { useGetIdentity, useInvalidate, useList, useOne, useUpdate } from '@refinedev/core';
 import { useQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Ban, Clock, Flag, ListTree, Search, SlidersHorizontal, X } from 'lucide-react';
+import { Ban, ChevronsLeft, Clock, Flag, ListTree, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
@@ -77,9 +77,17 @@ type BoardFilter = {
   priority: string; // '' = any
   hideDone: boolean;
   swimlane: SwimlaneDim;
+  collapsed: string[]; // collapsed column ids
 };
 
-const EMPTY_FILTER: BoardFilter = { q: '', mine: false, priority: '', hideDone: false, swimlane: 'none' };
+const EMPTY_FILTER: BoardFilter = {
+  q: '',
+  mine: false,
+  priority: '',
+  hideDone: false,
+  swimlane: 'none',
+  collapsed: [],
+};
 
 const boardFilterKey = (projectIri: string) => `worktide.boardFilter.${projectIri}`;
 
@@ -254,6 +262,12 @@ export function ProjectBoardTab({ projectIri }: Props) {
         /* ignore storage failures (private mode etc.) */
       }
       return next;
+    });
+  const toggleCollapse = (colId: string) =>
+    setFilter({
+      collapsed: filter.collapsed.includes(colId)
+        ? filter.collapsed.filter((c) => c !== colId)
+        : [...filter.collapsed, colId],
     });
   const filterActive =
     filter.q !== '' || filter.mine || filter.priority !== '' || filter.hideDone || filter.swimlane !== 'none';
@@ -626,6 +640,8 @@ export function ProjectBoardTab({ projectIri }: Props) {
                 column={column}
                 tasks={tasksByColumn.byColumn[column.id] ?? []}
                 hiddenOlder={tasksByColumn.hiddenOlder[column.id] ?? 0}
+                collapsed={filter.collapsed.includes(column.id)}
+                onToggleCollapse={() => toggleCollapse(column.id)}
                 subtaskCountByParent={subtaskCountByParent}
                 blockedTaskIris={blockedTaskIris}
                 showAging={!doneColumnIds.has(column.id)}
@@ -662,6 +678,8 @@ function BoardColumn({
   column,
   tasks,
   hiddenOlder = 0,
+  collapsed = false,
+  onToggleCollapse,
   subtaskCountByParent,
   blockedTaskIris,
   showAging = false,
@@ -670,6 +688,8 @@ function BoardColumn({
   column: ResolvedColumn;
   tasks: Row<TaskJsonld>[];
   hiddenOlder?: number;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
   subtaskCountByParent: Record<string, number>;
   blockedTaskIris: Set<string>;
   showAging?: boolean;
@@ -691,6 +711,29 @@ function BoardColumn({
     getItemKey: (index) => tasks[index]['@id'] ?? index,
   });
   const virtualItems = virtualizer.getVirtualItems();
+
+  // Collapsed: a slim vertical bar (name + count). Stays a drop target so a
+  // card dropped on it still moves to this column. (After hooks — rules-of-hooks.)
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        ref={setNodeRef}
+        onClick={onToggleCollapse}
+        title={`${column.name} ausklappen`}
+        className={cn(
+          'flex h-[calc(100vh-14rem)] w-11 shrink-0 flex-col items-center gap-2 rounded-lg border bg-muted/30 py-3 transition-colors hover:bg-muted/60',
+          isOver && 'border-primary bg-primary/5',
+        )}
+      >
+        <span aria-hidden className="size-2.5 rounded-full" style={{ backgroundColor: column.color }} />
+        <span className="text-xs font-medium tabular-nums text-muted-foreground">{tasks.length}</span>
+        <span className="mt-1 [writing-mode:vertical-rl] rotate-180 text-sm font-medium">
+          {column.name}
+        </span>
+      </button>
+    );
+  }
 
   const wip = column.wipLimit ?? null;
   const overWip = wip != null && tasks.length > wip;
@@ -714,19 +757,31 @@ function BoardColumn({
           />
           <h3 className="text-sm font-medium">{column.name}</h3>
         </div>
-        {wip != null ? (
-          <span
-            className={cn(
-              'text-xs font-medium tabular-nums',
-              overWip ? 'text-red-600 dark:text-red-400' : atWip ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground',
-            )}
-            title={overWip ? `WIP-Limit überschritten (${tasks.length}/${wip})` : `WIP ${tasks.length} von ${wip}`}
-          >
-            {tasks.length} / {wip}
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground">{tasks.length}</span>
-        )}
+        <div className="flex items-center gap-1.5">
+          {wip != null ? (
+            <span
+              className={cn(
+                'text-xs font-medium tabular-nums',
+                overWip ? 'text-red-600 dark:text-red-400' : atWip ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground',
+              )}
+              title={overWip ? `WIP-Limit überschritten (${tasks.length}/${wip})` : `WIP ${tasks.length} von ${wip}`}
+            >
+              {tasks.length} / {wip}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">{tasks.length}</span>
+          )}
+          {onToggleCollapse ? (
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              title="Spalte einklappen"
+              className="text-muted-foreground/60 hover:text-foreground"
+            >
+              <ChevronsLeft className="size-4" />
+            </button>
+          ) : null}
+        </div>
       </div>
       {tasks.length === 0 && hiddenOlder === 0 ? (
         <p className="text-center text-xs text-muted-foreground/70 py-6">Keine Aufgaben</p>
