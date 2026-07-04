@@ -11,7 +11,6 @@ import { useNavigate } from 'react-router';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import type { ProjectMemberJsonld } from '@/api/types/projectMember/Jsonld';
 import type { ProjectStatusJsonld } from '@/api/types/projectStatus/Jsonld';
-import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import { api } from '@/lib/api';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
@@ -80,10 +79,15 @@ export function ProjectsListPage() {
   //  - /v1/reports/time over the last year, groupBy=project → minutes
   //    per project IRI.
   //  - All project_members → user-IRI lists per project.
-  const { result: allTasks } = useList<Row<TaskJsonld>>({
-    resource: 'tasks',
-    pagination: { mode: 'off' },
-    filters: [{ field: 'exists[closedOn]', operator: 'eq', value: 'false' }],
+  // Open-task counts per project come from one grouped aggregate endpoint
+  // instead of fetching every open task in the workspace just to tally them.
+  const { data: openTasksByProject } = useQuery({
+    queryKey: ['open-task-counts'],
+    queryFn: async () => {
+      const { data } = await api.get<{ counts: Record<string, number> }>('/reports/open-task-counts');
+      return data.counts;
+    },
+    staleTime: 60_000,
   });
 
   const { data: hoursPerProject } = useQuery({
@@ -111,14 +115,6 @@ export function ProjectsListPage() {
     resource: 'project_members',
     pagination: { mode: 'off' },
   });
-
-  const openTasksByProject = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const t of allTasks?.data ?? []) {
-      if (t.project) counts[t.project] = (counts[t.project] ?? 0) + 1;
-    }
-    return counts;
-  }, [allTasks]);
 
   const membersByProject = useMemo(() => {
     const map: Record<string, string[]> = {};
@@ -284,7 +280,7 @@ export function ProjectsListPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right text-xs">
-                        {p['@id'] && openTasksByProject[p['@id']] ? (
+                        {p['@id'] && openTasksByProject?.[p['@id']] ? (
                           <span className="inline-flex items-center gap-1">
                             <CheckSquare className="size-3 text-muted-foreground" />
                             {openTasksByProject[p['@id']]}

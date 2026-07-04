@@ -34,6 +34,7 @@ import { CreatedVsResolvedTab } from './tabs/CreatedVsResolvedTab';
 import { CumulativeFlowTab } from './tabs/CumulativeFlowTab';
 import { CycleTimeTab } from './tabs/CycleTimeTab';
 import { MrrTab } from './tabs/MrrTab';
+import { ThroughputTab } from './tabs/ThroughputTab';
 
 type ReportGroup = {
   key: string | null;
@@ -119,6 +120,7 @@ export function ReportsPage() {
           <TabsTrigger value="burndown">Burndown</TabsTrigger>
           <TabsTrigger value="cfd">Cumulative Flow</TabsTrigger>
           <TabsTrigger value="cvr">Created vs. Resolved</TabsTrigger>
+          <TabsTrigger value="throughput">Throughput</TabsTrigger>
           <TabsTrigger value="cycle">Cycle-Time</TabsTrigger>
           <TabsTrigger value="mrr">MRR</TabsTrigger>
         </TabsList>
@@ -133,6 +135,9 @@ export function ReportsPage() {
         </TabsContent>
         <TabsContent value="cvr" className="pt-4">
           <CreatedVsResolvedTab />
+        </TabsContent>
+        <TabsContent value="throughput" className="pt-4">
+          <ThroughputTab />
         </TabsContent>
         <TabsContent value="cycle" className="pt-4">
           <CycleTimeTab />

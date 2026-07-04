@@ -1,5 +1,5 @@
 import { useList, useTable } from '@refinedev/core';
-import { Search, Wifi, WifiOff } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Search, Wifi, WifiOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
@@ -10,6 +10,7 @@ import type { Row } from '@/lib/refine';
 import { BulkActionsBar } from '@/components/BulkActionsBar';
 import { SavedViewsBar } from '@/components/SavedViewsBar';
 import { EntitySyncBadgeStack } from '@/components/EntitySyncBadgeStack';
+import { PriorityScoreBadge, scoreEntryFromTask } from '@/components/PriorityScoreBadge';
 import { TagPicker } from '@/components/TagPicker';
 import { TaskDetailSheet } from '@/components/TaskDetailSheet';
 import { TrackerChip } from '@/components/TrackerChip';
@@ -68,12 +69,20 @@ export function TasksListPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string[]>([]);
 
-  const { tableQuery, filters, setFilters, setCurrentPage } = useTable<Row<TaskJsonld>>({
+  const { tableQuery, filters, setFilters, setCurrentPage, sorters, setSorters } = useTable<Row<TaskJsonld>>({
     resource: 'tasks',
     sorters: { initial: [{ field: 'updatedAt', order: 'desc' }] },
     pagination: { currentPage: 1, pageSize: 50 },
     syncWithLocation: true,
   });
+
+  // Server-side sort toggle for the computed score column (spans all pages).
+  const scoreSort = sorters.find((s) => s.field === 'priorityScore')?.order;
+  const toggleScoreSort = () => {
+    const next = scoreSort === 'desc' ? 'asc' : 'desc';
+    setSorters([{ field: 'priorityScore', order: next }]);
+    setCurrentPage(1);
+  };
   const { connected: liveConnected } = useLiveResource('tasks');
 
   /**
@@ -283,6 +292,23 @@ export function TasksListPage() {
                   <TableHead>Titel</TableHead>
                   <TableHead className="w-32">Status</TableHead>
                   <TableHead className="w-28">Prio</TableHead>
+                  <TableHead className="w-24">
+                    <button
+                      type="button"
+                      onClick={toggleScoreSort}
+                      className="inline-flex items-center gap-1 hover:text-foreground"
+                      title="Nach Prioritäts-Score sortieren"
+                    >
+                      Score
+                      {scoreSort === 'desc' ? (
+                        <ArrowDown className="size-3" />
+                      ) : scoreSort === 'asc' ? (
+                        <ArrowUp className="size-3" />
+                      ) : (
+                        <ArrowUpDown className="size-3 opacity-50" />
+                      )}
+                    </button>
+                  </TableHead>
                   <TableHead className="w-44">Projekt</TableHead>
                   <TableHead className="w-32">Fällig</TableHead>
                 </TableRow>
@@ -342,6 +368,9 @@ export function TasksListPage() {
                             {PRIORITY_LABEL[t.priority]}
                           </Badge>
                         ) : null}
+                      </TableCell>
+                      <TableCell>
+                        <PriorityScoreBadge entry={scoreEntryFromTask(t)} />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {project ? (

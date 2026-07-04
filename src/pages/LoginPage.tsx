@@ -2,6 +2,7 @@ import { useLogin } from '@refinedev/core';
 import { AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { Link } from 'react-router';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
@@ -95,6 +96,14 @@ export function LoginPage() {
               {errors.password ? (
                 <p className="text-xs text-destructive">{errors.password.message}</p>
               ) : null}
+              <div className="text-right">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                >
+                  Passwort vergessen?
+                </Link>
+              </div>
             </div>
 
             <Controller

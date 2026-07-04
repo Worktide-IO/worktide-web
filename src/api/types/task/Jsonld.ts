@@ -78,6 +78,19 @@ export type TaskJsonld = (HydraItemBaseSchema & {
     */
     estimatedMinutes?: number | null;
     /**
+     * @description Materialized internal priority score (0–100), computed server-side. Read-only.
+     * @type integer,null
+    */
+    priorityScore?: number | null;
+    /**
+     * @description Whether the task is blocked by an open predecessor (part of the score). Read-only.
+    */
+    priorityScoreBlocked?: boolean;
+    /**
+     * @description Score breakdown (label + contribution per sub-signal). Read-only.
+    */
+    priorityScoreParts?: { label: string; contribution: number }[] | null;
+    /**
      * @description Idempotency anchor for inbound channels (CSV-Import, Mail-Inbound,\nWebhook-Replay, AI-Breakdown). Indexed but not unique — multiple\nchannels can collide deliberately on the same external reference.
      * @type string,null, uuid
     */

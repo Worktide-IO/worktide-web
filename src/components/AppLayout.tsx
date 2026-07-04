@@ -5,10 +5,14 @@ import * as Icons from 'lucide-react';
 
 import { FloatingTimer } from '@/components/FloatingTimer';
 import { GlobalSearchDialog } from '@/components/GlobalSearchDialog';
+import { MercureStatusPill } from '@/components/MercureStatusPill';
 import { MyProjectsSidebar } from '@/components/MyProjectsSidebar';
+import { NetworkStatusBanner } from '@/components/NetworkStatusBanner';
+import { PendingMutationsToast } from '@/components/PendingMutationsToast';
 import { QuickAddDialog } from '@/components/QuickAddDialog';
 import { UserMenu } from '@/components/UserMenu';
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher';
+import { DevToolsBridge } from '@/components/DevToolsBridge';
 import { useIdleLogout } from '@/hooks/useIdleLogout';
 import { api } from '@/lib/api';
 import {
@@ -101,12 +105,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarMenuItem>
               <UserMenu />
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <div className="px-2 py-1">
+                <MercureStatusPill />
+              </div>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
 
       <SidebarInset>
+        <NetworkStatusBanner />
         <header className="flex h-14 items-center gap-2 border-b border-border px-4">
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-6" />
@@ -121,6 +131,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <FloatingTimer />
       <QuickAddDialog />
       <GlobalSearchDialog />
+      <PendingMutationsToast />
+      <DevToolsBridge />
     </SidebarProvider>
   );
 }
