@@ -329,6 +329,36 @@ function DescriptionEditor({ task }: { task: Row<TaskJsonld> }) {
   );
 }
 
+const PRIORITY_LABEL: Record<string, string> = {
+  low: 'Niedrig',
+  normal: 'Normal',
+  high: 'Hoch',
+  urgent: 'Dringend',
+};
+
+/** Priority dropdown for the header (no workflow gate — free to change). */
+function PriorityEditor({ task }: { task: Row<TaskJsonld> }) {
+  const invalidate = useInvalidate();
+  const change = (p: string) => {
+    if (!task.id || p === task.priority) return;
+    void patchTaskField(task.id, { priority: p }, invalidate);
+  };
+  return (
+    <Select value={task.priority ?? 'normal'} onValueChange={change}>
+      <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
+        <SelectValue placeholder="Priorität" />
+      </SelectTrigger>
+      <SelectContent>
+        {(['urgent', 'high', 'normal', 'low'] as const).map((p) => (
+          <SelectItem key={p} value={p}>
+            {PRIORITY_LABEL[p]}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 /** Workflow-gated status dropdown for the header. */
 function StatusEditor({ task }: { task: Row<TaskJsonld> }) {
   const invalidate = useInvalidate();
@@ -393,11 +423,7 @@ function TaskDetailBody({ task }: { task: Row<TaskJsonld> }) {
         </SheetTitle>
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <StatusEditor task={task} />
-          {task.priority ? (
-            <Badge variant="outline" className="text-[10px]">
-              Priorität: {task.priority}
-            </Badge>
-          ) : null}
+          <PriorityEditor task={task} />
           {task.dueOn ? (
             <span className="inline-flex items-center gap-1">
               <CalendarDays className="size-3" />
