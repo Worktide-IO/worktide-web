@@ -30,6 +30,10 @@ import { TeamMembersListPage } from '@/pages/team-members/TeamMembersListPage';
 import { ContactCreatePage } from '@/pages/contacts/ContactCreatePage';
 import { ContactEditPage } from '@/pages/contacts/ContactEditPage';
 import { ContactsListPage } from '@/pages/contacts/ContactsListPage';
+import { ResearchMissionsListPage } from '@/pages/research/ResearchMissionsListPage';
+import { ResearchMissionCreatePage } from '@/pages/research/ResearchMissionCreatePage';
+import { ResearchMissionDetailPage } from '@/pages/research/ResearchMissionDetailPage';
+import { LeadsListPage } from '@/pages/research/LeadsListPage';
 import { CustomerSystemCreatePage } from '@/pages/customer-systems/CustomerSystemCreatePage';
 import { CustomerSystemEditPage } from '@/pages/customer-systems/CustomerSystemEditPage';
 import { CustomerSystemsListPage } from '@/pages/customer-systems/CustomerSystemsListPage';
@@ -226,6 +230,18 @@ export default function App() {
               list: '/branchen',
               meta: { label: 'Branchen', icon: 'Building', category: 'CRM' },
             },
+            {
+              name: 'research_missions',
+              list: '/research/missions',
+              create: '/research/missions/create',
+              show: '/research/missions/:id',
+              meta: { label: 'Recherche/Akquise', icon: 'Compass', category: 'CRM' },
+            },
+            {
+              name: 'leads',
+              list: '/research/leads',
+              meta: { label: 'Leads', icon: 'Target', category: 'CRM' },
+            },
 
             // ---- Admin -----------------------------------------------------
             {
@@ -312,6 +328,10 @@ export default function App() {
               <Route path="/produkte/create" element={<ProductCreatePage />} />
               <Route path="/produkte/:id" element={<ProductEditPage />} />
               <Route path="/branchen" element={<IndustriesPage />} />
+              <Route path="/research/missions" element={<ResearchMissionsListPage />} />
+              <Route path="/research/missions/create" element={<ResearchMissionCreatePage />} />
+              <Route path="/research/missions/:id" element={<ResearchMissionDetailPage />} />
+              <Route path="/research/leads" element={<LeadsListPage />} />
               <Route path="/workspace-members" element={<PlaceholderPage resource="workspace_members" />} />
               <Route path="/permissions" element={<PermissionsMatrixPage />} />
               <Route path="/webhooks" element={<PlaceholderPage resource="webhooks" />} />
