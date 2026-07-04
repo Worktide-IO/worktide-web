@@ -1,9 +1,10 @@
-import { Building2, ExternalLink, User as UserIcon } from 'lucide-react';
+import { Building2, ExternalLink, History, User as UserIcon } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { aiErrorMessage } from '@/lib/ai';
 import type { Row } from '@/lib/refine';
+import { LeadActivityDialog } from './LeadActivityDialog';
 import {
   LEAD_SOURCE_LABEL,
   LEAD_STAGE_LABEL,
@@ -44,6 +45,7 @@ export function LeadsTable({
   onChanged: () => void;
 }) {
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [timelineLead, setTimelineLead] = useState<Row<LeadJsonld> | null>(null);
 
   const changeStage = async (lead: Row<LeadJsonld>, stage: LeadStage) => {
     if (!lead.id || stage === lead.stage) return;
@@ -81,7 +83,8 @@ export function LeadsTable({
   }
 
   return (
-    <Table>
+    <>
+      <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Lead</TableHead>
@@ -153,25 +156,38 @@ export function LeadsTable({
                 </Select>
               </TableCell>
               <TableCell className="text-right">
-                {converted ? (
-                  <Badge variant="secondary" className="text-xs">
-                    Kunde
-                  </Badge>
-                ) : (
+                <div className="flex items-center justify-end gap-1">
                   <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void convert(lead)}
-                    disabled={busyId === lead.id}
+                    size="icon"
+                    variant="ghost"
+                    className="size-8"
+                    title="Verlauf"
+                    onClick={() => setTimelineLead(lead)}
                   >
-                    In Kunde
+                    <History className="size-4" />
                   </Button>
-                )}
+                  {converted ? (
+                    <Badge variant="secondary" className="text-xs">
+                      Kunde
+                    </Badge>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void convert(lead)}
+                      disabled={busyId === lead.id}
+                    >
+                      In Kunde
+                    </Button>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           );
         })}
       </TableBody>
-    </Table>
+      </Table>
+      <LeadActivityDialog lead={timelineLead} onClose={() => setTimelineLead(null)} />
+    </>
   );
 }
