@@ -1,5 +1,5 @@
 import type { HydraItemBaseSchema } from '@/api/types/HydraItemBaseSchema.ts';
-import { api } from '@/lib/api';
+import { api, readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 
 /**
  * Client for the research/acquisition agent (backend Phase 1–3).
@@ -117,6 +117,27 @@ export type LeadActivityJsonld = HydraItemBaseSchema & {
   outcome?: string | null;
 };
 
+export type LeadActivityType =
+  | 'discovered'
+  | 'enriched'
+  | 'stage_change'
+  | 'email_sent'
+  | 'reply'
+  | 'forum_post'
+  | 'call'
+  | 'note';
+
+export const LEAD_ACTIVITY_LABEL: Record<string, string> = {
+  discovered: 'Entdeckt',
+  enriched: 'Angereichert',
+  stage_change: 'Statuswechsel',
+  email_sent: 'E-Mail gesendet',
+  reply: 'Antwort',
+  forum_post: 'Forenbeitrag',
+  call: 'Anruf',
+  note: 'Notiz',
+};
+
 /** Response shape of the create/answer clarification endpoints. */
 export type ClarifyResponse = {
   id: string;
@@ -227,4 +248,23 @@ export const leadActions = {
   /** Convert a lead into a Customer (sets convertedCustomer, stage → won). */
   convert: (id: string): Promise<unknown> =>
     api.post(`/leads/${id}/convert`).then((r) => r.data),
+};
+
+export const leadActivities = {
+  /**
+   * Append a manual note to a lead's timeline. lead_activities is a normal
+   * API-Platform resource, so we POST the IRIs directly (workspace comes from
+   * the active workspace; occurredAt is stamped server-side).
+   */
+  addNote: (leadIri: string, note: string): Promise<unknown> => {
+    const ws = readAuth(WORKSPACE_STORAGE_KEY);
+    return api
+      .post('/lead_activities', {
+        lead: leadIri,
+        workspace: ws ? `/v1/workspaces/${ws}` : undefined,
+        type: 'note',
+        payload: { note },
+      })
+      .then((r) => r.data);
+  },
 };
