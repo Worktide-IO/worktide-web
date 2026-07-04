@@ -46,6 +46,7 @@ const KIND_LABEL: Record<string, string> = {
   ticket_from_conversation: 'Ticket-Vorschlag',
   marketing_social_draft: 'Marketing-Copy',
   customer_upgrade_outreach: 'Upgrade-Outreach',
+  research_suggestion: 'Recherche-Vorschlag',
 };
 
 const TARGET_LABEL: Record<string, string> = {
@@ -53,6 +54,7 @@ const TARGET_LABEL: Record<string, string> = {
   conversation: 'Konversation',
   product: 'Produkt',
   customer: 'Kunde',
+  workspace: 'Workspace',
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -161,11 +163,19 @@ export function AiAgentsOverviewPage() {
     if (rec.target === 'customer') {
       return customerNameById[rec.targetId] ?? `Kunde ${rec.targetId.slice(0, 8)}`;
     }
+    if (rec.target === 'workspace') {
+      return 'Recherche';
+    }
     return `${TARGET_LABEL[rec.target] ?? rec.target} ${rec.targetId.slice(0, 8)}`;
   };
 
   const summaryOf = (rec: AiRecommendation): string => {
-    const s = rec.suggestion?.summary ?? rec.suggestion?.subject ?? rec.suggestion?.title ?? '';
+    const s =
+      rec.suggestion?.summary ??
+      rec.suggestion?.subject ??
+      rec.suggestion?.title ??
+      rec.suggestion?.prompt ??
+      '';
     return s || '(keine Zusammenfassung)';
   };
 
@@ -179,11 +189,15 @@ export function AiAgentsOverviewPage() {
           ? 'Entwurf übernommen – Social-Post-Draft erstellt.'
           : rec.kind === 'customer_upgrade_outreach'
             ? 'Übernommen – E-Mail-Entwurf erstellt (Versand erst nach Freigabe).'
-            : 'Empfehlung übernommen.';
+            : rec.kind === 'research_suggestion'
+              ? 'Übernommen – Recherche-Mission angelegt.'
+              : 'Empfehlung übernommen.';
       toast.success(msg);
       await query.refetch();
       if (rec.kind === 'marketing_social_draft') {
         navigate('/social');
+      } else if (rec.kind === 'research_suggestion') {
+        navigate('/research/missions');
       }
     } catch {
       toast.error('Übernehmen fehlgeschlagen.');
@@ -310,6 +324,7 @@ export function AiAgentsOverviewPage() {
                 <SelectItem value="ticket_from_conversation">Ticket-Vorschlag</SelectItem>
                 <SelectItem value="marketing_social_draft">Marketing-Copy</SelectItem>
                 <SelectItem value="customer_upgrade_outreach">Upgrade-Outreach</SelectItem>
+                <SelectItem value="research_suggestion">Recherche-Vorschlag</SelectItem>
               </SelectContent>
             </Select>
           </div>
