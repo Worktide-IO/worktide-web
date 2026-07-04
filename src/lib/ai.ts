@@ -10,7 +10,7 @@ import { api } from '@/lib/api';
  * pulling the full generated type, so the panel stays decoupled from `gen:api`.
  */
 
-export type AiTriageTarget = 'task' | 'conversation' | 'product' | 'customer';
+export type AiTriageTarget = 'task' | 'conversation' | 'product' | 'customer' | 'workspace';
 
 /** One per-network marketing post variant the agent drafted for a product. */
 export type AiSocialVariant = {
@@ -39,6 +39,11 @@ export type AiSuggestion = {
   subject?: string;
   body?: string;
   outdatedProducts?: { product: string; currentVersion: string; latestVersion: string }[];
+  // Workspace-shaped (proactive research suggestion)
+  prompt?: string;
+  objective?: string;
+  rationale?: string;
+  targetCount?: number | null;
 };
 
 export type AiRecommendation = {
