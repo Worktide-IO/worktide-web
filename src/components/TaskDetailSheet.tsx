@@ -38,7 +38,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AiTriagePanel } from '@/components/AiTriagePanel';
 import { TagPicker } from '@/components/TagPicker';
 import { EntitySyncBadgeStack } from '@/components/EntitySyncBadgeStack';
-import { PriorityScoreBadge, usePriorityScores } from '@/components/PriorityScoreBadge';
+import { PriorityScoreBadge, scoreEntryFromTask } from '@/components/PriorityScoreBadge';
 import { TrackerChip } from '@/components/TrackerChip';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
 import { userDisplayName, useUserDirectory } from '@/hooks/useUserDirectory';
@@ -362,8 +362,7 @@ function PriorityEditor({ task }: { task: Row<TaskJsonld> }) {
 
 /** Internal priority-score badge — a computed signal, complements the manual priority. */
 function TaskScoreBadge({ task }: { task: Row<TaskJsonld> }) {
-  const { scoreFor } = usePriorityScores(task.project?.split('/').pop());
-  return <PriorityScoreBadge entry={scoreFor(task['@id'])} />;
+  return <PriorityScoreBadge entry={scoreEntryFromTask(task)} />;
 }
 
 /** Workflow-gated status dropdown for the header. */

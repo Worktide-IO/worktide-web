@@ -1,40 +1,32 @@
-import { useQuery } from '@tanstack/react-query';
 import { Gauge } from 'lucide-react';
 
-import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
-/** One ticket's computed priority signal, as returned by /reports/priority-scores. */
+/** One ticket's computed priority signal (materialized on the task server-side). */
 export type PriorityScoreEntry = {
   score: number;
   blocked: boolean;
   parts: { label: string; contribution: number }[];
 };
 
+/** The stored priority-score fields on a task row. */
+type ScoredTask = {
+  priorityScore?: number | null;
+  priorityScoreBlocked?: boolean;
+  priorityScoreParts?: { label: string; contribution: number }[] | null;
+};
+
 /**
- * Shared fetch for the internal priority score. Keyed by project so a board
- * (one project) shares a single request across all its cards; the task list
- * omits `projectUuid` to score the whole workspace in one call. Either way the
- * result is a map of task-IRI → score entry.
+ * Build a score entry from the task's stored fields. Returns undefined when the
+ * task has not been scored yet (worktide:priority:recompute hasn't run for it).
  */
-export function usePriorityScores(projectUuid?: string) {
-  const { data } = useQuery({
-    queryKey: ['priority-scores', projectUuid ?? 'workspace'],
-    staleTime: 60_000,
-    queryFn: async () => {
-      const { data } = await api.get<{ scores: Record<string, PriorityScoreEntry> }>(
-        '/reports/priority-scores',
-        { params: projectUuid ? { project: projectUuid } : undefined },
-      );
-      return data.scores;
-    },
-  });
-  const scores = data ?? {};
+export function scoreEntryFromTask(task: ScoredTask | undefined | null): PriorityScoreEntry | undefined {
+  if (!task || task.priorityScore == null) return undefined;
   return {
-    scores,
-    scoreFor: (iri?: string | null): PriorityScoreEntry | undefined =>
-      iri ? scores[iri] : undefined,
+    score: task.priorityScore,
+    blocked: task.priorityScoreBlocked ?? false,
+    parts: task.priorityScoreParts ?? [],
   };
 }
 
