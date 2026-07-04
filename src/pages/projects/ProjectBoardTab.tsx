@@ -43,6 +43,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TagChips } from '@/components/TagChips';
 import { EntitySyncBadgeStack } from '@/components/EntitySyncBadgeStack';
+import { PriorityScoreBadge, usePriorityScores } from '@/components/PriorityScoreBadge';
 import { TrackerChip } from '@/components/TrackerChip';
 import { VersionBadge } from '@/components/VersionBadge';
 import { useProjectVersions } from '@/hooks/useProjectVersions';
@@ -976,6 +977,7 @@ function TaskCard({
         : 'text-amber-600 dark:text-amber-500';
   const { byIri: trackerByIri } = useTrackers();
   const { byIri: versionByIri } = useProjectVersions(task.project ?? null);
+  const { scoreFor } = usePriorityScores(task.project?.split('/').pop());
 
   return (
     <Card
@@ -1041,6 +1043,7 @@ function TaskCard({
                 {PRIORITY_LABEL[task.priority] ?? task.priority}
               </Badge>
             ) : null}
+            <PriorityScoreBadge entry={scoreFor(task['@id'])} compact />
             {task.dueOn ? (
               <span className="text-[10px] text-muted-foreground">
                 {new Date(task.dueOn).toLocaleDateString()}

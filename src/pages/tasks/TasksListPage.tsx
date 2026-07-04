@@ -10,6 +10,7 @@ import type { Row } from '@/lib/refine';
 import { BulkActionsBar } from '@/components/BulkActionsBar';
 import { SavedViewsBar } from '@/components/SavedViewsBar';
 import { EntitySyncBadgeStack } from '@/components/EntitySyncBadgeStack';
+import { PriorityScoreBadge, usePriorityScores } from '@/components/PriorityScoreBadge';
 import { TagPicker } from '@/components/TagPicker';
 import { TaskDetailSheet } from '@/components/TaskDetailSheet';
 import { TrackerChip } from '@/components/TrackerChip';
@@ -111,6 +112,8 @@ export function TasksListPage() {
     pagination: { mode: 'off' },
   });
   const { byIri: trackerByIri } = useTrackers();
+  // Workspace-wide scores (no project param) — one call for the whole list.
+  const { scoreFor } = usePriorityScores();
 
   const statusByIri = useMemo<Record<string, Row<TaskStatusJsonld>>>(() => {
     const map: Record<string, Row<TaskStatusJsonld>> = {};
@@ -283,6 +286,7 @@ export function TasksListPage() {
                   <TableHead>Titel</TableHead>
                   <TableHead className="w-32">Status</TableHead>
                   <TableHead className="w-28">Prio</TableHead>
+                  <TableHead className="w-24">Score</TableHead>
                   <TableHead className="w-44">Projekt</TableHead>
                   <TableHead className="w-32">Fällig</TableHead>
                 </TableRow>
@@ -342,6 +346,9 @@ export function TasksListPage() {
                             {PRIORITY_LABEL[t.priority]}
                           </Badge>
                         ) : null}
+                      </TableCell>
+                      <TableCell>
+                        <PriorityScoreBadge entry={scoreFor(iri)} />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {project ? (
