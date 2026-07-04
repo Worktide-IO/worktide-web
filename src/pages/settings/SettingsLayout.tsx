@@ -1,4 +1,4 @@
-import { Building2, ShieldCheck, UserCircle } from 'lucide-react';
+import { Building2, LifeBuoy, ShieldCheck, UserCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 
 import { cn } from '@/lib/utils';
@@ -13,6 +13,7 @@ const NAV: NavEntry[] = [
   { to: '/settings/profile', label: 'Profil', icon: UserCircle },
   { to: '/settings/security', label: 'Sicherheit', icon: ShieldCheck },
   { to: '/settings/workspace', label: 'Workspace', icon: Building2 },
+  { to: '/settings/portal', label: 'Kundenportal', icon: LifeBuoy },
 ];
 
 /**
