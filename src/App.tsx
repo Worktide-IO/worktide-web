@@ -43,6 +43,7 @@ import { ProjectCreatePage } from '@/pages/projects/ProjectCreatePage';
 import { ProjectDetailPage } from '@/pages/projects/ProjectDetailPage';
 import { ProjectEditPage } from '@/pages/projects/ProjectEditPage';
 import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
+import { PortalSettingsPage } from '@/pages/settings/PortalSettingsPage';
 import { ProfileSettingsPage } from '@/pages/settings/ProfileSettingsPage';
 import { SecuritySettingsPage } from '@/pages/settings/SecuritySettingsPage';
 import { WorkspaceSettingsPage } from '@/pages/settings/WorkspaceSettingsPage';
@@ -319,6 +320,7 @@ export default function App() {
               <Route path="/settings/profile" element={<ProfileSettingsPage />} />
               <Route path="/settings/security" element={<SecuritySettingsPage />} />
               <Route path="/settings/workspace" element={<WorkspaceSettingsPage />} />
+              <Route path="/settings/portal" element={<PortalSettingsPage />} />
             </Route>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
