@@ -44,6 +44,7 @@ import { userDisplayName, useUserDirectory } from '@/hooks/useUserDirectory';
 import { VersionBadge } from '@/components/VersionBadge';
 import { useProjectVersions } from '@/hooks/useProjectVersions';
 import { useTrackers } from '@/hooks/useTrackers';
+import { useWorkflowTransitions } from '@/hooks/useWorkflowTransitions';
 import { api } from '@/lib/api';
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import { useLiveResource } from '@/lib/mercure';
@@ -328,6 +329,51 @@ function DescriptionEditor({ task }: { task: Row<TaskJsonld> }) {
   );
 }
 
+/** Workflow-gated status dropdown for the header. */
+function StatusEditor({ task }: { task: Row<TaskJsonld> }) {
+  const invalidate = useInvalidate();
+  const { result: statuses } = useList<Row<TaskStatusJsonld>>({
+    resource: 'task_statuses',
+    pagination: { mode: 'off' },
+    sorters: [{ field: 'position', order: 'asc' }],
+  });
+  const { allowedToStatuses } = useWorkflowTransitions();
+  const list = statuses?.data ?? [];
+  if (list.length === 0) return null;
+
+  const change = (iri: string) => {
+    if (!task.id || iri === task.status) return;
+    const allowed = allowedToStatuses(task.tracker ?? null, task.status ?? null);
+    if (allowed && !allowed.has(iri)) {
+      toast.error('Statuswechsel nicht im Workflow erlaubt.');
+      return;
+    }
+    void patchTaskField(task.id, { status: iri }, invalidate);
+  };
+
+  return (
+    <Select value={task.status ?? ''} onValueChange={change}>
+      <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
+        <SelectValue placeholder="Status" />
+      </SelectTrigger>
+      <SelectContent>
+        {list.map((s) => (
+          <SelectItem key={s['@id']} value={s['@id'] ?? ''}>
+            <span className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="size-2 rounded-full"
+                style={{ backgroundColor: s.color ?? '#94a3b8' }}
+              />
+              {s.name}
+            </span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function TaskDetailBody({ task }: { task: Row<TaskJsonld> }) {
   const invalidate = useInvalidate();
   const { byIri: trackerByIri } = useTrackers();
@@ -346,6 +392,7 @@ function TaskDetailBody({ task }: { task: Row<TaskJsonld> }) {
           <TitleEditor task={task} />
         </SheetTitle>
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          <StatusEditor task={task} />
           {task.priority ? (
             <Badge variant="outline" className="text-[10px]">
               Priorität: {task.priority}
