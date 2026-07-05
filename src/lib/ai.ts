@@ -44,6 +44,11 @@ export type AiSuggestion = {
   objective?: string;
   rationale?: string;
   targetCount?: number | null;
+  // Workspace-shaped (generic agent action)
+  archetype?: string;
+  connectorCode?: string;
+  channelId?: string;
+  payload?: { body?: string; recipient?: string; subject?: string };
 };
 
 export type AiRecommendation = {
@@ -131,6 +136,17 @@ export const aiOutreach = {
    */
   request: (customerId: string): Promise<unknown> =>
     api.post(`/customers/${customerId}/ai-upgrade-outreach`).then((r) => r.data),
+};
+
+/**
+ * Generic agent: works out how to distribute a piece of content across the
+ * workspace's connected channels (incl. forums). The worker writes one pending
+ * agent-action recommendation per channel; accepting one materialises the normal
+ * egress-gated draft. `workspace` is the current workspace uuid (or IRI).
+ */
+export const aiAgent = {
+  planDistribution: (content: string, workspace: string): Promise<unknown> =>
+    api.post('/agent/plan-distribution', { content, workspace }).then((r) => r.data),
 };
 
 /** Best-effort extraction of a human-readable error from an axios failure. */
