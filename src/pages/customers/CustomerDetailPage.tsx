@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+import { CustomerSlaCard } from '@/components/CustomerSlaCard';
 import { CustomerAgreementsTab } from './CustomerAgreementsTab';
 import { CustomerProductsTab } from './CustomerProductsTab';
 import { CustomerForm } from './CustomerForm';
@@ -169,7 +170,8 @@ export function CustomerDetailPage() {
         <TabsContent value="subscriptions" className="pt-4">
           <CustomerSubscriptionsTab customerIri={iri} />
         </TabsContent>
-        <TabsContent value="agreements" className="pt-4">
+        <TabsContent value="agreements" className="space-y-4 pt-4">
+          {id ? <CustomerSlaCard customerId={id} /> : null}
           {id ? <CustomerAgreementsTab customerId={id} customerIri={iri} /> : null}
         </TabsContent>
         <TabsContent value="products" className="pt-4">
