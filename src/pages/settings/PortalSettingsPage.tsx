@@ -33,23 +33,31 @@ export function PortalSettingsPage() {
   );
 }
 
-// priority key · label · built-in default hours (mirrors PortalSlaCalculator::DEFAULT_HOURS).
-const PRIORITIES: { key: string; label: string; fallback: number }[] = [
-  { key: 'urgent', label: 'Dringend', fallback: 2 },
-  { key: 'high', label: 'Hoch', fallback: 4 },
-  { key: 'normal', label: 'Mittel', fallback: 24 },
-  { key: 'low', label: 'Niedrig', fallback: 72 },
+type Leg = 'response' | 'resolution';
+
+// priority key · label · built-in defaults (mirror PortalSlaCalculator::DEFAULTS).
+const PRIORITIES: { key: string; label: string; response: number; resolution: number }[] = [
+  { key: 'urgent', label: 'Dringend', response: 1, resolution: 4 },
+  { key: 'high', label: 'Hoch', response: 2, resolution: 8 },
+  { key: 'normal', label: 'Mittel', response: 8, resolution: 48 },
+  { key: 'low', label: 'Niedrig', response: 24, resolution: 120 },
 ];
 
-type SlaMap = Record<string, unknown>;
+type Vals = Record<string, { response: string; resolution: string }>;
 
-function readSla(workspace: { settings?: Record<string, unknown> | null } | undefined): Record<string, string> {
-  const portal = (workspace?.settings as { portal?: { sla?: SlaMap } } | null | undefined)?.portal;
-  const sla = portal?.sla ?? {};
-  const out: Record<string, string> = {};
+function readSla(workspace: { settings?: Record<string, unknown> | null } | undefined): Vals {
+  const sla = (workspace?.settings as { portal?: { sla?: Record<string, unknown> } } | null | undefined)?.portal?.sla ?? {};
+  const out: Vals = {};
   for (const { key } of PRIORITIES) {
     const v = sla[key];
-    out[key] = typeof v === 'number' && Number.isFinite(v) ? String(v) : '';
+    // Structured {response, resolution}; a bare number is legacy = resolution.
+    const asNum = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? String(x) : '');
+    if (typeof v === 'number') {
+      out[key] = { response: '', resolution: asNum(v) };
+    } else {
+      const o = (v ?? {}) as { response?: unknown; resolution?: unknown };
+      out[key] = { response: asNum(o.response), resolution: asNum(o.resolution) };
+    }
   }
   return out;
 }
@@ -71,10 +79,10 @@ function PortalSlaCard() {
   const saving = mutation.isPending;
 
   const initial = readSla(workspace);
-  const [hours, setHours] = useState<Record<string, string>>({});
+  const [vals, setVals] = useState<Vals>({});
 
   useEffect(() => {
-    setHours(readSla(workspace));
+    setVals(readSla(workspace));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspace?.id]);
 
@@ -82,41 +90,45 @@ function PortalSlaCard() {
     return null;
   }
 
-  const dirty = PRIORITIES.some(({ key }) => (hours[key] ?? '') !== (initial[key] ?? ''));
-  const invalid = PRIORITIES.some(({ key }) => {
-    const raw = (hours[key] ?? '').trim();
-    if (raw === '') return false;
-    const n = Number(raw);
-    return !Number.isInteger(n) || n < 0;
-  });
+  const get = (key: string, leg: Leg) => vals[key]?.[leg] ?? '';
+  const set = (key: string, leg: Leg, v: string) =>
+    setVals((p) => ({ ...p, [key]: { ...(p[key] ?? { response: '', resolution: '' }), [leg]: v } }));
+
+  const dirty = PRIORITIES.some(({ key }) =>
+    (['response', 'resolution'] as Leg[]).some((leg) => get(key, leg) !== (initial[key]?.[leg] ?? '')),
+  );
+  const invalid = PRIORITIES.some(({ key }) =>
+    (['response', 'resolution'] as Leg[]).some((leg) => {
+      const raw = get(key, leg).trim();
+      if (raw === '') return false;
+      const n = Number(raw);
+      return !Number.isInteger(n) || n < 0;
+    }),
+  );
 
   const handleSave = () => {
-    // Build the override map: only non-empty, valid entries are written.
-    const sla: Record<string, number> = {};
+    const sla: Record<string, { response?: number; resolution?: number }> = {};
     for (const { key } of PRIORITIES) {
-      const raw = (hours[key] ?? '').trim();
-      if (raw === '') continue;
-      const n = Number(raw);
-      if (Number.isInteger(n) && n >= 0) sla[key] = n;
+      const entry: { response?: number; resolution?: number } = {};
+      for (const leg of ['response', 'resolution'] as Leg[]) {
+        const raw = get(key, leg).trim();
+        if (raw === '') continue;
+        const n = Number(raw);
+        if (Number.isInteger(n) && n >= 0) entry[leg] = n;
+      }
+      if (Object.keys(entry).length > 0) sla[key] = entry;
     }
 
     const prev = (workspace.settings as Record<string, unknown> | null | undefined) ?? {};
     const prevPortal = (prev['portal'] as Record<string, unknown> | undefined) ?? {};
-    const nextSettings = {
-      ...prev,
-      portal: { ...prevPortal, sla },
-    };
-
     update(
-      { resource: 'workspaces', id, values: { settings: nextSettings }, successNotification: false },
+      { resource: 'workspaces', id, values: { settings: { ...prev, portal: { ...prevPortal, sla } } }, successNotification: false },
       {
         onSuccess: () => toast.success('SLA-Richtlinie gespeichert.'),
         onError: (err) => {
           const status = (err as { response?: { status?: number } })?.response?.status;
           toast.error(
-            status === 403
-              ? 'Keine Berechtigung — nur Admins können die SLA-Richtlinie ändern.'
-              : 'Konnte nicht speichern.',
+            status === 403 ? 'Keine Berechtigung — nur Admins können die SLA-Richtlinie ändern.' : 'Konnte nicht speichern.',
           );
         },
       },
@@ -130,33 +142,41 @@ function PortalSlaCard() {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Ziel-Reaktionszeit je Ticket-Priorität, in Stunden ab Ticket-Erstellung. Bestimmt die
-          SLA-Spalte im Portal. <span className="text-foreground">Leer</span> = Standardwert,{' '}
-          <span className="text-foreground">0</span> = keine SLA für diese Priorität.
+          Ziel-Zeiten je Ticket-Priorität, in Stunden ab Ticket-Erstellung: <b>Reaktion</b> (erste
+          Agentur-Antwort) und <b>Lösung</b> (Ticket erledigt). Bestimmt die SLA-Anzeige im Portal.{' '}
+          <span className="text-foreground">Leer</span> = Standardwert,{' '}
+          <span className="text-foreground">0</span> = keine SLA. Kunden mit eigenem SLA übersteuern das.
         </p>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {PRIORITIES.map(({ key, label, fallback }) => (
-            <div key={key} className="space-y-1.5">
-              <Label htmlFor={`sla-${key}`}>{label}</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id={`sla-${key}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={hours[key] ?? ''}
-                  onChange={(e) => setHours((prev) => ({ ...prev, [key]: e.target.value }))}
-                  placeholder={`Standard: ${fallback}`}
-                  className="min-w-0 flex-1"
-                />
-                <span className="text-sm text-muted-foreground">Std.</span>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {PRIORITIES.map((p) => (
+            <div key={p.key} className="space-y-2 rounded-md border p-3">
+              <div className="text-sm font-medium">{p.label}</div>
+              <div className="flex items-center gap-4">
+                {(['response', 'resolution'] as Leg[]).map((leg) => (
+                  <div key={leg} className="flex-1 space-y-1">
+                    <Label htmlFor={`sla-${p.key}-${leg}`} className="text-xs text-muted-foreground">
+                      {leg === 'response' ? 'Reaktion' : 'Lösung'}
+                    </Label>
+                    <div className="flex items-center gap-1.5">
+                      <Input
+                        id={`sla-${p.key}-${leg}`}
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={get(p.key, leg)}
+                        onChange={(e) => set(p.key, leg, e.target.value)}
+                        placeholder={String(p[leg])}
+                        className="min-w-0 flex-1"
+                      />
+                      <span className="text-xs text-muted-foreground">Std.</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
         </div>
-        {invalid ? (
-          <p className="text-sm text-destructive">Bitte nur ganze Zahlen ≥ 0 eingeben.</p>
-        ) : null}
+        {invalid ? <p className="text-sm text-destructive">Bitte nur ganze Zahlen ≥ 0 eingeben.</p> : null}
         <div>
           <Button type="button" onClick={handleSave} disabled={saving || !dirty || invalid}>
             {saving ? 'Speichere…' : 'Speichern'}
