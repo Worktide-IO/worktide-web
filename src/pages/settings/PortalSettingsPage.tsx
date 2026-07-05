@@ -2,11 +2,13 @@ import { useList, useOne, useUpdate } from '@refinedev/core';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
 import type { WorkspaceJsonld } from '@/api/types/workspace/Jsonld';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 
@@ -29,7 +31,76 @@ export function PortalSettingsPage() {
         </p>
       </div>
       <PortalSlaCard />
+      <PortalWaitingStatusesCard />
     </SettingsLayout>
+  );
+}
+
+// The serializer strips the `is` prefix, so the API exposes `waitingForCustomer`/`completed`.
+type TaskStatusRow = Row<TaskStatusJsonld> & { waitingForCustomer?: boolean; completed?: boolean };
+
+/**
+ * Marks which task statuses mean "waiting on the customer". Tickets in such a
+ * status pause their portal SLA and surface under the "Wartet auf mich" filter.
+ * Toggles TaskStatus.isWaitingForCustomer via PATCH /v1/task_statuses/{id}.
+ */
+function PortalWaitingStatusesCard() {
+  const { result, query } = useList<TaskStatusRow>({
+    resource: 'task_statuses',
+    pagination: { mode: 'off' },
+    sorters: [{ field: 'position', order: 'asc' }],
+  });
+  const { mutate: update } = useUpdate<TaskStatusRow>();
+  const [pending, setPending] = useState<Record<string, boolean>>({});
+
+  if (query.isLoading) return null;
+  const statuses = (result?.data ?? []).filter((s) => !s.completed);
+  const isOn = (s: TaskStatusRow) => pending[String(s.id)] ?? Boolean(s.waitingForCustomer);
+
+  const toggle = (s: TaskStatusRow, v: boolean) => {
+    const sid = String(s.id);
+    setPending((p) => ({ ...p, [sid]: v }));
+    update(
+      { resource: 'task_statuses', id: sid, values: { waitingForCustomer: v }, successNotification: false },
+      {
+        onSuccess: () => toast.success('Status aktualisiert.'),
+        onError: (err) => {
+          setPending((p) => {
+            const n = { ...p };
+            delete n[sid];
+            return n;
+          });
+          const code = (err as { response?: { status?: number } })?.response?.status;
+          toast.error(code === 403 ? 'Keine Berechtigung.' : 'Konnte nicht speichern.');
+        },
+      },
+    );
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Status „wartet auf Kunde"</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Tickets in einem markierten Status pausieren die SLA und erscheinen im Portal unter
+          „Wartet auf mich". (Abgeschlossene Status sind ausgenommen.)
+        </p>
+        {statuses.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Keine Status vorhanden.</p>
+        ) : (
+          <div className="divide-y">
+            {statuses.map((s) => (
+              <div key={s.id} className="flex items-center justify-between py-2">
+                <span className="text-sm">{s.name}</span>
+                <Switch checked={isOn(s)} onCheckedChange={(v) => toggle(s, v)} />
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
