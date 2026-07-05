@@ -73,6 +73,13 @@ src/
 
 ## OpenAPI codegen
 
+> ⚠️ **`pnpm gen:api` is currently broken on Node 24** (kubb fails and can wipe
+> `src/api/types`). Until it's fixed, don't run it blindly — restore via
+> `git checkout src/api` if it does. Types for newer, not-yet-generated
+> resources (social posts, research missions/leads, agent actions) are
+> **hand-authored** in `src/lib/*.ts` (e.g. `lib/research.ts`, `lib/ai.ts`,
+> `lib/social.ts`); migrate them into `@/api/types` once codegen works again.
+
 The backend exposes its OpenAPI 3.1 spec at
 `https://api.worktide.ddev.site/v1/docs.jsonopenapi` (API Platform 4
 serves the JSON-LD/Hydra contract there — note the `.jsonopenapi`
@@ -97,14 +104,22 @@ Wrap generated `*Jsonld` types with the `Row<T>` helper from
 `lib/refine.ts` when handing them to Refine — it drops the spec-allowed
 `null` from `id` so they satisfy Refine's `BaseRecord` constraint.
 
+## Feature areas (shipped)
+
+Sidebar layout + CRUD resources, Mercure live updates (`useLiveResource`),
+Kanban board with configurable status→column groups, active-timer pill,
+inbox/conversations, reports, permission matrix, customers/contacts/products,
+social-post composer, and the **AI agents** area (`/ki-agenten` recommendation
+inbox + triggers) plus the **research/acquisition agent** (`/research/missions`,
+`/research/leads`: conversational mission creation, lead pipeline with
+stage/convert, activity timeline, proactive-suggestion inbox).
+
 ## Next milestones
 
-- [ ] Refine `<ThemedLayout>` (sidebar + header) + first CRUD resource
-- [ ] Mercure subscription hook for live task / timer updates
-- [ ] Kanban board (`dnd-kit`)
-- [ ] Active-timer pill in the header
-- [ ] Rich-text Document editor (TipTap)
-- [ ] Permission-matrix grid (workspace settings)
+- [ ] Board flow metrics (CFD, cycle/lead time) + WIP limits
+- [ ] Rich-text Document editor (TipTap) polish
+- [ ] Research: distribution/forum placements UI + saved segments
+- [ ] Migrate hand-authored `lib/*` types back into generated `@/api/types` once `gen:api` is fixed
 
 ## Why Refine
 
