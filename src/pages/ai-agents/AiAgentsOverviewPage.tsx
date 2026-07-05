@@ -5,8 +5,9 @@ import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import type { AiRecommendation } from '@/lib/ai';
-import { aiMarketing, aiOutreach, aiTriage } from '@/lib/ai';
+import { aiAgent, aiMarketing, aiOutreach, aiTriage } from '@/lib/ai';
 import { readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { Textarea } from '@/components/ui/textarea';
 import { useMercureTopic } from '@/lib/mercure';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,7 @@ const KIND_LABEL: Record<string, string> = {
   marketing_social_draft: 'Marketing-Copy',
   customer_upgrade_outreach: 'Upgrade-Outreach',
   research_suggestion: 'Recherche-Vorschlag',
+  agent_action: 'Agent-Aktion',
 };
 
 const TARGET_LABEL: Record<string, string> = {
@@ -78,6 +80,7 @@ export function AiAgentsOverviewPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<string>('');
   const [selectedCustomer, setSelectedCustomer] = useState<string>('');
+  const [distributionContent, setDistributionContent] = useState<string>('');
 
   // Server-side filtering via the flat ai_recommendations collection (newest
   // first). Refine maps eq-filters to ?status= / ?kind= (BackedEnumFilter).
@@ -175,6 +178,8 @@ export function AiAgentsOverviewPage() {
       rec.suggestion?.subject ??
       rec.suggestion?.title ??
       rec.suggestion?.prompt ??
+      rec.suggestion?.payload?.body ??
+      rec.suggestion?.rationale ??
       '';
     return s || '(keine Zusammenfassung)';
   };
@@ -191,13 +196,17 @@ export function AiAgentsOverviewPage() {
             ? 'Übernommen – E-Mail-Entwurf erstellt (Versand erst nach Freigabe).'
             : rec.kind === 'research_suggestion'
               ? 'Übernommen – Recherche-Mission angelegt.'
-              : 'Empfehlung übernommen.';
+              : rec.kind === 'agent_action'
+                ? 'Übernommen – Entwurf erstellt (Versand/Publish erst nach Freigabe).'
+                : 'Empfehlung übernommen.';
       toast.success(msg);
       await query.refetch();
       if (rec.kind === 'marketing_social_draft') {
         navigate('/social');
       } else if (rec.kind === 'research_suggestion') {
         navigate('/research/missions');
+      } else if (rec.kind === 'agent_action' && rec.suggestion?.archetype === 'social_post') {
+        navigate('/social');
       }
     } catch {
       toast.error('Übernehmen fehlgeschlagen.');
@@ -235,6 +244,22 @@ export function AiAgentsOverviewPage() {
     try {
       await aiOutreach.request(selectedCustomer);
       toast.success('Upgrade-Outreach angefordert – erscheint gleich als Empfehlung.');
+    } catch {
+      toast.error('Anfrage fehlgeschlagen (LLM/Egress prüfen).');
+    }
+  };
+
+  const onPlanDistribution = async () => {
+    const content = distributionContent.trim();
+    if (content === '') return;
+    if (!workspaceId) {
+      toast.error('Kein aktiver Workspace gewählt.');
+      return;
+    }
+    try {
+      await aiAgent.planDistribution(content, workspaceId);
+      toast.success('Verteilung geplant – Vorschläge erscheinen gleich als Empfehlungen.');
+      setDistributionContent('');
     } catch {
       toast.error('Anfrage fehlgeschlagen (LLM/Egress prüfen).');
     }
@@ -295,6 +320,23 @@ export function AiAgentsOverviewPage() {
               Upgrade-Outreach erzeugen
             </Button>
           </div>
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="min-w-[280px] flex-1">
+              <Textarea
+                rows={2}
+                placeholder="Inhalt/Ankündigung, den der Agent auf die verbundenen Kanäle (inkl. Foren) verteilen soll…"
+                value={distributionContent}
+                onChange={(e) => setDistributionContent(e.target.value)}
+              />
+            </div>
+            <Button
+              variant="secondary"
+              onClick={onPlanDistribution}
+              disabled={distributionContent.trim() === ''}
+            >
+              Verteilung planen
+            </Button>
+          </div>
         </CardHeader>
       </Card>
 
@@ -325,6 +367,7 @@ export function AiAgentsOverviewPage() {
                 <SelectItem value="marketing_social_draft">Marketing-Copy</SelectItem>
                 <SelectItem value="customer_upgrade_outreach">Upgrade-Outreach</SelectItem>
                 <SelectItem value="research_suggestion">Recherche-Vorschlag</SelectItem>
+                <SelectItem value="agent_action">Agent-Aktion</SelectItem>
               </SelectContent>
             </Select>
           </div>
