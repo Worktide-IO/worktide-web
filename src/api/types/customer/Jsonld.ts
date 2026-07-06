@@ -31,6 +31,11 @@ export type CustomerJsonld = (HydraItemBaseSchema & {
     */
     vatId?: string | null;
     /**
+     * Human customer number, synced from lexoffice (read-only).
+     * @type string,null
+    */
+    customerNumber?: string | null;
+    /**
      * @type string,null, email
     */
     email?: string | null;
