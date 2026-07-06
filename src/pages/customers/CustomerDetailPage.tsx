@@ -1,5 +1,5 @@
 import { useOne } from '@refinedev/core';
-import { ArrowLeft, Building2, Globe, Mail, Phone } from 'lucide-react';
+import { ArrowLeft, Building2, Globe, Hash, Mail, Phone } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 
 import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
@@ -109,6 +109,15 @@ export function CustomerDetailPage() {
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            {c.customerNumber ? (
+              <span
+                className="inline-flex items-center gap-1 font-mono"
+                title="Kundennummer (aus lexoffice)"
+              >
+                <Hash className="size-3" />
+                {c.customerNumber}
+              </span>
+            ) : null}
             {c.legalName ? <span>{c.legalName}</span> : null}
             {c.email ? (
               <a
