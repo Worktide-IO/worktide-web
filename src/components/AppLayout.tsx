@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import * as Icons from 'lucide-react';
 
+import { BrandLogo } from '@/components/BrandLogo';
 import { FloatingTimer } from '@/components/FloatingTimer';
 import { GlobalSearchDialog } from '@/components/GlobalSearchDialog';
 import { MercureStatusPill } from '@/components/MercureStatusPill';
@@ -120,11 +121,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <header className="flex h-14 items-center gap-2 border-b border-border px-4">
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-6" />
-          <img
-            src="/brand/logo/worktide-lockup.svg"
-            alt="Worktide"
-            className="h-6 w-auto"
-          />
+          <BrandLogo className="h-6 w-auto" />
         </header>
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </SidebarInset>
