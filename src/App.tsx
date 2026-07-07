@@ -12,6 +12,7 @@ import { dataProvider } from '@/providers/dataProvider';
 import { LoginPage } from '@/pages/LoginPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
+import { SetupWizardPage } from '@/pages/setup/SetupWizardPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { ActivityPage } from '@/pages/activity/ActivityPage';
@@ -343,6 +344,7 @@ export default function App() {
               <Route path="/settings/portal" element={<PortalSettingsPage />} />
             </Route>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/setup" element={<SetupWizardPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
           </Routes>
