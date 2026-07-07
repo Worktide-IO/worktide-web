@@ -1,11 +1,12 @@
 import { useLogin } from '@refinedev/core';
 import { AlertCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,7 +21,25 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
+  const navigate = useNavigate();
   const { mutate: login, isPending } = useLogin<LoginValues>();
+
+  // First-run detection: if the instance has no users yet, there's nothing to
+  // log into — send the visitor to the setup wizard. Fail-open on any error.
+  useEffect(() => {
+    let alive = true;
+    api
+      .get<{ needsSetup: boolean }>('/setup/status')
+      .then(({ data }) => {
+        if (alive && data?.needsSetup) navigate('/setup', { replace: true });
+      })
+      .catch(() => {
+        /* ignore — stay on login */
+      });
+    return () => {
+      alive = false;
+    };
+  }, [navigate]);
   // Refine's useLogin().error doesn't surface auth-provider failures that
   // return { success: false, error: ... } — those just show a toast. So
   // we track the message ourselves via the onError callback to keep a
