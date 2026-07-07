@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 
@@ -30,9 +31,92 @@ export function PortalSettingsPage() {
           Konfiguration des Kundenportals für diesen Mandanten — nur Workspace-Admins können speichern.
         </p>
       </div>
+      <PortalWelcomeTextCard />
       <PortalSlaCard />
       <PortalWaitingStatusesCard />
     </SettingsLayout>
+  );
+}
+
+/**
+ * Editable greeting included in the portal invitation email (set-password link).
+ * Stored under settings.portal.welcomeText and saved via PATCH /v1/workspaces/{id}.
+ */
+function PortalWelcomeTextCard() {
+  const stored = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
+  const { result: workspaces } = useList<Row<WorkspaceJsonld>>({
+    resource: 'workspaces',
+    pagination: { mode: 'off' },
+    queryOptions: { enabled: !stored },
+  });
+  const id = stored ?? workspaces?.data?.[0]?.id ?? null;
+  const { result: workspace, query } = useOne<
+    Row<WorkspaceJsonld> & { settings?: Record<string, unknown> | null }
+  >({
+    resource: 'workspaces',
+    id: id ?? '',
+    queryOptions: { enabled: Boolean(id) },
+  });
+  const { mutate: update, mutation } = useUpdate<Row<WorkspaceJsonld>>();
+
+  const initial =
+    (
+      workspace?.settings as { portal?: { welcomeText?: string } } | null | undefined
+    )?.portal?.welcomeText ?? '';
+  const [text, setText] = useState('');
+
+  useEffect(() => {
+    setText(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspace?.id]);
+
+  if (!id || query.isLoading || !workspace) return null;
+
+  const dirty = text.trim() !== initial.trim();
+
+  const save = () => {
+    const prev = (workspace.settings as Record<string, unknown> | null | undefined) ?? {};
+    const prevPortal = (prev['portal'] as Record<string, unknown> | undefined) ?? {};
+    update(
+      {
+        resource: 'workspaces',
+        id,
+        values: { settings: { ...prev, portal: { ...prevPortal, welcomeText: text.trim() } } },
+        successNotification: false,
+      },
+      {
+        onSuccess: () => toast.success('Begrüßungstext gespeichert.'),
+        onError: (err) => {
+          const status = (err as { response?: { status?: number } })?.response?.status;
+          toast.error(status === 403 ? 'Keine Berechtigung.' : 'Konnte nicht speichern.');
+        },
+      },
+    );
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Begrüßungstext</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Wird in der Einladungs-E-Mail zum Kundenportal über dem Zugangslink angezeigt. Leer
+          lassen, um nur den Standardtext zu senden.
+        </p>
+        <Textarea
+          rows={4}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="z. B. Herzlich willkommen in unserem Kundenportal! Hier finden Sie Ihre Tickets, Angebote und Dokumente."
+        />
+        <div className="flex justify-end">
+          <Button onClick={save} disabled={!dirty || mutation.isPending}>
+            Speichern
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

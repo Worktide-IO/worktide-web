@@ -7,6 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
 import { api } from '@/lib/api';
+import { BrandLogo } from '@/components/BrandLogo';
+import { BrandingFooter } from '@/components/BrandingFooter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -78,14 +80,11 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen grid place-items-center bg-muted/40 p-6">
-      <Card className="w-full max-w-sm">
+      <div className="flex w-full max-w-sm flex-col gap-6">
+      <Card className="w-full">
         <form onSubmit={onSubmit} noValidate>
           <CardHeader className="text-center items-center">
-            <img
-              src="/brand/logo/worktide-lockup.svg"
-              alt="Worktide"
-              className="h-9 w-auto"
-            />
+            <BrandLogo className="h-9 w-auto" />
             <CardDescription>Bitte anmelden, um fortzufahren.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -163,6 +162,8 @@ export function LoginPage() {
           </CardContent>
         </form>
       </Card>
+      <BrandingFooter />
+      </div>
     </div>
   );
 }
