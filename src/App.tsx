@@ -8,10 +8,12 @@ import { AppLayout } from '@/components/AppLayout';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { authProvider } from '@/providers/authProvider';
+import { BrandingProvider } from '@/providers/BrandingProvider';
 import { dataProvider } from '@/providers/dataProvider';
 import { LoginPage } from '@/pages/LoginPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
+import { AcceptInvitationPage } from '@/pages/AcceptInvitationPage';
 import { SetupWizardPage } from '@/pages/setup/SetupWizardPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
@@ -99,6 +101,7 @@ function DevtoolsGate({ children }: { children: React.ReactNode }): React.JSX.El
 export default function App() {
   return (
     <BrowserRouter>
+      <BrandingProvider>
       <TooltipProvider delayDuration={300}>
       <DevtoolsGate>
         <Refine
@@ -347,11 +350,13 @@ export default function App() {
             <Route path="/setup" element={<SetupWizardPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/accept-invitation" element={<AcceptInvitationPage />} />
           </Routes>
         </Refine>
         <Toaster richColors closeButton position="top-right" />
       </DevtoolsGate>
       </TooltipProvider>
+      </BrandingProvider>
     </BrowserRouter>
   );
 }

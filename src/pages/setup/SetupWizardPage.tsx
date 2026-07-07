@@ -21,6 +21,7 @@ import {
   REFRESH_STORAGE_KEY,
   WORKSPACE_STORAGE_KEY,
 } from '@/lib/api';
+import { BrandLogo } from '@/components/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -177,7 +178,7 @@ export function SetupWizardPage() {
     <div className="min-h-screen grid place-items-center bg-muted/40 p-6">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center items-center space-y-2">
-          <img src="/brand/logo/worktide-lockup.svg" alt="Worktide" className="h-9 w-auto" />
+          <BrandLogo className="h-9 w-auto" />
           <div>
             <CardTitle className="text-base">Willkommen bei Worktide</CardTitle>
             <CardDescription>
