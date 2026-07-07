@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
 import type { WorkspaceMemberJsonld } from '@/api/types/workspaceMember/Jsonld';
+import { InviteMembersCard } from '@/components/InviteMembersCard';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -114,6 +115,8 @@ export function TeamMembersListPage() {
           />
         </div>
       </div>
+
+      <InviteMembersCard />
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
