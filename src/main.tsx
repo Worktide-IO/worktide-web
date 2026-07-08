@@ -5,6 +5,12 @@ import App from './App.tsx'
 import { installPendingQueueDrainers } from './lib/pendingQueue.ts'
 import { applyBranding, readCachedBranding } from './lib/branding.ts'
 
+declare global {
+  interface Window {
+    __wtAppMounted?: () => void
+  }
+}
+
 // Apply the last-known branding (colors + title) before first paint so a
 // white-labeled instance never flashes stock Worktide colors. The
 // BrandingProvider revalidates against the API once mounted.
@@ -19,3 +25,7 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+
+// Signal the blank-page recovery guard in index.html that the app mounted,
+// so it clears the reload counter and the watchdog stands down.
+window.__wtAppMounted?.()
