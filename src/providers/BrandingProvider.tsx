@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
+import { DemoBanner } from '@/components/DemoBanner';
 import {
   applyBranding,
   fetchBranding,
@@ -34,7 +35,12 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  return <BrandingContext.Provider value={branding}>{children}</BrandingContext.Provider>;
+  return (
+    <BrandingContext.Provider value={branding}>
+      <DemoBanner />
+      {children}
+    </BrandingContext.Provider>
+  );
 }
 
 /** Access the current branding (logo, name, colors, legal links). */
