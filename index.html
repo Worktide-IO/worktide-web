@@ -12,6 +12,57 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Blank-page recovery. When the OS wakes from sleep/hibernate, Chrome
+      // switches network interface and aborts in-flight module fetches with
+      // net::ERR_NETWORK_CHANGED. In dev, Vite loads each import as a separate
+      // ES module, so a single aborted fetch stops React from mounting and the
+      // page stays white. This guard reloads once (capped) to recover.
+      (function () {
+        var KEY = '__wt_reload_count';
+        var MAX = 3;
+        var armed = false; // only reload once per document load
+
+        function reloadOnce(reason) {
+          if (armed) return;
+          var n = +(sessionStorage.getItem(KEY) || 0);
+          if (n >= MAX) return; // server likely really down — don't loop
+          armed = true;
+          sessionStorage.setItem(KEY, String(n + 1));
+          console.warn('[bootstrap] reloading after failed load:', reason);
+          location.reload();
+        }
+
+        // Called from main.tsx once React has mounted → clears the counter.
+        window.__wtAppMounted = function () {
+          window.__wtMounted = true;
+          sessionStorage.removeItem(KEY);
+        };
+
+        // A <script>/<link> module that fails to load fires an error event on
+        // window (capture phase); ERR_NETWORK_CHANGED surfaces here.
+        window.addEventListener(
+          'error',
+          function (e) {
+            var t = e && e.target;
+            if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) {
+              reloadOnce('resource ' + (t.src || t.href));
+            }
+          },
+          true,
+        );
+
+        // Vite fires this in production when a lazy chunk fails to preload.
+        window.addEventListener('vite:preloadError', function () {
+          reloadOnce('vite:preloadError');
+        });
+
+        // Watchdog: nothing mounted after a few seconds → force a reload.
+        setTimeout(function () {
+          if (!window.__wtMounted) reloadOnce('watchdog: root empty');
+        }, 8000);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
