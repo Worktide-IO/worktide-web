@@ -1,9 +1,10 @@
-import { Clock, FolderKanban, ListChecks, ListTodo, type LucideIcon } from 'lucide-react';
+import { Activity, Clock, FolderKanban, ListChecks, ListTodo, type LucideIcon } from 'lucide-react';
 
 import { ActiveTimerWidget } from './widgets/ActiveTimerWidget';
 import { MyProjectsWidget } from './widgets/MyProjectsWidget';
 import { MyTasksWidget } from './widgets/MyTasksWidget';
 import { OpenCustomerTasksWidget } from './widgets/OpenCustomerTasksWidget';
+import { RecentStatusUpdatesWidget } from './widgets/RecentStatusUpdatesWidget';
 
 /**
  * Widget catalog. Every renderable dashboard tile must have an entry
@@ -55,6 +56,14 @@ export const WIDGET_REGISTRY: Record<string, WidgetDefinition> = {
     icon: ListTodo,
     defaultSize: { w: 4, h: 18 },
     Component: MyTasksWidget,
+  },
+  'recent-status-updates': {
+    key: 'recent-status-updates',
+    label: 'Status-Updates',
+    description: 'Neueste Projekt-Status-Updates workspace-weit',
+    icon: Activity,
+    defaultSize: { w: 4, h: 10 },
+    Component: RecentStatusUpdatesWidget,
   },
 };
 
