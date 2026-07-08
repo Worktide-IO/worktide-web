@@ -19,6 +19,7 @@ import { WatchButton } from '@/components/WatchButton';
 import { ProjectBoardTab } from './ProjectBoardTab';
 import { ProjectOverviewTab } from './ProjectOverviewTab';
 import { ProjectReleasesTab } from './ProjectReleasesTab';
+import { ProjectStatusUpdatesTab } from './ProjectStatusUpdatesTab';
 
 /**
  * Project detail page — header + tabbed body.
@@ -142,6 +143,7 @@ export function ProjectDetailPage() {
         <TabsList>
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="board">Board</TabsTrigger>
+          <TabsTrigger value="status-updates">Status-Updates</TabsTrigger>
           <TabsTrigger value="releases">Releases</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="pt-4">
@@ -149,6 +151,9 @@ export function ProjectDetailPage() {
         </TabsContent>
         <TabsContent value="board" className="pt-4">
           <ProjectBoardTab projectIri={p['@id'] ?? ''} />
+        </TabsContent>
+        <TabsContent value="status-updates" className="pt-4">
+          <ProjectStatusUpdatesTab projectIri={p['@id'] ?? ''} />
         </TabsContent>
         <TabsContent value="releases" className="pt-4">
           <ProjectReleasesTab projectIri={p['@id'] ?? ''} projectId={p.id ?? ''} />
