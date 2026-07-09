@@ -203,6 +203,9 @@ function ActiveSourceRow({
       <button type="button" onClick={onEdit} className="flex-1 min-w-0 text-left">
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-medium truncate">{channel.name}</span>
+          {(channel as unknown as { isShared?: boolean }).isShared === false ? (
+            <Badge variant="outline" className="text-[9px]">Persönlich</Badge>
+          ) : null}
           {!enabled ? <Power className="size-3 text-muted-foreground/50" /> : null}
         </div>
         <div className="text-xs text-muted-foreground truncate">

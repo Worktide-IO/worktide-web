@@ -98,6 +98,10 @@ export type ChannelJsonld = (HydraItemBaseSchema & {
     /**
      * @type string,null, iri-reference
     */
+    ownerUser?: string | null;
+    /**
+     * @type string,null, iri-reference
+    */
     createdByUser?: string | null;
     /**
      * @type string,null, iri-reference

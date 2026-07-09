@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { ChannelJsonld } from '@/api/types/channel/Jsonld';
+import { ChannelVisibilityFields, type ChannelVisibility } from '@/components/ChannelVisibilityFields';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -70,6 +71,7 @@ export function SourceWizard({
   // Step-1 fields
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
+  const [visibility, setVisibility] = useState<ChannelVisibility>({ isShared: true, ownerUser: null });
 
   // Load existing channel when editing
   const { result: existing } = useOne<Row<ChannelJsonld>>({
@@ -81,6 +83,8 @@ export function SourceWizard({
     if (existing) {
       setName(existing.name ?? '');
       setAddress(existing.address ?? '');
+      const ex = existing as unknown as { isShared?: boolean; ownerUser?: string | null };
+      setVisibility({ isShared: ex.isShared ?? true, ownerUser: ex.ownerUser ?? null });
     }
   }, [existing]);
 
@@ -185,6 +189,8 @@ export function SourceWizard({
         inboundConfig,
         outboundConfig: {},
         authConfig: {},
+        isShared: visibility.isShared,
+        ownerUser: visibility.ownerUser,
       };
       const resp = await api.post<{ id: string; '@id': string }>('/channels', payload);
       setChannelId(resp.data.id);
@@ -209,7 +215,12 @@ export function SourceWizard({
     }
     setSaving(true);
     try {
-      const body: Record<string, unknown> = { name: name.trim(), address: address.trim() || null };
+      const body: Record<string, unknown> = {
+        name: name.trim(),
+        address: address.trim() || null,
+        isShared: visibility.isShared,
+        ownerUser: visibility.ownerUser,
+      };
 
       if (def.code === 'email_imap') {
         body.inboundConfig = {
@@ -325,13 +336,21 @@ export function SourceWizard({
 
         <div className="space-y-3 py-2">
           {step === 'identify' ? (
-            <IdentifyStep
-              name={name}
-              setName={setName}
-              address={address}
-              setAddress={setAddress}
-              hint={def.setupHint}
-            />
+            <>
+              <IdentifyStep
+                name={name}
+                setName={setName}
+                address={address}
+                setAddress={setAddress}
+                hint={def.setupHint}
+              />
+              <ChannelVisibilityFields value={visibility} onChange={setVisibility} />
+            </>
+          ) : null}
+
+          {/* Edit skips the identify step, so surface visibility here too. */}
+          {step === 'configure' && isEdit ? (
+            <ChannelVisibilityFields value={visibility} onChange={setVisibility} />
           ) : null}
 
           {step === 'configure' && def.code === 'email_imap' ? (
