@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import type { ContactJsonld } from '@/api/types/contact/Jsonld';
+import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import { api } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 import { Badge } from '@/components/ui/badge';
@@ -27,10 +28,21 @@ export function ContactPortalAccess({ contactId }: { contactId: string }) {
   });
   const [busy, setBusy] = useState(false);
 
+  const customerId = contact?.customer?.split('/').pop() ?? '';
+  const { result: customer } = useOne<Row<CustomerJsonld> & { portalEnabled?: boolean }>({
+    resource: 'customers',
+    id: customerId,
+    queryOptions: { enabled: Boolean(customerId) },
+  });
+
   if (!contact) return null;
   const active = Boolean(contact.linkedUser);
   const email = contact.email ?? '';
   const invitedAt = contact.portalInvitedAt ?? null;
+  // The customer's portal must be freigeschaltet before an invitation can be
+  // sent — otherwise the contact would set a password but be locked out at
+  // login (mirrors the backend guard in PortalAccessGrantController).
+  const customerEnabled = Boolean(customer?.portalEnabled);
 
   async function call(action: string, okMsg: string) {
     setBusy(true);
@@ -73,10 +85,17 @@ export function ContactPortalAccess({ contactId }: { contactId: string }) {
               </p>
             )}
 
+            {!customerEnabled ? (
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                Das Kundenportal ist für diesen Kunden nicht freigeschaltet — Einladung erst
+                möglich, wenn das Portal am Kunden aktiviert ist.
+              </p>
+            ) : null}
+
             <div className="flex flex-wrap gap-2">
               <Button
                 size="sm"
-                disabled={busy}
+                disabled={busy || !customerEnabled}
                 onClick={() =>
                   call(
                     'send-portal-invitation',
