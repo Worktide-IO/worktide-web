@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { ChannelJsonld } from '@/api/types/channel/Jsonld';
+import { ChannelVisibilityFields, type ChannelVisibility } from '@/components/ChannelVisibilityFields';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -232,7 +233,12 @@ function ChannelRow({
         )}
       </TableCell>
       <TableCell>
-        <div className="font-medium">{channel.name}</div>
+        <div className="flex items-center gap-1.5">
+          <span className="font-medium">{channel.name}</span>
+          <Badge variant="outline" className="text-[9px]">
+            {(channel as unknown as { isShared?: boolean }).isShared === false ? 'Persönlich' : 'Team'}
+          </Badge>
+        </div>
         {channel.address ? (
           <div className="text-xs text-muted-foreground">{channel.address}</div>
         ) : null}
@@ -306,6 +312,10 @@ function ChannelDialog(props: DialogProps) {
 
   const [inboundEnabled, setInboundEnabled] = useState(true);
   const [outboundEnabled, setOutboundEnabled] = useState(true);
+  const [visibility, setVisibility] = useState<ChannelVisibility>({
+    isShared: (initial as unknown as { isShared?: boolean })?.isShared ?? true,
+    ownerUser: (initial as unknown as { ownerUser?: string | null })?.ownerUser ?? null,
+  });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -342,6 +352,8 @@ function ChannelDialog(props: DialogProps) {
         outboundConfig: outboundEnabled
           ? { host: smtpHost, port: Number(smtpPort) || 587, encryption: smtpEnc, from: smtpFrom || address }
           : {},
+        isShared: visibility.isShared,
+        ownerUser: visibility.ownerUser,
       };
       // Only send authConfig on changes — keep the existing encrypted
       // value on edit when the operator didn't retype the password.
@@ -409,6 +421,8 @@ function ChannelDialog(props: DialogProps) {
             <Label htmlFor="ch-address">Adresse</Label>
             <Input id="ch-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="support@firma.de" />
           </div>
+
+          <ChannelVisibilityFields value={visibility} onChange={setVisibility} />
 
           <div className="grid grid-cols-2 gap-2 rounded-md border bg-muted/30 p-3">
             <label className="flex items-center gap-2 text-sm">
