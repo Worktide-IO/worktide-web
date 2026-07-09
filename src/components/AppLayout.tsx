@@ -8,6 +8,7 @@ import { FloatingTimer } from '@/components/FloatingTimer';
 import { GlobalSearchDialog } from '@/components/GlobalSearchDialog';
 import { MercureStatusPill } from '@/components/MercureStatusPill';
 import { MyProjectsSidebar } from '@/components/MyProjectsSidebar';
+import { NotificationBell } from '@/components/NotificationBell';
 import { NetworkStatusBanner } from '@/components/NetworkStatusBanner';
 import { PendingMutationsToast } from '@/components/PendingMutationsToast';
 import { QuickAddDialog } from '@/components/QuickAddDialog';
@@ -122,6 +123,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-6" />
           <BrandLogo className="h-6 w-auto" />
+          <div className="ml-auto flex items-center gap-1">
+            <NotificationBell />
+          </div>
         </header>
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </SidebarInset>
