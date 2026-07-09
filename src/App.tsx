@@ -65,6 +65,7 @@ import { IndustriesPage } from '@/pages/industries/IndustriesPage';
 import { TasksListPage } from '@/pages/tasks/TasksListPage';
 import { TimeEntriesListPage } from '@/pages/timeEntries/TimeEntriesListPage';
 import { AiAgentsOverviewPage } from '@/pages/ai-agents/AiAgentsOverviewPage';
+import { NotificationsListPage } from '@/pages/notifications/NotificationsListPage';
 
 /**
  * Top-level wiring. Refine handles auth-gating + data-provider injection;
@@ -293,6 +294,7 @@ export default function App() {
               }
             >
               <Route index element={<DashboardPage />} />
+              <Route path="/benachrichtigungen" element={<NotificationsListPage />} />
               <Route path="/wall" element={<WallPage />} />
               <Route path="/projects" element={<ProjectsListPage />} />
               <Route path="/projects/create" element={<ProjectCreatePage />} />
