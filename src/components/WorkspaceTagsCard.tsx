@@ -32,6 +32,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { TranslationsFields, type TranslationsMap } from '@/components/TranslationsFields';
+import { useSupportedLanguages, useLocalize } from '@/lib/languages';
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 import { cn } from '@/lib/utils';
@@ -166,6 +168,7 @@ function TagRow({
   onEdit: () => void;
 }) {
   const invalidate = useInvalidate();
+  const localize = useLocalize();
   const [deleting, setDeleting] = useState(false);
   const color = tag.color ?? '#94a3b8';
 
@@ -204,7 +207,7 @@ function TagRow({
             color,
           }}
         >
-          {tag.name}
+          {localize(tag, 'name')}
         </span>
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">
@@ -237,9 +240,13 @@ function TagDialog(props: DialogProps) {
   const isEdit = props.mode === 'edit';
   const initial = isEdit ? props.tag : null;
 
+  const { languages } = useSupportedLanguages();
   const [name, setName] = useState(initial?.name ?? '');
   const [color, setColor] = useState(initial?.color ?? SWATCHES[7]);
   const [scope, setScope] = useState<TagJsonldScopeEnum>(initial?.scope ?? 'any');
+  const [translations, setTranslations] = useState<TranslationsMap>(
+    (initial as unknown as { translations?: TranslationsMap } | null)?.translations ?? {},
+  );
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -247,6 +254,9 @@ function TagDialog(props: DialogProps) {
       setName(props.tag.name ?? '');
       setColor(props.tag.color ?? SWATCHES[7]);
       setScope(props.tag.scope ?? 'any');
+      setTranslations(
+        (props.tag as unknown as { translations?: TranslationsMap }).translations ?? {},
+      );
     }
   }, [isEdit, props]);
 
@@ -258,7 +268,7 @@ function TagDialog(props: DialogProps) {
       if (isEdit && props.tag.id) {
         await api.patch(
           `/tags/${props.tag.id}`,
-          { name: trimmed, color, scope },
+          { name: trimmed, color, scope, translations },
           { headers: { 'Content-Type': 'application/merge-patch+json' } },
         );
         toast.success(`Tag "${trimmed}" aktualisiert.`);
@@ -272,6 +282,7 @@ function TagDialog(props: DialogProps) {
           name: trimmed,
           color,
           scope,
+          translations,
           workspace: `/v1/workspaces/${workspaceId}`,
         });
         toast.success(`Tag "${trimmed}" angelegt.`);
@@ -364,6 +375,12 @@ function TagDialog(props: DialogProps) {
               </span>
             </div>
           </div>
+          <TranslationsFields
+            fields={[{ key: 'name', label: 'Name' }]}
+            locales={languages}
+            value={translations}
+            onChange={setTranslations}
+          />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={props.onClose} disabled={saving}>

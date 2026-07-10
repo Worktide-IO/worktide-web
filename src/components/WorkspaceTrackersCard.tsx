@@ -18,6 +18,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TranslationsFields, type TranslationsMap } from '@/components/TranslationsFields';
+import { useSupportedLanguages, useLocalize } from '@/lib/languages';
 import {
   Table,
   TableBody,
@@ -140,6 +142,7 @@ function TrackerRow({
   onEdit: () => void;
 }) {
   const invalidate = useInvalidate();
+  const localize = useLocalize();
   const [deleting, setDeleting] = useState(false);
   const color = tracker.color ?? '#94a3b8';
   const iconName = (tracker.icon ?? 'circle') as Parameters<typeof DynamicIcon>[0]['name'];
@@ -180,7 +183,7 @@ function TrackerRow({
           <DynamicIcon name={iconName} className="size-4" strokeWidth={2.25} />
         </span>
       </TableCell>
-      <TableCell className="font-medium">{tracker.name}</TableCell>
+      <TableCell className="font-medium">{localize(tracker, 'name')}</TableCell>
       <TableCell className="text-center">
         {isDefault ? (
           <Star className="inline size-4 fill-amber-400 text-amber-500" aria-label="Default" />
@@ -219,11 +222,15 @@ function TrackerDialog(props: DialogProps) {
   const isEdit = props.mode === 'edit';
   const initial = isEdit ? props.tracker : null;
 
+  const { languages } = useSupportedLanguages();
   const [name, setName] = useState(initial?.name ?? '');
   const [icon, setIcon] = useState(initial?.icon ?? ICON_PRESETS[0]);
   const [color, setColor] = useState(initial?.color ?? SWATCHES[6]);
   const [isDefault, setIsDefault] = useState<boolean>(
     (initial as unknown as { default?: boolean } | null)?.default === true,
+  );
+  const [translations, setTranslations] = useState<TranslationsMap>(
+    (initial as unknown as { translations?: TranslationsMap } | null)?.translations ?? {},
   );
   const [saving, setSaving] = useState(false);
 
@@ -234,6 +241,9 @@ function TrackerDialog(props: DialogProps) {
       setColor(props.tracker.color ?? SWATCHES[6]);
       setIsDefault(
         (props.tracker as unknown as { default?: boolean }).default === true,
+      );
+      setTranslations(
+        (props.tracker as unknown as { translations?: TranslationsMap }).translations ?? {},
       );
     }
   }, [isEdit, props]);
@@ -263,7 +273,7 @@ function TrackerDialog(props: DialogProps) {
       if (isEdit && props.tracker.id) {
         await api.patch(
           `/trackers/${props.tracker.id}`,
-          { name: trimmed, icon, color, isDefault },
+          { name: trimmed, icon, color, isDefault, translations },
           { headers: { 'Content-Type': 'application/merge-patch+json' } },
         );
         toast.success(`Tracker "${trimmed}" aktualisiert.`);
@@ -278,6 +288,7 @@ function TrackerDialog(props: DialogProps) {
           icon,
           color,
           isDefault,
+          translations,
           position: allTrackers.length,
           workspace: `/v1/workspaces/${workspaceId}`,
         });
@@ -385,6 +396,12 @@ function TrackerDialog(props: DialogProps) {
             />
             Als Standard für neue Aufgaben verwenden
           </label>
+          <TranslationsFields
+            fields={[{ key: 'name', label: 'Name' }]}
+            locales={languages}
+            value={translations}
+            onChange={setTranslations}
+          />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={props.onClose} disabled={saving}>

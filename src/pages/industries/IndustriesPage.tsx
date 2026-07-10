@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TranslationsFields, type TranslationsMap } from '@/components/TranslationsFields';
+import { useSupportedLanguages, useLocalize } from '@/lib/languages';
 import {
   Table,
   TableBody,
@@ -40,9 +42,13 @@ export function IndustriesPage() {
     sorters: [{ field: 'position', order: 'asc' }],
   });
 
+  const { languages } = useSupportedLanguages();
+  const localize = useLocalize();
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
-  const [rename, setRename] = useState<{ id: string; name: string } | null>(null);
+  const [rename, setRename] = useState<
+    { id: string; name: string; translations: TranslationsMap } | null
+  >(null);
 
   const workspaceIri = (() => {
     const id = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
@@ -88,7 +94,7 @@ export function IndustriesPage() {
     const n = rename.name.trim();
     if (!n) return;
     setBusy(true);
-    await patch(rename.id, { name: n }, 'Umbenannt.');
+    await patch(rename.id, { name: n, translations: rename.translations }, 'Gespeichert.');
     setRename(null);
     setBusy(false);
   };
@@ -151,7 +157,7 @@ export function IndustriesPage() {
               <TableBody>
                 {rows.map((i) => (
                   <TableRow key={i['@id']} className={i.isArchived ? 'opacity-60' : ''}>
-                    <TableCell className="font-medium">{i.name}</TableCell>
+                    <TableCell className="font-medium">{localize(i, 'name')}</TableCell>
                     <TableCell>
                       {i.isArchived ? (
                         <Badge variant="outline" className="text-[10px]">
@@ -170,9 +176,17 @@ export function IndustriesPage() {
                           variant="outline"
                           size="sm"
                           className="h-7"
-                          onClick={() => i.id && setRename({ id: i.id, name: i.name })}
+                          onClick={() =>
+                            i.id &&
+                            setRename({
+                              id: i.id,
+                              name: i.name,
+                              translations:
+                                (i as unknown as { translations?: TranslationsMap }).translations ?? {},
+                            })
+                          }
                         >
-                          <Pencil className="size-3" /> Umbenennen
+                          <Pencil className="size-3" /> Bearbeiten
                         </Button>
                         <Button
                           type="button"
@@ -211,16 +225,24 @@ export function IndustriesPage() {
       <Dialog open={rename !== null} onOpenChange={(o) => !o && setRename(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Branche umbenennen</DialogTitle>
+            <DialogTitle>Branche bearbeiten</DialogTitle>
           </DialogHeader>
           {rename ? (
-            <Input
-              value={rename.name}
-              onChange={(e) => setRename({ ...rename, name: e.target.value })}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void saveRename();
-              }}
-            />
+            <div className="space-y-3">
+              <Input
+                value={rename.name}
+                onChange={(e) => setRename({ ...rename, name: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void saveRename();
+                }}
+              />
+              <TranslationsFields
+                fields={[{ key: 'name', label: 'Name' }]}
+                locales={languages}
+                value={rename.translations}
+                onChange={(translations) => setRename({ ...rename, translations })}
+              />
+            </div>
           ) : null}
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => setRename(null)} disabled={busy}>
