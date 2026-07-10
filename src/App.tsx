@@ -63,6 +63,9 @@ import { ProductCreatePage } from '@/pages/products/ProductCreatePage';
 import { ProductEditPage } from '@/pages/products/ProductEditPage';
 import { IndustriesPage } from '@/pages/industries/IndustriesPage';
 import { NewslettersPage } from '@/pages/newsletters/NewslettersPage';
+import { MeetingTypesPage } from '@/pages/meetings/MeetingTypesPage';
+import { BookingsPage } from '@/pages/meetings/BookingsPage';
+import { CalendarSyncPage } from '@/pages/meetings/CalendarSyncPage';
 import { TasksListPage } from '@/pages/tasks/TasksListPage';
 import { TimeEntriesListPage } from '@/pages/timeEntries/TimeEntriesListPage';
 import { AiAgentsOverviewPage } from '@/pages/ai-agents/AiAgentsOverviewPage';
@@ -242,6 +245,21 @@ export default function App() {
               meta: { label: 'Newsletter', icon: 'Mail', category: 'CRM' },
             },
             {
+              name: 'meeting_types',
+              list: '/terminarten',
+              meta: { label: 'Terminarten', icon: 'CalendarClock', category: 'CRM' },
+            },
+            {
+              name: 'bookings',
+              list: '/buchungen',
+              meta: { label: 'Buchungen', icon: 'CalendarDays', category: 'CRM' },
+            },
+            {
+              name: 'staff_calendar_connections',
+              list: '/kalender-sync',
+              meta: { label: 'Kalender-Sync', icon: 'RefreshCw', category: 'CRM' },
+            },
+            {
               name: 'research_missions',
               list: '/research/missions',
               create: '/research/missions/create',
@@ -349,6 +367,9 @@ export default function App() {
               <Route path="/produkte/:id" element={<ProductEditPage />} />
               <Route path="/branchen" element={<IndustriesPage />} />
               <Route path="/newsletter" element={<NewslettersPage />} />
+              <Route path="/terminarten" element={<MeetingTypesPage />} />
+              <Route path="/buchungen" element={<BookingsPage />} />
+              <Route path="/kalender-sync" element={<CalendarSyncPage />} />
               <Route path="/research/missions" element={<ResearchMissionsListPage />} />
               <Route path="/research/missions/create" element={<ResearchMissionCreatePage />} />
               <Route path="/research/missions/:id" element={<ResearchMissionDetailPage />} />
