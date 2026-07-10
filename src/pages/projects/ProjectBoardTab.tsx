@@ -42,6 +42,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TagChips } from '@/components/TagChips';
 import { EntitySyncBadgeStack } from '@/components/EntitySyncBadgeStack';
+import { EntitySyncScopeProvider } from '@/components/EntitySyncScope';
 import { PriorityScoreBadge, scoreEntryFromTask } from '@/components/PriorityScoreBadge';
 import { TrackerChip } from '@/components/TrackerChip';
 import { VersionBadge } from '@/components/VersionBadge';
@@ -212,6 +213,11 @@ export function ProjectBoardTab({ projectIri }: Props) {
     }
     return m;
   }, [tasks]);
+
+  // Ids of every task on the board → one batched external-sync fetch for all
+  // cards (via EntitySyncScopeProvider), instead of each card crawling the
+  // whole workspace entity_syncs table.
+  const boardTaskIds = useMemo(() => (tasks?.data ?? []).map((t) => t.id), [tasks]);
 
   // The blocking rule (predecessor in this project still open → successor
   // blocked, for TaskDependencyType::isBlocking() types) now runs server-side.
@@ -525,6 +531,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
   }
 
   return (
+    <EntitySyncScopeProvider entityType="task" ids={boardTaskIds}>
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {[
@@ -658,6 +665,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
         />
       ) : null}
     </div>
+    </EntitySyncScopeProvider>
   );
 }
 
