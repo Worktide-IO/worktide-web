@@ -1,13 +1,10 @@
-import { useGetIdentity, useList } from '@refinedev/core';
 import { CalendarDays, ListTodo } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { ProjectJsonld } from '@/api/types/project/Jsonld';
-import type { TaskJsonld } from '@/api/types/task/Jsonld';
-import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
-import { useLiveResource } from '@/lib/mercure';
-import type { Row } from '@/lib/refine';
+import { api } from '@/lib/api';
+import { topicFor, useMercureTopic } from '@/lib/mercure';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -21,64 +18,54 @@ const PRIORITY_VARIANT: Record<string, 'outline' | 'secondary' | 'default' | 'de
   urgent: 'destructive',
 };
 
-type Identity = { id?: string };
+/** One row from GET /v1/dashboard/my-tasks — the project + open-flag are inlined. */
+type MyTask = {
+  '@id': string;
+  id: string;
+  identifier: string;
+  title: string;
+  priority?: string;
+  dueOn: string | null;
+  status: string;
+  isOpen: boolean;
+  project: { '@id': string; id: string; name: string; color: string } | null;
+};
+
+const MY_TASKS_KEY = ['dashboard', 'my-tasks'] as const;
 
 /**
- * "Meine Aufgaben" — tasks the current user is an assignee on, filtered
- * by due-date relative to today. Three tabs:
+ * "Meine Aufgaben" — tasks the current user is an assignee on, bucketed by
+ * due-date relative to today:
  *
- *   Heute      dueOn === heute        (also "vergessen") → roter Badge
+ *   Heute      dueOn === heute (+ open no-due) → roter Badge
  *   Diese Wo.  dueOn ∈ [heute, +6]
  *   Überfäll.  dueOn < heute UND status nicht completed
  *
- * Assignee-check sieht direkte Zuweisungen + Team-Membership (`assignees`
- * vom Backend ist schon flattened auf User-IRIs; Team-Expansion ist
- * derzeit nur direct-user — siehe project_worktide TaskAssignee Memo).
+ * Data comes from the dedicated /v1/dashboard/my-tasks read-model (server
+ * filters to THIS user's open/due-soon tasks with the project inlined) instead
+ * of fetching the whole tasks/projects/statuses collections and filtering
+ * client-side. Bucketing stays client-side so it uses the browser's timezone.
  */
 type TabKey = 'today' | 'week' | 'overdue';
 
 export function MyTasksWidget() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabKey>('today');
-  const { data: identity } = useGetIdentity<Identity>();
-  const userIri = identity?.id ? `/v1/users/${identity.id}` : null;
+  const queryClient = useQueryClient();
 
-  const { result: tasks, query } = useList<Row<TaskJsonld>>({
-    resource: 'tasks',
-    pagination: { mode: 'off' },
-    sorters: [{ field: 'dueOn', order: 'asc' }],
-    queryOptions: { enabled: Boolean(userIri) },
+  const query = useQuery({
+    queryKey: MY_TASKS_KEY,
+    queryFn: async () => {
+      const { data } = await api.get<{ tasks: MyTask[]; capped: boolean }>('/dashboard/my-tasks');
+      return data;
+    },
   });
-  const { result: projects } = useList<Row<ProjectJsonld>>({
-    resource: 'projects',
-    pagination: { mode: 'off' },
+  // Live: refetch when any task changes (mirrors the old useLiveResource('tasks')).
+  useMercureTopic(topicFor('tasks'), {
+    onMessage: () => void queryClient.invalidateQueries({ queryKey: MY_TASKS_KEY }),
   });
-  const { result: statuses } = useList<Row<TaskStatusJsonld>>({
-    resource: 'task_statuses',
-    pagination: { mode: 'off' },
-  });
-  useLiveResource('tasks');
 
-  const projectByIri = useMemo(() => {
-    const m: Record<string, Row<ProjectJsonld>> = {};
-    for (const p of projects?.data ?? []) if (p['@id']) m[p['@id']] = p;
-    return m;
-  }, [projects]);
-  const openStatusIris = useMemo(() => {
-    const set = new Set<string>();
-    for (const s of statuses?.data ?? []) {
-      const completed = (s as { completed?: boolean }).completed ?? s.isCompleted ?? false;
-      if (s['@id'] && !completed) set.add(s['@id']);
-    }
-    return set;
-  }, [statuses]);
-
-  const mine = useMemo(() => {
-    if (!userIri) return [];
-    return (tasks?.data ?? []).filter(
-      (t) => (t.assignees ?? []).includes(userIri),
-    );
-  }, [tasks, userIri]);
+  const mine = query.data?.tasks ?? [];
 
   // Bucket boundaries — local time, midnight-snapped so the filter survives
   // server-side UTC offsets in dueOn.
@@ -90,11 +77,11 @@ export function MyTasksWidget() {
   weekEnd.setDate(today.getDate() + 7);
 
   const buckets = useMemo(() => {
-    const todays: Row<TaskJsonld>[] = [];
-    const weeks: Row<TaskJsonld>[] = [];
-    const overdues: Row<TaskJsonld>[] = [];
+    const todays: MyTask[] = [];
+    const weeks: MyTask[] = [];
+    const overdues: MyTask[] = [];
     for (const t of mine) {
-      const isOpen = t.status ? openStatusIris.has(t.status) : true;
+      const isOpen = t.isOpen;
       if (!t.dueOn) {
         if (isOpen) todays.push(t);
         continue;
@@ -110,7 +97,7 @@ export function MyTasksWidget() {
       }
     }
     return { today: todays, week: weeks, overdue: overdues };
-  }, [mine, openStatusIris, today, tomorrow, weekEnd]);
+  }, [mine, today, tomorrow, weekEnd]);
 
   if (query.isLoading) {
     return (
@@ -128,7 +115,7 @@ export function MyTasksWidget() {
     );
   }
 
-  const renderList = (list: Row<TaskJsonld>[]) =>
+  const renderList = (list: MyTask[]) =>
     list.length === 0 ? (
       <p className="text-center text-xs text-muted-foreground py-8">
         Nichts hier — gönn dir 'nen Kaffee.
@@ -136,7 +123,7 @@ export function MyTasksWidget() {
     ) : (
       <ul className="divide-y">
         {list.map((t) => {
-          const project = t.project ? projectByIri[t.project] : null;
+          const project = t.project;
           return (
             <li key={t['@id']}>
               <button
