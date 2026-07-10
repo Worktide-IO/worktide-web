@@ -16,9 +16,8 @@ import {
 
 import {
   api,
+  setAccessToken,
   writeAuth,
-  JWT_STORAGE_KEY,
-  REFRESH_STORAGE_KEY,
   WORKSPACE_STORAGE_KEY,
 } from '@/lib/api';
 import { BrandLogo } from '@/components/BrandLogo';
@@ -150,10 +149,10 @@ export function SetupWizardPage() {
         workspaceName: values.workspaceName,
         firstName: values.firstName ?? '',
       });
-      // Persist the freshly-issued session exactly like the auth layer expects,
-      // then hard-navigate so Refine bootstraps a clean authenticated session.
-      writeAuth(JWT_STORAGE_KEY, data.token);
-      if (data.refresh_token) writeAuth(REFRESH_STORAGE_KEY, data.refresh_token);
+      // Access token in memory; the refresh token is set as an httpOnly cookie
+      // by the setup response. The hard-navigate reloads into a clean session —
+      // authProvider.check() silently refreshes from the cookie.
+      setAccessToken(data.token);
       if (data.workspaceId) writeAuth(WORKSPACE_STORAGE_KEY, data.workspaceId);
       toast.success('Setup abgeschlossen — willkommen bei Worktide!');
       window.location.assign('/');
