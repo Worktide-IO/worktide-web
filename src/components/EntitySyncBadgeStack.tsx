@@ -8,30 +8,39 @@ import type { Row } from '@/lib/refine';
 import { EntitySyncBadge } from './EntitySyncBadge';
 
 /**
- * Renders all external-system badges for one Worktide entity in a
- * row. Reads from the workspace's `entity_syncs` list (single
- * cached fetch shared across every task on the page) and filters
- * client-side by (entityType, entityId) — much cheaper than a
- * per-task fetch in a long kanban list.
+ * Renders all external-system badges for one Worktide entity in a row.
  *
- * Use `variant="compact"` on dense surfaces (kanban cards, task
- * list rows) and `variant="full"` in the task detail sheet header
- * where the external IDs deserve space.
+ * Two modes:
+ *  - **Provided** (preferred on lists/boards): the parent passes the already
+ *    scoped `syncs` for this entity — e.g. one `entity_syncs?entityType=…&
+ *    entityId[]=…` fetch for every visible row. No fetch happens here.
+ *  - **Self-fetch** (fallback, single surfaces like the detail sheet): with no
+ *    `syncs` prop we load the workspace's `entity_syncs` and filter client-side.
+ *    Avoid this on long lists — `pagination:off` crawls the whole table
+ *    (page-by-page), which on a big workspace is dozens of round-trips.
+ *
+ * Use `variant="compact"` on dense surfaces (kanban cards, task list rows) and
+ * `variant="full"` in the task detail sheet header where the IDs deserve space.
  */
 export function EntitySyncBadgeStack({
   entityType = 'task',
   entityId,
+  syncs: providedSyncs,
   variant = 'compact',
   className,
 }: {
   entityType?: string;
   entityId: string | undefined;
+  /** Pre-scoped syncs for this entity; when set, no self-fetch is done. */
+  syncs?: Row<EntitySyncJsonld>[];
   variant?: 'compact' | 'full';
   className?: string;
 }) {
+  const selfFetch = providedSyncs === undefined;
   const { result: syncs } = useList<Row<EntitySyncJsonld>>({
     resource: 'entity_syncs',
     pagination: { mode: 'off' },
+    queryOptions: { enabled: selfFetch },
   });
   const { result: channels } = useList<Row<ChannelJsonld>>({
     resource: 'channels',
@@ -46,10 +55,11 @@ export function EntitySyncBadgeStack({
 
   const matching = useMemo(() => {
     if (!entityId) return [];
+    if (providedSyncs !== undefined) return providedSyncs;
     return (syncs?.data ?? []).filter(
       (s) => s.entityType === entityType && s.entityId === entityId,
     );
-  }, [syncs, entityType, entityId]);
+  }, [providedSyncs, syncs, entityType, entityId]);
 
   if (matching.length === 0) return null;
 

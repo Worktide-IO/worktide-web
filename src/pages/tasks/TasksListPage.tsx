@@ -1,10 +1,13 @@
 import { useList, useTable } from '@refinedev/core';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import type { EntitySyncJsonld } from '@/api/types/entitySync/Jsonld';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
+import { api } from '@/lib/api';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { BulkActionsBar } from '@/components/BulkActionsBar';
@@ -153,8 +156,37 @@ export function TasksListPage() {
   };
 
   const isLoading = tableQuery.isLoading;
-  const rows = tableQuery.data?.data ?? [];
+  const rows = useMemo(() => tableQuery.data?.data ?? [], [tableQuery.data]);
   const total = tableQuery.data?.total ?? 0;
+
+  // External-sync badges: fetch ONLY the syncs for the tasks on this page in a
+  // single request, instead of letting each row's EntitySyncBadgeStack crawl the
+  // whole workspace entity_syncs table (pagination:off = dozens of round-trips).
+  const pageTaskIds = useMemo(
+    () => rows.map((r) => r.id).filter((id): id is string => Boolean(id)),
+    [rows],
+  );
+  const { data: pageSyncs } = useQuery({
+    queryKey: ['task-entity-syncs', pageTaskIds],
+    enabled: pageTaskIds.length > 0,
+    queryFn: async () => {
+      const search = new URLSearchParams();
+      search.set('entityType', 'task');
+      for (const id of pageTaskIds) search.append('entityId[]', id);
+      // One page covers a 50-row list comfortably (200 = API max per page).
+      search.set('itemsPerPage', '200');
+      const { data } = await api.get(`/entity_syncs?${search.toString()}`);
+      return (data.member ?? data['hydra:member'] ?? []) as Row<EntitySyncJsonld>[];
+    },
+  });
+  const syncsByTaskId = useMemo(() => {
+    const map: Record<string, Row<EntitySyncJsonld>[]> = {};
+    for (const s of pageSyncs ?? []) {
+      if (!s.entityId) continue;
+      (map[s.entityId] ??= []).push(s);
+    }
+    return map;
+  }, [pageSyncs]);
 
   // Bulk-edit selection state — set of task IRIs.
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -347,7 +379,11 @@ export function TasksListPage() {
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           <span className="truncate">{t.title}</span>
-                          <EntitySyncBadgeStack entityId={t.id} variant="compact" />
+                          <EntitySyncBadgeStack
+                            entityId={t.id}
+                            syncs={t.id ? (syncsByTaskId[t.id] ?? []) : []}
+                            variant="compact"
+                          />
                         </div>
                       </TableCell>
                       <TableCell>
