@@ -2,11 +2,9 @@ import type { AuthProvider } from '@refinedev/core';
 import {
   api,
   clearAuth,
-  JWT_STORAGE_KEY,
-  readAuth,
+  getAccessToken,
   refreshAccessToken,
-  REFRESH_STORAGE_KEY,
-  REMEMBER_STORAGE_KEY,
+  setAccessToken,
   WORKSPACE_STORAGE_KEY,
   writeAuth,
 } from '@/lib/api';
@@ -15,96 +13,80 @@ import { clearMercureToken } from '@/lib/mercure';
 /**
  * Refine auth-provider wired to Worktide's JWT login endpoints:
  *
- *   POST /v1/auth/login    { email, password }     → { token, refresh_token }
- *   POST /v1/auth/refresh  { refresh_token }       → { token, refresh_token }
- *   POST /v1/auth/logout   (bearer)
- *   GET  /v1/auth/me       (bearer)                → { id, email, fullName, ... }
+ *   POST /v1/auth/login    { email, password }   → { token }   (+ httpOnly refresh cookie)
+ *   POST /v1/auth/refresh  {}  (cookie)          → { token }   (rotates the cookie)
+ *   POST /v1/auth/logout   (bearer, cookie)      → clears the cookie + revokes
+ *   GET  /v1/auth/me       (bearer)              → { id, email, fullName, ... }
  *
- * The refresh-token rotation happens lazy on first 401 — onError below.
- * On hard auth failure (refresh also rejected) we wipe credentials and
- * redirect to /login.
- *
- * Workspace context: after login we fetch /v1/auth/me, pick the first
- * workspace membership and persist its UUID under wt.workspace so future
- * requests carry X-Workspace-Id automatically (see lib/api.ts).
+ * Auth model (M1): the access token (JWT) is held in memory only; the refresh
+ * token is an httpOnly cookie. On load/reload check() silently refreshes from
+ * the cookie to restore the session; on a 401 the token is refreshed + the
+ * request replayed (lib/api.ts). Hard failure → wipe + redirect to /login.
  */
-type LoginInput = { email?: string; password?: string; remember?: boolean };
+type LoginInput = { email?: string; password?: string };
+
+function readWorkspace(): string | null {
+  return localStorage.getItem(WORKSPACE_STORAGE_KEY);
+}
+
+/** Best-effort: persist the caller's first workspace so requests carry X-Workspace-Id. */
+async function bootstrapWorkspace(): Promise<void> {
+  if (readWorkspace()) return;
+  try {
+    const me = await api.get('/auth/me');
+    const ws = me.data?.workspaces?.[0]?.id ?? me.data?.workspaceId;
+    if (ws) writeAuth(WORKSPACE_STORAGE_KEY, ws);
+  } catch {
+    // transient — check()/next nav retries
+  }
+}
 
 export const authProvider: AuthProvider = {
   async login(params) {
-    const { email, password, remember = true } = params as LoginInput;
+    const { email, password } = params as LoginInput;
     if (!email || !password) {
       return { success: false, error: { name: 'Missing', message: 'Email + Passwort erforderlich' } };
     }
     try {
-      // Persist the choice BEFORE writing tokens so writeAuth picks the
-      // right bucket on the very first call.
-      localStorage.setItem(REMEMBER_STORAGE_KEY, remember ? '1' : '0');
-
-      const { data } = await api.post<{ token: string; refresh_token: string }>(
+      const { data } = await api.post<{ token: string }>(
         '/auth/login',
         { email, password },
         { headers: { Authorization: '' } }, // suppress any stale JWT
       );
-      writeAuth(JWT_STORAGE_KEY, data.token);
-      writeAuth(REFRESH_STORAGE_KEY, data.refresh_token);
+      setAccessToken(data.token); // in-memory; the refresh cookie is set by the response
     } catch {
-      // Only the credentials-check is allowed to fail with "LoginFailed".
       return {
         success: false,
         error: { name: 'LoginFailed', message: 'Ungültige Zugangsdaten.' },
       };
     }
-    // Workspace bootstrap is best-effort and must NOT roll back the login.
-    // If /auth/me throws transiently, check() will retry on next nav.
-    try {
-      const me = await api.get('/auth/me');
-      const workspaceId = me.data?.workspaces?.[0]?.id ?? me.data?.workspaceId;
-      if (workspaceId) {
-        writeAuth(WORKSPACE_STORAGE_KEY, workspaceId);
-      }
-    } catch {
-      // intentional fallthrough
-    }
+    await bootstrapWorkspace();
     return { success: true, redirectTo: '/' };
   },
 
   async logout() {
     try {
-      await api.post('/auth/logout', {});
+      await api.post('/auth/logout', {}); // clears the httpOnly cookie + revokes the token
     } catch {
-      // intentional: even if revocation fails, drop the local creds
+      // even if revocation fails, drop the local session
     }
-    clearAuth(JWT_STORAGE_KEY);
-    clearAuth(REFRESH_STORAGE_KEY);
+    setAccessToken(null);
     clearAuth(WORKSPACE_STORAGE_KEY);
     clearMercureToken();
     return { success: true, redirectTo: '/login' };
   },
 
   async check() {
-    const jwt = readAuth(JWT_STORAGE_KEY);
-    if (!jwt) {
-      return { authenticated: false, redirectTo: '/login' };
-    }
-    // Bootstrap wt.workspace if missing. Two real causes:
-    //  - The JWT is older than the workspace-persistence code (legacy
-    //    session from before that ship).
-    //  - The original login picked up the JWT successfully but /auth/me
-    //    threw transiently and we never reached the workspace-set step.
-    // Either way, requests that need X-Workspace-Id (PAT-creates,
-    // workspace-scoped PATCH, etc.) silently fail until the user
-    // re-logs in — fix that here once per affected boot.
-    if (!readAuth(WORKSPACE_STORAGE_KEY)) {
-      try {
-        const me = await api.get('/auth/me');
-        const ws = me.data?.workspaces?.[0]?.id ?? me.data?.workspaceId;
-        if (ws) writeAuth(WORKSPACE_STORAGE_KEY, ws);
-      } catch {
-        // /auth/me itself failed — let the request that revealed this
-        // surface its own error; we'll get another chance next nav.
+    // A fresh load/reload has no in-memory token → silently refresh from the
+    // httpOnly cookie. This is the session-restore path AND the auth gate;
+    // Refine's <Authenticated> shows its loading fallback while this awaits.
+    if (!getAccessToken()) {
+      const ok = await refreshAccessToken();
+      if (!ok) {
+        return { authenticated: false, redirectTo: '/login' };
       }
     }
+    await bootstrapWorkspace();
     return { authenticated: true };
   },
 
@@ -112,10 +94,7 @@ export const authProvider: AuthProvider = {
     if ((error as { response?: { status?: number } })?.response?.status !== 401) {
       return {};
     }
-    if (!readAuth(REFRESH_STORAGE_KEY)) {
-      return { logout: true, redirectTo: '/login' };
-    }
-    // Share ONE refresh across all concurrent 401s (rotation-safe).
+    // Share ONE refresh across all concurrent 401s (cookie-based, rotation-safe).
     const refreshed = await refreshAccessToken();
     return refreshed ? {} : { logout: true, redirectTo: '/login' };
   },

@@ -6,16 +6,14 @@ import axios, {
 } from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { api, JWT_STORAGE_KEY, REFRESH_STORAGE_KEY, readAuth, writeAuth } from './api';
+import { api, getAccessToken, refreshAccessToken, setAccessToken } from './api';
 
 /**
- * 401 → refresh → replay contract (web M2). We drive the REAL response
- * interceptor from api.ts through a stubbed axios adapter, so the shipped code
- * path runs rather than a reimplementation. The adapter decides 401-vs-200 from
- * the Bearer token, mirroring the backend: the stale JWT is rejected, the
- * freshly-refreshed one accepted. A custom adapter must enforce validateStatus
- * itself (reject non-2xx) — else a resolved 401 reads as success and the error
- * interceptor never fires.
+ * Auth model (M1): access token in memory, refresh token in an httpOnly cookie.
+ * We drive the REAL interceptor + refresh through a stubbed axios adapter. The
+ * adapter honours "Bearer jwt-new" as the refreshed access token and treats the
+ * stale one as expired; the refresh endpoint always succeeds here (the cookie is
+ * assumed present — the browser attaches it, invisible to JS).
  */
 
 function authHeader(config: InternalAxiosRequestConfig): string {
@@ -28,22 +26,8 @@ function reply(config: InternalAxiosRequestConfig, status: number, data: unknown
   return Promise.reject(new AxiosError('Request failed', AxiosError.ERR_BAD_REQUEST, config, null, response));
 }
 
-function fakeStorage(): Storage {
-  const m = new Map<string, string>();
-  return {
-    getItem: (k: string) => m.get(k) ?? null,
-    setItem: (k: string, v: string) => void m.set(k, String(v)),
-    removeItem: (k: string) => void m.delete(k),
-    clear: () => m.clear(),
-    key: (i: number) => [...m.keys()][i] ?? null,
-    get length() {
-      return m.size;
-    },
-  } as Storage;
-}
-
 let refreshCalls: number;
-/** When true the refresh endpoint itself answers 401 (revoked/expired token). */
+/** When true the refresh endpoint answers 401 (no/expired cookie). */
 let refreshFails: boolean;
 
 function installAdapter(): void {
@@ -51,21 +35,21 @@ function installAdapter(): void {
     const url = `${config.baseURL ?? ''}${config.url ?? ''}`;
     if (url.includes('/auth/refresh')) {
       refreshCalls += 1;
-      return refreshFails
-        ? reply(config, 401, { error: 'invalid refresh token' })
-        : reply(config, 200, { token: 'jwt-new', refresh_token: 'refresh-new' });
+      return refreshFails ? reply(config, 401, { error: 'no cookie' }) : reply(config, 200, { token: 'jwt-new' });
     }
-    return authHeader(config) === 'Bearer jwt-new'
-      ? reply(config, 200, { ok: true })
-      : reply(config, 401, { error: 'expired' });
+    return authHeader(config) === 'Bearer jwt-new' ? reply(config, 200, { ok: true }) : reply(config, 401, { error: 'expired' });
   };
   api.defaults.adapter = adapter;
   axios.defaults.adapter = adapter;
 }
 
 beforeEach(() => {
-  vi.stubGlobal('localStorage', fakeStorage());
-  vi.stubGlobal('sessionStorage', fakeStorage());
+  vi.stubGlobal('localStorage', {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  });
+  setAccessToken(null);
   refreshCalls = 0;
   refreshFails = false;
   installAdapter();
@@ -73,77 +57,75 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  setAccessToken(null);
 });
 
-describe('api 401 refresh interceptor (M2)', () => {
-  it('refreshes once and replays the original request with the new token', async () => {
-    writeAuth(JWT_STORAGE_KEY, 'jwt-stale');
-    writeAuth(REFRESH_STORAGE_KEY, 'refresh-1');
-
-    const res = await api.get('/tasks');
-
-    expect(res.data).toEqual({ ok: true });
+describe('refreshAccessToken (cookie-based)', () => {
+  it('refreshes with no body token and stores the access token in memory', async () => {
+    const ok = await refreshAccessToken();
+    expect(ok).toBe(true);
     expect(refreshCalls).toBe(1);
-    expect(readAuth(JWT_STORAGE_KEY)).toBe('jwt-new');
-    expect(readAuth(REFRESH_STORAGE_KEY)).toBe('refresh-new');
+    expect(getAccessToken()).toBe('jwt-new');
   });
 
-  it('coalesces concurrent 401s into a single refresh (rotation-safe)', async () => {
-    writeAuth(JWT_STORAGE_KEY, 'jwt-stale');
-    writeAuth(REFRESH_STORAGE_KEY, 'refresh-1');
+  it('resolves false (no throw) when there is no valid cookie', async () => {
+    refreshFails = true;
+    const ok = await refreshAccessToken();
+    expect(ok).toBe(false);
+    expect(getAccessToken()).toBeNull();
+  });
 
+  it('coalesces concurrent callers into a single refresh', async () => {
+    const [a, b, c] = await Promise.all([refreshAccessToken(), refreshAccessToken(), refreshAccessToken()]);
+    expect([a, b, c]).toEqual([true, true, true]);
+    expect(refreshCalls).toBe(1);
+  });
+
+  it('a failed refresh does not poison later refreshes (inflight reset)', async () => {
+    refreshFails = true;
+    expect(await refreshAccessToken()).toBe(false);
+    refreshFails = false;
+    expect(await refreshAccessToken()).toBe(true);
+    expect(getAccessToken()).toBe('jwt-new');
+  });
+});
+
+describe('api 401 refresh interceptor', () => {
+  it('refreshes once and replays the original request with the new token', async () => {
+    setAccessToken('jwt-stale');
+    const res = await api.get('/tasks');
+    expect(res.data).toEqual({ ok: true });
+    expect(refreshCalls).toBe(1);
+    expect(getAccessToken()).toBe('jwt-new');
+  });
+
+  it('coalesces concurrent 401s into a single refresh', async () => {
+    setAccessToken('jwt-stale');
     const all = await Promise.all([api.get('/a'), api.get('/b'), api.get('/c')]);
-
     expect(all.map((r) => r.data)).toEqual([{ ok: true }, { ok: true }, { ok: true }]);
     expect(refreshCalls).toBe(1);
   });
 
   it('rejects (for authProvider to log out) when refresh fails', async () => {
-    writeAuth(JWT_STORAGE_KEY, 'jwt-stale');
-    writeAuth(REFRESH_STORAGE_KEY, 'refresh-bad');
+    setAccessToken('jwt-stale');
     refreshFails = true;
-
     await expect(api.get('/tasks')).rejects.toMatchObject({ response: { status: 401 } });
-    expect(refreshCalls).toBe(1);
-  });
-
-  it('does not attempt a refresh when there is no refresh token', async () => {
-    writeAuth(JWT_STORAGE_KEY, 'jwt-stale'); // no refresh token stored
-
-    await expect(api.get('/tasks')).rejects.toMatchObject({ response: { status: 401 } });
-    expect(refreshCalls).toBe(0);
-  });
-
-  it('a no-token 401 does not poison later refreshes (inflight-leak regression)', async () => {
-    // A 401 with NO refresh token must not cache a stuck resolved-false
-    // in-flight promise, or every subsequent refresh short-circuits to false.
-    writeAuth(JWT_STORAGE_KEY, 'jwt-stale');
-    await expect(api.get('/a')).rejects.toMatchObject({ response: { status: 401 } });
-    expect(refreshCalls).toBe(0);
-
-    // The user now has a refresh token — a later 401 must actually refresh + replay.
-    writeAuth(REFRESH_STORAGE_KEY, 'refresh-1');
-    const res = await api.get('/b');
-    expect(res.data).toEqual({ ok: true });
     expect(refreshCalls).toBe(1);
   });
 
   it('does not retry a second time if the replay also 401s', async () => {
-    writeAuth(JWT_STORAGE_KEY, 'jwt-stale');
-    writeAuth(REFRESH_STORAGE_KEY, 'refresh-1');
-    // Refresh "succeeds" but the adapter never honours the new token either.
+    setAccessToken('jwt-stale');
     const adapter: AxiosAdapter = (config) => {
       const url = `${config.baseURL ?? ''}${config.url ?? ''}`;
       if (url.includes('/auth/refresh')) {
         refreshCalls += 1;
-        return reply(config, 200, { token: 'jwt-new', refresh_token: 'refresh-new' });
+        return reply(config, 200, { token: 'jwt-new' });
       }
       return reply(config, 401, { error: 'still expired' });
     };
     api.defaults.adapter = adapter;
     axios.defaults.adapter = adapter;
-
     await expect(api.get('/tasks')).rejects.toMatchObject({ response: { status: 401 } });
-    expect(refreshCalls).toBe(1); // exactly one refresh attempt, no infinite loop
+    expect(refreshCalls).toBe(1);
   });
 });

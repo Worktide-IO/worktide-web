@@ -284,7 +284,15 @@ export default function App() {
           <Routes>
             <Route
               element={
-                <Authenticated key="auth" fallback={<Navigate to="/login" replace />}>
+                <Authenticated
+                  key="auth"
+                  fallback={<Navigate to="/login" replace />}
+                  loading={
+                    <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+                      Lädt…
+                    </div>
+                  }
+                >
                   <AppLayout>
                     <AppErrorBoundary>
                       <Outlet />
