@@ -14,6 +14,7 @@ import { CustomerPortalCard } from '@/components/CustomerPortalCard';
 import { CustomerSlaCard } from '@/components/CustomerSlaCard';
 import { CustomerAgreementsTab } from './CustomerAgreementsTab';
 import { CustomerProductsTab } from './CustomerProductsTab';
+import { CustomerNewslettersTab } from './CustomerNewslettersTab';
 import { CustomerForm } from './CustomerForm';
 import {
   CustomerContactsTab,
@@ -167,6 +168,7 @@ export function CustomerDetailPage() {
           <TabsTrigger value="subscriptions">Abos</TabsTrigger>
           <TabsTrigger value="agreements">Verträge</TabsTrigger>
           <TabsTrigger value="products">Produkte</TabsTrigger>
+          <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="pt-4">
           <CustomerForm action="edit" id={id} embedded />
@@ -187,6 +189,9 @@ export function CustomerDetailPage() {
         </TabsContent>
         <TabsContent value="products" className="pt-4">
           {id ? <CustomerProductsTab customerIri={iri} /> : null}
+        </TabsContent>
+        <TabsContent value="newsletter" className="pt-4">
+          {id ? <CustomerNewslettersTab customerId={id} /> : null}
         </TabsContent>
       </Tabs>
     </div>

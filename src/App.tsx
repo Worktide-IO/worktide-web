@@ -62,6 +62,7 @@ import { ProductsListPage } from '@/pages/products/ProductsListPage';
 import { ProductCreatePage } from '@/pages/products/ProductCreatePage';
 import { ProductEditPage } from '@/pages/products/ProductEditPage';
 import { IndustriesPage } from '@/pages/industries/IndustriesPage';
+import { NewslettersPage } from '@/pages/newsletters/NewslettersPage';
 import { TasksListPage } from '@/pages/tasks/TasksListPage';
 import { TimeEntriesListPage } from '@/pages/timeEntries/TimeEntriesListPage';
 import { AiAgentsOverviewPage } from '@/pages/ai-agents/AiAgentsOverviewPage';
@@ -236,6 +237,11 @@ export default function App() {
               meta: { label: 'Branchen', icon: 'Building', category: 'CRM' },
             },
             {
+              name: 'newsletters',
+              list: '/newsletter',
+              meta: { label: 'Newsletter', icon: 'Mail', category: 'CRM' },
+            },
+            {
               name: 'research_missions',
               list: '/research/missions',
               create: '/research/missions/create',
@@ -342,6 +348,7 @@ export default function App() {
               <Route path="/produkte/create" element={<ProductCreatePage />} />
               <Route path="/produkte/:id" element={<ProductEditPage />} />
               <Route path="/branchen" element={<IndustriesPage />} />
+              <Route path="/newsletter" element={<NewslettersPage />} />
               <Route path="/research/missions" element={<ResearchMissionsListPage />} />
               <Route path="/research/missions/create" element={<ResearchMissionCreatePage />} />
               <Route path="/research/missions/:id" element={<ResearchMissionDetailPage />} />
