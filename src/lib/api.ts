@@ -5,55 +5,44 @@ import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig 
  * VITE_API_BASE for production deploys; dev defaults to a path that the
  * Vite proxy forwards to api.worktide.ddev.site (see vite.config.ts).
  *
- * JWT lives in localStorage under "wt.jwt"; the request interceptor stamps
- * the Authorization header. On 401 a response interceptor refreshes the token
- * once and replays the request (transparent to the caller); if refresh fails it
- * rejects and authProvider.onError logs the user out.
+ * Auth (M1): the refresh token lives in an httpOnly cookie the browser sends
+ * automatically (withCredentials) — never in JS-readable storage. The short-
+ * lived access token (JWT, ~1h) is held in MEMORY only (below); on load/reload
+ * the app silently refreshes from the cookie (authProvider.check). On 401 a
+ * response interceptor refreshes once and replays the request.
+ *
+ * Only non-sensitive prefs (the selected workspace id) live in localStorage.
  */
 export const API_BASE = import.meta.env.VITE_API_BASE ?? '/v1';
-export const JWT_STORAGE_KEY = 'wt.jwt';
-export const REFRESH_STORAGE_KEY = 'wt.refresh';
 export const WORKSPACE_STORAGE_KEY = 'wt.workspace';
-/** Persisted "Angemeldet bleiben" choice; survives tab-close so even
- *  empty sessionStorage can decide which bucket to write into. */
-export const REMEMBER_STORAGE_KEY = 'wt.remember';
 
-/**
- * Auth-token storage chooser. Two buckets:
- *   - localStorage  → persists across tabs + browser restarts.
- *   - sessionStorage → wiped on tab/browser close.
- *
- * Choice is set at login: "Angemeldet bleiben" → localStorage,
- * unchecked → sessionStorage. Default is localStorage so existing
- * users keep the prior behaviour without an extra click.
- *
- * Readers fall through both buckets so a token written to either
- * survives bootstrap. Writers go to the chosen bucket only and clear
- * the other one to keep state consistent.
- */
-export function authStorage(): Storage {
-  return localStorage.getItem(REMEMBER_STORAGE_KEY) === '0' ? sessionStorage : localStorage;
+// In-memory access token — deliberately NOT persisted, so XSS can't lift a
+// long-lived credential and a closed tab ends the in-memory session (the cookie
+// still allows a silent re-auth until it expires / is revoked).
+let accessToken: string | null = null;
+export function getAccessToken(): string | null {
+  return accessToken;
+}
+export function setAccessToken(token: string | null): void {
+  accessToken = token;
 }
 
+/** localStorage helpers for non-sensitive prefs (workspace id). */
 export function readAuth(key: string): string | null {
-  return sessionStorage.getItem(key) ?? localStorage.getItem(key);
+  return localStorage.getItem(key);
 }
-
 export function writeAuth(key: string, value: string): void {
-  const target = authStorage();
-  target.setItem(key, value);
-  // Wipe the *other* bucket so a leftover stale token from a previous
-  // setting can't shadow the fresh one.
-  (target === localStorage ? sessionStorage : localStorage).removeItem(key);
+  localStorage.setItem(key, value);
 }
-
 export function clearAuth(key: string): void {
   localStorage.removeItem(key);
-  sessionStorage.removeItem(key);
 }
 
 export const api: AxiosInstance = axios.create({
   baseURL: API_BASE,
+  // Send + accept the httpOnly refresh-token cookie on cross-origin XHR
+  // (web → api). Harmless same-origin (dev via the Vite proxy).
+  withCredentials: true,
   // 30s hard timeout — without this a wedged backend (slow load
   // balancer, half-deployed pod) leaves Refine spinners on forever
   // and the user can't tell the difference between "saving" and
@@ -67,7 +56,7 @@ export const api: AxiosInstance = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const jwt = readAuth(JWT_STORAGE_KEY);
+  const jwt = getAccessToken();
   if (jwt && config.headers) {
     config.headers.Authorization = `Bearer ${jwt}`;
   }
@@ -104,10 +93,11 @@ export function classifyError(error: unknown): NetworkErrorKind {
 
 /**
  * Single-flight access-token refresh, shared by the authProvider (401 on a
- * normal request) and the offline pending-queue drain. Refresh tokens ROTATE,
- * so concurrent callers must await ONE POST /auth/refresh — otherwise the first
- * rotation invalidates the token the others hold and they spuriously fail.
- * Resolves true iff a valid access token is now stored.
+ * normal request, silent-refresh-on-load) and the offline pending-queue drain.
+ * The refresh token travels as the httpOnly cookie (withCredentials) — no body
+ * token — and the backend rotates it into a fresh cookie. Concurrent callers
+ * must await ONE POST /auth/refresh (the rotation invalidates prior tokens).
+ * Resolves true iff a valid access token is now in memory.
  */
 let refreshInflight: Promise<boolean> | null = null;
 
@@ -115,25 +105,22 @@ export function refreshAccessToken(): Promise<boolean> {
   if (refreshInflight) {
     return refreshInflight;
   }
-  // Check for a refresh token BEFORE creating the in-flight promise. If we did
-  // it inside, the early `return false` would skip the `finally` that resets
-  // `refreshInflight` — leaving it stuck as a resolved-false promise, so every
-  // later refresh (even after a fresh login) would short-circuit to false.
-  const refresh = readAuth(REFRESH_STORAGE_KEY);
-  if (!refresh) {
-    return Promise.resolve(false);
-  }
   refreshInflight = (async () => {
     try {
-      const { data } = await api.post<{ token: string; refresh_token: string }>(
+      // No body token: the cookie carries it. Suppress any stale Bearer so a
+      // just-expired access token can't shadow the cookie.
+      const { data } = await api.post<{ token: string }>(
         '/auth/refresh',
-        { refresh_token: refresh },
+        {},
         { headers: { Authorization: '' } },
       );
-      writeAuth(JWT_STORAGE_KEY, data.token);
-      writeAuth(REFRESH_STORAGE_KEY, data.refresh_token);
+      if (!data?.token) {
+        return false;
+      }
+      setAccessToken(data.token);
       return true;
     } catch {
+      // No cookie / revoked / expired → not authenticated.
       return false;
     } finally {
       refreshInflight = null;
@@ -228,8 +215,8 @@ api.interceptors.response.use(
     original._retried = true;
     const ok = await refreshAccessToken();
     if (!ok) return Promise.reject(error);
-    // The request interceptor re-reads JWT_STORAGE_KEY, so the replay carries the
-    // fresh token.
+    // The request interceptor re-reads the in-memory access token, so the replay
+    // carries the fresh one.
     return api(original);
   },
 );

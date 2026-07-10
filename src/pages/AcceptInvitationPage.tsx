@@ -2,7 +2,7 @@ import { AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
-import { api, writeAuth, JWT_STORAGE_KEY, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { api, setAccessToken, writeAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import { BrandLogo } from '@/components/BrandLogo';
 import { BrandingFooter } from '@/components/BrandingFooter';
 import { Button } from '@/components/ui/button';
@@ -55,7 +55,7 @@ export function AcceptInvitationPage() {
         `/workspace_invitations/${encodeURIComponent(token)}/accept`,
         body,
       );
-      if (data.token) writeAuth(JWT_STORAGE_KEY, data.token);
+      if (data.token) setAccessToken(data.token); // in-memory; refresh cookie set by the response
       if (data.workspaceId) writeAuth(WORKSPACE_STORAGE_KEY, data.workspaceId);
       navigate('/', { replace: true });
     } catch (err) {
