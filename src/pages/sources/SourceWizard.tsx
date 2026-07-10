@@ -62,7 +62,9 @@ export function SourceWizard({
   const def = findSourceType(adapterCode);
   const isEdit = Boolean(existingChannelId);
 
-  const [step, setStep] = useState<Step>(isEdit ? 'configure' : 'identify');
+  // Both create and edit start on 'identify' (name + visibility). In edit the
+  // channel already exists, so submitIdentify just advances instead of creating.
+  const [step, setStep] = useState<Step>('identify');
   const [channelId, setChannelId] = useState<string | null>(existingChannelId);
   const [testVerdict, setTestVerdict] = useState<TestVerdict | null>(null);
   const [saving, setSaving] = useState(false);
@@ -158,6 +160,12 @@ export function SourceWizard({
   const submitIdentify = async () => {
     if (!name.trim()) {
       toast.error('Name ist pflicht.');
+      return;
+    }
+    // Editing: the channel already exists — don't create a second one. Just move
+    // to the config step; name + visibility are persisted by submitConfigure.
+    if (isEdit) {
+      setStep('configure');
       return;
     }
     setSaving(true);
@@ -348,25 +356,6 @@ export function SourceWizard({
             </>
           ) : null}
 
-          {/* Edit skips the identify step, so surface the renamable label +
-              visibility here — otherwise an existing source can't be renamed.
-              submitConfigure already persists `name`. */}
-          {step === 'configure' && isEdit ? (
-            <>
-              <div className="space-y-1.5">
-                <Label htmlFor="wiz-edit-name">Bezeichnung</Label>
-                <Input
-                  id="wiz-edit-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="z. B. Support-Postfach"
-                />
-                <p className="text-xs text-muted-foreground">Wird als Channel-Bezeichnung in Listen angezeigt.</p>
-              </div>
-              <ChannelVisibilityFields value={visibility} onChange={setVisibility} />
-            </>
-          ) : null}
-
           {step === 'configure' && def.code === 'email_imap' ? (
             <ImapConfigure cfg={cfg} setField={setField} isEdit={isEdit} />
           ) : null}
@@ -401,10 +390,7 @@ export function SourceWizard({
         </div>
 
         <DialogFooter>
-          {/* Edit starts on 'configure' (identify is skipped), so no "back" to
-              identify there — otherwise the visibility fields, shown on both
-              steps, appear twice. */}
-          {step !== 'identify' && step !== 'done' && !(step === 'configure' && isEdit) ? (
+          {step !== 'identify' && step !== 'done' ? (
             <Button
               variant="ghost"
               onClick={() => setStep(step === 'test' ? 'configure' : 'identify')}
