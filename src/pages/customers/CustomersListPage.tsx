@@ -1,6 +1,6 @@
 import { useList, useTable } from '@refinedev/core';
 import { Link } from 'react-router';
-import { Plus, Search, Wifi, WifiOff } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type { Row } from '@/lib/refine';
@@ -8,6 +8,7 @@ import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { IndustryJsonld } from '@/lib/industry';
 import { useLiveResource } from '@/lib/mercure';
 import { Badge } from '@/components/ui/badge';
+import { LiveBadge } from '@/components/LiveBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -321,23 +322,3 @@ function Pagination({
   );
 }
 
-/**
- * Tiny "live" status pill next to the page title. Green when the Mercure
- * EventSource is open, muted while it reconnects. Kept inline so the
- * Customer list stays a self-contained reference for the pattern; other
- * list pages can copy this exact shape.
- */
-function LiveBadge({ connected }: { connected: boolean }) {
-  if (connected) {
-    return (
-      <Badge variant="secondary" className="gap-1 text-xs">
-        <Wifi className="size-3" /> Live
-      </Badge>
-    );
-  }
-  return (
-    <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
-      <WifiOff className="size-3" /> offline
-    </Badge>
-  );
-}
