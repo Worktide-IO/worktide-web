@@ -4,6 +4,7 @@ import {
   clearAuth,
   JWT_STORAGE_KEY,
   readAuth,
+  refreshAccessToken,
   REFRESH_STORAGE_KEY,
   REMEMBER_STORAGE_KEY,
   WORKSPACE_STORAGE_KEY,
@@ -111,22 +112,12 @@ export const authProvider: AuthProvider = {
     if ((error as { response?: { status?: number } })?.response?.status !== 401) {
       return {};
     }
-    const refresh = readAuth(REFRESH_STORAGE_KEY);
-    if (!refresh) {
+    if (!readAuth(REFRESH_STORAGE_KEY)) {
       return { logout: true, redirectTo: '/login' };
     }
-    try {
-      const { data } = await api.post<{ token: string; refresh_token: string }>(
-        '/auth/refresh',
-        { refresh_token: refresh },
-        { headers: { Authorization: '' } },
-      );
-      writeAuth(JWT_STORAGE_KEY, data.token);
-      writeAuth(REFRESH_STORAGE_KEY, data.refresh_token);
-      return {};
-    } catch {
-      return { logout: true, redirectTo: '/login' };
-    }
+    // Share ONE refresh across all concurrent 401s (rotation-safe).
+    const refreshed = await refreshAccessToken();
+    return refreshed ? {} : { logout: true, redirectTo: '/login' };
   },
 
   async getIdentity() {
