@@ -103,6 +103,43 @@ export function classifyError(error: unknown): NetworkErrorKind {
 }
 
 /**
+ * Single-flight access-token refresh, shared by the authProvider (401 on a
+ * normal request) and the offline pending-queue drain. Refresh tokens ROTATE,
+ * so concurrent callers must await ONE POST /auth/refresh — otherwise the first
+ * rotation invalidates the token the others hold and they spuriously fail.
+ * Resolves true iff a valid access token is now stored.
+ */
+let refreshInflight: Promise<boolean> | null = null;
+
+export function refreshAccessToken(): Promise<boolean> {
+  if (refreshInflight) {
+    return refreshInflight;
+  }
+  refreshInflight = (async () => {
+    const refresh = readAuth(REFRESH_STORAGE_KEY);
+    if (!refresh) {
+      return false;
+    }
+    try {
+      const { data } = await api.post<{ token: string; refresh_token: string }>(
+        '/auth/refresh',
+        { refresh_token: refresh },
+        { headers: { Authorization: '' } },
+      );
+      writeAuth(JWT_STORAGE_KEY, data.token);
+      writeAuth(REFRESH_STORAGE_KEY, data.refresh_token);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      refreshInflight = null;
+    }
+  })();
+
+  return refreshInflight;
+}
+
+/**
  * CustomEvent the response interceptor emits on the window so the
  * <NetworkStatusBanner /> and the useResilientMutation queue can
  * react without a global state library. Detail carries the kind,
