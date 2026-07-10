@@ -20,6 +20,7 @@ import './calendar.css';
 
 type Identity = { id?: string };
 type Filter = 'all' | 'mine' | 'customers';
+type BookingRow = Row<{ '@id': string; id?: string; startAt: string; endAt: string; inviteeName: string; status: string }>;
 
 /**
  * Calendar view at `/calendar`.
@@ -50,6 +51,10 @@ export function CalendarPage() {
   });
   const { result: projects } = useList<Row<ProjectJsonld>>({
     resource: 'projects',
+    pagination: { mode: 'off' },
+  });
+  const { result: bookings } = useList<BookingRow>({
+    resource: 'bookings',
     pagination: { mode: 'off' },
   });
   const { connected } = useLiveResource('tasks');
@@ -97,7 +102,28 @@ export function CalendarPage() {
     });
   }, [filteredTasks, projectByIri]);
 
+  // Confirmed bookings as timed events (always shown, brand-coloured).
+  const bookingEvents = useMemo<EventInput[]>(() => {
+    return (bookings?.data ?? [])
+      .filter((b) => b.status !== 'cancelled')
+      .map((b) => ({
+        id: b['@id'] ?? '',
+        title: `📅 ${b.inviteeName}`,
+        start: b.startAt,
+        end: b.endAt,
+        backgroundColor: '#0F8C72',
+        borderColor: '#0F8C72',
+        extendedProps: { type: 'booking' },
+      }));
+  }, [bookings]);
+
+  const allEvents = useMemo<EventInput[]>(() => [...events, ...bookingEvents], [events, bookingEvents]);
+
   const handleClick = (arg: EventClickArg) => {
+    if (arg.event.extendedProps.type === 'booking') {
+      navigate('/buchungen');
+      return;
+    }
     const projectId = arg.event.extendedProps.projectId as string | null;
     if (projectId) {
       navigate(`/projects/${projectId}?tab=board`);
@@ -123,7 +149,7 @@ export function CalendarPage() {
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            {events.length} Tasks mit Fälligkeitsdatum
+            {events.length} Tasks · {bookingEvents.length} Termine
           </p>
         </div>
         <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
@@ -161,7 +187,7 @@ export function CalendarPage() {
                 week: 'Woche',
                 day: 'Tag',
               }}
-              events={events}
+              events={allEvents}
               eventClick={handleClick}
               dayMaxEventRows={4}
               weekNumbers
