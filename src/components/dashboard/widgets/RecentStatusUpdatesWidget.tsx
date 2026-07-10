@@ -1,27 +1,26 @@
-import { useList } from '@refinedev/core';
 import { Activity } from 'lucide-react';
-import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { ProjectJsonld } from '@/api/types/project/Jsonld';
-import type { Row } from '@/lib/refine';
-import { useUserDirectory, userDisplayName } from '@/hooks/useUserDirectory';
+import { api } from '@/lib/api';
+import { topicFor, useMercureTopic } from '@/lib/mercure';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type Health = 'on_track' | 'at_risk' | 'off_track' | 'on_hold' | 'complete';
 
-type StatusUpdate = Row<{
-  '@id'?: string;
-  id?: string;
-  health?: Health;
-  title?: string | null;
-  summary?: string | null;
-  project?: string | null;
-  createdByUser?: string | null;
-  createdAt?: string;
-}>;
+/** One row from GET /v1/dashboard/recent-status-updates — project + author inlined. */
+type StatusUpdate = {
+  '@id': string;
+  id: string;
+  health: Health;
+  title: string | null;
+  summary: string | null;
+  createdAt: string | null;
+  project: { '@id': string; id: string; name: string };
+  author: { id: string; name: string } | null;
+};
 
 const HEALTH_DOT: Record<Health, string> = {
   on_track: 'bg-green-500',
@@ -31,33 +30,31 @@ const HEALTH_DOT: Record<Health, string> = {
   complete: 'bg-sky-500',
 };
 
+const KEY = ['dashboard', 'recent-status-updates'] as const;
+
 /**
  * Workspace-wide feed of the most recent project status-updates — the
- * coordinator's "what did every project last report" glance. Reads the same
- * ProjectStatusUpdate resource as the project Status-Updates tab; clicking a
- * row opens that project's tab.
+ * coordinator's "what did every project last report" glance. Backed by the
+ * /v1/dashboard/recent-status-updates read-model (server returns the newest 12
+ * with project + author inlined) instead of fetching the whole
+ * project_status_updates + projects collections and slicing client-side.
  */
 export function RecentStatusUpdatesWidget() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const { result: updates, query } = useList<StatusUpdate>({
-    resource: 'project_status_updates',
-    pagination: { mode: 'off' },
-    sorters: [{ field: 'createdAt', order: 'desc' }],
+  const query = useQuery({
+    queryKey: KEY,
+    queryFn: async () => {
+      const { data } = await api.get<{ updates: StatusUpdate[] }>('/dashboard/recent-status-updates');
+      return data;
+    },
   });
-  const { result: projects } = useList<Row<ProjectJsonld>>({
-    resource: 'projects',
-    pagination: { mode: 'off' },
+  useMercureTopic(topicFor('project_status_updates'), {
+    onMessage: () => void queryClient.invalidateQueries({ queryKey: KEY }),
   });
-  const { byIri: userByIri } = useUserDirectory();
 
-  const projectByIri = useMemo(() => {
-    const m: Record<string, Row<ProjectJsonld>> = {};
-    for (const p of projects?.data ?? []) if (p['@id']) m[p['@id']] = p;
-    return m;
-  }, [projects]);
-
-  const rows = useMemo(() => (updates?.data ?? []).slice(0, 12), [updates]);
+  const rows = query.data?.updates ?? [];
 
   return (
     <Card className="h-full overflow-hidden">
@@ -82,11 +79,10 @@ export function RecentStatusUpdatesWidget() {
         ) : (
           <ul className="divide-y">
             {rows.map((u) => {
-              const project = u.project ? projectByIri[u.project] : null;
-              const author = u.createdByUser ? userByIri[u.createdByUser] : undefined;
+              const project = u.project;
               const line = u.title || u.summary || '—';
               return (
-                <li key={u['@id'] ?? u.id}>
+                <li key={u['@id']}>
                   <button
                     type="button"
                     className="widget-no-drag flex w-full items-start gap-2 rounded-md px-2 py-2 text-left hover:bg-muted/50"
@@ -105,7 +101,7 @@ export function RecentStatusUpdatesWidget() {
                       <div className="truncate text-sm font-medium">{line}</div>
                       <div className="truncate text-xs text-muted-foreground">
                         {project?.name ?? '—'}
-                        {author ? ` · ${userDisplayName(author)}` : ''}
+                        {u.author ? ` · ${u.author.name}` : ''}
                         {u.createdAt ? ` · ${new Date(u.createdAt).toLocaleDateString('de-DE')}` : ''}
                       </div>
                     </div>
