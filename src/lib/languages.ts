@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { api } from '@/lib/api';
+import { api, readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 
 /**
  * Human labels for the locale codes the backend advertises. Unknown codes
@@ -100,6 +100,52 @@ export function useActiveLocale(): string {
   }, []);
 
   return locale ?? 'en';
+}
+
+// The workspace's own language — the one the base columns are authored in, so
+// it needs no separate translation entry. Cached per workspace id.
+const wsLocaleCache: Record<string, string> = {};
+const wsLocaleInflight: Record<string, Promise<string | null>> = {};
+
+async function fetchPrimaryLocale(workspaceId: string): Promise<string | null> {
+  if (wsLocaleCache[workspaceId]) return wsLocaleCache[workspaceId];
+  if (!wsLocaleInflight[workspaceId]) {
+    wsLocaleInflight[workspaceId] = api
+      .get<{ locale?: string }>(`/workspaces/${workspaceId}`)
+      .then(({ data }) => {
+        const loc = data.locale ?? null;
+        if (loc) wsLocaleCache[workspaceId] = loc;
+        return loc;
+      })
+      .catch(() => null)
+      .finally(() => {
+        delete wsLocaleInflight[workspaceId];
+      });
+  }
+  return wsLocaleInflight[workspaceId];
+}
+
+/**
+ * The active workspace's primary language (its `locale`). Base columns are
+ * authored in this language, so translation editors exclude it. Null while
+ * loading or if unavailable.
+ */
+export function usePrimaryLocale(): string | null {
+  const wsId = readAuth(WORKSPACE_STORAGE_KEY) ?? '';
+  const [locale, setLocale] = useState<string | null>(wsId ? (wsLocaleCache[wsId] ?? null) : null);
+
+  useEffect(() => {
+    if (!wsId) return;
+    let cancelled = false;
+    void fetchPrimaryLocale(wsId).then((l) => {
+      if (!cancelled) setLocale(l);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [wsId]);
+
+  return locale;
 }
 
 /**

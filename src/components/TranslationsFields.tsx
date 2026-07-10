@@ -1,6 +1,6 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { languageLabel, type TranslationsMap } from '@/lib/languages';
+import { languageLabel, usePrimaryLocale, type TranslationsMap } from '@/lib/languages';
 
 export type { TranslationsMap };
 
@@ -27,7 +27,11 @@ export function TranslationsFields({
   value: TranslationsMap;
   onChange: (next: TranslationsMap) => void;
 }) {
-  if (locales.length === 0 || fields.length === 0) return null;
+  // The workspace's own language authors the base columns, so it needs no
+  // separate translation entry — only offer the *other* supported locales.
+  const primaryLocale = usePrimaryLocale();
+  const visibleLocales = locales.filter((locale) => locale !== primaryLocale);
+  if (visibleLocales.length === 0 || fields.length === 0) return null;
 
   const set = (field: string, locale: string, raw: string) => {
     const next: TranslationsMap = { ...value, [field]: { ...(value[field] ?? {}) } };
@@ -45,7 +49,7 @@ export function TranslationsFields({
   return (
     <div className="space-y-3 rounded-md border border-dashed p-3">
       <p className="text-xs font-medium text-muted-foreground">Übersetzungen</p>
-      {locales.map((locale) => (
+      {visibleLocales.map((locale) => (
         <div key={locale} className="space-y-2">
           <p className="text-xs font-semibold">{languageLabel(locale)}</p>
           {fields.map((field) => (
