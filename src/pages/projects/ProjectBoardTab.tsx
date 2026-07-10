@@ -10,7 +10,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useGetIdentity, useInvalidate, useList, useOne, useUpdate } from '@refinedev/core';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Ban, ChevronsLeft, Clock, Flag, ListTree, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
@@ -30,12 +30,11 @@ import {
 } from '@/components/ui/select';
 
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
-import type { TaskDependencyJsonld } from '@/api/types/taskDependency/Jsonld';
 import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
 import type { WorkspaceJsonld } from '@/api/types/workspace/Jsonld';
 import { readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import { resolveBoardColumns, type BoardColumnConfig, type ResolvedColumn } from '@/lib/boardColumns';
-import { useLiveResource } from '@/lib/mercure';
+import { topicFor, useLiveResource, useMercureTopic } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -159,14 +158,25 @@ export function ProjectBoardTab({ projectIri }: Props) {
   useLiveResource('tasks');
   useLiveResource('task_statuses');
 
-  // Subtask counts + "is blocked" lookup powered by the dependency
-  // table. We pull dependencies once per project — cheap because they
-  // stay rare per board.
-  const { result: dependencies } = useList<Row<TaskDependencyJsonld>>({
-    resource: 'task_dependencies',
-    pagination: { mode: 'off' },
-    queryOptions: { enabled: Boolean(projectIri) },
+  // Blocked-task highlighting comes from a project-scoped read-model instead of
+  // pulling EVERY workspace dependency: the server returns the successors whose
+  // blocking predecessor in this project is still open. Refetched on live task /
+  // status changes so a predecessor closing clears the block promptly.
+  const projectId = projectIri.split('/').pop() ?? '';
+  const queryClient = useQueryClient();
+  const { data: blockedData } = useQuery({
+    queryKey: ['board-blocked', projectId],
+    queryFn: async () => {
+      const { data } = await api.get<{ blocked: string[] }>('/dashboard/project-blocked', {
+        params: { project: projectId },
+      });
+      return data;
+    },
+    enabled: Boolean(projectId),
   });
+  const invalidateBlocked = () => void queryClient.invalidateQueries({ queryKey: ['board-blocked', projectId] });
+  useMercureTopic(topicFor('tasks'), { onMessage: invalidateBlocked });
+  useMercureTopic(topicFor('task_statuses'), { onMessage: invalidateBlocked });
 
   // Pre-check workflow rules client-side so a forbidden DnD shows a
   // useful toast instead of silently snapping back after a 403.
@@ -203,33 +213,9 @@ export function ProjectBoardTab({ projectIri }: Props) {
     return m;
   }, [tasks]);
 
-  const blockedTaskIris = useMemo(() => {
-    const open = new Set<string>();
-    const openStatusIris = new Set<string>();
-    for (const s of statuses?.data ?? []) {
-      const done = (s as { completed?: boolean }).completed ?? s.isCompleted ?? false;
-      if (!done && s['@id']) openStatusIris.add(s['@id']);
-    }
-    const taskByIri = new Map<string, Row<TaskJsonld>>();
-    for (const t of tasks?.data ?? []) {
-      if (t['@id']) taskByIri.set(t['@id'], t);
-    }
-    // Blocking-style relations stop the successor from moving forward
-    // while the predecessor is still in an open status. The set lives
-    // in BLOCKING_TYPES so the UI stays in sync with the backend's
-    // TaskDependencyType::isBlocking() — see that PHP file for why
-    // these three count and the others don't.
-    const BLOCKING_TYPES = new Set(['finish_to_start', 'blocks', 'precedes']);
-    for (const d of dependencies?.data ?? []) {
-      if (!d.type || !BLOCKING_TYPES.has(d.type)) continue;
-      const pred = d.predecessor ? taskByIri.get(d.predecessor) : null;
-      if (!pred || !pred.status) continue;
-      if (openStatusIris.has(pred.status) && d.successor) {
-        open.add(d.successor);
-      }
-    }
-    return open;
-  }, [dependencies, statuses, tasks]);
+  // The blocking rule (predecessor in this project still open → successor
+  // blocked, for TaskDependencyType::isBlocking() types) now runs server-side.
+  const blockedTaskIris = useMemo(() => new Set(blockedData?.blocked ?? []), [blockedData]);
 
   // The open ticket lives in the URL (?task=<uuid>) so it's deep-linkable and
   // survives back/forward — no local state.
