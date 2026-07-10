@@ -1,6 +1,6 @@
 import { useList, useTable } from '@refinedev/core';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, CheckSquare, Plus, Search, Timer, Wifi, WifiOff } from 'lucide-react';
+import { CalendarDays, CheckSquare, Plus, Search, Timer } from 'lucide-react';
 import { ProjectStarButton } from '@/components/ProjectStarButton';
 import { TagChips } from '@/components/TagChips';
 import { TagPicker } from '@/components/TagPicker';
@@ -16,6 +16,7 @@ import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { Badge } from '@/components/ui/badge';
+import { LiveBadge } from '@/components/LiveBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -318,14 +319,3 @@ export function ProjectsListPage() {
   );
 }
 
-function LiveBadge({ connected }: { connected: boolean }) {
-  return connected ? (
-    <Badge variant="secondary" className="gap-1 text-xs">
-      <Wifi className="size-3" /> Live
-    </Badge>
-  ) : (
-    <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
-      <WifiOff className="size-3" /> offline
-    </Badge>
-  );
-}
