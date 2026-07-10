@@ -38,12 +38,21 @@ export function EntitySyncBadgeStack({
   className?: string;
 }) {
   const scope = useEntitySyncScope();
-  // Only crawl the whole table when neither an explicit prop nor a scope
-  // provider supplies the syncs for this entity.
-  const selfFetch = providedSyncs === undefined && scope === null;
+  // Fall back to fetching only when neither an explicit prop nor a scope
+  // provider supplies the syncs for this entity. Even then, scope the request to
+  // THIS entity (entityType + entityId) so a single surface (e.g. the detail
+  // sheet) fetches its own 0–2 rows instead of crawling the whole workspace
+  // table page by page.
+  const selfFetch = providedSyncs === undefined && scope === null && Boolean(entityId);
   const { result: syncs } = useList<Row<EntitySyncJsonld>>({
     resource: 'entity_syncs',
     pagination: { mode: 'off' },
+    filters: entityId
+      ? [
+          { field: 'entityType', operator: 'eq', value: entityType },
+          { field: 'entityId', operator: 'eq', value: entityId },
+        ]
+      : [],
     queryOptions: { enabled: selfFetch },
   });
   const { result: channels } = useList<Row<ChannelJsonld>>({
