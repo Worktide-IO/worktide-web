@@ -1,6 +1,8 @@
 import { useOne } from '@refinedev/core';
-import { ArrowLeft, Pencil, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Pencil, Share2, Wifi, WifiOff } from 'lucide-react';
+import { useState } from 'react';
 import { ProjectStarButton } from '@/components/ProjectStarButton';
+import { ProjectShareDialog } from '@/components/ProjectShareDialog';
 import { TagChips } from '@/components/TagChips';
 import { useNavigate, useParams } from 'react-router';
 
@@ -33,6 +35,7 @@ import { ProjectStatusUpdatesTab } from './ProjectStatusUpdatesTab';
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [shareOpen, setShareOpen] = useState(false);
 
   const { result: project, query: projectQuery } = useOne<Row<ProjectJsonld>>({
     resource: 'projects',
@@ -107,6 +110,9 @@ export function ProjectDetailPage() {
             )}
             <WatchButton target="project" targetId={p.id} className="ml-2" />
             <ProjectStarButton projectId={p.id} variant="full" className="ml-auto" />
+            <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
+              <Share2 className="size-4" /> Teilen
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -159,6 +165,15 @@ export function ProjectDetailPage() {
           <ProjectReleasesTab projectIri={p['@id'] ?? ''} projectId={p.id ?? ''} />
         </TabsContent>
       </Tabs>
+
+      {p.id ? (
+        <ProjectShareDialog
+          projectId={p.id}
+          projectName={p.name ?? 'Projekt'}
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+        />
+      ) : null}
     </div>
   );
 }
