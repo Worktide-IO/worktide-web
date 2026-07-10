@@ -1,14 +1,9 @@
-import { useList } from '@refinedev/core';
 import { ListChecks } from 'lucide-react';
-import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { ProjectJsonld } from '@/api/types/project/Jsonld';
-import type { TaskJsonld } from '@/api/types/task/Jsonld';
-import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
-import { useLiveResource } from '@/lib/mercure';
-import type { Row } from '@/lib/refine';
-import { useCustomerLookup } from '@/lib/useCustomerLookup';
+import { api } from '@/lib/api';
+import { topicFor, useMercureTopic } from '@/lib/mercure';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,57 +15,43 @@ const PRIORITY_VARIANT: Record<string, 'outline' | 'secondary' | 'default' | 'de
   urgent: 'destructive',
 };
 
+/** One row from GET /v1/dashboard/open-customer-tasks — project + customer inlined. */
+type CustomerTask = {
+  '@id': string;
+  id: string;
+  identifier: string;
+  title: string;
+  priority?: string;
+  dueOn: string | null;
+  project: { '@id': string; id: string; name: string; color: string };
+  customer: { id: string; name: string };
+};
+
+const KEY = ['dashboard', 'open-customer-tasks'] as const;
+
 /**
- * Cross-project list of open tasks that belong to projects with an
- * assigned customer. The "everything a paying customer is still
- * waiting on" view — the coordinator's first thing to look at every
- * morning.
- *
- * Filters client-side (workspace usually has < 100 active tasks):
- *  - task.status.isCompleted === false
- *  - task.project.customer !== null
+ * Cross-project list of open tasks that belong to projects with an assigned
+ * customer — "everything a paying customer is still waiting on". Backed by the
+ * /v1/dashboard/open-customer-tasks read-model (server filters open + has-customer
+ * and inlines project/customer) instead of fetching the whole tasks/projects/
+ * statuses collections and filtering client-side.
  */
 export function OpenCustomerTasksWidget() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const { result: tasks, query } = useList<Row<TaskJsonld>>({
-    resource: 'tasks',
-    pagination: { mode: 'off' },
-    sorters: [{ field: 'dueOn', order: 'asc' }],
+  const query = useQuery({
+    queryKey: KEY,
+    queryFn: async () => {
+      const { data } = await api.get<{ tasks: CustomerTask[]; capped: boolean }>('/dashboard/open-customer-tasks');
+      return data;
+    },
   });
-  const { result: projects } = useList<Row<ProjectJsonld>>({
-    resource: 'projects',
-    pagination: { mode: 'off' },
+  useMercureTopic(topicFor('tasks'), {
+    onMessage: () => void queryClient.invalidateQueries({ queryKey: KEY }),
   });
-  const { result: statuses } = useList<Row<TaskStatusJsonld>>({
-    resource: 'task_statuses',
-    pagination: { mode: 'off' },
-  });
-  useLiveResource('tasks');
 
-  const projectByIri = useMemo(() => {
-    const m: Record<string, Row<ProjectJsonld>> = {};
-    for (const p of projects?.data ?? []) if (p['@id']) m[p['@id']] = p;
-    return m;
-  }, [projects]);
-  const customerByIri = useCustomerLookup((projects?.data ?? []).map((p) => p.customer));
-  const openStatusIris = useMemo(() => {
-    const set = new Set<string>();
-    for (const s of statuses?.data ?? []) {
-      const completed = (s as { completed?: boolean }).completed ?? s.isCompleted ?? false;
-      if (s['@id'] && !completed) set.add(s['@id']);
-    }
-    return set;
-  }, [statuses]);
-
-  const rows = useMemo(() => {
-    return (tasks?.data ?? []).filter((t) => {
-      if (!t.status || !openStatusIris.has(t.status)) return false;
-      if (!t.project) return false;
-      const project = projectByIri[t.project];
-      return Boolean(project?.customer);
-    });
-  }, [tasks, openStatusIris, projectByIri]);
+  const rows = query.data?.tasks ?? [];
 
   return (
     <Card className="h-full overflow-hidden">
@@ -97,8 +78,8 @@ export function OpenCustomerTasksWidget() {
         ) : (
           <ul className="divide-y">
             {rows.map((t) => {
-              const project = t.project ? projectByIri[t.project] : null;
-              const customer = project?.customer ? customerByIri[project.customer] : null;
+              const project = t.project;
+              const customer = t.customer;
               return (
                 <li key={t['@id']}>
                   <button
