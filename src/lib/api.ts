@@ -16,6 +16,33 @@ import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? '/v1';
 export const WORKSPACE_STORAGE_KEY = 'wt.workspace';
 
+// Non-sensitive hint: "this browser has had a session before" (set on login /
+// successful refresh, cleared on logout / failed refresh). Lets the app skip the
+// silent POST /auth/refresh on a fresh or logged-out browser — that request 401s
+// when there's no cookie, and the browser logs every 401 to the console as an
+// error, which reads as a scary failure on the login page. The refresh cookie is
+// httpOnly (JS can't read it), so this flag is our only client-visible signal of
+// a probable session; it never gates real auth (the cookie does).
+export const SESSION_HINT_KEY = 'wt.session';
+export function hasSessionHint(): boolean {
+  try {
+    return localStorage.getItem(SESSION_HINT_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+export function setSessionHint(on: boolean): void {
+  try {
+    if (on) {
+      localStorage.setItem(SESSION_HINT_KEY, '1');
+    } else {
+      localStorage.removeItem(SESSION_HINT_KEY);
+    }
+  } catch {
+    /* private mode / storage disabled — refresh simply proceeds as before */
+  }
+}
+
 // In-memory access token — deliberately NOT persisted, so XSS can't lift a
 // long-lived credential and a closed tab ends the in-memory session (the cookie
 // still allows a silent re-auth until it expires / is revoked).
@@ -115,12 +142,15 @@ export function refreshAccessToken(): Promise<boolean> {
         { headers: { Authorization: '' } },
       );
       if (!data?.token) {
+        setSessionHint(false);
         return false;
       }
       setAccessToken(data.token);
+      setSessionHint(true);
       return true;
     } catch {
       // No cookie / revoked / expired → not authenticated.
+      setSessionHint(false);
       return false;
     } finally {
       refreshInflight = null;
