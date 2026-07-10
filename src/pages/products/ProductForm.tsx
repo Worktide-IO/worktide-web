@@ -38,6 +38,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { TranslationsFields, type TranslationsMap } from '@/components/TranslationsFields';
+import { useSupportedLanguages } from '@/lib/languages';
 
 type Mode = { action: 'create' } | { action: 'edit'; id: string };
 
@@ -70,6 +72,7 @@ export function ProductForm(props: Mode) {
     defaultValues: { type: 'product', status: 'active' } as Partial<Row<ProductJsonld>> & FieldValues,
   });
 
+  const { languages } = useSupportedLanguages();
   const current = query?.data?.data as Row<ProductJsonld> | undefined;
   const type = (watch('type') as ProductType | undefined) ?? 'product';
   const productIri = current?.['@id'];
@@ -169,6 +172,22 @@ export function ProductForm(props: Mode) {
               <Label htmlFor="description">Beschreibung</Label>
               <Textarea id="description" rows={3} {...register('description')} />
             </div>
+
+            <Controller
+              control={control}
+              name="translations"
+              render={({ field }) => (
+                <TranslationsFields
+                  fields={[
+                    { key: 'name', label: 'Name' },
+                    { key: 'description', label: 'Beschreibung' },
+                  ]}
+                  locales={languages}
+                  value={(field.value as TranslationsMap | undefined) ?? {}}
+                  onChange={field.onChange}
+                />
+              )}
+            />
           </CardContent>
         </Card>
       </form>
