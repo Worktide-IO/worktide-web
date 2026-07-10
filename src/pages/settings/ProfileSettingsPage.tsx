@@ -7,7 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { languageLabel, resetI18nProfileCache } from '@/lib/languages';
 
 import { SettingsLayout } from './SettingsLayout';
 
@@ -19,7 +27,15 @@ type ProfileSnapshot = {
   fullName: string;
   roles: string[];
   lastLoginAt: string | null;
+  // Preferred display language (a supported-locale code) or null = follow the
+  // workspace / app default. `supportedLanguages` is the server's allow-list.
+  preferredLanguage: string | null;
+  supportedLanguages: string[];
 };
+
+// Radix Select has no concept of an empty value, so "no preference" gets a
+// sentinel that maps to null on the wire.
+const AUTO_LANGUAGE = '__auto__';
 
 /**
  * `/settings/profile` — user-self profile editor.
@@ -51,6 +67,7 @@ function ProfileForm() {
   const [profile, setProfile] = useState<ProfileSnapshot | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [preferredLanguage, setPreferredLanguage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -63,6 +80,7 @@ function ProfileForm() {
         setProfile(data);
         setFirstName(data.firstName ?? '');
         setLastName(data.lastName ?? '');
+        setPreferredLanguage(data.preferredLanguage ?? null);
       } catch (err) {
         console.warn('ProfileSettingsPage: load failed', err);
       } finally {
@@ -80,8 +98,13 @@ function ProfileForm() {
       const { data } = await api.patch<ProfileSnapshot>('/me/profile', {
         firstName,
         lastName,
+        preferredLanguage,
       });
       setProfile(data);
+      setPreferredLanguage(data.preferredLanguage ?? null);
+      // The active-locale + supported-languages cache keys off the profile;
+      // drop it so translatable content re-resolves in the new language.
+      resetI18nProfileCache();
       // Identity is cached by Refine — invalidate so the sidebar avatar
       // initials and topbar greeting pick up the new name immediately.
       await refetchIdentity?.();
@@ -118,7 +141,10 @@ function ProfileForm() {
     );
   }
 
-  const dirty = firstName !== (profile.firstName ?? '') || lastName !== (profile.lastName ?? '');
+  const dirty =
+    firstName !== (profile.firstName ?? '') ||
+    lastName !== (profile.lastName ?? '') ||
+    preferredLanguage !== (profile.preferredLanguage ?? null);
 
   return (
     <Card>
@@ -151,6 +177,30 @@ function ProfileForm() {
           <Input id="email" type="email" value={profile.email} readOnly disabled />
           <p className="text-xs text-muted-foreground">
             Email-Wechsel ist noch nicht implementiert.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="preferredLanguage">Sprache</Label>
+          <Select
+            value={preferredLanguage ?? AUTO_LANGUAGE}
+            onValueChange={(value) =>
+              setPreferredLanguage(value === AUTO_LANGUAGE ? null : value)
+            }
+          >
+            <SelectTrigger id="preferredLanguage" className="sm:w-64">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={AUTO_LANGUAGE}>Automatisch (Workspace-Standard)</SelectItem>
+              {profile.supportedLanguages.map((code) => (
+                <SelectItem key={code} value={code}>
+                  {languageLabel(code)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Bestimmt die Sprache übersetzbarer Inhalte (Status, Typen, Tags, Vorlagen …).
           </p>
         </div>
         <div>
