@@ -387,7 +387,10 @@ export function SourceWizard({
         </div>
 
         <DialogFooter>
-          {step !== 'identify' && step !== 'done' ? (
+          {/* Edit starts on 'configure' (identify is skipped), so no "back" to
+              identify there — otherwise the visibility fields, shown on both
+              steps, appear twice. */}
+          {step !== 'identify' && step !== 'done' && !(step === 'configure' && isEdit) ? (
             <Button
               variant="ghost"
               onClick={() => setStep(step === 'test' ? 'configure' : 'identify')}
