@@ -3,8 +3,10 @@ import {
   api,
   clearAuth,
   getAccessToken,
+  hasSessionHint,
   refreshAccessToken,
   setAccessToken,
+  setSessionHint,
   WORKSPACE_STORAGE_KEY,
   writeAuth,
 } from '@/lib/api';
@@ -54,6 +56,7 @@ export const authProvider: AuthProvider = {
         { headers: { Authorization: '' } }, // suppress any stale JWT
       );
       setAccessToken(data.token); // in-memory; the refresh cookie is set by the response
+      setSessionHint(true); // remember a session exists so future loads may silent-refresh
     } catch {
       return {
         success: false,
@@ -71,6 +74,7 @@ export const authProvider: AuthProvider = {
       // even if revocation fails, drop the local session
     }
     setAccessToken(null);
+    setSessionHint(false); // no session → skip the silent refresh (and its console 401) on /login
     clearAuth(WORKSPACE_STORAGE_KEY);
     clearMercureToken();
     return { success: true, redirectTo: '/login' };
@@ -81,6 +85,13 @@ export const authProvider: AuthProvider = {
     // httpOnly cookie. This is the session-restore path AND the auth gate;
     // Refine's <Authenticated> shows its loading fallback while this awaits.
     if (!getAccessToken()) {
+      // Skip the refresh entirely when this browser has never held a session
+      // (fresh visitor or post-logout): the POST would 401 with no cookie and
+      // the browser logs that 401 to the console, which looks alarming on the
+      // login screen. No hint → definitely unauthenticated, no request needed.
+      if (!hasSessionHint()) {
+        return { authenticated: false, redirectTo: '/login' };
+      }
       const ok = await refreshAccessToken();
       if (!ok) {
         return { authenticated: false, redirectTo: '/login' };
