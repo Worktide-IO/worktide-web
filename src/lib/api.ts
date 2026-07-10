@@ -1,4 +1,4 @@
-import axios, { AxiosError, type AxiosInstance } from 'axios';
+import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 
 /**
  * Shared axios instance pointed at the Worktide REST API. Honors
@@ -6,9 +6,9 @@ import axios, { AxiosError, type AxiosInstance } from 'axios';
  * Vite proxy forwards to api.worktide.ddev.site (see vite.config.ts).
  *
  * JWT lives in localStorage under "wt.jwt"; the request interceptor stamps
- * the Authorization header. On 401 we let the auth provider decide
- * (token refresh vs. redirect to login) — no silent retries here so
- * failure paths stay observable.
+ * the Authorization header. On 401 a response interceptor refreshes the token
+ * once and replays the request (transparent to the caller); if refresh fails it
+ * rejects and authProvider.onError logs the user out.
  */
 export const API_BASE = import.meta.env.VITE_API_BASE ?? '/v1';
 export const JWT_STORAGE_KEY = 'wt.jwt';
@@ -115,11 +115,15 @@ export function refreshAccessToken(): Promise<boolean> {
   if (refreshInflight) {
     return refreshInflight;
   }
+  // Check for a refresh token BEFORE creating the in-flight promise. If we did
+  // it inside, the early `return false` would skip the `finally` that resets
+  // `refreshInflight` — leaving it stuck as a resolved-false promise, so every
+  // later refresh (even after a fresh login) would short-circuit to false.
+  const refresh = readAuth(REFRESH_STORAGE_KEY);
+  if (!refresh) {
+    return Promise.resolve(false);
+  }
   refreshInflight = (async () => {
-    const refresh = readAuth(REFRESH_STORAGE_KEY);
-    if (!refresh) {
-      return false;
-    }
     try {
       const { data } = await api.post<{ token: string; refresh_token: string }>(
         '/auth/refresh',
@@ -202,6 +206,31 @@ api.interceptors.response.use(
       });
     }
     return Promise.reject(error);
+  },
+);
+
+// On 401: refresh the access token once and replay the original request, so a
+// transparently-recoverable expiry never surfaces as a query error (M2 — Refine's
+// onError can't retry the failed query, it would stay errored until a manual
+// refetch). refreshAccessToken() is single-flight, so concurrent 401s share one
+// refresh. If refresh fails we reject and let authProvider.onError log out.
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const original = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined;
+    if (error.response?.status !== 401 || !original || original._retried) {
+      return Promise.reject(error);
+    }
+    // Never recurse on the refresh call itself.
+    if (typeof original.url === 'string' && original.url.includes('/auth/refresh')) {
+      return Promise.reject(error);
+    }
+    original._retried = true;
+    const ok = await refreshAccessToken();
+    if (!ok) return Promise.reject(error);
+    // The request interceptor re-reads JWT_STORAGE_KEY, so the replay carries the
+    // fresh token.
+    return api(original);
   },
 );
 
