@@ -443,12 +443,15 @@ function ChannelDialog(props: DialogProps) {
                   <div className="grid grid-cols-[1fr_100px_120px] gap-2">
                     <Input value={imapHost} onChange={(e) => setImapHost(e.target.value)} placeholder="Host (imap.firma.de)" />
                     <Input value={imapPort} onChange={(e) => setImapPort(e.target.value)} placeholder="Port" />
-                    <Select value={imapEnc} onValueChange={setImapEnc}>
+                    <Select
+                      value={imapEnc === '' ? 'none' : imapEnc}
+                      onValueChange={(v) => setImapEnc(v === 'none' ? '' : v)}
+                    >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ssl">SSL</SelectItem>
                         <SelectItem value="tls">TLS</SelectItem>
-                        <SelectItem value="">keine</SelectItem>
+                        <SelectItem value="none">keine</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -462,12 +465,15 @@ function ChannelDialog(props: DialogProps) {
                   <div className="grid grid-cols-[1fr_100px_120px] gap-2">
                     <Input value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} placeholder="Host (smtp.firma.de)" />
                     <Input value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} placeholder="Port" />
-                    <Select value={smtpEnc} onValueChange={setSmtpEnc}>
+                    <Select
+                      value={smtpEnc === '' ? 'none' : smtpEnc}
+                      onValueChange={(v) => setSmtpEnc(v === 'none' ? '' : v)}
+                    >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ssl">SSL</SelectItem>
                         <SelectItem value="tls">STARTTLS</SelectItem>
-                        <SelectItem value="">keine</SelectItem>
+                        <SelectItem value="none">keine</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

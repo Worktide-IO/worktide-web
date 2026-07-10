@@ -488,12 +488,15 @@ function ImapConfigure({
         <div className="grid grid-cols-[1fr_100px_120px] gap-2">
           <Input value={cfg.imapHost ?? ''} onChange={(e) => setField('imapHost', e.target.value)} placeholder="imap.firma.de" />
           <Input value={cfg.imapPort ?? '993'} onChange={(e) => setField('imapPort', e.target.value)} placeholder="Port" />
-          <Select value={cfg.imapEnc ?? 'ssl'} onValueChange={(v) => setField('imapEnc', v)}>
+          <Select
+            value={cfg.imapEnc === '' ? 'none' : (cfg.imapEnc ?? 'ssl')}
+            onValueChange={(v) => setField('imapEnc', v === 'none' ? '' : v)}
+          >
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="ssl">SSL</SelectItem>
               <SelectItem value="tls">TLS</SelectItem>
-              <SelectItem value="">keine</SelectItem>
+              <SelectItem value="none">keine</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -504,12 +507,15 @@ function ImapConfigure({
         <div className="grid grid-cols-[1fr_100px_120px] gap-2">
           <Input value={cfg.smtpHost ?? ''} onChange={(e) => setField('smtpHost', e.target.value)} placeholder="smtp.firma.de" />
           <Input value={cfg.smtpPort ?? '587'} onChange={(e) => setField('smtpPort', e.target.value)} placeholder="Port" />
-          <Select value={cfg.smtpEnc ?? 'tls'} onValueChange={(v) => setField('smtpEnc', v)}>
+          <Select
+            value={cfg.smtpEnc === '' ? 'none' : (cfg.smtpEnc ?? 'tls')}
+            onValueChange={(v) => setField('smtpEnc', v === 'none' ? '' : v)}
+          >
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="ssl">SSL</SelectItem>
               <SelectItem value="tls">STARTTLS</SelectItem>
-              <SelectItem value="">keine</SelectItem>
+              <SelectItem value="none">keine</SelectItem>
             </SelectContent>
           </Select>
         </div>
