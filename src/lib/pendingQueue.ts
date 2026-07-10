@@ -1,6 +1,6 @@
 import type { AxiosRequestConfig } from 'axios';
 
-import { api, classifyError } from '@/lib/api';
+import { api, classifyError, refreshAccessToken } from '@/lib/api';
 
 /**
  * Persistent FIFO queue of "we tried to save and the network blinked" mutations.
@@ -119,6 +119,9 @@ export async function drainPendingQueue(): Promise<void> {
   if (draining) return;
   if (typeof navigator !== 'undefined' && !navigator.onLine) return;
   draining = true;
+  // Entry id we've already refreshed-and-retried this drain — guards against a
+  // refresh→retry→401 loop when a fresh token still can't satisfy the request.
+  let refreshedFor: string | null = null;
   try {
     while (true) {
       const queue = read();
@@ -141,6 +144,23 @@ export async function drainPendingQueue(): Promise<void> {
         if (kind === 'offline' || kind === 'timeout') {
           // Stop draining — try again on the next online/recovery event.
           return;
+        }
+        if (kind === 'auth') {
+          // The JWT likely expired during the outage. Refresh once (rotation-
+          // safe, shared with the authProvider) and retry the SAME entry with
+          // the new token — do NOT burn an attempt. If refresh fails the session
+          // is gone; if it still 401s after a refresh, stop instead of looping —
+          // either way the queue is preserved for a later drain / re-login,
+          // rather than the edit being dropped as `dead`.
+          if (refreshedFor === next.id) {
+            return;
+          }
+          const refreshed = await refreshAccessToken();
+          if (!refreshed) {
+            return;
+          }
+          refreshedFor = next.id;
+          continue;
         }
         // 4xx / 5xx — count an attempt, give up at MAX_ATTEMPTS.
         const after = read().map((m) =>
