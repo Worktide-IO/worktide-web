@@ -1,5 +1,5 @@
 import { useList, useTable } from '@refinedev/core';
-import { ArrowDown, ArrowUp, ArrowUpDown, Search, Wifi, WifiOff } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
@@ -10,6 +10,7 @@ import type { Row } from '@/lib/refine';
 import { BulkActionsBar } from '@/components/BulkActionsBar';
 import { SavedViewsBar } from '@/components/SavedViewsBar';
 import { EntitySyncBadgeStack } from '@/components/EntitySyncBadgeStack';
+import { LiveBadge } from '@/components/LiveBadge';
 import { PriorityScoreBadge, scoreEntryFromTask } from '@/components/PriorityScoreBadge';
 import { TagPicker } from '@/components/TagPicker';
 import { TaskDetailSheet } from '@/components/TaskDetailSheet';
@@ -407,14 +408,3 @@ export function TasksListPage() {
   );
 }
 
-function LiveBadge({ connected }: { connected: boolean }) {
-  return connected ? (
-    <Badge variant="secondary" className="gap-1 text-xs">
-      <Wifi className="size-3" /> Live
-    </Badge>
-  ) : (
-    <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
-      <WifiOff className="size-3" /> offline
-    </Badge>
-  );
-}

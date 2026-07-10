@@ -1,5 +1,5 @@
 import { useGetIdentity, useInvalidate, useList, useTable } from '@refinedev/core';
-import { Search, Wifi, WifiOff } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -12,6 +12,7 @@ import { useResilientMutation } from '@/hooks/useResilientMutation';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { Badge } from '@/components/ui/badge';
+import { LiveBadge } from '@/components/LiveBadge';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -392,14 +393,3 @@ function BilledCell({ entry, isOwn }: { entry: Row<TimeEntryJsonld>; isOwn: bool
   );
 }
 
-function LiveBadge({ connected }: { connected: boolean }) {
-  return connected ? (
-    <Badge variant="secondary" className="gap-1 text-xs">
-      <Wifi className="size-3" /> Live
-    </Badge>
-  ) : (
-    <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
-      <WifiOff className="size-3" /> offline
-    </Badge>
-  );
-}
