@@ -1,21 +1,29 @@
 import { Check } from 'lucide-react';
 import { useNavigate } from 'react-router';
 
-import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
-import type { ProjectJsonld } from '@/api/types/project/Jsonld';
-import type { ProjectMemberJsonld } from '@/api/types/projectMember/Jsonld';
 import { UserAvatarStack } from '@/components/UserAvatarStack';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import type { Row } from '@/lib/refine';
 import { timeAgo } from '@/lib/time';
 
-type Props = {
-  project: Row<ProjectJsonld>;
-  customer: Row<CustomerJsonld> | null;
+/** The minimal project shape The Wall read-model returns for a card. */
+export type WallProject = {
+  '@id': string;
+  id: string;
+  name: string;
+  key: string;
+  description: string | null;
+  color: string;
+  updatedAt: string | null;
+  status: string;
+  customer: { id: string; name: string } | null;
   totalTasks: number;
   openTasks: number;
-  members: Row<ProjectMemberJsonld>[];
+  memberIris: string[];
+};
+
+type Props = {
+  project: WallProject;
 };
 
 /**
@@ -30,17 +38,11 @@ type Props = {
  * Tasks count "closed / total" is the percentage; "0 von 0" reads as
  * "no tasks yet" rather than 100% which would be visually misleading.
  */
-export function ProjectWallCard({
-  project,
-  customer,
-  totalTasks,
-  openTasks,
-  members,
-}: Props) {
+export function ProjectWallCard({ project }: Props) {
   const navigate = useNavigate();
+  const { totalTasks, openTasks, customer, memberIris } = project;
   const closed = Math.max(0, totalTasks - openTasks);
   const pct = totalTasks > 0 ? (closed / totalTasks) * 100 : 0;
-  const memberIris = members.map((m) => m.user).filter((u): u is string => Boolean(u));
 
   return (
     <Card
@@ -78,7 +80,7 @@ export function ProjectWallCard({
 
         <div className="flex items-center justify-between">
           <UserAvatarStack iris={memberIris} size="sm" max={4} />
-          <span className="text-[10px] text-muted-foreground">{timeAgo(project.updatedAt)}</span>
+          <span className="text-[10px] text-muted-foreground">{timeAgo(project.updatedAt ?? undefined)}</span>
         </div>
       </CardContent>
     </Card>
