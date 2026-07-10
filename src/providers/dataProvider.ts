@@ -3,10 +3,13 @@ import { api, API_BASE } from '@/lib/api';
 
 /**
  * Per-resource memory of whether `getMany` can batch via `?id[]=` (i.e. the
- * resource exposes a uuid `id` filter). We probe once: if the batched response
- * only contains requested ids the filter is live (→ true); if the server
- * ignored the param and returned unrelated rows we fall back to per-id fetches
- * and remember not to try again (→ false). Undefined = not probed yet.
+ * resource exposes a uuid `id` filter). We probe once and only cache a
+ * DEFINITIVE result: `true` when the batched response contains only requested
+ * ids, `false` only when the server demonstrably ignored the param (returned a
+ * row we didn't ask for, or more rows than requested). Ambiguous signals — an
+ * empty result (filter honoured, nothing matched) or a transient request error
+ * — are NOT cached as `false`, so one all-miss query or a blip can't wrongly
+ * brand a batchable resource per-id for the whole session. Undefined = not probed.
  */
 const idBatchable = new Map<string, boolean>();
 
@@ -148,18 +151,24 @@ export const dataProvider: DataProvider = {
       const members = (data.member ?? data['hydra:member'] ?? []) as Array<{ '@id'?: string; id?: string }>;
       const requested = new Set(idStrs);
       const idOf = (m: { '@id'?: string; id?: string }) => m['@id']?.split('/').pop() ?? m.id ?? '';
-      // Filter is live iff every returned row was actually requested (and the
-      // server honoured the page size). Otherwise the param was ignored.
-      const batched =
-        members.length > 0 && members.length <= idStrs.length && members.every((m) => requested.has(idOf(m)));
-      if (batched) {
-        idBatchable.set(resource, true);
+      // The filter was honoured iff no returned row is outside the requested set
+      // and the page wasn't overrun. An EMPTY result also counts as honoured —
+      // an ignored `id[]` returns the whole (non-empty) collection, so empty
+      // means "filtered to nothing", i.e. the ids simply don't exist → data: [].
+      const honoured = members.length <= idStrs.length && members.every((m) => requested.has(idOf(m)));
+      if (honoured) {
+        // Only lock in `true` once we've actually seen ≥1 requested row come
+        // back; an empty page is consistent with batching but doesn't prove it,
+        // so leave it un-probed and serve the (correct) empty result.
+        if (members.length > 0) idBatchable.set(resource, true);
         return { data: members as never };
       }
+      // Server returned unrelated rows → it genuinely ignored the param.
       idBatchable.set(resource, false);
       return perId();
     } catch {
-      idBatchable.set(resource, false);
+      // Transient (network/5xx) — fall back for THIS call but don't brand the
+      // resource non-batchable; re-probe next time.
       return perId();
     }
   },
