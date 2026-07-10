@@ -348,9 +348,23 @@ export function SourceWizard({
             </>
           ) : null}
 
-          {/* Edit skips the identify step, so surface visibility here too. */}
+          {/* Edit skips the identify step, so surface the renamable label +
+              visibility here — otherwise an existing source can't be renamed.
+              submitConfigure already persists `name`. */}
           {step === 'configure' && isEdit ? (
-            <ChannelVisibilityFields value={visibility} onChange={setVisibility} />
+            <>
+              <div className="space-y-1.5">
+                <Label htmlFor="wiz-edit-name">Bezeichnung</Label>
+                <Input
+                  id="wiz-edit-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="z. B. Support-Postfach"
+                />
+                <p className="text-xs text-muted-foreground">Wird als Channel-Bezeichnung in Listen angezeigt.</p>
+              </div>
+              <ChannelVisibilityFields value={visibility} onChange={setVisibility} />
+            </>
           ) : null}
 
           {step === 'configure' && def.code === 'email_imap' ? (
