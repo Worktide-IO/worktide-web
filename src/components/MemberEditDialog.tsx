@@ -45,6 +45,8 @@ type Candidate = { userId: string; label: string };
 type Props = {
   member: Row<WorkspaceMemberJsonld>;
   user: Row<UserJsonld> | null;
+  /** Whether this member already has an avatar (gates the avatar fetch). */
+  hasAvatar?: boolean;
   /** Other active members this member's tasks can be handed over to on removal. */
   reassignCandidates: Candidate[];
   open: boolean;
@@ -59,12 +61,20 @@ type Props = {
  * before the membership is deleted, so no task is left orphaned. You can't
  * deactivate or remove your own membership (self-lockout guard).
  */
-export function MemberEditDialog({ member, user, reassignCandidates, open, onOpenChange }: Props) {
+export function MemberEditDialog({
+  member,
+  user,
+  hasAvatar,
+  reassignCandidates,
+  open,
+  onOpenChange,
+}: Props) {
   const invalidate = useInvalidate();
   const queryClient = useQueryClient();
   const { data: identity } = useGetIdentity<{ id?: string }>();
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [justUploaded, setJustUploaded] = useState(false);
 
   // The parent mounts this dialog fresh per open, so props-initialised state is enough.
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
@@ -140,7 +150,9 @@ export function MemberEditDialog({ member, user, reassignCandidates, open, onOpe
         headers: { 'Content-Type': undefined },
       });
       toast.success('Foto aktualisiert.');
+      setJustUploaded(true);
       void queryClient.invalidateQueries({ queryKey: ['member-avatar', memberId] });
+      void invalidate({ resource: 'files', invalidates: ['list'] });
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       toast.error(detail ?? 'Foto konnte nicht hochgeladen werden.');
@@ -250,6 +262,7 @@ export function MemberEditDialog({ member, user, reassignCandidates, open, onOpe
               <div className="flex items-center gap-3">
                 <AuthedAvatar
                   memberId={memberId}
+                  hasAvatar={hasAvatar || justUploaded}
                   fallback={user ? userInitials(user) : '?'}
                   size="lg"
                   className="shrink-0"
