@@ -1,4 +1,5 @@
 import { useList, useTable } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { CalendarDays, Plus, Search, Wifi, WifiOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
@@ -32,21 +33,21 @@ import {
 } from '@/components/ui/table';
 
 const BILLING_LABEL: Record<string, string> = {
-  monthly: 'Monatlich',
-  quarterly: 'Quartal',
-  half_yearly: 'Halbjährlich',
-  yearly: 'Jährlich',
-  once: 'Einmalig',
+  monthly: 'billing.monthly',
+  quarterly: 'billing.quarterly',
+  half_yearly: 'billing.half_yearly',
+  yearly: 'billing.yearly',
+  once: 'billing.once',
 };
 
 const STATUS_BADGE: Record<
   string,
   { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
 > = {
-  trial: { label: 'Trial', variant: 'outline' },
-  active: { label: 'Aktiv', variant: 'default' },
-  paused: { label: 'Pausiert', variant: 'secondary' },
-  cancelled: { label: 'Gekündigt', variant: 'destructive' },
+  trial: { label: 'subscription_status.trial', variant: 'outline' },
+  active: { label: 'subscription_status.active', variant: 'default' },
+  paused: { label: 'subscription_status.paused', variant: 'secondary' },
+  cancelled: { label: 'subscription_status.cancelled', variant: 'destructive' },
 };
 
 /**
@@ -60,6 +61,7 @@ const STATUS_BADGE: Record<
  * by design for those.
  */
 export function SubscriptionsListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [customerFilter, setCustomerFilter] = useState('all');
@@ -176,7 +178,7 @@ export function SubscriptionsListPage() {
                 <SelectItem value="all">Alle Status</SelectItem>
                 {Object.entries(STATUS_BADGE).map(([value, b]) => (
                   <SelectItem key={value} value={value}>
-                    {b.label}
+                    {t(b.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -228,12 +230,12 @@ export function SubscriptionsListPage() {
                       <TableCell>
                         {statusBadge ? (
                           <Badge variant={statusBadge.variant} className="text-[10px]">
-                            {statusBadge.label}
+                            {t(statusBadge.label)}
                           </Badge>
                         ) : null}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {BILLING_LABEL[s.billingCycle ?? 'monthly'] ?? s.billingCycle}
+                        {BILLING_LABEL[s.billingCycle ?? 'monthly'] ? t(BILLING_LABEL[s.billingCycle ?? 'monthly']) : s.billingCycle}
                       </TableCell>
                       <TableCell className="text-right font-mono text-sm tabular-nums">
                         {formatMoney(s.priceCents ?? 0, s.currency ?? 'eur')}

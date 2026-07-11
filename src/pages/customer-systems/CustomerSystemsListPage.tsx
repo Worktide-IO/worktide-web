@@ -1,4 +1,5 @@
 import { useTable } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { ExternalLink, Plus, Search, Server, Wifi, WifiOff } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
@@ -39,25 +40,26 @@ import {
  * /v1/customers fetch resolves the FK in the row.
  */
 const TYPE_LABEL: Record<string, string> = {
-  typo3: 'TYPO3',
-  wordpress: 'WordPress',
-  drupal: 'Drupal',
-  magento: 'Magento',
-  shopware: 'Shopware',
-  joomla: 'Joomla',
-  symfony: 'Symfony',
-  laravel: 'Laravel',
-  static: 'Static',
-  other: 'Other',
+  typo3: 'system_type.typo3',
+  wordpress: 'system_type.wordpress',
+  drupal: 'system_type.drupal',
+  magento: 'system_type.magento',
+  shopware: 'system_type.shopware',
+  joomla: 'system_type.joomla',
+  symfony: 'system_type.symfony',
+  laravel: 'system_type.laravel',
+  static: 'system_type.static',
+  other: 'system_type.other',
 };
 
 const ENV_BADGE: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
-  production: { label: 'Prod', variant: 'default' },
-  staging: { label: 'Stage', variant: 'secondary' },
-  development: { label: 'Dev', variant: 'outline' },
+  production: { label: 'env_badge.production', variant: 'default' },
+  staging: { label: 'env_badge.staging', variant: 'secondary' },
+  development: { label: 'env_badge.development', variant: 'outline' },
 };
 
 export function CustomerSystemsListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [customerFilter, setCustomerFilter] = useState('all');
@@ -152,7 +154,7 @@ export function CustomerSystemsListPage() {
                 <SelectItem value="all">Alle Typen</SelectItem>
                 {Object.entries(TYPE_LABEL).map(([value, label]) => (
                   <SelectItem key={value} value={value}>
-                    {label}
+                    {t(label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -208,13 +210,13 @@ export function CustomerSystemsListPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-mono text-[10px]">
-                          {TYPE_LABEL[s.type ?? 'other'] ?? s.type}
+                          {TYPE_LABEL[s.type ?? 'other'] ? t(TYPE_LABEL[s.type ?? 'other']) : s.type}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         {env ? (
                           <Badge variant={env.variant} className="text-[10px]">
-                            {env.label}
+                            {t(env.label)}
                           </Badge>
                         ) : null}
                       </TableCell>

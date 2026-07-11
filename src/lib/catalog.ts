@@ -49,7 +49,8 @@ export type CustomerProductJsonld = HydraItemBaseSchema & {
 };
 
 export const PRODUCT_TYPE_LABEL: Record<ProductType, string> = {
-  product: 'product.type.product'  service: 'Service',
+  product: 'product.type.product',
+  service: 'product.type.service',
 };
 
 export const PRODUCT_STATUS_BADGE: Record<

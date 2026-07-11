@@ -1,4 +1,5 @@
 import { useList, useMany } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Sparkles, Wifi, WifiOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -43,27 +44,27 @@ import {
 type ProductRow = { '@id'?: string; id?: string; name?: string };
 
 const KIND_LABEL: Record<string, string> = {
-  triage: 'Triage',
-  ticket_from_conversation: 'Ticket-Vorschlag',
-  marketing_social_draft: 'Marketing-Copy',
-  customer_upgrade_outreach: 'Upgrade-Outreach',
-  research_suggestion: 'Recherche-Vorschlag',
-  agent_action: 'Agent-Aktion',
+  triage: 'ai_kind.triage',
+  ticket_from_conversation: 'ai_kind.ticket_from_conversation',
+  marketing_social_draft: 'ai_kind.marketing_social_draft',
+  customer_upgrade_outreach: 'ai_kind.customer_upgrade_outreach',
+  research_suggestion: 'ai_kind.research_suggestion',
+  agent_action: 'ai_kind.agent_action',
 };
 
 const TARGET_LABEL: Record<string, string> = {
-  task: 'Aufgabe',
-  conversation: 'Konversation',
-  product: 'Produkt',
-  customer: 'Kunde',
-  workspace: 'Workspace',
+  task: 'ai_target.task',
+  conversation: 'ai_target.conversation',
+  product: 'ai_target.product',
+  customer: 'ai_target.customer',
+  workspace: 'ai_target.workspace',
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  pending: 'Ausstehend',
-  accepted: 'Übernommen',
-  rejected: 'Verworfen',
-  superseded: 'Ersetzt',
+  pending: 'ai_status.pending',
+  accepted: 'ai_status.accepted',
+  rejected: 'ai_status.rejected',
+  superseded: 'ai_status.superseded',
 };
 
 const STATUS_VARIANT: Record<string, 'outline' | 'secondary' | 'default'> = {
@@ -74,6 +75,7 @@ const STATUS_VARIANT: Record<string, 'outline' | 'secondary' | 'default'> = {
 };
 
 export function AiAgentsOverviewPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [kindFilter, setKindFilter] = useState<string>('all');
@@ -169,7 +171,7 @@ export function AiAgentsOverviewPage() {
     if (rec.target === 'workspace') {
       return 'Recherche';
     }
-    return `${TARGET_LABEL[rec.target] ?? rec.target} ${rec.targetId.slice(0, 8)}`;
+    return `${TARGET_LABEL[rec.target] ? t(TARGET_LABEL[rec.target]) : rec.target} ${rec.targetId.slice(0, 8)}`;
   };
 
   const summaryOf = (rec: AiRecommendation): string => {
@@ -400,12 +402,12 @@ export function AiAgentsOverviewPage() {
                     <TableCell className="font-medium">{targetLabel(rec)}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-xs">
-                        {KIND_LABEL[rec.kind] ?? rec.kind}
+                        {KIND_LABEL[rec.kind] ? t(KIND_LABEL[rec.kind]) : rec.kind}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant={STATUS_VARIANT[rec.status] ?? 'outline'} className="text-xs">
-                        {STATUS_LABEL[rec.status] ?? rec.status}
+                        {STATUS_LABEL[rec.status] ? t(STATUS_LABEL[rec.status]) : rec.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">

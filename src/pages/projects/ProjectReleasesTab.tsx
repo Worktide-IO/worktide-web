@@ -1,4 +1,5 @@
 import { useInvalidate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { CalendarDays, CheckCircle2, Loader2, Lock, Pencil, Plus, Tag, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -38,14 +39,14 @@ import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 
 const STATUS_OPTIONS = [
-  { value: 'open', label: 'Offen', icon: Tag },
-  { value: 'locked', label: 'Eingefroren', icon: Lock },
-  { value: 'closed', label: 'Veröffentlicht', icon: CheckCircle2 },
+  { value: 'open', label: 'release_status.open', icon: Tag },
+  { value: 'locked', label: 'release_status.locked', icon: Lock },
+  { value: 'closed', label: 'release_status.closed', icon: CheckCircle2 },
 ];
 
 const SHARING_OPTIONS = [
-  { value: 'none', label: 'Nur dieses Projekt' },
-  { value: 'system', label: 'Workspace-weit (alle Projekte)' },
+  { value: 'none', label: 'sharing.none' },
+  { value: 'system', label: 'sharing.system' },
 ];
 
 /**
@@ -157,6 +158,7 @@ function VersionRow({
   version: Row<ProjectVersionJsonld>;
   onEdit: () => void;
 }) {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const [deleting, setDeleting] = useState(false);
   const status = (version.status as string) ?? 'open';
@@ -201,11 +203,11 @@ function VersionRow({
       <TableCell>
         <span className="inline-flex items-center gap-1 text-xs">
           <StatusIcon className="size-3" />
-          {STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status}
+          {t(STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status)}
         </span>
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">
-        {SHARING_OPTIONS.find((o) => o.value === sharing)?.label ?? sharing}
+        {t(SHARING_OPTIONS.find((o) => o.value === sharing)?.label ?? sharing)}
       </TableCell>
       <TableCell className="text-right">
         <Button variant="ghost" size="icon" className="size-7" onClick={onEdit}>
@@ -241,6 +243,7 @@ type DialogProps =
     };
 
 function VersionDialog(props: DialogProps) {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const isEdit = props.mode === 'edit';
   const initial = isEdit ? props.version : null;
@@ -358,7 +361,7 @@ function VersionDialog(props: DialogProps) {
                 <SelectContent>
                   {STATUS_OPTIONS.map((o) => (
                     <SelectItem key={o.value} value={o.value}>
-                      {o.label}
+                      {t(o.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -374,7 +377,7 @@ function VersionDialog(props: DialogProps) {
               <SelectContent>
                 {SHARING_OPTIONS.map((o) => (
                   <SelectItem key={o.value} value={o.value}>
-                    {o.label}
+                    {t(o.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

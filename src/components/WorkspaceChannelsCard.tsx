@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Link2, Loader2, Mailbox, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -38,8 +39,8 @@ import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 
 const ADAPTER_PROVIDER_LABEL: Record<string, string> = {
-  email_graph: 'Microsoft 365',
-  email_gmail: 'Google Workspace',
+  email_graph: 'adapter_provider.email_graph',
+  email_gmail: 'adapter_provider.email_gmail',
 };
 
 /**
@@ -53,8 +54,9 @@ const ADAPTER_PROVIDER_LABEL: Record<string, string> = {
  * /inbox?oauth=ok|err.
  */
 function OAuthConnectBlock({ channelId, adapterCode, hasToken }: { channelId: string | null; adapterCode: string; hasToken: boolean }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
-  const providerLabel = ADAPTER_PROVIDER_LABEL[adapterCode] ?? 'Provider';
+  const providerLabel = ADAPTER_PROVIDER_LABEL[adapterCode] ? t(ADAPTER_PROVIDER_LABEL[adapterCode]) : 'Provider';
   const startConnect = async () => {
     if (!channelId) {
       toast.error('Channel erst speichern, danach OAuth-Login starten.');
@@ -105,9 +107,9 @@ function OAuthConnectBlock({ channelId, adapterCode, hasToken }: { channelId: st
 }
 
 const ADAPTER_LABEL: Record<string, string> = {
-  email_imap: 'E-Mail (IMAP/SMTP)',
-  email_graph: 'E-Mail (Microsoft 365)',
-  email_gmail: 'E-Mail (Google Workspace)',
+  email_imap: 'adapter.email_imap',
+  email_graph: 'adapter.email_graph',
+  email_gmail: 'adapter.email_gmail',
 };
 
 /**
@@ -201,6 +203,7 @@ function ChannelRow({
   channel: Row<ChannelJsonld>;
   onEdit: () => void;
 }) {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const [deleting, setDeleting] = useState(false);
   const caps = (channel.capabilities ?? []) as string[];
@@ -249,7 +252,7 @@ function ChannelRow({
         ) : null}
       </TableCell>
       <TableCell className="text-xs">
-        {ADAPTER_LABEL[channel.adapterCode ?? ''] ?? channel.adapterCode}
+        {ADAPTER_LABEL[channel.adapterCode ?? ''] ? t(ADAPTER_LABEL[channel.adapterCode ?? '']) : channel.adapterCode}
       </TableCell>
       <TableCell>
         <div className="flex flex-wrap gap-1">

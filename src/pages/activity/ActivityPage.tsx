@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import {
   CheckSquare,
   Clock,
@@ -43,19 +44,19 @@ import { timeAgo } from '@/lib/time';
  */
 
 const AGGREGATE_LABEL: Record<string, string> = {
-  Project: 'Projekt',
-  Task: 'Aufgabe',
-  Comment: 'Kommentar',
-  File: 'Datei',
-  FileVersion: 'Datei-Version',
-  TimeEntry: 'Zeiteintrag',
-  User: 'Benutzer',
-  Customer: 'Kunde',
-  Contact: 'Kontakt',
-  CustomerSystem: 'System',
-  ServiceSubscription: 'Abo',
-  Document: 'Dokument',
-  Watch: 'Beobachtung',
+  Project: 'aggregate.Project',
+  Task: 'aggregate.Task',
+  Comment: 'aggregate.Comment',
+  File: 'aggregate.File',
+  FileVersion: 'aggregate.FileVersion',
+  TimeEntry: 'aggregate.TimeEntry',
+  User: 'aggregate.User',
+  Customer: 'aggregate.Customer',
+  Contact: 'aggregate.Contact',
+  CustomerSystem: 'aggregate.CustomerSystem',
+  ServiceSubscription: 'aggregate.ServiceSubscription',
+  Document: 'aggregate.Document',
+  Watch: 'aggregate.Watch',
 };
 
 const ICON_BY_AGGREGATE: Record<string, LucideIcon> = {
@@ -80,6 +81,7 @@ const VERB_BY_SUFFIX: Record<string, string> = {
 };
 
 export function ActivityPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [aggregateFilter, setAggregateFilter] = useState('all');
   const [actorFilter, setActorFilter] = useState('all');
@@ -152,7 +154,7 @@ export function ActivityPage() {
                 <SelectItem value="all">Alle Typen</SelectItem>
                 {aggregateOptions.map((k) => (
                   <SelectItem key={k} value={k}>
-                    {AGGREGATE_LABEL[k] ?? k}
+                    {AGGREGATE_LABEL[k] ? t(AGGREGATE_LABEL[k]) : k}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -210,7 +212,7 @@ export function ActivityPage() {
                         </span>
                         <span className="text-muted-foreground">hat</span>
                         <Badge variant="outline" className="text-[10px]">
-                          {AGGREGATE_LABEL[e.aggregateType ?? ''] ?? e.aggregateType ?? '—'}
+                          {AGGREGATE_LABEL[e.aggregateType ?? ''] ? t(AGGREGATE_LABEL[e.aggregateType ?? '']) : (e.aggregateType ?? '—')}
                         </Badge>
                         <span className="text-muted-foreground">{verb}</span>
                         {e.aggregateId ? (
