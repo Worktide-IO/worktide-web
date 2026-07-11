@@ -232,7 +232,7 @@ export function QuickAddDialog() {
         variant="outline"
         onClick={() => setOpen(true)}
         className="fixed bottom-20 right-5 z-50 size-9 rounded-full shadow-md"
-        aria-label="Schnell hinzufügen"
+        aria-label={t('quick_add.fab_aria')}
         title="Cmd+K"
       >
         <Plus className="size-4" />
@@ -251,20 +251,20 @@ export function QuickAddDialog() {
         >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Plus className="size-4" /> Schnell-Erfassung
+              <Plus className="size-4" /> {t('quick_add.title')}
             </DialogTitle>
             <DialogDescription>
-              Enter speichert, Esc schließt.
+              {t('quick_add.description')}
             </DialogDescription>
           </DialogHeader>
 
           <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
             <TabsList className="w-full">
               <TabsTrigger value="task" className="flex-1 gap-1.5">
-                <CheckSquare className="size-3.5" /> Aufgabe
+                <CheckSquare className="size-3.5" /> {t('quick_add.tab_task')}
               </TabsTrigger>
               <TabsTrigger value="project" className="flex-1 gap-1.5">
-                <FolderKanban className="size-3.5" /> Projekt
+                <FolderKanban className="size-3.5" /> {t('quick_add.tab_project')}
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -272,15 +272,15 @@ export function QuickAddDialog() {
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="quick-add-title">
-                {mode === 'task' ? 'Titel' : 'Projektname'}
+                {mode === 'task' ? t('quick_add.label_title') : t('quick_add.label_project_name')}
               </Label>
               <Input
                 ref={titleRef}
                 id="quick-add-title"
                 placeholder={
                   mode === 'task'
-                    ? 'Was soll erledigt werden?'
-                    : 'Wie heißt das Projekt?'
+                    ? t('quick_add.placeholder_task')
+                    : t('quick_add.placeholder_project')
                 }
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -289,7 +289,7 @@ export function QuickAddDialog() {
 
             {mode === 'task' ? (
               <div className="space-y-1.5">
-                <Label>Projekt (optional)</Label>
+                <Label>{t('quick_add.label_project_optional')}</Label>
                 <Select value={projectId} onValueChange={setProjectId}>
                   <SelectTrigger>
                     <SelectValue />
@@ -298,7 +298,7 @@ export function QuickAddDialog() {
                     <SelectItem value="none">
                       <span className="inline-flex items-center gap-2">
                         <FolderKanban className="size-3.5 text-muted-foreground" />
-                        — Privat —
+                        {t('quick_add.private')}
                       </span>
                     </SelectItem>
                     {(projects?.data ?? []).map((p) => (
@@ -323,7 +323,7 @@ export function QuickAddDialog() {
               <>
                 <div className="space-y-1.5">
                   <Label htmlFor="quick-add-key">
-                    Key (Slug für Task-IDs)
+                    {t('quick_add.label_key')}
                   </Label>
                   <Input
                     id="quick-add-key"
@@ -332,16 +332,16 @@ export function QuickAddDialog() {
                       setProjectKeyTouched(true);
                       setProjectKey(e.target.value.toUpperCase());
                     }}
-                    placeholder="z. B. WORK"
+                    placeholder={t('quick_add.placeholder_key')}
                     maxLength={16}
                     className="font-mono uppercase"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Wird aus dem Namen vorgeschlagen; eindeutig pro Workspace.
+                    {t('quick_add.key_hint')}
                   </p>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Kunde (optional)</Label>
+                  <Label>{t('quick_add.label_customer_optional')}</Label>
                   <CustomerCombobox
                     value={projectCustomer === 'none' ? null : projectCustomer}
                     onChange={(v) => setProjectCustomer(v ?? 'none')}
@@ -362,7 +362,7 @@ export function QuickAddDialog() {
                   navigate('/projects/create');
                 }}
               >
-                Mehr Felder…
+                {t('quick_add.more_fields')}
               </Button>
             ) : (
               <Button
@@ -379,7 +379,7 @@ export function QuickAddDialog() {
                   }
                 }}
               >
-                Zur Liste
+                {t('quick_add.to_list')}
               </Button>
             )}
             <Button
@@ -389,10 +389,10 @@ export function QuickAddDialog() {
             >
               {submitting ? (
                 <>
-                  <Loader2 className="size-4 animate-spin" /> Speichere…
+                  <Loader2 className="size-4 animate-spin" /> {t('quick_add.saving')}
                 </>
               ) : (
-                <>Anlegen ⏎</>
+                <>{t('quick_add.create')}</>
               )}
             </Button>
           </div>

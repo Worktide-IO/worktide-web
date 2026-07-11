@@ -90,7 +90,7 @@ export function LeadActivityDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Users className="size-4" /> Verlauf — {lead?.name}
+            <Users className="size-4" /> {t('lead_activity.title', { name: lead?.name ?? '' })}
           </DialogTitle>
         </DialogHeader>
 
@@ -101,7 +101,7 @@ export function LeadActivityDialog({
               <Skeleton className="h-10 w-full" />
             </>
           ) : activities.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">Noch keine Aktivitäten.</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">{t('lead_activity.empty')}</p>
           ) : (
             activities.map((a) => {
               const Icon = ICON[a.type] ?? FileText;
@@ -128,12 +128,12 @@ export function LeadActivityDialog({
         <div className="flex items-end gap-2 border-t pt-3">
           <Textarea
             rows={2}
-            placeholder="Notiz hinzufügen…"
+            placeholder={t('lead_activity.note_placeholder')}
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
           <Button onClick={() => void addNote()} disabled={busy || note.trim() === ''}>
-            <Send className="size-4" /> Notiz
+            <Send className="size-4" /> {t('lead_activity.add_note')}
           </Button>
         </div>
       </DialogContent>
@@ -150,7 +150,7 @@ function formatDate(iso?: string): string {
 }
 
 /** Human one-liner from the activity's payload/outcome. */
-function summarize(a: Row<LeadActivityJsonld>, t: (key: string) => string): string {
+function summarize(a: Row<LeadActivityJsonld>, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const p = (a.payload ?? {}) as Record<string, unknown>;
   switch (a.type) {
     case 'stage_change': {
@@ -161,7 +161,7 @@ function summarize(a: Row<LeadActivityJsonld>, t: (key: string) => string): stri
       return `${from} → ${to}`;
     }
     case 'discovered':
-      return typeof p.provider === 'string' && p.provider !== '' ? `Gefunden via ${p.provider}` : 'Gefunden';
+      return typeof p.provider === 'string' && p.provider !== '' ? t('lead_activity.found_via', { provider: p.provider }) : t('lead_activity.found');
     case 'note':
       return String(p.note ?? a.outcome ?? '');
     default:

@@ -1,5 +1,6 @@
 import { useForm } from '@refinedev/react-hook-form';
 import { useNavigation } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
@@ -63,6 +64,7 @@ type Props = Mode & {
 };
 
 export function CustomerForm(props: Props) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { show } = useNavigation();
   const {
@@ -115,12 +117,12 @@ export function CustomerForm(props: Props) {
         <div className="flex items-center justify-end gap-2">
           {props.action === 'edit' ? (
             <Button type="button" variant="outline" size="sm" disabled>
-              <Trash2 className="size-4" /> Löschen
+              <Trash2 className="size-4" /> {t('action.delete')}
             </Button>
           ) : null}
           <Button type="submit" disabled={isSubmitting || formLoading}>
             <Save className="size-4" />
-            {isSubmitting ? 'Speichern …' : 'Speichern'}
+            {isSubmitting ? t('customer_form.saving') : t('action.save')}
           </Button>
         </div>
       ) : (
@@ -131,7 +133,7 @@ export function CustomerForm(props: Props) {
             </Button>
             <div>
               <h2 className="text-2xl">
-                {props.action === 'create' ? 'Neuer Kunde' : current?.name ?? 'Kunde bearbeiten'}
+                {props.action === 'create' ? t('customer_form.title_new') : current?.name ?? t('customer_form.title_edit')}
               </h2>
               {props.action === 'edit' && current?.legalName ? (
                 <p className="text-sm text-muted-foreground">{current.legalName}</p>
@@ -146,7 +148,7 @@ export function CustomerForm(props: Props) {
           <div className="flex items-center gap-2">
             {props.action === 'edit' ? (
               <Button type="button" variant="outline" size="sm" disabled>
-                <Trash2 className="size-4" /> Löschen
+                <Trash2 className="size-4" /> {t('action.delete')}
               </Button>
             ) : null}
             <Button type="submit" disabled={isSubmitting || formLoading}>
@@ -169,7 +171,7 @@ export function CustomerForm(props: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Stammdaten</CardTitle>
+              <CardTitle>{t('customer_form.section_master')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Controller
@@ -187,7 +189,7 @@ export function CustomerForm(props: Props) {
                           : 'text-muted-foreground hover:text-foreground',
                       )}
                     >
-                      Firma
+                      {t('customer_form.type_company')}
                     </button>
                     <button
                       type="button"
@@ -199,7 +201,7 @@ export function CustomerForm(props: Props) {
                           : 'text-muted-foreground hover:text-foreground',
                       )}
                     >
-                      Person
+                      {t('customer_form.type_person')}
                     </button>
                   </div>
                 )}
@@ -209,27 +211,27 @@ export function CustomerForm(props: Props) {
                 <>
                   <Field
                     id="name"
-                    label="Firmenname"
+                    label={t('customer_form.field_company_name')}
                     required
-                    {...register('name', { required: 'Pflichtfeld' })}
+                    {...register('name', { required: t('customer_form.required') })}
                   />
-                  <Field id="legalName" label="Firmen-Langname (für Rechnungen)" {...register('legalName')} />
-                  <Field id="vatId" label="USt-ID" {...register('vatId')} />
+                  <Field id="legalName" label={t('customer_form.field_legal_name')} {...register('legalName')} />
+                  <Field id="vatId" label={t('customer_form.field_vat_id')} {...register('vatId')} />
                 </>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
-                  <Field id="firstName" label="Vorname" {...register('firstName')} />
+                  <Field id="firstName" label={t('customer_form.field_first_name')} {...register('firstName')} />
                   <Field
                     id="lastName"
-                    label="Nachname"
+                    label={t('customer_form.field_last_name')}
                     required
-                    {...register('lastName', { required: 'Pflichtfeld' })}
+                    {...register('lastName', { required: t('customer_form.required') })}
                   />
                 </div>
               )}
 
               <div className="space-y-1.5">
-                <Label htmlFor="industry">Branche</Label>
+                <Label htmlFor="industry">{t('customer_form.field_industry')}</Label>
                 <Controller
                   control={control}
                   name="industry"
@@ -244,7 +246,7 @@ export function CustomerForm(props: Props) {
 
               <div className="grid grid-cols-2 gap-4">
                 <Field id="email" label="Email" type="email" {...register('email')} />
-                <Field id="phone" label="Telefon" {...register('phone')} />
+                <Field id="phone" label={t('customer_form.field_phone')} {...register('phone')} />
               </div>
               <Field id="website" label="Website" type="url" {...register('website')} />
             </CardContent>
@@ -252,11 +254,11 @@ export function CustomerForm(props: Props) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Status</CardTitle>
+              <CardTitle>{t('customer_form.section_status')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="status">Lebenszyklus</Label>
+                <Label htmlFor="status">{t('customer_form.field_lifecycle')}</Label>
                 <Controller
                   name="status"
                   control={control}
@@ -267,10 +269,10 @@ export function CustomerForm(props: Props) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="prospect">Prospect</SelectItem>
-                        <SelectItem value="active">Aktiv</SelectItem>
-                        <SelectItem value="inactive">Inaktiv</SelectItem>
+                        <SelectItem value="active">{t('customer_form.status_active')}</SelectItem>
+                        <SelectItem value="inactive">{t('customer_form.status_inactive')}</SelectItem>
                         <SelectItem value="churned">Churned</SelectItem>
-                        <SelectItem value="archived">Archiviert</SelectItem>
+                        <SelectItem value="archived">{t('customer_form.status_archived')}</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
@@ -278,7 +280,7 @@ export function CustomerForm(props: Props) {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Typ</Label>
+                <Label>{t('customer_form.field_type')}</Label>
                 <div className="flex flex-col gap-2 pt-1">
                   <Controller
                     name="isCustomer"
@@ -289,7 +291,7 @@ export function CustomerForm(props: Props) {
                           checked={field.value ?? false}
                           onCheckedChange={(v) => field.onChange(v === true)}
                         />
-                        Kunde
+                        {t('customer_form.type_customer')}
                       </label>
                     )}
                   />
@@ -302,7 +304,7 @@ export function CustomerForm(props: Props) {
                           checked={field.value ?? false}
                           onCheckedChange={(v) => field.onChange(v === true)}
                         />
-                        Lieferant
+                        {t('customer_form.type_vendor')}
                       </label>
                     )}
                   />
@@ -312,10 +314,11 @@ export function CustomerForm(props: Props) {
               {props.action === 'edit' && current?.id ? (
                 <div className="text-xs text-muted-foreground space-y-1">
                   <div>
-                    Erstellt: {current.createdAt ? new Date(current.createdAt).toLocaleString() : '—'}
+                    {t('customer_form.created_label')}{' '}
+                    {current.createdAt ? new Date(current.createdAt).toLocaleString() : '—'}
                   </div>
                   <div>
-                    Aktualisiert:{' '}
+                    {t('customer_form.updated_label')}{' '}
                     {current.updatedAt ? new Date(current.updatedAt).toLocaleString() : '—'}
                   </div>
                   <button
@@ -323,7 +326,7 @@ export function CustomerForm(props: Props) {
                     className="underline underline-offset-2"
                     onClick={() => show('customers', current.id ?? '')}
                   >
-                    Detail …
+                    {t('customer_form.detail_link')}
                   </button>
                 </div>
               ) : null}
@@ -332,18 +335,18 @@ export function CustomerForm(props: Props) {
 
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Adresse</CardTitle>
+              <CardTitle>{t('customer_form.section_address')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Field id="addressLine1" label="Adresse" {...register('addressLine1')} />
-              <Field id="addressLine2" label="Adresszusatz" {...register('addressLine2')} />
+              <Field id="addressLine1" label={t('customer_form.field_address')} {...register('addressLine1')} />
+              <Field id="addressLine2" label={t('customer_form.field_address2')} {...register('addressLine2')} />
               <div className="grid grid-cols-3 gap-4">
-                <Field id="zip" label="PLZ" {...register('zip')} />
-                <Field id="city" label="Stadt" className="col-span-2" {...register('city')} />
+                <Field id="zip" label={t('customer_form.field_zip')} {...register('zip')} />
+                <Field id="city" label={t('customer_form.field_city')} className="col-span-2" {...register('city')} />
               </div>
               <Field
                 id="country"
-                label="Land (ISO 3166-1 alpha-2)"
+                label={t('customer_form.field_country')}
                 maxLength={2}
                 {...register('country')}
               />
@@ -352,12 +355,12 @@ export function CustomerForm(props: Props) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Notizen</CardTitle>
+              <CardTitle>{t('customer_form.section_notes')}</CardTitle>
             </CardHeader>
             <CardContent>
               <Textarea
                 rows={8}
-                placeholder="Free-form. Account-Manager-Wechsel, Lieferadressen, Eigenheiten …"
+                placeholder={t('customer_form.notes_placeholder')}
                 {...register('notes')}
               />
             </CardContent>

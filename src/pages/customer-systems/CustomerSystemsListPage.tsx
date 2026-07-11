@@ -92,7 +92,7 @@ export function CustomerSystemsListPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl">Systeme</h2>
+            <h2 className="text-2xl">{t('customer_systems_list.heading')}</h2>
             {liveConnected ? (
               <Badge variant="secondary" className="gap-1 text-xs">
                 <Wifi className="size-3" /> Live
@@ -104,24 +104,24 @@ export function CustomerSystemsListPage() {
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            {total} betreute Systeme im Workspace
+            {t('customer_systems_list.count', { count: total })}
           </p>
         </div>
         <Button asChild>
           <Link to="/customer-systems/create">
-            <Plus className="size-4" /> Neues System
+            <Plus className="size-4" /> {t('customer_systems_list.new')}
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader className="gap-4">
-          <CardTitle>Übersicht</CardTitle>
+          <CardTitle>{t('customer_systems_list.overview')}</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[240px] max-w-md">
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
-                placeholder="Name suchen…"
+                placeholder={t('customer_systems_list.search_placeholder')}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -132,7 +132,7 @@ export function CustomerSystemsListPage() {
             </div>
             <CustomerCombobox
               className="w-56"
-              placeholder="Alle Kunden"
+              placeholder={t('customer_systems_list.all_customers')}
               value={customerFilter === 'all' ? null : customerFilter}
               onChange={(v) => {
                 const next = v ?? 'all';
@@ -148,10 +148,10 @@ export function CustomerSystemsListPage() {
               }}
             >
               <SelectTrigger className="w-44">
-                <SelectValue placeholder="Typ" />
+                <SelectValue placeholder={t('customer_systems_list.type')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Typen</SelectItem>
+                <SelectItem value="all">{t('customer_systems_list.all_types')}</SelectItem>
                 {Object.entries(TYPE_LABEL).map(([value, label]) => (
                   <SelectItem key={value} value={value}>
                     {t(label)}
@@ -171,20 +171,20 @@ export function CustomerSystemsListPage() {
           ) : rows.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-12">
               {search || customerFilter !== 'all' || typeFilter !== 'all'
-                ? 'Keine Treffer mit diesen Filtern.'
-                : 'Noch keine Systeme angelegt.'}
+                ? t('customer_systems_list.no_matches')
+                : t('customer_systems_list.empty')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10"></TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="w-32">Typ</TableHead>
-                  <TableHead className="w-24">Umgebung</TableHead>
-                  <TableHead className="w-48">Kunde</TableHead>
+                  <TableHead>{t('customer_systems_list.col_name')}</TableHead>
+                  <TableHead className="w-32">{t('customer_systems_list.col_type')}</TableHead>
+                  <TableHead className="w-24">{t('customer_systems_list.col_environment')}</TableHead>
+                  <TableHead className="w-48">{t('customer_systems_list.col_customer')}</TableHead>
                   <TableHead>URL</TableHead>
-                  <TableHead className="w-24">Version</TableHead>
+                  <TableHead className="w-24">{t('customer_systems_list.col_version')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -204,7 +204,7 @@ export function CustomerSystemsListPage() {
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{s.name}</span>
                           {s.isActive === false ? (
-                            <Badge variant="outline" className="text-[10px]">inaktiv</Badge>
+                            <Badge variant="outline" className="text-[10px]">{t('customer_systems_list.inactive')}</Badge>
                           ) : null}
                         </div>
                       </TableCell>

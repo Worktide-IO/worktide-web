@@ -166,13 +166,13 @@ export function ConversationDetailPage() {
   return (
     <div className="flex h-[calc(100vh-6rem)] flex-col gap-3">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/inbox')} aria-label="Zurück">
+        <Button variant="ghost" size="icon" onClick={() => navigate('/inbox')} aria-label={t('conversation.back')}>
           <ArrowLeft className="size-4" />
         </Button>
         <div className="flex-1 min-w-0">
           <h2 className="text-xl font-semibold truncate">{convo.subject || '(no subject)'}</h2>
           <p className="text-xs text-muted-foreground truncate">
-            {convo.senderRaw ?? '—'} · {channel?.name ?? 'Channel?'} · {bubbles.length} Nachricht{bubbles.length === 1 ? '' : 'en'}
+            {convo.senderRaw ?? '—'} · {channel?.name ?? 'Channel?'} · {t('conversation.messages_count', { count: bubbles.length })}
           </p>
         </div>
         <Select value={(convo.status as string) ?? 'open'} onValueChange={setStatus}>
@@ -210,7 +210,7 @@ export function ConversationDetailPage() {
               ) : (
                 <ChevronUp className="size-3.5" />
               )}
-              Ältere Nachrichten laden
+              {t('conversation.load_older')}
             </Button>
           </div>
         ) : null}
@@ -244,7 +244,7 @@ function MessageBubble({ bubble }: { bubble: Bubble }) {
       <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2 pt-3">
         <Mail className={cn('size-4', isInbound ? 'text-indigo-500' : 'text-emerald-500')} />
         <span className="text-xs font-medium">
-          {isInbound ? e?.senderRaw ?? 'Unbekannter Absender' : `→ ${m?.recipientRaw ?? '(unknown)'}`}
+          {isInbound ? e?.senderRaw ?? t('conversation.unknown_sender') : `→ ${m?.recipientRaw ?? '(unknown)'}`}
         </span>
         <span className="text-xs text-muted-foreground ml-auto">
           {bubble.at.toLocaleString('de-DE')}
@@ -267,6 +267,7 @@ function MessageBubble({ bubble }: { bubble: Bubble }) {
 }
 
 function InboundBody({ event }: { event: Row<InboundEventJsonld> }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const meta = (event as unknown as { sourceMetadata?: Record<string, unknown> }).sourceMetadata ?? {};
   const truncated = meta.bodyTruncated === true;
@@ -277,7 +278,7 @@ function InboundBody({ event }: { event: Row<InboundEventJsonld> }) {
     <>
       {oversized ? (
         <div className="mb-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-800">
-          Mail übersprungen — Größe überschreitet das Channel-Limit.
+          {t('conversation.mail_skipped')}
         </div>
       ) : null}
       <pre className={cn('whitespace-pre-wrap text-sm', !expanded && 'line-clamp-12')}>
@@ -291,7 +292,7 @@ function InboundBody({ event }: { event: Row<InboundEventJsonld> }) {
           onClick={() => setExpanded(true)}
         >
           <ChevronDown className="size-3" />
-          {truncated ? 'Vollständige Mail laden' : 'Mehr anzeigen'}
+          {truncated ? t('conversation.load_full_mail') : t('conversation.show_more')}
         </Button>
       ) : null}
       {attachments.length > 0 ? (
@@ -303,10 +304,10 @@ function InboundBody({ event }: { event: Row<InboundEventJsonld> }) {
                 'inline-flex items-center gap-1 rounded border bg-muted/30 px-1.5 py-0.5 text-xs',
                 a.oversized && 'border-amber-300 bg-amber-50 text-amber-800',
               )}
-              title={a.oversized ? 'Zu groß, nicht gespeichert' : 'Gespeichert'}
+              title={a.oversized ? t('conversation.att_too_large') : t('conversation.att_saved')}
             >
               <Paperclip className="size-3" />
-              {a.filename ?? 'anhang'} ({Math.round((a.sizeBytes ?? 0) / 1024)} KB)
+              {a.filename ?? t('conversation.attachment_fallback')} ({Math.round((a.sizeBytes ?? 0) / 1024)} KB)
             </span>
           ))}
         </div>
@@ -375,14 +376,14 @@ function ReplyComposer({
     <Card>
       <CardHeader className="space-y-2 pb-2">
         <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-          <Label htmlFor="reply-to" className="text-xs">An</Label>
+          <Label htmlFor="reply-to" className="text-xs">{t('conversation.to')}</Label>
           <input
             id="reply-to"
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
             className="h-8 rounded border bg-background px-2 text-sm"
           />
-          <Label htmlFor="reply-subject" className="text-xs">Betreff</Label>
+          <Label htmlFor="reply-subject" className="text-xs">{t('conversation.subject')}</Label>
           <input
             id="reply-subject"
             value={subject}
@@ -395,13 +396,13 @@ function ReplyComposer({
         <Textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="Antwort verfassen…"
+          placeholder={t('conversation.reply_placeholder')}
           className="h-32 resize-none text-sm"
         />
         <div className="flex justify-end gap-2">
           <Button onClick={send} disabled={sending}>
             <Send className="size-4" />
-            {sending ? 'Sende…' : 'Senden'}
+            {sending ? t('conversation.sending') : t('conversation.send')}
           </Button>
         </div>
       </CardContent>

@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -10,18 +11,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
  * when building it. See ../worktide-portal/docs/PLAN.md.
  */
 export function ForgotPasswordPage() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen grid place-items-center bg-muted/40 p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Passwort zurücksetzen</CardTitle>
-          <CardDescription>Diese Ansicht ist noch nicht implementiert (Platzhalter).</CardDescription>
+          <CardTitle>{t('forgot_password.title')}</CardTitle>
+          <CardDescription>{t('forgot_password.not_implemented')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
-            Backend-Endpoint vorhanden — UI folgt. Solange:{' '}
+            {t('forgot_password.hint')}{' '}
             <Link to="/login" className="underline">
-              zurück zur Anmeldung
+              {t('forgot_password.back_to_login')}
             </Link>
             .
           </p>

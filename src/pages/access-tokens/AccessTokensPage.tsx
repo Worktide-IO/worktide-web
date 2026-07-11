@@ -74,6 +74,7 @@ type IssuedPat = Pat & { plaintextToken?: string };
  * we filter the list by the active workspace IRI.
  */
 export function AccessTokensPage() {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const [createOpen, setCreateOpen] = useState(false);
   const [issued, setIssued] = useState<IssuedPat | null>(null);
@@ -107,23 +108,21 @@ export function AccessTokensPage() {
             Personal Access Tokens
           </h2>
           <p className="max-w-2xl text-sm text-muted-foreground">
-            Langlebige Bearer-Tokens für externe Integrationen — CI-Skripte,
-            der Worktide-MCP-Server, eigene Dashboards. Jeder Token läuft
-            unter deinem User und respektiert deine Berechtigungen.
-            Authentifizierung erfolgt per <code className="font-mono">X-Worktide-Token</code>-Header.
+            {translate('access_tokens.intro_before')}
+            <code className="font-mono">X-Worktide-Token</code>
+            {translate('access_tokens.intro_after')}
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="size-4" /> Neuer Token
+          <Plus className="size-4" /> {translate('access_tokens.new')}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Aktive Tokens</CardTitle>
+          <CardTitle>{translate('access_tokens.active_title')}</CardTitle>
           <CardDescription>
-            Nicht widerrufene Tokens. Widerrufene Tokens werden ausgegraut am
-            Ende der Liste angezeigt.
+            {translate('access_tokens.active_desc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -134,16 +133,18 @@ export function AccessTokensPage() {
             </div>
           ) : (tokens?.data?.length ?? 0) === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
-              Noch keine Tokens. Klick auf <em>+ Neuer Token</em>, um den ersten anzulegen.
+              {translate('access_tokens.empty_before')}
+              <em>{translate('access_tokens.empty_cta')}</em>
+              {translate('access_tokens.empty_after')}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead>{translate('access_tokens.col_name')}</TableHead>
                   <TableHead className="w-40">Prefix</TableHead>
-                  <TableHead className="w-40">Zuletzt benutzt</TableHead>
-                  <TableHead className="w-32">Läuft ab</TableHead>
+                  <TableHead className="w-40">{translate('access_tokens.col_last_used')}</TableHead>
+                  <TableHead className="w-32">{translate('access_tokens.col_expires')}</TableHead>
                   <TableHead className="w-24 text-right">Status</TableHead>
                   <TableHead className="w-24" />
                 </TableRow>
@@ -179,7 +180,7 @@ function TokenRow({ token }: { token: Row<Pat> }) {
 
   const revoke = async () => {
     if (!token.id) return;
-    if (!window.confirm(`Token "${token.name}" wirklich widerrufen? Externe Integrationen, die diesen Token verwenden, brechen sofort ab.`)) {
+    if (!window.confirm(translate('access_tokens.revoke_confirm', { name: token.name }))) {
       return;
     }
     setRevoking(true);
@@ -201,19 +202,19 @@ function TokenRow({ token }: { token: Row<Pat> }) {
         {token.tokenPrefix ?? '—'}…
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">
-        {token.lastUsedAt ? new Date(token.lastUsedAt).toLocaleString() : 'nie'}
+        {token.lastUsedAt ? new Date(token.lastUsedAt).toLocaleString() : translate('access_tokens.never')}
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">
-        {token.expiresAt ? new Date(token.expiresAt).toLocaleDateString() : 'unbegrenzt'}
+        {token.expiresAt ? new Date(token.expiresAt).toLocaleDateString() : translate('access_tokens.unlimited')}
       </TableCell>
       <TableCell className="text-right">
         {isRevoked ? (
           <Badge variant="outline" className="gap-1 text-[10px]">
-            <Ban className="size-3" /> widerrufen
+            <Ban className="size-3" /> {translate('access_tokens.status_revoked')}
           </Badge>
         ) : (
           <Badge variant="secondary" className="text-[10px]">
-            aktiv
+            {translate('access_tokens.status_active')}
           </Badge>
         )}
       </TableCell>
@@ -226,7 +227,7 @@ function TokenRow({ token }: { token: Row<Pat> }) {
             onClick={revoke}
           >
             {revoking ? <Loader2 className="size-3 animate-spin" /> : <Ban className="size-3" />}
-            Widerrufen
+            {translate('access_tokens.revoke')}
           </Button>
         )}
       </TableCell>
@@ -287,21 +288,19 @@ function CreateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Personal Access Token anlegen</DialogTitle>
+          <DialogTitle>{translate('access_tokens.create_title')}</DialogTitle>
           <DialogDescription>
-            Gib dem Token einen sprechenden Namen — typischerweise der Name
-            der Integration, die ihn verwendet ("MCP lokal", "GitHub-Actions"
-            etc.). Optional kannst du ein Ablaufdatum setzen.
+            {translate('access_tokens.create_desc')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="pat-name">Name</Label>
+            <Label htmlFor="pat-name">{translate('access_tokens.col_name')}</Label>
             <Input
               id="pat-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="z. B. MCP lokal"
+              placeholder={translate('access_tokens.name_ph')}
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !saving && name.trim()) submit();
@@ -309,7 +308,7 @@ function CreateDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="pat-expires">Ablaufdatum (optional)</Label>
+            <Label htmlFor="pat-expires">{translate('access_tokens.expires_label')}</Label>
             <Input
               id="pat-expires"
               type="date"
@@ -318,17 +317,17 @@ function CreateDialog({
               min={new Date().toISOString().slice(0, 10)}
             />
             <p className="text-xs text-muted-foreground">
-              Leer = nie ablaufend (bis manuell widerrufen).
+              {translate('access_tokens.expires_hint')}
             </p>
           </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
-            Abbrechen
+            {translate('action.cancel')}
           </Button>
           <Button onClick={submit} disabled={saving || !name.trim()}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-            Token erzeugen
+            {translate('access_tokens.create_submit')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -374,13 +373,13 @@ function IssuedDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldAlert className="size-5 text-amber-500" />
-            Token "{token.name}" angelegt
+            {translate('access_tokens.issued_title', { name: token.name })}
           </DialogTitle>
           <DialogDescription>
             <strong className="text-foreground">
-              Kopiere den Token jetzt — er wird nicht mehr angezeigt.
+              {translate('access_tokens.issued_warning')}
             </strong>{' '}
-            Bewahre ihn wie ein Passwort auf; verloren = neu anlegen.
+            {translate('access_tokens.issued_hint')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -396,7 +395,7 @@ function IssuedDialog({
               variant="outline"
               size="icon"
               onClick={() => setShow((v) => !v)}
-              aria-label={show ? 'Token verbergen' : 'Token anzeigen'}
+              aria-label={show ? translate('access_tokens.hide_token') : translate('access_tokens.show_token')}
             >
               {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </Button>
@@ -405,7 +404,7 @@ function IssuedDialog({
             </Button>
           </div>
           <div className="rounded-md border bg-muted/30 p-3 space-y-1.5 text-xs">
-            <p className="font-medium">Verwendung — Worktide-MCP-Server:</p>
+            <p className="font-medium">{translate('access_tokens.usage_mcp')}</p>
             <pre className="overflow-x-auto rounded bg-background p-2 font-mono text-[11px]">
 {`{
   "mcpServers": {
@@ -420,7 +419,7 @@ function IssuedDialog({
   }
 }`}
             </pre>
-            <p className="font-medium pt-1">Verwendung — curl:</p>
+            <p className="font-medium pt-1">{translate('access_tokens.usage_curl')}</p>
             <pre className="overflow-x-auto rounded bg-background p-2 font-mono text-[11px]">
 {`curl -H "X-Worktide-Token: ${token.tokenPrefix ?? 'wt_pat_'}…" \\
   https://api.worktide.example.com/v1/auth/me`}
@@ -428,7 +427,7 @@ function IssuedDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={onClose}>Habe ich kopiert — schließen</Button>
+          <Button onClick={onClose}>{translate('access_tokens.issued_close')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

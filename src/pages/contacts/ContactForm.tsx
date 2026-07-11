@@ -1,5 +1,6 @@
 import { useNavigation } from '@refinedev/core';
 import { useForm } from '@refinedev/react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
@@ -43,6 +44,7 @@ type Mode = { action: 'create' } | { action: 'edit'; id: string };
  */
 export function ContactForm(props: Mode) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { show } = useNavigation();
   void show;
 
@@ -79,9 +81,9 @@ export function ContactForm(props: Mode) {
           <div>
             <h2 className="text-2xl">
               {props.action === 'create'
-                ? 'Neuer Kontakt'
+                ? t('contact_form.heading_new')
                 : `${current?.firstName ?? ''} ${current?.lastName ?? ''}`.trim() ||
-                  'Kontakt bearbeiten'}
+                  t('contact_form.heading_edit')}
             </h2>
             {props.action === 'edit' && current?.position ? (
               <p className="text-sm text-muted-foreground">{current.position}</p>
@@ -89,19 +91,19 @@ export function ContactForm(props: Mode) {
           </div>
           {props.action === 'edit' && current?.isPrimary ? (
             <Badge variant="secondary" className="ml-3">
-              primär
+              {t('contact_form.primary_badge')}
             </Badge>
           ) : null}
         </div>
         <div className="flex items-center gap-2">
           {props.action === 'edit' ? (
             <Button type="button" variant="outline" size="sm" disabled>
-              <Trash2 className="size-4" /> Löschen
+              <Trash2 className="size-4" /> {t('action.delete')}
             </Button>
           ) : null}
           <Button type="submit" disabled={isSubmitting || formLoading}>
             <Save className="size-4" />
-            {isSubmitting ? 'Speichern …' : 'Speichern'}
+            {isSubmitting ? t('action.saving') : t('action.save')}
           </Button>
         </div>
       </div>
@@ -118,12 +120,12 @@ export function ContactForm(props: Mode) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Person</CardTitle>
+              <CardTitle>{t('contact_form.card_person')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_2fr] gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="salutation">Anrede</Label>
+                  <Label htmlFor="salutation">{t('contact_form.field_salutation')}</Label>
                   <Controller
                     name="salutation"
                     control={control}
@@ -138,7 +140,7 @@ export function ContactForm(props: Mode) {
                         <SelectContent>
                           {SALUTATIONS.map((s) => (
                             <SelectItem key={s.value} value={s.value}>
-                              {s.label}
+                              {s.value === 'none' ? t('contact_form.salutation_none') : s.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -148,28 +150,28 @@ export function ContactForm(props: Mode) {
                 </div>
                 <Field
                   id="firstName"
-                  label="Vorname"
+                  label={t('contact_form.field_firstname')}
                   required
-                  {...register('firstName', { required: 'Pflichtfeld' })}
+                  {...register('firstName', { required: t('validation.required') })}
                 />
                 <Field
                   id="lastName"
-                  label="Nachname"
+                  label={t('contact_form.field_lastname')}
                   required
-                  {...register('lastName', { required: 'Pflichtfeld' })}
+                  {...register('lastName', { required: t('validation.required') })}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <Field id="title" label="Titel (Dr., Prof., …)" {...register('title')} />
-                <Field id="position" label="Position / Rolle" {...register('position')} />
+                <Field id="title" label={t('contact_form.field_title')} {...register('title')} />
+                <Field id="position" label={t('contact_form.field_position')} {...register('position')} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Field id="email" label="Email" type="email" {...register('email')} />
-                <Field id="phone" label="Telefon" {...register('phone')} />
-                <Field id="mobile" label="Mobil" {...register('mobile')} />
+                <Field id="phone" label={t('contact_form.field_phone')} {...register('phone')} />
+                <Field id="mobile" label={t('contact_form.field_mobile')} {...register('mobile')} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="notes">Notizen</Label>
+                <Label htmlFor="notes">{t('contact_form.field_notes')}</Label>
                 <Textarea id="notes" rows={4} {...register('notes')} />
               </div>
             </CardContent>
@@ -177,12 +179,12 @@ export function ContactForm(props: Mode) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Zuordnung</CardTitle>
+              <CardTitle>{t('contact_form.card_assignment')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="customer">
-                  Kunde <span className="text-destructive">*</span>
+                  {t('contact_form.field_customer')} <span className="text-destructive">*</span>
                 </Label>
                 <Controller
                   name="customer"
@@ -201,9 +203,9 @@ export function ContactForm(props: Mode) {
 
               <div className="flex items-center justify-between rounded-md border border-input p-3">
                 <div className="space-y-0.5">
-                  <Label htmlFor="isPrimary">Primärer Ansprechpartner</Label>
+                  <Label htmlFor="isPrimary">{t('contact_form.field_primary')}</Label>
                   <p className="text-xs text-muted-foreground">
-                    Wird in Listen-Ansichten als ⭐ markiert.
+                    {t('contact_form.primary_hint')}
                   </p>
                 </div>
                 <Controller
@@ -221,9 +223,9 @@ export function ContactForm(props: Mode) {
 
               <div className="flex items-center justify-between rounded-md border border-input p-3">
                 <div className="space-y-0.5">
-                  <Label htmlFor="isActive">Aktiv</Label>
+                  <Label htmlFor="isActive">{t('contact_form.field_active')}</Label>
                   <p className="text-xs text-muted-foreground">
-                    Inaktive Kontakte bleiben in der Historie, aber tauchen in Vorschlägen nicht auf.
+                    {t('contact_form.active_hint')}
                   </p>
                 </div>
                 <Controller

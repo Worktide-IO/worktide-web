@@ -65,10 +65,10 @@ export function WorkspaceSwitcher() {
   };
 
   if (query.isLoading) {
-    return <SidebarMenuButton size="lg" disabled>Lade…</SidebarMenuButton>;
+    return <SidebarMenuButton size="lg" disabled>{t('workspace_switcher.loading')}</SidebarMenuButton>;
   }
   if (!workspaces?.data?.length) {
-    return <SidebarMenuButton size="lg" disabled>Keine Workspaces</SidebarMenuButton>;
+    return <SidebarMenuButton size="lg" disabled>{t('workspace_switcher.empty')}</SidebarMenuButton>;
   }
 
   const initials = workspaceInitials(active?.name ?? active?.slug);
@@ -78,7 +78,7 @@ export function WorkspaceSwitcher() {
       <PopoverTrigger asChild>
         <SidebarMenuButton
           size="lg"
-          aria-label="Workspace wechseln"
+          aria-label={t('workspace_switcher.aria_switch')}
           className="data-[state=open]:bg-sidebar-accent"
         >
           <Avatar className="size-7 rounded-md">
@@ -87,7 +87,7 @@ export function WorkspaceSwitcher() {
           <div className="flex flex-1 flex-col items-start gap-0.5 leading-tight">
             <span className="text-sm font-medium truncate">{active?.name ?? active?.slug ?? '—'}</span>
             <span className="text-xs text-muted-foreground truncate">
-              {workspaces.data.length} Workspace{workspaces.data.length === 1 ? '' : 's'}
+              {t('workspace_switcher.count', { count: workspaces.data.length })}
             </span>
           </div>
           <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
@@ -95,9 +95,9 @@ export function WorkspaceSwitcher() {
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="start" sideOffset={8}>
         <Command>
-          <CommandInput placeholder="Workspace suchen…" />
+          <CommandInput placeholder={t('workspace_switcher.search_placeholder')} />
           <CommandList>
-            <CommandEmpty>Keine Treffer.</CommandEmpty>
+            <CommandEmpty>{t('workspace_switcher.no_results')}</CommandEmpty>
             <CommandGroup>
               {workspaces.data.map((ws) => (
                 <CommandItem
@@ -141,7 +141,7 @@ export function WorkspaceSwitcher() {
                 }}
               >
                 <Settings className="size-4 mr-2" />
-                Workspace-Einstellungen
+                {t('workspace_switcher.settings')}
               </CommandItem>
             </CommandGroup>
           </CommandList>

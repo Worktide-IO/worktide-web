@@ -72,12 +72,12 @@ const ICON_BY_AGGREGATE: Record<string, LucideIcon> = {
 };
 
 const VERB_BY_SUFFIX: Record<string, string> = {
-  created: 'erstellt',
-  updated: 'aktualisiert',
-  deleted: 'gelöscht',
-  closed: 'geschlossen',
-  opened: 'geöffnet',
-  archived: 'archiviert',
+  created: 'activity.verb_created',
+  updated: 'activity.verb_updated',
+  deleted: 'activity.verb_deleted',
+  closed: 'activity.verb_closed',
+  opened: 'activity.verb_opened',
+  archived: 'activity.verb_archived',
 };
 
 export function ActivityPage() {
@@ -121,7 +121,7 @@ export function ActivityPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl">Aktivität</h2>
+            <h2 className="text-2xl">{t('activity.heading')}</h2>
             {liveConnected ? (
               <Badge variant="secondary" className="gap-1 text-xs">
                 <Wifi className="size-3" /> Live
@@ -132,26 +132,26 @@ export function ActivityPage() {
               </Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">{total} Ereignisse</p>
+          <p className="text-sm text-muted-foreground">{t('activity.events_count', { count: total })}</p>
         </div>
       </div>
 
       <Card>
         <CardHeader className="gap-4">
-          <CardTitle>Filter</CardTitle>
+          <CardTitle>{t('activity.filter')}</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <Input
-              placeholder="Event-Name (z. B. task.updated)"
+              placeholder={t('activity.search_placeholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="max-w-sm"
             />
             <Select value={aggregateFilter} onValueChange={setAggregateFilter}>
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Entity-Typ" />
+                <SelectValue placeholder={t('activity.entity_type_placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Typen</SelectItem>
+                <SelectItem value="all">{t('activity.all_types')}</SelectItem>
                 {aggregateOptions.map((k) => (
                   <SelectItem key={k} value={k}>
                     {AGGREGATE_LABEL[k] ? t(AGGREGATE_LABEL[k]) : k}
@@ -161,10 +161,10 @@ export function ActivityPage() {
             </Select>
             <Select value={actorFilter} onValueChange={setActorFilter}>
               <SelectTrigger className="w-56">
-                <SelectValue placeholder="Benutzer" />
+                <SelectValue placeholder={t('activity.user_placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Benutzer</SelectItem>
+                <SelectItem value="all">{t('activity.all_users')}</SelectItem>
                 {users.map((u) => (
                   <SelectItem key={u['@id']} value={u['@id'] ?? ''}>
                     {userDisplayName(u)}
@@ -183,7 +183,7 @@ export function ActivityPage() {
             </div>
           ) : rows.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-12">
-              Keine Ereignisse mit diesen Filtern.
+              {t('activity.empty')}
             </p>
           ) : (
             <ul className="divide-y">
@@ -208,13 +208,13 @@ export function ActivityPage() {
                           <div className="size-4" />
                         )}
                         <span className="font-medium">
-                          {actor ? userDisplayName(actor) : <span className="italic text-muted-foreground">System</span>}
+                          {actor ? userDisplayName(actor) : <span className="italic text-muted-foreground">{t('activity.system_actor')}</span>}
                         </span>
                         <span className="text-muted-foreground">hat</span>
                         <Badge variant="outline" className="text-[10px]">
                           {AGGREGATE_LABEL[e.aggregateType ?? ''] ? t(AGGREGATE_LABEL[e.aggregateType ?? '']) : (e.aggregateType ?? '—')}
                         </Badge>
-                        <span className="text-muted-foreground">{verb}</span>
+                        <span className="text-muted-foreground">{t(verb)}</span>
                         {e.aggregateId ? (
                           <span className="font-mono text-[10px] text-muted-foreground">
                             #{e.aggregateId.slice(-8)}

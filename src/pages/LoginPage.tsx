@@ -1,4 +1,5 @@
 import { useLogin } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { AlertCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -23,6 +24,7 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { mutate: login, isPending } = useLogin<LoginValues>();
 
@@ -64,7 +66,7 @@ export function LoginPage() {
       onError: (err) => {
         const msg =
           (err as { message?: string } | undefined)?.message ??
-          'Ungültige Zugangsdaten.';
+          t('login.invalid_credentials');
         setLoginError(msg);
       },
       onSuccess: (data) => {
@@ -72,7 +74,7 @@ export function LoginPage() {
         // resolved value with `success: false` — surface those too.
         if (data && typeof data === 'object' && 'success' in data && data.success === false) {
           const errObj = (data as { error?: { message?: string } }).error;
-          setLoginError(errObj?.message ?? 'Ungültige Zugangsdaten.');
+          setLoginError(errObj?.message ?? t('login.invalid_credentials'));
         }
       },
     });
@@ -85,11 +87,11 @@ export function LoginPage() {
         <form onSubmit={onSubmit} noValidate>
           <CardHeader className="text-center items-center">
             <BrandLogo className="h-9 w-auto" />
-            <CardDescription>Bitte anmelden, um fortzufahren.</CardDescription>
+            <CardDescription>{t('login.subtitle')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('login.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -103,7 +105,7 @@ export function LoginPage() {
               ) : null}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">Passwort</Label>
+              <Label htmlFor="password">{t('login.password')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -119,7 +121,7 @@ export function LoginPage() {
                   to="/forgot-password"
                   className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                 >
-                  Passwort vergessen?
+                  {t('login.forgot')}
                 </Link>
               </div>
             </div>
@@ -137,13 +139,12 @@ export function LoginPage() {
                     checked={!!field.value}
                     onCheckedChange={(checked) => field.onChange(!!checked)}
                   />
-                  Auf diesem Gerät angemeldet bleiben
+                  {t('login.remember')}
                 </label>
               )}
             />
             <p className="text-xs text-muted-foreground -mt-2">
-              Aus = Sitzung wird beendet, wenn das Browserfenster
-              geschlossen wird. Für geteilte Rechner empfohlen.
+              {t('login.remember_hint')}
             </p>
 
             {loginError ? (
@@ -157,7 +158,7 @@ export function LoginPage() {
             ) : null}
 
             <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? 'Anmelden …' : 'Anmelden'}
+              {isPending ? t('login.submitting') : t('login.submit')}
             </Button>
           </CardContent>
         </form>

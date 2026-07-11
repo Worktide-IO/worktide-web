@@ -1,4 +1,5 @@
 import { useMenu } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
  * in two places.
  */
 export function PlaceholderPage({ resource: resourceName }: { resource: string }) {
+  const { t } = useTranslation();
   const { menuItems } = useMenu();
   const item = menuItems.find((m) => m.name === resourceName);
   const label = (item?.meta?.label as string | undefined) ?? item?.label ?? resourceName;
@@ -21,11 +23,11 @@ export function PlaceholderPage({ resource: resourceName }: { resource: string }
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <h2 className="text-2xl">{label}</h2>
-        <Badge variant="secondary">In Arbeit</Badge>
+        <Badge variant="secondary">{t('placeholder_page.in_progress')}</Badge>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Bald verfügbar</CardTitle>
+          <CardTitle>{t('placeholder_page.coming_soon')}</CardTitle>
           <CardDescription>
             Diese Ansicht entsteht in einem der kommenden Iterationsschritte. Die API
             dahinter (<code className="font-mono text-xs">{`/v1/${resourceName}`}</code>)

@@ -114,28 +114,28 @@ export function CustomersListPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl">Kunden</h2>
+            <h2 className="text-2xl">{t('customers_list.heading')}</h2>
             <LiveBadge connected={liveConnected} />
           </div>
           <p className="text-sm text-muted-foreground">
-            {total} {total === 1 ? 'Kunde' : 'Kunden'} im Workspace
+            {t('customers_list.count', { count: total })}
           </p>
         </div>
         <Button asChild>
           <Link to="/customers/create">
-            <Plus className="size-4" /> Neuer Kunde
+            <Plus className="size-4" /> {t('customers_list.new')}
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader className="gap-4">
-          <CardTitle>Übersicht</CardTitle>
+          <CardTitle>{t('customers_list.overview')}</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[240px] max-w-md">
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
-                placeholder="Nach Name suchen…"
+                placeholder={t('customers_list.search_ph')}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -155,9 +155,9 @@ export function CustomersListPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Typen</SelectItem>
-                <SelectItem value="customer">Kunde</SelectItem>
-                <SelectItem value="vendor">Lieferant</SelectItem>
+                <SelectItem value="all">{t('customers_list.type_all')}</SelectItem>
+                <SelectItem value="customer">{t('customers_list.type_customer')}</SelectItem>
+                <SelectItem value="vendor">{t('customers_list.type_vendor')}</SelectItem>
               </SelectContent>
             </Select>
             <Select
@@ -171,12 +171,12 @@ export function CustomersListPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
+                <SelectItem value="all">{t('customers_list.status_all')}</SelectItem>
                 <SelectItem value="prospect">Prospect</SelectItem>
-                <SelectItem value="active">Aktiv</SelectItem>
-                <SelectItem value="inactive">Inaktiv</SelectItem>
+                <SelectItem value="active">{t('customers_list.status_active')}</SelectItem>
+                <SelectItem value="inactive">{t('customers_list.status_inactive')}</SelectItem>
                 <SelectItem value="churned">Churned</SelectItem>
-                <SelectItem value="archived">Archiviert</SelectItem>
+                <SelectItem value="archived">{t('customers_list.status_archived')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -191,20 +191,20 @@ export function CustomersListPage() {
           ) : rows.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-12">
               {search || statusFilter !== 'all'
-                ? 'Keine Treffer mit diesen Filtern.'
-                : 'Noch keine Kunden angelegt.'}
+                ? t('customers_list.empty_filtered')
+                : t('customers_list.empty')}
             </p>
           ) : (
             <>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="w-28">Typ</TableHead>
-                    <TableHead className="w-32">Status</TableHead>
-                    <TableHead className="w-48">Branche</TableHead>
-                    <TableHead className="w-40">Stadt</TableHead>
-                    <TableHead className="w-20 text-right">Kontakte</TableHead>
+                    <TableHead>{t('customers_list.col_name')}</TableHead>
+                    <TableHead className="w-28">{t('customers_list.col_type')}</TableHead>
+                    <TableHead className="w-32">{t('customers_list.col_status')}</TableHead>
+                    <TableHead className="w-48">{t('customers_list.col_industry')}</TableHead>
+                    <TableHead className="w-40">{t('customers_list.col_city')}</TableHead>
+                    <TableHead className="w-20 text-right">{t('customers_list.col_contacts')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -224,10 +224,10 @@ export function CustomersListPage() {
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {(c as CustomerRow).isCustomer ? (
-                            <Badge variant="secondary">Kunde</Badge>
+                            <Badge variant="secondary">{t('customers_list.type_customer')}</Badge>
                           ) : null}
                           {(c as CustomerRow).isVendor ? (
-                            <Badge variant="outline">Lieferant</Badge>
+                            <Badge variant="outline">{t('customers_list.type_vendor')}</Badge>
                           ) : null}
                         </div>
                       </TableCell>
@@ -278,6 +278,7 @@ function Pagination({
   onCurrentPage: (p: number) => void;
   onPageSize: (s: number) => void;
 }) {
+  const { t } = useTranslation();
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const from = (currentPage - 1) * pageSize + 1;
   const to = Math.min(currentPage * pageSize, total);
@@ -285,7 +286,7 @@ function Pagination({
   return (
     <div className="flex items-center justify-between pt-4 text-sm text-muted-foreground">
       <span>
-        {from}–{to} von {total}
+        {t('customers_list.pagination_range', { from, to, total })}
       </span>
       <div className="flex items-center gap-2">
         <Select value={String(pageSize)} onValueChange={(v) => onPageSize(Number(v))}>
@@ -295,7 +296,7 @@ function Pagination({
           <SelectContent>
             {[10, 25, 50, 100].map((s) => (
               <SelectItem key={s} value={String(s)}>
-                {s} / Seite
+                {t('customers_list.per_page', { n: s })}
               </SelectItem>
             ))}
           </SelectContent>
@@ -306,7 +307,7 @@ function Pagination({
           disabled={currentPage <= 1}
           onClick={() => onCurrentPage(currentPage - 1)}
         >
-          Zurück
+          {t('customers_list.prev')}
         </Button>
         <span>
           {currentPage} / {pageCount}
@@ -317,7 +318,7 @@ function Pagination({
           disabled={currentPage >= pageCount}
           onClick={() => onCurrentPage(currentPage + 1)}
         >
-          Weiter
+          {t('customers_list.next')}
         </Button>
       </div>
     </div>

@@ -108,9 +108,9 @@ export function TeamMembersListPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl">Mitglieder</h2>
+          <h2 className="text-2xl">{translate('team_members.heading')}</h2>
           <p className="text-sm text-muted-foreground">
-            Alle Mitglieder dieses Workspace inkl. Rollen und Workload.
+            {translate('team_members.subtitle')}
           </p>
         </div>
         <div className="relative w-64">
@@ -118,7 +118,7 @@ export function TeamMembersListPage() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Name oder Email…"
+            placeholder={translate('team_members.search_placeholder')}
             className="pl-8"
           />
         </div>
@@ -135,7 +135,7 @@ export function TeamMembersListPage() {
       ) : rows.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            Keine Mitglieder gefunden.
+            {translate('team_members.empty')}
           </CardContent>
         </Card>
       ) : (
@@ -157,7 +157,7 @@ export function TeamMembersListPage() {
                   />
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="truncate text-sm font-medium">
-                      {u ? userDisplayName(u) : 'Unbekannt'}
+                      {u ? userDisplayName(u) : translate('team_members.unknown')}
                     </div>
                     {u?.email ? (
                       <a
@@ -178,12 +178,12 @@ export function TeamMembersListPage() {
                       </Badge>
                       {inactive ? (
                         <Badge variant="outline" className="gap-1 text-[10px] text-destructive border-destructive/30 bg-destructive/5">
-                          Gesperrt
+                          {translate('team_members.blocked')}
                         </Badge>
                       ) : null}
                       <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                         <CheckSquare className="size-3" />
-                        {openCount} {openCount === 1 ? 'Aufgabe' : 'Aufgaben'} offen
+                        {translate('team_members.open_tasks', { count: openCount })}
                       </span>
                     </div>
                   </div>
@@ -192,8 +192,8 @@ export function TeamMembersListPage() {
                     size="icon"
                     className="shrink-0 self-start text-muted-foreground"
                     onClick={() => setEditing({ m, u })}
-                    title="Mitglied bearbeiten"
-                    aria-label="Mitglied bearbeiten"
+                    title={translate('team_members.edit_member')}
+                    aria-label={translate('team_members.edit_member')}
                   >
                     <Pencil className="size-4" />
                   </Button>

@@ -6,8 +6,10 @@ import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { CalendarDays, Wifi, WifiOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
+import i18n from '@/i18n';
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import { useLiveResource } from '@/lib/mercure';
@@ -42,6 +44,7 @@ type AbsenceContactRow = Row<{ '@id': string; firstName?: string; lastName?: str
  * `Workspace.locale` / `Workspace.timezone`.
  */
 export function CalendarPage() {
+  const { t: translate } = useTranslation();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<Filter>('all');
   const { data: identity } = useGetIdentity<Identity>();
@@ -142,7 +145,9 @@ export function CalendarPage() {
       endExclusive.setDate(endExclusive.getDate() + 1);
       return {
         id: a['@id'] ?? '',
-        title: `🌴 ${absenceContactsByIri[a.contact] ?? 'Kunde'} abwesend`,
+        title: translate('calendar.contact_absent', {
+          name: absenceContactsByIri[a.contact] ?? translate('calendar.contact_fallback'),
+        }),
         start: a.startsOn.slice(0, 10),
         end: endExclusive.toISOString().slice(0, 10),
         allDay: true,
@@ -180,7 +185,7 @@ export function CalendarPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl">Kalender</h2>
+            <h2 className="text-2xl">{translate('calendar.heading')}</h2>
             {connected ? (
               <Badge variant="secondary" className="gap-1 text-xs">
                 <Wifi className="size-3" /> Live
@@ -192,14 +197,17 @@ export function CalendarPage() {
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            {events.length} Tasks · {bookingEvents.length} Termine
+            {translate('calendar.counts', {
+              tasks: events.length,
+              bookings: bookingEvents.length,
+            })}
           </p>
         </div>
         <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
           <TabsList>
-            <TabsTrigger value="all">Alle</TabsTrigger>
-            <TabsTrigger value="mine">Meine</TabsTrigger>
-            <TabsTrigger value="customers">Kunden</TabsTrigger>
+            <TabsTrigger value="all">{translate('calendar.filter_all')}</TabsTrigger>
+            <TabsTrigger value="mine">{translate('calendar.filter_mine')}</TabsTrigger>
+            <TabsTrigger value="customers">{translate('calendar.filter_customers')}</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -225,10 +233,10 @@ export function CalendarPage() {
                 right: 'dayGridMonth,timeGridWeek,timeGridDay',
               }}
               buttonText={{
-                today: 'Heute',
-                month: 'Monat',
-                week: 'Woche',
-                day: 'Tag',
+                today: translate('calendar.btn_today'),
+                month: translate('calendar.btn_month'),
+                week: translate('calendar.btn_week'),
+                day: translate('calendar.btn_day'),
               }}
               events={allEvents}
               eventClick={handleClick}
@@ -246,11 +254,11 @@ export function CalendarPage() {
 function labelFor(f: Filter): string {
   switch (f) {
     case 'mine':
-      return 'Mir zugewiesene Aufgaben';
+      return i18n.t('calendar.label_mine');
     case 'customers':
-      return 'Aufgaben in Kunden-Projekten';
+      return i18n.t('calendar.label_customers');
     case 'all':
     default:
-      return 'Alle Aufgaben mit Fälligkeitsdatum';
+      return i18n.t('calendar.label_all');
   }
 }

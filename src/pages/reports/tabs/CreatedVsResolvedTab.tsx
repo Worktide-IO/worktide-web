@@ -1,6 +1,7 @@
 import { useList } from '@refinedev/core';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   CartesianGrid,
   Legend,
@@ -52,6 +53,7 @@ function todayIso() { return new Date().toISOString().slice(0, 10); }
  * growing.
  */
 export function CreatedVsResolvedTab() {
+  const { t } = useTranslation();
   const [from, setFrom] = useState(() => isoDaysAgo(60));
   const [to, setTo] = useState(() => todayIso());
   const [bucket, setBucket] = useState<'day' | 'week'>('week');
@@ -76,7 +78,7 @@ export function CreatedVsResolvedTab() {
   return (
     <ReportShell
       title="Created vs. Resolved"
-      description="Pro Tag oder Woche: Wieviele Aufgaben kamen rein, wieviele wurden geschlossen?"
+      description={t('cvr.description')}
       from={from}
       to={to}
       onFromChange={setFrom}
@@ -90,19 +92,19 @@ export function CreatedVsResolvedTab() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="day">Tag</SelectItem>
-                <SelectItem value="week">Woche</SelectItem>
+                <SelectItem value="day">{t('cvr.bucket_day')}</SelectItem>
+                <SelectItem value="week">{t('cvr.bucket_week')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs">Projekt</Label>
+            <Label className="text-xs">{t('cvr.project')}</Label>
             <Select value={projectId} onValueChange={setProjectId}>
               <SelectTrigger className="w-56">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL_PROJECTS}>Alle Projekte</SelectItem>
+                <SelectItem value={ALL_PROJECTS}>{t('cvr.all_projects')}</SelectItem>
                 {(projects?.data ?? []).map((p) => (
                   <SelectItem key={p['@id']} value={p.id ?? ''}>
                     {p.name}
@@ -116,13 +118,13 @@ export function CreatedVsResolvedTab() {
     >
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Volumen pro {bucket === 'day' ? 'Tag' : 'Woche'}</CardTitle>
+          <CardTitle className="text-base">{bucket === 'day' ? t('cvr.volume_per_day') : t('cvr.volume_per_week')}</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <Skeleton className="h-72 w-full" />
           ) : (data?.series ?? []).length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Keine Daten im Zeitraum.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">{t('cvr.empty')}</p>
           ) : (
             <div className="h-72 w-full">
               <ResponsiveContainer>

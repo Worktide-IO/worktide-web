@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Bug, Wifi, ServerCrash, Hourglass, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -36,12 +37,13 @@ type Choice = {
 };
 
 const CHOICES: Choice[] = [
-  { mode: 'offline', label: 'Offline', icon: Wifi, description: 'Jeder Request schlägt mit ERR_NETWORK fehl.' },
-  { mode: 'server', label: 'Server 503', icon: ServerCrash, description: '30 s lang antworten alle Requests mit 503.', durationMs: 30_000 },
-  { mode: 'slow', label: 'Langsam', icon: Hourglass, description: '8 s Latenz pro Request, gut für Spinner-Checks.' },
+  { mode: 'offline', label: 'network_sim.offline_label', icon: Wifi, description: 'network_sim.offline_desc' },
+  { mode: 'server', label: 'network_sim.server_label', icon: ServerCrash, description: 'network_sim.server_desc', durationMs: 30_000 },
+  { mode: 'slow', label: 'network_sim.slow_label', icon: Hourglass, description: 'network_sim.slow_desc' },
 ];
 
 export function NetworkSimulatorPanel(): React.JSX.Element | null {
+  const { t: translate } = useTranslation();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<SimulatorMode>(() => readSimulatorMode());
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
@@ -72,8 +74,8 @@ export function NetworkSimulatorPanel(): React.JSX.Element | null {
           'fixed bottom-4 left-4 z-50 flex size-9 items-center justify-center rounded-full border border-border bg-background shadow-md hover:bg-muted',
           mode !== 'off' && 'border-amber-500 ring-2 ring-amber-500/30',
         )}
-        title={mode === 'off' ? 'Netzwerk-Simulator' : `Simulator aktiv: ${mode}`}
-        aria-label="Netzwerk-Simulator öffnen"
+        title={mode === 'off' ? translate('network_sim.title') : translate('network_sim.active_title', { mode })}
+        aria-label={translate('network_sim.open_aria')}
       >
         <Bug className={cn('size-4', mode === 'off' ? 'text-muted-foreground' : 'text-amber-600')} />
       </button>
@@ -85,13 +87,13 @@ export function NetworkSimulatorPanel(): React.JSX.Element | null {
       <div className="flex items-center justify-between border-b border-border px-3 py-2">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Bug className="size-4" />
-          Netzwerk-Simulator
+          {translate('network_sim.title')}
         </div>
         <button
           type="button"
           onClick={() => setOpen(false)}
           className="rounded p-1 hover:bg-muted"
-          aria-label="Schließen"
+          aria-label={translate('network_sim.close_aria')}
         >
           <X className="size-3" />
         </button>
@@ -105,7 +107,7 @@ export function NetworkSimulatorPanel(): React.JSX.Element | null {
           onClick={() => setSimulatorMode('off')}
         >
           <Wifi className="mr-2 size-4 text-emerald-500" />
-          Online (normal)
+          {translate('network_sim.online')}
         </Button>
         {CHOICES.map((c) => (
           <Button
@@ -114,18 +116,18 @@ export function NetworkSimulatorPanel(): React.JSX.Element | null {
             size="sm"
             className="w-full justify-start"
             onClick={() => setSimulatorMode(c.mode, { durationMs: c.durationMs })}
-            title={c.description}
+            title={translate(c.description)}
           >
             <c.icon className="mr-2 size-4" />
-            {c.label}
+            {translate(c.label)}
           </Button>
         ))}
       </div>
 
       <div className="border-t border-border px-3 py-2 text-xs text-muted-foreground">
         {mode === 'off'
-          ? 'Klick auf einen Modus → wirkt sofort auf alle Requests.'
-          : `Aktiver Modus: ${mode} — auto-off in ${secondsLeft}s.`}
+          ? translate('network_sim.hint_idle')
+          : translate('network_sim.hint_active', { mode, seconds: secondsLeft })}
       </div>
     </div>
   );

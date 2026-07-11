@@ -1,6 +1,7 @@
 import { useList } from '@refinedev/core';
 import { Pause, Play, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
@@ -59,6 +60,7 @@ function RunningPill({
   onStop: () => Promise<void>;
   onCancel: () => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const started = new Date(timer.startedAt).getTime();
   const seconds = Math.max(0, Math.round((Date.now() - started) / 1000));
 
@@ -79,14 +81,14 @@ function RunningPill({
       <div
         className="size-2 animate-pulse rounded-full bg-green-500"
         aria-hidden
-        title="Timer läuft"
+        title={t('floating_timer.running_title')}
       />
       <div className="flex flex-col leading-tight">
         <span className="font-mono text-sm font-medium tabular-nums">
           {formatElapsed(seconds)}
         </span>
         <span className="max-w-40 truncate text-[10px] text-muted-foreground">
-          {projectName ?? timer.description ?? 'Freie Zeit'}
+          {projectName ?? timer.description ?? t('floating_timer.free_time')}
         </span>
       </div>
       <Button
@@ -95,8 +97,8 @@ function RunningPill({
         variant="default"
         className="size-7 rounded-full"
         onClick={() => void onStop()}
-        aria-label="Timer stoppen"
-        title="Timer stoppen"
+        aria-label={t('floating_timer.stop')}
+        title={t('floating_timer.stop')}
       >
         <Pause className="size-3.5" />
       </Button>
@@ -106,8 +108,8 @@ function RunningPill({
         variant="ghost"
         className="size-7 rounded-full"
         onClick={() => void onCancel()}
-        aria-label="Timer verwerfen"
-        title="Verwerfen (kein TimeEntry anlegen)"
+        aria-label={t('floating_timer.discard_aria')}
+        title={t('floating_timer.discard_title')}
       >
         <X className="size-3.5" />
       </Button>
@@ -120,6 +122,7 @@ function IdleButton({
 }: {
   onStart: (input: { projectId?: string | null; taskId?: string | null; description?: string | null }) => Promise<unknown>;
 }) {
+  const { t: translate } = useTranslation();
   const [open, setOpen] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
@@ -173,27 +176,27 @@ function IdleButton({
             'fixed bottom-4 right-4 z-50 size-12 rounded-full shadow-lg',
             'transition-transform hover:scale-105',
           )}
-          aria-label="Timer starten"
-          title="Timer starten"
+          aria-label={translate('floating_timer.start')}
+          title={translate('floating_timer.start')}
         >
           <Play className="size-5 fill-current" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" side="top" className="w-80 space-y-3">
         <div className="space-y-1">
-          <h4 className="text-sm font-semibold">Timer starten</h4>
+          <h4 className="text-sm font-semibold">{translate('floating_timer.start')}</h4>
           <p className="text-xs text-muted-foreground">
-            Alles optional — auch ohne Projekt loslegen geht.
+            {translate('floating_timer.optional_hint')}
           </p>
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="timer-description" className="text-xs">
-            Notiz
+            {translate('floating_timer.note_label')}
           </Label>
           <Input
             id="timer-description"
-            placeholder="Woran arbeitest du?"
+            placeholder={translate('floating_timer.note_placeholder')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             autoFocus
@@ -201,7 +204,7 @@ function IdleButton({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs">Projekt</Label>
+          <Label className="text-xs">{translate('floating_timer.project_label')}</Label>
           <Select
             value={projectId ?? 'none'}
             onValueChange={(v) => {
@@ -212,10 +215,10 @@ function IdleButton({
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Kein Projekt" />
+              <SelectValue placeholder={translate('floating_timer.no_project')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">— Kein Projekt —</SelectItem>
+              <SelectItem value="none">{translate('floating_timer.no_project_option')}</SelectItem>
               {(projects?.data ?? []).map((p) => (
                 <SelectItem key={p['@id']} value={p.id ?? ''}>
                   <span className="font-mono text-xs text-muted-foreground">{p.key}</span>{' '}
@@ -234,10 +237,10 @@ function IdleButton({
             disabled={!projectId}
           >
             <SelectTrigger>
-              <SelectValue placeholder={projectId ? 'Kein Task' : 'Erst Projekt wählen'} />
+              <SelectValue placeholder={projectId ? translate('floating_timer.no_task') : translate('floating_timer.pick_project_first')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">— Kein Task —</SelectItem>
+              <SelectItem value="none">{translate('floating_timer.no_task_option')}</SelectItem>
               {(tasks?.data ?? []).map((t) => (
                 <SelectItem key={t['@id']} value={t.id ?? ''}>
                   <span className="font-mono text-xs text-muted-foreground">

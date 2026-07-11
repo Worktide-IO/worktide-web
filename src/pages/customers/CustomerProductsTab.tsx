@@ -155,7 +155,7 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
     } catch (e) {
       const msg =
         (e as { response?: { data?: { detail?: string; description?: string } } })?.response?.data
-          ?.detail ?? 'Speichern fehlgeschlagen.';
+          ?.detail ?? t('customer_products.err_save');
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -170,10 +170,10 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle className="flex items-center gap-2">
-          <Boxes className="size-4 text-muted-foreground" /> Produkte & Services
+          <Boxes className="size-4 text-muted-foreground" /> {t('customer_products.heading')}
         </CardTitle>
         <Button type="button" size="sm" onClick={openAssign} disabled={catalog.length === 0}>
-          <Plus className="size-4" /> Zuordnen
+          <Plus className="size-4" /> {t('customer_products.assign')}
         </Button>
       </CardHeader>
       <CardContent>
@@ -184,19 +184,19 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
           </div>
         ) : catalog.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Kein Katalog vorhanden. Lege zuerst unter <strong>Produkte &amp; Services</strong> etwas an.
+            {t('customer_products.empty_catalog_before')} <strong>{t('customer_products.empty_catalog_strong')}</strong> {t('customer_products.empty_catalog_after')}
           </p>
         ) : rows.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Diesem Kunden ist noch nichts zugeordnet.
+            {t('customer_products.empty_assignments')}
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Produkt / Service</TableHead>
-                <TableHead className="w-32">Version</TableHead>
-                <TableHead className="w-28">Status</TableHead>
+                <TableHead>{t('customer_products.col_product')}</TableHead>
+                <TableHead className="w-32">{t('customer_products.col_version')}</TableHead>
+                <TableHead className="w-28">{t('customer_products.col_status')}</TableHead>
                 <TableHead className="w-28 text-right" />
               </TableRow>
             </TableHeader>
@@ -222,7 +222,7 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
                           <span className="font-mono">{version.version}</span>
                           {behind ? (
                             <Badge variant="secondary" className="text-[10px]">
-                              Update verfügbar
+                              {t('customer_products.update_available')}
                             </Badge>
                           ) : null}
                         </span>
@@ -243,7 +243,7 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
                         className="h-7"
                         onClick={() => openEdit(cp)}
                       >
-                        <Pencil className="size-3" /> Bearbeiten
+                        <Pencil className="size-3" /> {t('action.edit')}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -257,17 +257,16 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
       <Dialog open={edit !== null} onOpenChange={(o) => !o && setEdit(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{edit?.existing ? 'Zuordnung bearbeiten' : 'Produkt zuordnen'}</DialogTitle>
+            <DialogTitle>{edit?.existing ? t('customer_products.dialog_edit_title') : t('customer_products.dialog_assign_title')}</DialogTitle>
             <DialogDescription>
-              Produkte werden an eine Version gebunden — ein Upgrade stellt einfach die
-              neuere Version ein.
+              {t('customer_products.dialog_description')}
             </DialogDescription>
           </DialogHeader>
 
           {edit ? (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Produkt / Service</Label>
+                <Label>{t('customer_products.col_product')}</Label>
                 <Select
                   value={edit.productIri}
                   disabled={!!edit.existing}
@@ -276,7 +275,7 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Wählen…" />
+                    <SelectValue placeholder={t('customer_products.select_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {catalog.map((p) => (
@@ -290,13 +289,13 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
 
               {editIsVersioned ? (
                 <div className="space-y-1.5">
-                  <Label>Version</Label>
+                  <Label>{t('customer_products.col_version')}</Label>
                   <Select
                     value={edit.productVersionIri}
                     onValueChange={(v) => setEdit({ ...edit, productVersionIri: v })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Version wählen…" />
+                      <SelectValue placeholder={t('customer_products.version_placeholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {(versionsByProduct[edit.productIri] ?? [])
@@ -305,7 +304,7 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
                         .map((v) => (
                           <SelectItem key={v['@id']} value={v['@id'] ?? ''}>
                             {v.version}
-                            {v.isLatest ? ' — aktuell' : ''}
+                            {v.isLatest ? ` ${t('customer_products.latest_suffix')}` : ''}
                           </SelectItem>
                         ))}
                     </SelectContent>
@@ -315,7 +314,7 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Status</Label>
+                  <Label>{t('customer_products.col_status')}</Label>
                   <Select
                     value={edit.status}
                     onValueChange={(v) => setEdit({ ...edit, status: v as CustomerProductStatus })}
@@ -324,13 +323,13 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Aktiv</SelectItem>
-                      <SelectItem value="churned">Beendet</SelectItem>
+                      <SelectItem value="active">{t('customer_products.status_active')}</SelectItem>
+                      <SelectItem value="churned">{t('customer_products.status_churned')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="cp-acq">Erworben am</Label>
+                  <Label htmlFor="cp-acq">{t('customer_products.acquired_at')}</Label>
                   <Input
                     id="cp-acq"
                     type="date"
@@ -341,7 +340,7 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="cp-notes">Notiz</Label>
+                <Label htmlFor="cp-notes">{t('customer_products.note')}</Label>
                 <Input
                   id="cp-notes"
                   value={edit.notes}
@@ -353,11 +352,11 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
 
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => setEdit(null)} disabled={saving}>
-              Abbrechen
+              {t('action.cancel')}
             </Button>
             <Button type="button" onClick={save} disabled={saving}>
               {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-              Speichern
+              {t('action.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

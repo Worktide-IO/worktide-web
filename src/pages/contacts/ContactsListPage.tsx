@@ -1,4 +1,5 @@
 import { useTable } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Mail, Phone, Plus, Search, Star, Wifi, WifiOff } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
@@ -33,6 +34,7 @@ import {
  * embed-projection on the API side needed.
  */
 export function ContactsListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [customerFilter, setCustomerFilter] = useState('all');
@@ -63,7 +65,7 @@ export function ContactsListPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl">Kontakte</h2>
+            <h2 className="text-2xl">{t('contacts_list.heading')}</h2>
             {liveConnected ? (
               <Badge variant="secondary" className="gap-1 text-xs">
                 <Wifi className="size-3" /> Live
@@ -74,23 +76,23 @@ export function ContactsListPage() {
               </Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">{total} Kontakte im Workspace</p>
+          <p className="text-sm text-muted-foreground">{t('contacts_list.count', { count: total })}</p>
         </div>
         <Button asChild>
           <Link to="/contacts/create">
-            <Plus className="size-4" /> Neuer Kontakt
+            <Plus className="size-4" /> {t('contacts_list.new')}
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader className="gap-4">
-          <CardTitle>Übersicht</CardTitle>
+          <CardTitle>{t('contacts_list.overview')}</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[240px] max-w-md">
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
-                placeholder="Nachname suchen…"
+                placeholder={t('contacts_list.search_placeholder')}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -101,7 +103,7 @@ export function ContactsListPage() {
             </div>
             <CustomerCombobox
               className="w-64"
-              placeholder="Alle Kunden"
+              placeholder={t('contacts_list.all_customers')}
               value={customerFilter === 'all' ? null : customerFilter}
               onChange={(v) => {
                 const next = v ?? 'all';
@@ -121,19 +123,19 @@ export function ContactsListPage() {
           ) : rows.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-12">
               {search || customerFilter !== 'all'
-                ? 'Keine Treffer mit diesen Filtern.'
-                : 'Noch keine Kontakte angelegt.'}
+                ? t('contacts_list.no_matches')
+                : t('contacts_list.empty')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12"></TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="w-48">Kunde</TableHead>
-                  <TableHead className="w-40">Position</TableHead>
-                  <TableHead className="w-64">Email</TableHead>
-                  <TableHead className="w-44">Telefon</TableHead>
+                  <TableHead>{t('contacts_list.col_name')}</TableHead>
+                  <TableHead className="w-48">{t('contacts_list.col_customer')}</TableHead>
+                  <TableHead className="w-40">{t('contacts_list.col_position')}</TableHead>
+                  <TableHead className="w-64">{t('contacts_list.col_email')}</TableHead>
+                  <TableHead className="w-44">{t('contacts_list.col_phone')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -161,11 +163,11 @@ export function ContactsListPage() {
                           {c.isPrimary ? (
                             <Star
                               className="size-3 fill-amber-400 text-amber-400"
-                              aria-label="Primärer Ansprechpartner"
+                              aria-label={t('contacts_list.primary_contact')}
                             />
                           ) : null}
                           {c.isActive === false ? (
-                            <Badge variant="outline" className="text-[10px]">inaktiv</Badge>
+                            <Badge variant="outline" className="text-[10px]">{t('contacts_list.inactive')}</Badge>
                           ) : null}
                         </div>
                         {c.title ? (

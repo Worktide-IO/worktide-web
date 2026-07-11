@@ -1,5 +1,6 @@
 import { useList } from '@refinedev/core';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import {
   Area,
@@ -51,6 +52,7 @@ function todayIso() { return new Date().toISOString().slice(0, 10); }
  * reflects how many projects are running, not progress).
  */
 export function BurndownTab() {
+  const { t } = useTranslation();
   const [from, setFrom] = useState(() => isoDaysAgo(30));
   const [to, setTo] = useState(() => todayIso());
   const [projectId, setProjectId] = useState<string>('');
@@ -75,17 +77,17 @@ export function BurndownTab() {
   return (
     <ReportShell
       title="Burndown"
-      description="Anzahl offener Aufgaben pro Tag — zeigt, wie der Backlog im gewählten Zeitraum kleiner (oder größer) wird."
+      description={t('burndown.description')}
       from={from}
       to={to}
       onFromChange={setFrom}
       onToChange={setTo}
       extras={
         <div className="space-y-1.5">
-          <Label htmlFor="bd-project" className="text-xs">Projekt</Label>
+          <Label htmlFor="bd-project" className="text-xs">{t('burndown.project')}</Label>
           <Select value={projectId} onValueChange={setProjectId}>
             <SelectTrigger id="bd-project" className="w-56">
-              <SelectValue placeholder="Projekt wählen…" />
+              <SelectValue placeholder={t('burndown.pick_project')} />
             </SelectTrigger>
             <SelectContent>
               {(projects?.data ?? []).map((p) => (
@@ -102,20 +104,20 @@ export function BurndownTab() {
         <CardHeader>
           <CardTitle className="text-base">
             {projectId
-              ? `Offene Aufgaben (${data?.totalTasks ?? 0} im Zeitraum erfasst)`
-              : 'Bitte erst ein Projekt wählen.'}
+              ? t('burndown.open_tasks_title', { count: data?.totalTasks ?? 0 })
+              : t('burndown.pick_first')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {!projectId ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              Burndown braucht einen Projekt-Kontext.
+              {t('burndown.needs_project')}
             </p>
           ) : isLoading ? (
             <Skeleton className="h-72 w-full" />
           ) : (data?.series ?? []).length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              Keine Daten im Zeitraum.
+              {t('burndown.no_data')}
             </p>
           ) : (
             <div className="h-72 w-full">
