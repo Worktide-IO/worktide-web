@@ -1,5 +1,5 @@
 import { useGetIdentity, useInvalidate } from '@refinedev/core';
-import { Loader2, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -34,9 +34,16 @@ const ROLES = [
   { value: 'guest', label: 'Gast' },
 ];
 
+/** Value the "reassign to" select uses to mean "leave the tasks unassigned". */
+const UNASSIGN = '__unassign__';
+
+type Candidate = { userId: string; label: string };
+
 type Props = {
   member: Row<WorkspaceMemberJsonld>;
   user: Row<UserJsonld> | null;
+  /** Other active members this member's tasks can be handed over to on removal. */
+  reassignCandidates: Candidate[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -44,22 +51,27 @@ type Props = {
 /**
  * Admin edit of a workspace member. Name + email go to the dedicated
  * PATCH /v1/workspace_members/{id}/profile (writes the linked User); role +
- * active flag are a merge-patch on the member itself; removal is a DELETE.
- * You can't deactivate or remove your own membership (self-lockout guard).
+ * active flag are a merge-patch on the member itself. Removal opens a handover
+ * step: the member's assigned tasks are reassigned to another member (or cleared)
+ * before the membership is deleted, so no task is left orphaned. You can't
+ * deactivate or remove your own membership (self-lockout guard).
  */
-export function MemberEditDialog({ member, user, open, onOpenChange }: Props) {
+export function MemberEditDialog({ member, user, reassignCandidates, open, onOpenChange }: Props) {
   const invalidate = useInvalidate();
   const { data: identity } = useGetIdentity<{ id?: string }>();
 
-  // The parent mounts this dialog fresh per open ({editing ? <…/> : null}), so
-  // initialising from props is enough — no reset effect needed.
+  // The parent mounts this dialog fresh per open, so props-initialised state is enough.
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [role, setRole] = useState((member.role as string | undefined) ?? 'member');
   const [isActive, setIsActive] = useState((member as { isActive?: boolean }).isActive ?? true);
   const [busy, setBusy] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Removal / handover sub-view.
+  const [removeMode, setRemoveMode] = useState(false);
+  const [assignedCount, setAssignedCount] = useState<number | null>(null);
+  const [reassignTo, setReassignTo] = useState(reassignCandidates[0]?.userId ?? UNASSIGN);
 
   const memberId = member.id;
   const isSelf = Boolean(
@@ -69,13 +81,13 @@ export function MemberEditDialog({ member, user, open, onOpenChange }: Props) {
   const refresh = () => {
     void invalidate({ resource: 'workspace_members', invalidates: ['list'] });
     void invalidate({ resource: 'users', invalidates: ['list'] });
+    void invalidate({ resource: 'tasks', invalidates: ['list'] });
   };
 
   const save = async () => {
     if (!memberId) return;
     setBusy(true);
     try {
-      // 1) Profile (name / email) — dedicated admin endpoint on the User.
       const profileChanged =
         firstName !== (user?.firstName ?? '') ||
         lastName !== (user?.lastName ?? '') ||
@@ -88,7 +100,6 @@ export function MemberEditDialog({ member, user, open, onOpenChange }: Props) {
         });
       }
 
-      // 2) Membership (role / active) — merge-patch on the member.
       const membershipPatch: Record<string, unknown> = {};
       if (role !== ((member.role as string | undefined) ?? 'member')) membershipPatch.role = role;
       if (isActive !== ((member as { isActive?: boolean }).isActive ?? true)) {
@@ -111,11 +122,27 @@ export function MemberEditDialog({ member, user, open, onOpenChange }: Props) {
     }
   };
 
+  const openRemove = async () => {
+    if (!memberId) return;
+    setRemoveMode(true);
+    setAssignedCount(null);
+    try {
+      const { data } = await api.get<{ assignedTaskCount?: number }>(
+        `/workspace_members/${memberId}/assignments`,
+      );
+      setAssignedCount(data.assignedTaskCount ?? 0);
+    } catch {
+      setAssignedCount(0); // fall back to 0 — removal still works, just no count shown
+    }
+  };
+
   const remove = async () => {
     if (!memberId) return;
     setBusy(true);
     try {
-      await api.delete(`/workspace_members/${memberId}`);
+      await api.post(`/workspace_members/${memberId}/remove`, {
+        reassignTo: reassignTo === UNASSIGN ? null : reassignTo,
+      });
       toast.success('Mitglied entfernt.');
       refresh();
       onOpenChange(false);
@@ -130,92 +157,143 @@ export function MemberEditDialog({ member, user, open, onOpenChange }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Mitglied bearbeiten</DialogTitle>
-          <DialogDescription>Name, E-Mail, Rolle und Zugang dieses Mitglieds verwalten.</DialogDescription>
-        </DialogHeader>
+        {removeMode ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>Mitglied entfernen</DialogTitle>
+              <DialogDescription>
+                {user?.firstName || user?.lastName
+                  ? `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()
+                  : (user?.email ?? 'Dieses Mitglied')}{' '}
+                aus dem Workspace entfernen.
+              </DialogDescription>
+            </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="mem-first">Vorname</Label>
-              <Input id="mem-first" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+            <div className="space-y-4">
+              {assignedCount === null ? (
+                <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin" /> Zugewiesene Aufgaben werden geprüft …
+                </div>
+              ) : assignedCount === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Diesem Mitglied sind keine Aufgaben zugewiesen.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    <span className="font-medium">{assignedCount}</span>{' '}
+                    {assignedCount === 1 ? 'zugewiesene Aufgabe' : 'zugewiesene Aufgaben'}. Übertragen
+                    an:
+                  </p>
+                  <Select value={reassignTo} onValueChange={setReassignTo}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {reassignCandidates.map((c) => (
+                        <SelectItem key={c.userId} value={c.userId}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value={UNASSIGN}>— Nicht zuweisen —</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="mem-last">Nachname</Label>
-              <Input id="mem-last" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="mem-email">E-Mail</Label>
-            <Input id="mem-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <p className="text-xs text-muted-foreground">E-Mail ist der Login — muss eindeutig sein.</p>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Rolle</Label>
-            <Select value={role} onValueChange={setRole}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ROLES.map((r) => (
-                  <SelectItem key={r.value} value={r.value}>
-                    {r.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center justify-between rounded-md border p-3">
-            <div className="space-y-0.5">
-              <Label htmlFor="mem-active">Aktiv</Label>
-              <p className="text-xs text-muted-foreground">
-                {isActive ? 'Hat Zugriff auf diesen Workspace.' : 'Gesperrt — kein Zugriff auf diesen Workspace.'}
-              </p>
-            </div>
-            <Switch
-              id="mem-active"
-              checked={isActive}
-              onCheckedChange={setIsActive}
-              disabled={isSelf}
-            />
-          </div>
-          {isSelf ? (
-            <p className="text-xs text-muted-foreground">
-              Du kannst deine eigene Mitgliedschaft nicht sperren oder entfernen.
-            </p>
-          ) : null}
-        </div>
 
-        <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-          {isSelf ? (
-            <span />
-          ) : confirmDelete ? (
-            <Button variant="destructive" size="sm" onClick={remove} disabled={busy}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-              Wirklich entfernen?
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setConfirmDelete(true)}
-              disabled={busy}
-            >
-              <Trash2 className="size-4" /> Entfernen
-            </Button>
-          )}
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-              Abbrechen
-            </Button>
-            <Button onClick={save} disabled={busy}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              Speichern
-            </Button>
-          </div>
-        </DialogFooter>
+            <DialogFooter className="gap-2 sm:justify-between">
+              <Button variant="ghost" onClick={() => setRemoveMode(false)} disabled={busy}>
+                <ArrowLeft className="size-4" /> Zurück
+              </Button>
+              <Button variant="destructive" onClick={remove} disabled={busy || assignedCount === null}>
+                {busy ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                Entfernen
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>Mitglied bearbeiten</DialogTitle>
+              <DialogDescription>Name, E-Mail, Rolle und Zugang dieses Mitglieds verwalten.</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="mem-first">Vorname</Label>
+                  <Input id="mem-first" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="mem-last">Nachname</Label>
+                  <Input id="mem-last" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="mem-email">E-Mail</Label>
+                <Input id="mem-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <p className="text-xs text-muted-foreground">E-Mail ist der Login — muss eindeutig sein.</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Rolle</Label>
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLES.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>
+                        {r.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center justify-between rounded-md border p-3">
+                <div className="space-y-0.5">
+                  <Label htmlFor="mem-active">Aktiv</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {isActive
+                      ? 'Hat Zugriff auf diesen Workspace.'
+                      : 'Gesperrt — kein Zugriff auf diesen Workspace.'}
+                  </p>
+                </div>
+                <Switch id="mem-active" checked={isActive} onCheckedChange={setIsActive} disabled={isSelf} />
+              </div>
+              {isSelf ? (
+                <p className="text-xs text-muted-foreground">
+                  Du kannst deine eigene Mitgliedschaft nicht sperren oder entfernen.
+                </p>
+              ) : null}
+            </div>
+
+            <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+              {isSelf ? (
+                <span />
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={openRemove}
+                  disabled={busy}
+                >
+                  <Trash2 className="size-4" /> Entfernen
+                </Button>
+              )}
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
+                  Abbrechen
+                </Button>
+                <Button onClick={save} disabled={busy}>
+                  {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+                  Speichern
+                </Button>
+              </div>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
