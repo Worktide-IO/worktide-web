@@ -1,4 +1,5 @@
 import { Building2, ExternalLink, History, User as UserIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -44,6 +45,7 @@ export function LeadsTable({
   leads: Row<LeadJsonld>[];
   onChanged: () => void;
 }) {
+  const { t } = useTranslation();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [timelineLead, setTimelineLead] = useState<Row<LeadJsonld> | null>(null);
 
@@ -135,7 +137,7 @@ export function LeadsTable({
                 )}
               </TableCell>
               <TableCell className="text-muted-foreground text-xs">
-                {lead.source ? (LEAD_SOURCE_LABEL[lead.source] ?? lead.source) : '—'}
+                {lead.source ? (LEAD_SOURCE_LABEL[lead.source] ? t(LEAD_SOURCE_LABEL[lead.source]) : lead.source) : '—'}
               </TableCell>
               <TableCell>
                 <Select
@@ -149,7 +151,7 @@ export function LeadsTable({
                   <SelectContent>
                     {LEAD_STAGES.map((s) => (
                       <SelectItem key={s} value={s}>
-                        {LEAD_STAGE_LABEL[s]}
+                        {t(LEAD_STAGE_LABEL[s])}
                       </SelectItem>
                     ))}
                   </SelectContent>

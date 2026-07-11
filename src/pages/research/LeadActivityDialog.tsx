@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowRight,
   FileText,
@@ -56,6 +57,7 @@ export function LeadActivityDialog({
   lead: Row<LeadJsonld> | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const leadIri = lead?.['@id'];
@@ -111,7 +113,7 @@ export function LeadActivityDialog({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-[10px]">
-                        {LEAD_ACTIVITY_LABEL[a.type] ?? a.type}
+                        {LEAD_ACTIVITY_LABEL[a.type] ? t(LEAD_ACTIVITY_LABEL[a.type]) : a.type}
                       </Badge>
                       <span className="text-xs text-muted-foreground">{formatDate(a.occurredAt)}</span>
                     </div>
@@ -152,8 +154,10 @@ function summarize(a: Row<LeadActivityJsonld>): string {
   const p = (a.payload ?? {}) as Record<string, unknown>;
   switch (a.type) {
     case 'stage_change': {
-      const from = LEAD_STAGE_LABEL[String(p.from) as LeadStage] ?? String(p.from ?? '?');
-      const to = LEAD_STAGE_LABEL[String(p.to) as LeadStage] ?? String(p.to ?? '?');
+      const fromKey = LEAD_STAGE_LABEL[String(p.from) as LeadStage];
+      const from = fromKey ? t(fromKey) : String(p.from ?? '?');
+      const toKey = LEAD_STAGE_LABEL[String(p.to) as LeadStage];
+      const to = toKey ? t(toKey) : String(p.to ?? '?');
       return `${from} → ${to}`;
     }
     case 'discovered':

@@ -1,4 +1,5 @@
 import { useTable } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Search, Target, Wifi, WifiOff } from 'lucide-react';
 import { useState } from 'react';
 
@@ -28,6 +29,7 @@ import { LeadsTable } from './LeadsTable';
  * the shared {@link LeadsTable}.
  */
 export function LeadsListPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState('all');
 
@@ -99,7 +101,7 @@ export function LeadsListPage() {
                 <SelectItem value="all">Alle Stufen</SelectItem>
                 {LEAD_STAGES.map((s) => (
                   <SelectItem key={s} value={s}>
-                    {LEAD_STAGE_LABEL[s]}
+                    {t(LEAD_STAGE_LABEL[s])}
                   </SelectItem>
                 ))}
               </SelectContent>

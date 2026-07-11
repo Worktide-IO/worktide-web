@@ -1,4 +1,5 @@
 import { useTable } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Compass, Plus, Wifi, WifiOff } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
@@ -38,6 +39,7 @@ import {
  * starts the clarification flow.
  */
 export function ResearchMissionsListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -98,7 +100,7 @@ export function ResearchMissionsListPage() {
                 <SelectItem value="all">Alle Status</SelectItem>
                 {Object.entries(MISSION_STATUS_LABEL).map(([value, label]) => (
                   <SelectItem key={value} value={value}>
-                    {label}
+                    {t(label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -143,12 +145,12 @@ export function ResearchMissionsListPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-xs">
-                        {OBJECTIVE_LABEL[m.objective] ?? m.objective}
+                        {OBJECTIVE_LABEL[m.objective] ? t(OBJECTIVE_LABEL[m.objective]) : m.objective}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant={MISSION_STATUS_VARIANT[m.status] ?? 'outline'} className="text-xs">
-                        {MISSION_STATUS_LABEL[m.status] ?? m.status}
+                        {MISSION_STATUS_LABEL[m.status] ? t(MISSION_STATUS_LABEL[m.status]) : m.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground">
