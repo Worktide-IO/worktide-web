@@ -188,11 +188,11 @@ export function SocialPostComposer(props: Mode) {
 
   async function handleSave() {
     if (!body.trim()) {
-      toast.error('Der Beitragstext darf nicht leer sein.');
+      toast.error(translate('toast.post_body_empty'));
       return;
     }
     if (enabledChannels.length === 0) {
-      toast.error('Wähle mindestens ein Netzwerk aus.');
+      toast.error(translate('toast.select_min_one_network'));
       return;
     }
     setSaving(true);
@@ -213,7 +213,7 @@ export function SocialPostComposer(props: Mode) {
             bodyOverride: t.useOverride && t.override.trim() ? t.override : null,
           });
         }
-        toast.success('Entwurf gespeichert.');
+        toast.success(translate('toast.draft_saved'));
         if (created.id) navigate(`/social/${created.id}`);
         return;
       }
@@ -270,12 +270,12 @@ export function SocialPostComposer(props: Mode) {
       if (failures) {
         toast.error(`Gespeichert, aber ${failures} Netzwerk(e) fehlerhaft.`);
       } else {
-        toast.success('Gespeichert.');
+        toast.success(translate('toast.saved'));
       }
       await Promise.all([postQuery.refetch(), targetsQuery.refetch()]);
       invalidate({ resource: 'social_posts', invalidates: ['detail', 'list'], id: props.id });
     } catch {
-      toast.error('Speichern fehlgeschlagen.');
+      toast.error(translate('toast.save_failed'));
     } finally {
       setSaving(false);
     }
@@ -309,7 +309,7 @@ export function SocialPostComposer(props: Mode) {
       const result = await socialActions.preview(props.id);
       setPreview(result);
     } catch {
-      toast.error('Vorschau fehlgeschlagen.');
+      toast.error(translate('toast.preview_failed'));
     } finally {
       setBusyAction(null);
     }

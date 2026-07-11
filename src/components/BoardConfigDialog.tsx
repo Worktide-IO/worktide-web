@@ -1,4 +1,5 @@
 import { useUpdate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { GripVertical, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -47,6 +48,7 @@ export function BoardConfigDialog({
   columns: BoardColumnConfig[] | null;
   statuses: Row<TaskStatusJsonld>[];
 }) {
+  const { t } = useTranslation();
   // Seeded once per mount from the saved config. The parent mounts this dialog
   // only while open, so a fresh open always re-reads the current config.
   const [groups, setGroups] = useState<BoardColumnConfig[]>(() =>
@@ -131,10 +133,10 @@ export function BoardConfigDialog({
       },
       {
         onSuccess: () => {
-          toast.success('Board-Spalten gespeichert.');
+          toast.success(t('toast.board_columns_saved'));
           onOpenChange(false);
         },
-        onError: () => toast.error('Speichern fehlgeschlagen.'),
+        onError: () => toast.error(t('toast.save_failed')),
       },
     );
   };

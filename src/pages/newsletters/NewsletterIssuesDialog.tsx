@@ -1,4 +1,5 @@
 import { Copy, Loader2, Pencil, Send, Trash2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -54,6 +55,7 @@ export function NewsletterIssuesDialog({
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
+  const { t: translate } = useTranslation();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(false);
@@ -121,11 +123,11 @@ export function NewsletterIssuesDialog({
     setBusy(true);
     try {
       await persistDraft();
-      toast.success('Entwurf gespeichert.');
+      toast.success(translate('toast.draft_saved'));
       resetComposer();
       load();
     } catch {
-      toast.error('Speichern fehlgeschlagen.');
+      toast.error(translate('toast.save_failed'));
     } finally {
       setBusy(false);
     }
@@ -155,7 +157,7 @@ export function NewsletterIssuesDialog({
       await sendId(id);
       resetComposer();
     } catch {
-      toast.error('Senden fehlgeschlagen.');
+      toast.error(translate('toast.send_failed'));
     } finally {
       setBusy(false);
     }
@@ -201,10 +203,10 @@ export function NewsletterIssuesDialog({
         body: body.trim() || null,
         workspace: workspaceIri,
       });
-      toast.success('Als Vorlage gespeichert.');
+      toast.success(translate('toast.saved_as_template'));
       loadTemplates();
     } catch {
-      toast.error('Speichern der Vorlage fehlgeschlagen.');
+      toast.error(translate('toast.template_save_failed'));
     }
   };
 
@@ -215,7 +217,7 @@ export function NewsletterIssuesDialog({
       if (editingId === idOf(i)) resetComposer();
       load();
     } catch {
-      toast.error('Löschen fehlgeschlagen.');
+      toast.error(translate('toast.delete_failed'));
     }
   };
 

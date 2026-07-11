@@ -1,4 +1,5 @@
 import { useGetIdentity } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, ListChecks, Send, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -58,6 +59,7 @@ function readCollection(data: unknown): StatusUpdate[] {
  * entries (the DELETE voter enforces this server-side regardless).
  */
 export function ProjectStatusUpdatesTab({ projectIri }: { projectIri: string }) {
+  const { t } = useTranslation();
   const { data: identity } = useGetIdentity<Identity>();
   const meIri = identity?.id ? `/v1/users/${identity.id}` : null;
   const { byIri } = useUserDirectory();
@@ -104,7 +106,7 @@ export function ProjectStatusUpdatesTab({ projectIri }: { projectIri: string }) 
         risks: risks.trim() || null,
         nextSteps: nextSteps.trim() || null,
       });
-      toast.success('Status-Update gepostet.');
+      toast.success(t('toast.status_update_posted'));
       setTitle('');
       setSummary('');
       setRisks('');
@@ -123,7 +125,7 @@ export function ProjectStatusUpdatesTab({ projectIri }: { projectIri: string }) 
     if (!u.id) return;
     try {
       await api.delete(`/project_status_updates/${u.id}`);
-      toast.success('Update gelöscht.');
+      toast.success(t('toast.update_deleted'));
       void load();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;

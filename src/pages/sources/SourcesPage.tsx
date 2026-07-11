@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Activity, CheckCircle2, Loader2, Plug, Power, Trash2, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -194,13 +195,14 @@ function ActiveSourceRow({
   const lastSynced = (channel as unknown as { lastSyncedAt?: string | null }).lastSyncedAt;
 
   const remove = async () => {
+  const { t: translate } = useTranslation();
     if (!channel.id) return;
     if (!window.confirm(`Quelle „${channel.name}" löschen? Konversationen + Events werden mit gelöscht.`)) return;
     setDeleting(true);
     try {
       await api.delete(`/channels/${channel.id}`);
       void invalidate({ resource: 'channels', invalidates: ['list'] });
-      toast.success('Quelle gelöscht.');
+      toast.success(translate('toast.source_deleted'));
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       toast.error(detail ?? 'Konnte Quelle nicht löschen.');

@@ -1,4 +1,5 @@
 import { useList, useOne, useUpdate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Mail } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
@@ -27,6 +28,7 @@ const ROOT = '__root__';
  * Customer.enabledNewsletterIds via PATCH /v1/customers/{id} (workspace EDIT).
  */
 export function CustomerNewslettersTab({ customerId }: { customerId: string }) {
+  const { t } = useTranslation();
   const { result: customer, query } = useOne<CustomerRow>({ resource: 'customers', id: customerId });
   const { result: list } = useList<NewsletterRow>({
     resource: 'newsletters',
@@ -52,7 +54,7 @@ export function CustomerNewslettersTab({ customerId }: { customerId: string }) {
       { resource: 'customers', id: customerId, values: { enabledNewsletterIds: next }, successNotification: false },
       {
         onSuccess: () => {
-          toast.success('Freischaltung gespeichert.');
+          toast.success(t('toast.activation_saved'));
           void query.refetch();
         },
         onError: (err) => {

@@ -210,6 +210,7 @@ export function ProductForm(props: Mode) {
  * Mirrors AiTriagePanel; the full cross-workspace view lives under /ki-agenten.
  */
 function ProductMarketingCard({ productId }: { productId: string }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [requesting, setRequesting] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -239,9 +240,9 @@ function ProductMarketingCard({ productId }: { productId: string }) {
     setRequesting(true);
     try {
       await aiMarketing.request(productId);
-      toast.success('Marketing-Entwurf angefordert – erscheint gleich als Empfehlung.');
+      toast.success(t('toast.marketing_draft_requested'));
     } catch {
-      toast.error('Anfrage fehlgeschlagen (LLM/Egress prüfen).');
+      toast.error(t('toast.llm_request_failed'));
     } finally {
       setRequesting(false);
     }
@@ -251,11 +252,11 @@ function ProductMarketingCard({ productId }: { productId: string }) {
     setBusyId(rec.id);
     try {
       await aiTriage.accept(rec.id);
-      toast.success('Entwurf übernommen – Social-Post-Draft erstellt.');
+      toast.success(t('toast.draft_adopted_social'));
       await query.refetch();
       navigate('/social');
     } catch {
-      toast.error('Übernehmen fehlgeschlagen.');
+      toast.error(t('toast.adopt_failed'));
     } finally {
       setBusyId(null);
     }
@@ -265,10 +266,10 @@ function ProductMarketingCard({ productId }: { productId: string }) {
     setBusyId(rec.id);
     try {
       await aiTriage.reject(rec.id);
-      toast.success('Empfehlung verworfen.');
+      toast.success(t('toast.recommendation_dismissed'));
       await query.refetch();
     } catch {
-      toast.error('Verwerfen fehlgeschlagen.');
+      toast.error(t('toast.dismiss_failed'));
     } finally {
       setBusyId(null);
     }
@@ -362,7 +363,7 @@ function ProductVersionsCard({
 
   const submit = async () => {
     if (!version.trim()) {
-      toast.error('Versionsnummer angeben.');
+      toast.error(t('toast.enter_version'));
       return;
     }
     setSaving(true);

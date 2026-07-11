@@ -211,7 +211,7 @@ export function AiAgentsOverviewPage() {
         navigate('/social');
       }
     } catch {
-      toast.error('Übernehmen fehlgeschlagen.');
+      toast.error(t('toast.adopt_failed'));
     } finally {
       setBusyId(null);
     }
@@ -222,10 +222,10 @@ export function AiAgentsOverviewPage() {
     setBusyId(rec.id);
     try {
       await aiTriage.reject(rec.id);
-      toast.success('Empfehlung verworfen.');
+      toast.success(t('toast.recommendation_dismissed'));
       await query.refetch();
     } catch {
-      toast.error('Verwerfen fehlgeschlagen.');
+      toast.error(t('toast.dismiss_failed'));
     } finally {
       setBusyId(null);
     }
@@ -235,9 +235,9 @@ export function AiAgentsOverviewPage() {
     if (!selectedProduct) return;
     try {
       await aiMarketing.request(selectedProduct);
-      toast.success('Marketing-Entwurf angefordert – erscheint gleich als Empfehlung.');
+      toast.success(t('toast.marketing_draft_requested'));
     } catch {
-      toast.error('Anfrage fehlgeschlagen (LLM/Egress prüfen).');
+      toast.error(t('toast.llm_request_failed'));
     }
   };
 
@@ -245,9 +245,9 @@ export function AiAgentsOverviewPage() {
     if (!selectedCustomer) return;
     try {
       await aiOutreach.request(selectedCustomer);
-      toast.success('Upgrade-Outreach angefordert – erscheint gleich als Empfehlung.');
+      toast.success(t('toast.upgrade_outreach_requested'));
     } catch {
-      toast.error('Anfrage fehlgeschlagen (LLM/Egress prüfen).');
+      toast.error(t('toast.llm_request_failed'));
     }
   };
 
@@ -255,15 +255,15 @@ export function AiAgentsOverviewPage() {
     const content = distributionContent.trim();
     if (content === '') return;
     if (!workspaceId) {
-      toast.error('Kein aktiver Workspace gewählt.');
+      toast.error(t('toast.no_active_workspace_selected'));
       return;
     }
     try {
       await aiAgent.planDistribution(content, workspaceId);
-      toast.success('Verteilung geplant – Vorschläge erscheinen gleich als Empfehlungen.');
+      toast.success(t('toast.distribution_scheduled'));
       setDistributionContent('');
     } catch {
-      toast.error('Anfrage fehlgeschlagen (LLM/Egress prüfen).');
+      toast.error(t('toast.llm_request_failed'));
     }
   };
 

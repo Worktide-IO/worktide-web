@@ -65,7 +65,7 @@ export function ResearchMissionDetailPage() {
     setBusy(true);
     try {
       await researchMission.run(mission.id);
-      toast.success('Suche gestartet – Leads erscheinen, sobald der Lauf durch ist.');
+      toast.success(t('toast.search_started_run'));
       window.setTimeout(() => {
         void missionQuery.refetch();
         void leadsQuery.refetch();

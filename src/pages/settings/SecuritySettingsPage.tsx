@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   Monitor,
   Bell,
@@ -127,6 +128,7 @@ const CHAT_PROVIDERS = [
  * whether one is configured; "Test senden" posts a live message.
  */
 function NotificationsCard() {
+  const { t } = useTranslation();
   const [prefs, setPrefs] = useState<NotifPrefs | null>(null);
   const [chat, setChat] = useState<ChatStatus | null>(null);
   const [provider, setProvider] = useState('slack');
@@ -152,7 +154,7 @@ function NotificationsCard() {
     try {
       await api.put('/me/preferences', { notificationPreferences: merged });
     } catch {
-      toast.error('Konnte nicht speichern.');
+      toast.error(t('toast.could_not_save'));
     }
   };
 
@@ -280,6 +282,7 @@ function NotificationsCard() {
 }
 
 function SessionsCard() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [sessions, setSessions] = useState<Session[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -291,7 +294,7 @@ function SessionsCard() {
       setSessions(data.sessions);
     } catch (err) {
       console.warn('SessionsCard.load failed', err);
-      toast.error('Sitzungen konnten nicht geladen werden.');
+      toast.error(t('toast.sessions_load_failed'));
     } finally {
       setLoading(false);
     }
@@ -309,12 +312,12 @@ function SessionsCard() {
     setBusy(id);
     try {
       await api.delete(`/me/sessions/${id}`);
-      toast.success('Sitzung beendet.');
+      toast.success(t('toast.session_ended'));
       await load();
       qc.invalidateQueries({ queryKey: ['me'] });
     } catch (err) {
       console.warn('Session revoke failed', err);
-      toast.error('Konnte Sitzung nicht beenden.');
+      toast.error(t('toast.could_not_end_session'));
     } finally {
       setBusy(null);
     }
@@ -331,7 +334,7 @@ function SessionsCard() {
       await load();
     } catch (err) {
       console.warn('Revoke-others failed', err);
-      toast.error('Konnte andere Sitzungen nicht beenden.');
+      toast.error(t('toast.could_not_end_other_sessions'));
     } finally {
       setBusy(null);
     }
@@ -434,6 +437,7 @@ function SessionsCard() {
 }
 
 function IdleTimeoutCard() {
+  const { t } = useTranslation();
   const [value, setValue] = useState<string>('off');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -457,10 +461,10 @@ function IdleTimeoutCard() {
       await api.put('/me/preferences', {
         idleTimeoutMinutes: next === 'off' ? null : Number(next),
       });
-      toast.success('Auto-Logout aktualisiert.');
+      toast.success(t('toast.auto_logout_updated'));
     } catch (err) {
       console.warn('Idle timeout save failed', err);
-      toast.error('Konnte nicht speichern.');
+      toast.error(t('toast.could_not_save'));
     } finally {
       setSaving(false);
     }

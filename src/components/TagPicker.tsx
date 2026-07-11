@@ -1,4 +1,5 @@
 import { useInvalidate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Check, Plus, Tag as TagIcon, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -69,6 +70,7 @@ export function TagPicker({
   placeholder = 'Tags wählen…',
   className,
 }: Props) {
+  const { t: translate } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [creating, setCreating] = useState(false);
@@ -94,7 +96,7 @@ export function TagPicker({
     const workspaceId =
       typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
     if (!workspaceId) {
-      toast.error('Workspace nicht gefunden.');
+      toast.error(translate('toast.workspace_not_found'));
       return;
     }
     setCreating(true);
@@ -114,7 +116,7 @@ export function TagPicker({
       setQuery('');
       toast.success(`Tag "${name}" angelegt`);
     } catch {
-      toast.error('Konnte Tag nicht anlegen.');
+      toast.error(translate('toast.could_not_create_tag'));
     } finally {
       setCreating(false);
     }

@@ -1,4 +1,5 @@
 import Papa from 'papaparse';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ArrowRight, FileSpreadsheet, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -96,6 +97,7 @@ const FIELDS_BY_RESOURCE: Record<Resource, { key: string; label: string; require
 type Step = 1 | 2 | 3;
 
 export function ImportPage() {
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>(1);
   const [resource, setResource] = useState<Resource>('customers');
   const [fileName, setFileName] = useState<string | null>(null);
@@ -169,7 +171,7 @@ export function ImportPage() {
       setStep(3);
     } catch (err) {
       console.warn('Import dryRun failed', err);
-      toast.error('Validierung fehlgeschlagen.');
+      toast.error(t('toast.validation_failed'));
     } finally {
       setBusy(false);
     }
@@ -202,7 +204,7 @@ export function ImportPage() {
       setDryRunResult(null);
     } catch (err) {
       console.warn('Import commit failed', err);
-      toast.error('Import fehlgeschlagen.');
+      toast.error(t('toast.import_failed'));
     } finally {
       setBusy(false);
     }

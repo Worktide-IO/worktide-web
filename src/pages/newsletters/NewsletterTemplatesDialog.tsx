@@ -1,4 +1,5 @@
 import { Loader2, Pencil, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -25,6 +26,7 @@ const MERGE_PATCH = { headers: { 'Content-Type': 'application/merge-patch+json' 
  * speichern"); here they can be fully maintained.
  */
 export function NewsletterTemplatesDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const { t: translate } = useTranslation();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<Editing | null>(null);
@@ -60,7 +62,7 @@ export function NewsletterTemplatesDialog({ open, onOpenChange }: { open: boolea
       setEditing(null);
       load();
     } catch {
-      toast.error('Speichern fehlgeschlagen.');
+      toast.error(translate('toast.save_failed'));
     } finally {
       setBusy(false);
     }
@@ -73,7 +75,7 @@ export function NewsletterTemplatesDialog({ open, onOpenChange }: { open: boolea
       if (editing?.id === idOf(t)) setEditing(null);
       load();
     } catch {
-      toast.error('Löschen fehlgeschlagen.');
+      toast.error(translate('toast.delete_failed'));
     }
   };
 

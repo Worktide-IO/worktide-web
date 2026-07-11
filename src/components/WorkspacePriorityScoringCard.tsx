@@ -1,4 +1,5 @@
 import { useOne, useUpdate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -53,6 +54,7 @@ export function WorkspacePriorityScoringCard() {
 }
 
 function PriorityScoringForm({ workspaceId, settings }: { workspaceId: string; settings: Settings }) {
+  const { t } = useTranslation();
   const { mutate: update, mutation } = useUpdate();
   const [weights, setWeights] = useState<Record<string, number>>(() => ({
     ...DEFAULT_WEIGHTS,
@@ -75,8 +77,8 @@ function PriorityScoringForm({ workspaceId, settings }: { workspaceId: string; s
         successNotification: false,
       },
       {
-        onSuccess: () => toast.success('Prioritäts-Gewichte gespeichert.'),
-        onError: () => toast.error('Speichern fehlgeschlagen.'),
+        onSuccess: () => toast.success(t('toast.priority_weights_saved')),
+        onError: () => toast.error(t('toast.save_failed')),
       },
     );
   };

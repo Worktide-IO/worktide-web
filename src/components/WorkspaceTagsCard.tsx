@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Loader2, Pencil, Plus, Tags, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -167,6 +168,7 @@ function TagRow({
   tag: Row<TagJsonld>;
   onEdit: () => void;
 }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const localize = useLocalize();
   const [deleting, setDeleting] = useState(false);
@@ -183,7 +185,7 @@ function TagRow({
       void invalidate({ resource: 'tags', invalidates: ['list'] });
       toast.success(`Tag "${tag.name}" gelöscht.`);
     } catch {
-      toast.error('Konnte Tag nicht löschen.');
+      toast.error(translate('toast.could_not_delete_tag'));
     } finally {
       setDeleting(false);
     }

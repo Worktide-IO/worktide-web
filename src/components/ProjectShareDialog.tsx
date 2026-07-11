@@ -108,7 +108,7 @@ export function ProjectShareDialog({ projectId, projectName, open, onOpenChange 
     const workspaceId =
       typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
     if (!workspaceId) {
-      toast.error('Kein aktiver Workspace.');
+      toast.error(t('toast.no_active_workspace'));
       return;
     }
     setBusy(true);
@@ -134,7 +134,7 @@ export function ProjectShareDialog({ projectId, projectName, open, onOpenChange 
     if (!inv.id) return;
     try {
       await api.delete(`/project_share_invitations/${inv.id}`);
-      toast.success('Einladung zurückgezogen.');
+      toast.success(t('toast.invitation_revoked'));
       void load();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;

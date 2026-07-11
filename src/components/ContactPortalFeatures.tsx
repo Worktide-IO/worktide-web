@@ -1,4 +1,5 @@
 import { useOne, useUpdate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -33,6 +34,7 @@ type ContactRow = Row<ContactJsonld> & { portalHiddenFeatures?: string[] | null 
  * the portal's effective feature map = workspace features minus these.
  */
 export function ContactPortalFeatures({ contactId }: { contactId: string }) {
+  const { t } = useTranslation();
   const { result: contact } = useOne<ContactRow>({ resource: 'contacts', id: contactId });
 
   const stored = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
@@ -57,7 +59,7 @@ export function ContactPortalFeatures({ contactId }: { contactId: string }) {
     update(
       { resource: 'contacts', id: contactId, values: { portalHiddenFeatures: next }, successNotification: false },
       {
-        onSuccess: () => toast.success('Sichtbarkeit gespeichert.'),
+        onSuccess: () => toast.success(t('toast.visibility_saved')),
         onError: (err) => {
           const status = (err as { response?: { status?: number } })?.response?.status;
           toast.error(status === 403 ? 'Keine Berechtigung.' : 'Konnte nicht speichern.');

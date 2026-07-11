@@ -1,4 +1,5 @@
 import { useGetIdentity, useInvalidate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Camera, Loader2, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -69,6 +70,7 @@ export function MemberEditDialog({
   open,
   onOpenChange,
 }: Props) {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const queryClient = useQueryClient();
   const { data: identity } = useGetIdentity<{ id?: string }>();
@@ -127,7 +129,7 @@ export function MemberEditDialog({
         });
       }
 
-      toast.success('Mitglied aktualisiert.');
+      toast.success(t('toast.member_updated'));
       refresh();
       onOpenChange(false);
     } catch (err) {
@@ -149,7 +151,7 @@ export function MemberEditDialog({
       await api.post(`/workspace_members/${memberId}/avatar`, form, {
         headers: { 'Content-Type': undefined },
       });
-      toast.success('Foto aktualisiert.');
+      toast.success(t('toast.photo_updated'));
       setJustUploaded(true);
       void queryClient.invalidateQueries({ queryKey: ['member-avatar', memberId] });
       void invalidate({ resource: 'files', invalidates: ['list'] });
@@ -182,7 +184,7 @@ export function MemberEditDialog({
       await api.post(`/workspace_members/${memberId}/remove`, {
         reassignTo: reassignTo === UNASSIGN ? null : reassignTo,
       });
-      toast.success('Mitglied entfernt.');
+      toast.success(t('toast.member_removed'));
       refresh();
       onOpenChange(false);
     } catch (err) {

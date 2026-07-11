@@ -1,4 +1,5 @@
 import { useGetIdentity } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -63,6 +64,7 @@ export function ProfileSettingsPage() {
 }
 
 function ProfileForm() {
+  const { t } = useTranslation();
   const { refetch: refetchIdentity } = useGetIdentity();
   const [profile, setProfile] = useState<ProfileSnapshot | null>(null);
   const [firstName, setFirstName] = useState('');
@@ -108,10 +110,10 @@ function ProfileForm() {
       // Identity is cached by Refine — invalidate so the sidebar avatar
       // initials and topbar greeting pick up the new name immediately.
       await refetchIdentity?.();
-      toast.success('Profil gespeichert.');
+      toast.success(t('toast.profile_saved'));
     } catch (err) {
       console.warn('ProfileSettingsPage: save failed', err);
-      toast.error('Konnte nicht speichern.');
+      toast.error(t('toast.could_not_save'));
     } finally {
       setSaving(false);
     }
@@ -214,6 +216,7 @@ function ProfileForm() {
 }
 
 function PasswordForm() {
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordRepeat, setNewPasswordRepeat] = useState('');
@@ -221,11 +224,11 @@ function PasswordForm() {
 
   const handleChange = async () => {
     if (newPassword !== newPasswordRepeat) {
-      toast.error('Die neuen Passwörter stimmen nicht überein.');
+      toast.error(t('toast.passwords_mismatch'));
       return;
     }
     if (newPassword.length < 8) {
-      toast.error('Mindestens 8 Zeichen.');
+      toast.error(t('toast.min_8_chars'));
       return;
     }
     setSaving(true);
@@ -234,7 +237,7 @@ function PasswordForm() {
       setCurrentPassword('');
       setNewPassword('');
       setNewPasswordRepeat('');
-      toast.success('Passwort geändert.');
+      toast.success(t('toast.password_changed'));
     } catch (err) {
       const message =
         ((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail) ??

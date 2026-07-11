@@ -1,4 +1,5 @@
 import { useOne, useUpdate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -48,6 +49,7 @@ function readPolicy(customer: CustomerRow | undefined): Vals {
  * PATCH /v1/customers/{id} (workspace EDIT).
  */
 export function CustomerSlaCard({ customerId }: { customerId: string }) {
+  const { t } = useTranslation();
   const { result: customer, query } = useOne<CustomerRow>({ resource: 'customers', id: customerId });
 
   const stored = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
@@ -114,7 +116,7 @@ export function CustomerSlaCard({ customerId }: { customerId: string }) {
     update(
       { resource: 'customers', id: customerId, values: { slaPolicy: Object.keys(sla).length ? sla : null }, successNotification: false },
       {
-        onSuccess: () => toast.success('Kunden-SLA gespeichert.'),
+        onSuccess: () => toast.success(t('toast.customer_sla_saved')),
         onError: (err) => {
           const status = (err as { response?: { status?: number } })?.response?.status;
           toast.error(status === 403 ? 'Keine Berechtigung.' : 'Konnte nicht speichern.');
