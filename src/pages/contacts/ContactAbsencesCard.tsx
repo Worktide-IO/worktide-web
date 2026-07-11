@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { CalendarOff } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,7 @@ const fmtRange = (a: string, b: string) =>
  * their portal).
  */
 export function ContactAbsencesCard({ contactId }: { contactId: string }) {
+  const { t } = useTranslation();
   const { result } = useList<ContactAbsenceRow>({
     resource: 'contact_absences',
     filters: [{ field: 'contact', operator: 'eq', value: `/v1/contacts/${contactId}` }],
@@ -29,12 +31,12 @@ export function ContactAbsencesCard({ contactId }: { contactId: string }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <CalendarOff className="size-4 text-muted-foreground" /> Abwesenheiten
+          <CalendarOff className="size-4 text-muted-foreground" /> {t('contact_absences.title')}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {rows.length === 0 ? (
-          <p className="py-2 text-sm text-muted-foreground">Keine Abwesenheiten eingetragen.</p>
+          <p className="py-2 text-sm text-muted-foreground">{t('contact_absences.empty')}</p>
         ) : (
           <div className="divide-y">
             {rows.map((r) => (

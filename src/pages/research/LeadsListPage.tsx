@@ -56,7 +56,7 @@ export function LeadsListPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <h2 className="text-2xl">Leads</h2>
+        <h2 className="text-2xl">{t('lead_list.title')}</h2>
         {connected ? (
           <Badge variant="secondary" className="gap-1 text-xs">
             <Wifi className="size-3" /> Live
@@ -67,7 +67,7 @@ export function LeadsListPage() {
           </Badge>
         )}
       </div>
-      <p className="text-sm text-muted-foreground">{total} Leads im Workspace</p>
+      <p className="text-sm text-muted-foreground">{t('lead_list.count_in_workspace', { count: total })}</p>
 
       <Card>
         <CardHeader className="gap-4">
@@ -78,7 +78,7 @@ export function LeadsListPage() {
             <div className="relative flex-1 min-w-[240px] max-w-md">
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
-                placeholder="Name suchen…"
+                placeholder={t('lead_list.search_name')}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -95,10 +95,10 @@ export function LeadsListPage() {
               }}
             >
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder={t('lead_list.status')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Stufen</SelectItem>
+                <SelectItem value="all">{t('lead_list.all_stages')}</SelectItem>
                 {LEAD_STAGES.map((s) => (
                   <SelectItem key={s} value={s}>
                     {t(LEAD_STAGE_LABEL[s])}

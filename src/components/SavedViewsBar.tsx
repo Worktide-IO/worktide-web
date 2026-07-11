@@ -137,14 +137,14 @@ export function SavedViewsBar({ currentFilters, onApply, onSaved }: Props) {
             disabled={query.isLoading}
           >
             <Bookmark className={active ? 'size-3.5 fill-current' : 'size-3.5'} />
-            {active ? active.name : 'Gespeicherte Filter'}
+            {active ? active.name : t('saved_views.button')}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
-          <DropdownMenuLabel>Meine Filter</DropdownMenuLabel>
+          <DropdownMenuLabel>{t('saved_views.my_filters')}</DropdownMenuLabel>
           {(result?.data ?? []).length === 0 ? (
             <div className="px-2 py-3 text-xs text-muted-foreground">
-              Keine gespeicherten Filter.
+              {t('saved_views.empty')}
             </div>
           ) : (
             (result?.data ?? []).map((v) => {
@@ -163,7 +163,7 @@ export function SavedViewsBar({ currentFilters, onApply, onSaved }: Props) {
                     )}
                     <span className="truncate">{v.name}</span>
                     {v.isShared ? (
-                      <span className="text-[10px] text-muted-foreground">geteilt</span>
+                      <span className="text-[10px] text-muted-foreground">{t('saved_views.shared_badge')}</span>
                     ) : null}
                   </span>
                   <Button
@@ -175,7 +175,7 @@ export function SavedViewsBar({ currentFilters, onApply, onSaved }: Props) {
                       e.stopPropagation();
                       handleDelete(v);
                     }}
-                    aria-label="Löschen"
+                    aria-label={t('action.delete')}
                   >
                     <Trash2 className="size-3" />
                   </Button>
@@ -189,7 +189,7 @@ export function SavedViewsBar({ currentFilters, onApply, onSaved }: Props) {
               setDialogOpen(true);
             }}
           >
-            <BookmarkPlus className="size-4" /> Aktuellen Filter speichern…
+            <BookmarkPlus className="size-4" /> {t('saved_views.save_current')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -197,28 +197,27 @@ export function SavedViewsBar({ currentFilters, onApply, onSaved }: Props) {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Filter speichern</DialogTitle>
+            <DialogTitle>{t('saved_views.dialog_title')}</DialogTitle>
             <DialogDescription>
-              Filtersatz wird unter diesem Namen gespeichert und kann jederzeit
-              wieder angewendet werden.
+              {t('saved_views.dialog_description')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="view-name">Name</Label>
+              <Label htmlFor="view-name">{t('saved_views.name_label')}</Label>
               <Input
                 id="view-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
-                placeholder="z. B. Meine offenen — Hohe Prio"
+                placeholder={t('saved_views.name_placeholder')}
               />
             </div>
             <div className="flex items-center justify-between rounded-md border p-3">
               <div className="space-y-0.5">
-                <Label htmlFor="view-shared">Mit Workspace teilen</Label>
+                <Label htmlFor="view-shared">{t('saved_views.share_label')}</Label>
                 <p className="text-xs text-muted-foreground">
-                  Andere Mitglieder sehen den Filter dann auch.
+                  {t('saved_views.share_hint')}
                 </p>
               </div>
               <Switch id="view-shared" checked={shared} onCheckedChange={setShared} />
@@ -226,13 +225,13 @@ export function SavedViewsBar({ currentFilters, onApply, onSaved }: Props) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Abbrechen
+              {t('action.cancel')}
             </Button>
             <Button
               onClick={handleSave}
               disabled={!name.trim() || createMut.isPending}
             >
-              {createMut.isPending ? 'Speichere …' : 'Speichern'}
+              {createMut.isPending ? t('saved_views.saving') : t('action.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

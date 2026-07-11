@@ -138,7 +138,7 @@ export function InviteMembersCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Personen einladen</CardTitle>
+        <CardTitle className="text-base">{t('invite_members.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={invite} className="flex flex-wrap items-center gap-2">
@@ -148,7 +148,7 @@ export function InviteMembersCard() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@firma.de"
+              placeholder={t('invite_members.email_placeholder')}
               className="pl-8"
               autoComplete="off"
             />
@@ -166,7 +166,7 @@ export function InviteMembersCard() {
           </select>
           <Button type="submit" disabled={busy || !email.trim()}>
             <Send className="size-4" />
-            Einladen
+            {t('invite_members.invite')}
           </Button>
         </form>
 
@@ -183,7 +183,7 @@ export function InviteMembersCard() {
                 </Badge>
                 {inv.sendCount ? (
                   <span className="hidden text-xs text-muted-foreground sm:inline">
-                    {inv.sendCount}× gesendet
+                    {t('invite_members.times_sent', { count: inv.sendCount })}
                   </span>
                 ) : null}
                 {inv.status === 'pending' ? (
@@ -193,7 +193,7 @@ export function InviteMembersCard() {
                       variant="ghost"
                       size="sm"
                       onClick={() => resend(inv)}
-                      title="Erneut senden"
+                      title={t('invite_members.resend')}
                     >
                       <RefreshCw className="size-4" />
                     </Button>
@@ -202,7 +202,7 @@ export function InviteMembersCard() {
                       variant="ghost"
                       size="sm"
                       onClick={() => revoke(inv)}
-                      title="Zurückziehen"
+                      title={t('invite_members.revoke')}
                     >
                       <X className="size-4" />
                     </Button>
