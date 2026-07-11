@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './i18n' // initialise i18next before the app renders
 import App from './App.tsx'
 import { installPendingQueueDrainers } from './lib/pendingQueue.ts'
 import { applyBranding, readCachedBranding } from './lib/branding.ts'
