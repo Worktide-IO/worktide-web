@@ -2,22 +2,28 @@
  * FullCalendar overrides — match shadcn-token-driven look (borders, text
  * color, hover states). Kept minimal — every selector matches a single
  * FC class, no nesting; replacing FC later is a one-file rewrite.
+ *
+ * NOTE: the theme tokens (--secondary, --border, …) are raw oklch color
+ * values, so they're used directly as var(--token) — NOT wrapped in hsl(),
+ * which would produce hsl(oklch(…)) (invalid) and make buttons/borders fall
+ * back to invisible defaults.
  */
 
 .worktide-calendar .fc {
-  --fc-border-color: hsl(var(--border));
-  --fc-button-bg-color: hsl(var(--secondary));
-  --fc-button-border-color: hsl(var(--border));
-  --fc-button-hover-bg-color: hsl(var(--accent));
-  --fc-button-hover-border-color: hsl(var(--border));
-  --fc-button-active-bg-color: hsl(var(--primary));
-  --fc-button-active-border-color: hsl(var(--primary));
-  --fc-today-bg-color: hsl(var(--accent) / 0.3);
+  --fc-border-color: var(--border);
+  --fc-button-bg-color: var(--secondary);
+  --fc-button-text-color: var(--secondary-foreground);
+  --fc-button-border-color: var(--border);
+  --fc-button-hover-bg-color: var(--accent);
+  --fc-button-hover-border-color: var(--border);
+  --fc-button-active-bg-color: var(--primary);
+  --fc-button-active-border-color: var(--primary);
+  --fc-today-bg-color: color-mix(in oklch, var(--accent) 30%, transparent);
   --fc-page-bg-color: transparent;
-  --fc-neutral-bg-color: hsl(var(--muted) / 0.3);
+  --fc-neutral-bg-color: color-mix(in oklch, var(--muted) 30%, transparent);
   font-family: inherit;
   font-size: 0.875rem;
-  color: hsl(var(--foreground));
+  color: var(--foreground);
 }
 
 .worktide-calendar .fc-toolbar-title {
@@ -35,7 +41,7 @@
 
 .worktide-calendar .fc-button-primary:not(:disabled).fc-button-active,
 .worktide-calendar .fc-button-primary:not(:disabled):active {
-  color: hsl(var(--primary-foreground));
+  color: var(--primary-foreground);
 }
 
 .worktide-calendar .fc-col-header-cell {
@@ -43,13 +49,13 @@
   text-transform: uppercase;
   font-size: 0.7rem;
   letter-spacing: 0.05em;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
 }
 
 .worktide-calendar .fc-daygrid-day-number,
 .worktide-calendar .fc-timegrid-axis-cushion,
 .worktide-calendar .fc-timegrid-slot-label-cushion {
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
   font-size: 0.75rem;
 }
 
@@ -67,5 +73,5 @@
 
 .worktide-calendar .fc-day-today .fc-daygrid-day-number {
   font-weight: 600;
-  color: hsl(var(--primary));
+  color: var(--primary);
 }
