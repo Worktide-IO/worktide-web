@@ -163,13 +163,13 @@ export function AiAgentsOverviewPage() {
 
   const targetLabel = (rec: AiRecommendation): string => {
     if (rec.target === 'product') {
-      return productNameById[rec.targetId] ?? `Produkt ${rec.targetId.slice(0, 8)}`;
+      return productNameById[rec.targetId] ?? t('ai_agents.target_product', { id: rec.targetId.slice(0, 8) });
     }
     if (rec.target === 'customer') {
-      return customerNameById[rec.targetId] ?? `Kunde ${rec.targetId.slice(0, 8)}`;
+      return customerNameById[rec.targetId] ?? t('ai_agents.target_customer', { id: rec.targetId.slice(0, 8) });
     }
     if (rec.target === 'workspace') {
-      return 'Recherche';
+      return t('ai_agents.target_research');
     }
     return `${TARGET_LABEL[rec.target] ? t(TARGET_LABEL[rec.target]) : rec.target} ${rec.targetId.slice(0, 8)}`;
   };
@@ -183,7 +183,7 @@ export function AiAgentsOverviewPage() {
       rec.suggestion?.payload?.body ??
       rec.suggestion?.rationale ??
       '';
-    return s || '(keine Zusammenfassung)';
+    return s || t('ai_agents.no_summary');
   };
 
   const onAccept = async (rec: AiRecommendation) => {
@@ -270,7 +270,7 @@ export function AiAgentsOverviewPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <h2 className="text-2xl">KI-Agenten</h2>
+        <h2 className="text-2xl">{t('ai_agents.heading')}</h2>
         {connected ? (
           <Badge variant="secondary" className="gap-1 text-xs">
             <Wifi className="size-3" /> Live
@@ -281,17 +281,17 @@ export function AiAgentsOverviewPage() {
           </Badge>
         )}
       </div>
-      <p className="text-sm text-muted-foreground">{total} Empfehlungen im Workspace</p>
+      <p className="text-sm text-muted-foreground">{t('ai_agents.count', { count: total })}</p>
 
       <Card>
         <CardHeader className="gap-4">
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="size-4" /> Agenten starten
+            <Sparkles className="size-4" /> {t('ai_agents.start_agents')}
           </CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <Select value={selectedProduct} onValueChange={setSelectedProduct}>
               <SelectTrigger className="w-64">
-                <SelectValue placeholder="Produkt / Service wählen…" />
+                <SelectValue placeholder={t('ai_agents.pick_product')} />
               </SelectTrigger>
               <SelectContent>
                 {(products?.data ?? []).map((p) => (
@@ -302,13 +302,13 @@ export function AiAgentsOverviewPage() {
               </SelectContent>
             </Select>
             <Button onClick={onRequestMarketing} disabled={!selectedProduct}>
-              Marketing-Entwurf erzeugen
+              {t('ai_agents.create_marketing_draft')}
             </Button>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
               <SelectTrigger className="w-64">
-                <SelectValue placeholder="Kunde wählen…" />
+                <SelectValue placeholder={t('ai_agents.pick_customer')} />
               </SelectTrigger>
               <SelectContent>
                 {(customers?.data ?? []).map((c) => (
@@ -319,14 +319,14 @@ export function AiAgentsOverviewPage() {
               </SelectContent>
             </Select>
             <Button variant="secondary" onClick={onRequestOutreach} disabled={!selectedCustomer}>
-              Upgrade-Outreach erzeugen
+              {t('ai_agents.create_upgrade_outreach')}
             </Button>
           </div>
           <div className="flex flex-wrap items-end gap-2">
             <div className="min-w-[280px] flex-1">
               <Textarea
                 rows={2}
-                placeholder="Inhalt/Ankündigung, den der Agent auf die verbundenen Kanäle (inkl. Foren) verteilen soll…"
+                placeholder={t('ai_agents.distribution_placeholder')}
                 value={distributionContent}
                 onChange={(e) => setDistributionContent(e.target.value)}
               />
@@ -336,7 +336,7 @@ export function AiAgentsOverviewPage() {
               onClick={onPlanDistribution}
               disabled={distributionContent.trim() === ''}
             >
-              Verteilung planen
+              {t('ai_agents.plan_distribution')}
             </Button>
           </div>
         </CardHeader>
@@ -344,32 +344,32 @@ export function AiAgentsOverviewPage() {
 
       <Card>
         <CardHeader className="gap-4">
-          <CardTitle>Empfehlungen</CardTitle>
+          <CardTitle>{t('ai_agents.recommendations')}</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-44">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
-                <SelectItem value="pending">Ausstehend</SelectItem>
-                <SelectItem value="accepted">Übernommen</SelectItem>
-                <SelectItem value="rejected">Verworfen</SelectItem>
-                <SelectItem value="superseded">Ersetzt</SelectItem>
+                <SelectItem value="all">{t('ai_agents.status_all')}</SelectItem>
+                <SelectItem value="pending">{t('ai_agents.status_pending')}</SelectItem>
+                <SelectItem value="accepted">{t('ai_agents.status_accepted')}</SelectItem>
+                <SelectItem value="rejected">{t('ai_agents.status_rejected')}</SelectItem>
+                <SelectItem value="superseded">{t('ai_agents.status_superseded')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={kindFilter} onValueChange={setKindFilter}>
               <SelectTrigger className="w-52">
-                <SelectValue placeholder="Art" />
+                <SelectValue placeholder={t('ai_agents.kind')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Arten</SelectItem>
+                <SelectItem value="all">{t('ai_agents.kind_all')}</SelectItem>
                 <SelectItem value="triage">Triage</SelectItem>
-                <SelectItem value="ticket_from_conversation">Ticket-Vorschlag</SelectItem>
+                <SelectItem value="ticket_from_conversation">{t('ai_agents.kind_ticket_suggestion')}</SelectItem>
                 <SelectItem value="marketing_social_draft">Marketing-Copy</SelectItem>
                 <SelectItem value="customer_upgrade_outreach">Upgrade-Outreach</SelectItem>
-                <SelectItem value="research_suggestion">Recherche-Vorschlag</SelectItem>
-                <SelectItem value="agent_action">Agent-Aktion</SelectItem>
+                <SelectItem value="research_suggestion">{t('ai_agents.kind_research_suggestion')}</SelectItem>
+                <SelectItem value="agent_action">{t('ai_agents.kind_agent_action')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -383,17 +383,17 @@ export function AiAgentsOverviewPage() {
             </div>
           ) : items.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-12">
-              Keine Empfehlungen mit diesen Filtern.
+              {t('ai_agents.empty')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Ziel</TableHead>
-                  <TableHead className="w-40">Art</TableHead>
-                  <TableHead className="w-32">Status</TableHead>
-                  <TableHead>Vorschlag</TableHead>
-                  <TableHead className="w-52 text-right">Aktionen</TableHead>
+                  <TableHead>{t('ai_agents.col_target')}</TableHead>
+                  <TableHead className="w-40">{t('ai_agents.col_kind')}</TableHead>
+                  <TableHead className="w-32">{t('ai_agents.col_status')}</TableHead>
+                  <TableHead>{t('ai_agents.col_suggestion')}</TableHead>
+                  <TableHead className="w-52 text-right">{t('ai_agents.col_actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -421,7 +421,7 @@ export function AiAgentsOverviewPage() {
                             onClick={() => void onAccept(rec)}
                             disabled={busyId === rec.id}
                           >
-                            Übernehmen
+                            {t('ai_agents.accept')}
                           </Button>
                           <Button
                             size="sm"
@@ -429,7 +429,7 @@ export function AiAgentsOverviewPage() {
                             onClick={() => void onReject(rec)}
                             disabled={busyId === rec.id}
                           >
-                            Verwerfen
+                            {t('ai_agents.reject')}
                           </Button>
                         </div>
                       ) : (

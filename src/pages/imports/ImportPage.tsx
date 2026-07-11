@@ -43,54 +43,56 @@ type Resource = 'customers' | 'contacts' | 'tasks';
  * else would be silently dropped on the server anyway.
  */
 
+// `label`/`help` hold i18n keys (translated at render) so they follow the
+// active language rather than freezing at module-load time.
 const RESOURCES: { value: Resource; label: string; help: string }[] = [
-  { value: 'customers', label: 'Kunden', help: 'CRM-Kundendaten — Name pflicht' },
+  { value: 'customers', label: 'import.res_customers_label', help: 'import.res_customers_help' },
   {
     value: 'contacts',
-    label: 'Kontakte',
-    help: 'Ansprechpartner — Customer-Name oder UUID pflicht',
+    label: 'import.res_contacts_label',
+    help: 'import.res_contacts_help',
   },
-  { value: 'tasks', label: 'Aufgaben', help: 'Tasks — Title pflicht, Projekt-Key optional' },
+  { value: 'tasks', label: 'import.res_tasks_label', help: 'import.res_tasks_help' },
 ];
 
 const FIELDS_BY_RESOURCE: Record<Resource, { key: string; label: string; required?: boolean }[]> = {
   customers: [
-    { key: 'name', label: 'Name', required: true },
-    { key: 'legalName', label: 'Firmen-Langname' },
-    { key: 'email', label: 'Email' },
-    { key: 'phone', label: 'Telefon' },
-    { key: 'website', label: 'Website' },
-    { key: 'industry', label: 'Branche' },
-    { key: 'vatId', label: 'USt-ID' },
-    { key: 'addressLine1', label: 'Adresse' },
-    { key: 'addressLine2', label: 'Adresszusatz' },
-    { key: 'zip', label: 'PLZ' },
-    { key: 'city', label: 'Stadt' },
-    { key: 'country', label: 'Land (ISO)' },
-    { key: 'status', label: 'Status (prospect/active/...)' },
-    { key: 'isCompany', label: 'isCompany (true/false)' },
+    { key: 'name', label: 'import.field_name', required: true },
+    { key: 'legalName', label: 'import.field_legalName' },
+    { key: 'email', label: 'import.field_email' },
+    { key: 'phone', label: 'import.field_phone' },
+    { key: 'website', label: 'import.field_website' },
+    { key: 'industry', label: 'import.field_industry' },
+    { key: 'vatId', label: 'import.field_vatId' },
+    { key: 'addressLine1', label: 'import.field_addressLine1' },
+    { key: 'addressLine2', label: 'import.field_addressLine2' },
+    { key: 'zip', label: 'import.field_zip' },
+    { key: 'city', label: 'import.field_city' },
+    { key: 'country', label: 'import.field_country' },
+    { key: 'status', label: 'import.field_status_customer' },
+    { key: 'isCompany', label: 'import.field_isCompany' },
   ],
   contacts: [
-    { key: 'firstName', label: 'Vorname' },
-    { key: 'lastName', label: 'Nachname' },
-    { key: 'customer', label: 'Kunde (Name oder UUID)', required: true },
-    { key: 'salutation', label: 'Anrede' },
-    { key: 'title', label: 'Titel' },
-    { key: 'position', label: 'Position' },
-    { key: 'email', label: 'Email' },
-    { key: 'phone', label: 'Telefon' },
-    { key: 'mobile', label: 'Mobil' },
-    { key: 'isPrimary', label: 'isPrimary (true/false)' },
+    { key: 'firstName', label: 'import.field_firstName' },
+    { key: 'lastName', label: 'import.field_lastName' },
+    { key: 'customer', label: 'import.field_customer', required: true },
+    { key: 'salutation', label: 'import.field_salutation' },
+    { key: 'title', label: 'import.field_title' },
+    { key: 'position', label: 'import.field_position' },
+    { key: 'email', label: 'import.field_email' },
+    { key: 'phone', label: 'import.field_phone' },
+    { key: 'mobile', label: 'import.field_mobile' },
+    { key: 'isPrimary', label: 'import.field_isPrimary' },
   ],
   tasks: [
-    { key: 'title', label: 'Titel', required: true },
-    { key: 'project', label: 'Projekt-Key (z.B. WORK)' },
-    { key: 'status', label: 'Status-Name' },
-    { key: 'priority', label: 'Prio (low/normal/high/urgent)' },
-    { key: 'description', label: 'Beschreibung' },
-    { key: 'identifier', label: 'Identifier' },
-    { key: 'dueOn', label: 'Fällig am (YYYY-MM-DD)' },
-    { key: 'correlationId', label: 'CorrelationID (UUID, für idempotente Re-Imports)' },
+    { key: 'title', label: 'import.field_title', required: true },
+    { key: 'project', label: 'import.field_project' },
+    { key: 'status', label: 'import.field_status_name' },
+    { key: 'priority', label: 'import.field_priority' },
+    { key: 'description', label: 'import.field_description' },
+    { key: 'identifier', label: 'import.field_identifier' },
+    { key: 'dueOn', label: 'import.field_dueOn' },
+    { key: 'correlationId', label: 'import.field_correlationId' },
   ],
 };
 
@@ -213,18 +215,18 @@ export function ImportPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <h2 className="text-2xl">CSV-Import</h2>
+        <h2 className="text-2xl">{t('import.title')}</h2>
         <StepIndicator step={step} />
       </div>
 
       {step === 1 ? (
         <Card>
           <CardHeader>
-            <CardTitle>1. Datei wählen</CardTitle>
+            <CardTitle>{t('import.step1_title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Ziel</Label>
+              <Label>{t('import.target')}</Label>
               <Select value={resource} onValueChange={(v) => setResource(v as Resource)}>
                 <SelectTrigger className="max-w-md">
                   <SelectValue />
@@ -232,14 +234,14 @@ export function ImportPage() {
                 <SelectContent>
                   {RESOURCES.map((r) => (
                     <SelectItem key={r.value} value={r.value}>
-                      {r.label} — {r.help}
+                      {t(r.label)} — {t(r.help)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="csv-file">CSV-Datei</Label>
+              <Label htmlFor="csv-file">{t('import.csv_file')}</Label>
               <div className="flex items-center gap-3">
                 <Input
                   id="csv-file"
@@ -254,7 +256,7 @@ export function ImportPage() {
                 <Upload className="size-4 text-muted-foreground" />
               </div>
               <p className="text-xs text-muted-foreground">
-                Erste Zeile = Spaltennamen. Max 5.000 Zeilen.
+                {t('import.file_hint')}
               </p>
             </div>
           </CardContent>
@@ -264,18 +266,18 @@ export function ImportPage() {
       {step === 2 ? (
         <Card>
           <CardHeader>
-            <CardTitle>2. Spalten zuordnen</CardTitle>
+            <CardTitle>{t('import.step2_title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <FileSpreadsheet className="size-4" />
-              {fileName} — {csvRows.length} Zeilen
+              {fileName} — {t('import.n_rows', { count: csvRows.length })}
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               {fields.map((f) => (
                 <div key={f.key} className="space-y-1.5">
                   <Label>
-                    {f.label}
+                    {t(f.label)}
                     {f.required ? <span className="text-destructive"> *</span> : null}
                   </Label>
                   <Select
@@ -290,10 +292,10 @@ export function ImportPage() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="— nicht importieren —" />
+                      <SelectValue placeholder={t('import.dont_import')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__none__">— nicht importieren —</SelectItem>
+                      <SelectItem value="__none__">{t('import.dont_import')}</SelectItem>
                       {csvHeaders.map((h) => (
                         <SelectItem key={h} value={h}>
                           {h}
@@ -306,10 +308,10 @@ export function ImportPage() {
             </div>
             <div className="flex items-center justify-between">
               <Button variant="outline" onClick={() => setStep(1)}>
-                <ArrowLeft className="size-4" /> Zurück
+                <ArrowLeft className="size-4" /> {t('import.back')}
               </Button>
               <Button onClick={() => void runDryRun()} disabled={busy}>
-                {busy ? 'Validiere…' : 'Validieren'} <ArrowRight className="size-4" />
+                {busy ? t('import.validating') : t('import.validate')} <ArrowRight className="size-4" />
               </Button>
             </div>
           </CardContent>
@@ -319,40 +321,40 @@ export function ImportPage() {
       {step === 3 && dryRunResult ? (
         <Card>
           <CardHeader>
-            <CardTitle>3. Vorschau & Import</CardTitle>
+            <CardTitle>{t('import.step3_title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center gap-3">
-              <Badge variant="default">{dryRunResult.created} importierbar</Badge>
+              <Badge variant="default">{t('import.n_importable', { count: dryRunResult.created })}</Badge>
               {dryRunResult.matched && dryRunResult.matched > 0 ? (
                 <Badge variant="secondary">
-                  {dryRunResult.matched} bereits vorhanden
+                  {t('import.n_existing', { count: dryRunResult.matched })}
                 </Badge>
               ) : null}
               {dryRunResult.skipped > 0 ? (
                 <Badge variant="destructive">
-                  {dryRunResult.skipped} mit Fehlern
+                  {t('import.n_with_errors', { count: dryRunResult.skipped })}
                 </Badge>
               ) : null}
               <span className="text-xs text-muted-foreground">
-                Aus {csvRows.length} CSV-Zeilen
+                {t('import.from_n_rows', { count: csvRows.length })}
               </span>
             </div>
 
             {dryRunResult.errors.length > 0 ? (
               <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
                 <p className="mb-2 text-sm font-medium text-destructive">
-                  Fehler in {dryRunResult.errors.length} Zeile{dryRunResult.errors.length === 1 ? '' : 'n'}:
+                  {t('import.errors_in_rows', { count: dryRunResult.errors.length })}
                 </p>
                 <ul className="space-y-1 text-xs">
                   {dryRunResult.errors.slice(0, 20).map((e) => (
                     <li key={e.row} className="font-mono">
-                      <span className="text-muted-foreground">Zeile {e.row + 1}:</span> {e.message}
+                      <span className="text-muted-foreground">{t('import.row_label', { n: e.row + 1 })}</span> {e.message}
                     </li>
                   ))}
                   {dryRunResult.errors.length > 20 ? (
                     <li className="text-muted-foreground">
-                      … und {dryRunResult.errors.length - 20} weitere
+                      {t('import.and_n_more', { count: dryRunResult.errors.length - 20 })}
                     </li>
                   ) : null}
                 </ul>
@@ -361,7 +363,7 @@ export function ImportPage() {
 
             <details>
               <summary className="cursor-pointer text-sm text-muted-foreground">
-                Erste {Math.min(5, csvRows.length)} Zeilen ansehen
+                {t('import.preview_first_rows', { count: Math.min(5, csvRows.length) })}
               </summary>
               <div className="mt-2 overflow-x-auto">
                 <Table>
@@ -370,7 +372,7 @@ export function ImportPage() {
                       {fields
                         .filter((f) => mapping[f.key])
                         .map((f) => (
-                          <TableHead key={f.key}>{f.label}</TableHead>
+                          <TableHead key={f.key}>{t(f.label)}</TableHead>
                         ))}
                     </TableRow>
                   </TableHeader>
@@ -393,15 +395,15 @@ export function ImportPage() {
 
             <div className="flex items-center justify-between">
               <Button variant="outline" onClick={() => setStep(2)}>
-                <ArrowLeft className="size-4" /> Zurück
+                <ArrowLeft className="size-4" /> {t('import.back')}
               </Button>
               <Button
                 onClick={() => void runCommit()}
                 disabled={busy || dryRunResult.created === 0}
               >
                 {busy
-                  ? 'Importiere…'
-                  : `${dryRunResult.created} Datensätze importieren`}
+                  ? t('import.importing')
+                  : t('import.import_n_records', { count: dryRunResult.created })}
               </Button>
             </div>
           </CardContent>

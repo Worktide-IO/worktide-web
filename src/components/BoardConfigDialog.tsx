@@ -76,7 +76,7 @@ export function BoardConfigDialog({
   const addGroup = () =>
     setGroups((gs) => [
       ...gs,
-      { id: crypto.randomUUID(), name: 'Neue Spalte', color: '#94a3b8', statusIds: [], primaryStatusId: '' },
+      { id: crypto.randomUUID(), name: t('board_config.new_column_default'), color: '#94a3b8', statusIds: [], primaryStatusId: '' },
     ]);
 
   const patch = (id: string, next: Partial<BoardColumnConfig>) =>
@@ -147,15 +147,14 @@ export function BoardConfigDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Board-Spalten konfigurieren</DialogTitle>
+          <DialogTitle>{t('board_config.title')}</DialogTitle>
           <DialogDescription>
-            Fasse Status zu Spalten zusammen. Beim Ziehen einer Karte in eine Spalte bekommt sie
-            deren „primären" Status. Nicht zugeordnete Status erscheinen als eigene Spalten.
+            {t('board_config.desc')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/20 px-3 py-2 text-sm">
-          <span className="text-muted-foreground">Erledigt-Spalten: nur der letzten</span>
+          <span className="text-muted-foreground">{t('board_config.done_columns')}</span>
           <Input
             type="number"
             min={0}
@@ -166,14 +165,13 @@ export function BoardConfigDialog({
             }}
             className="h-8 w-20"
           />
-          <span className="text-muted-foreground">Tage anzeigen (0 = alle)</span>
+          <span className="text-muted-foreground">{t('board_config.days_show')}</span>
         </div>
 
         <div className="max-h-[55vh] space-y-3 overflow-y-auto pr-1">
           {groups.length === 0 ? (
             <p className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
-              Keine Gruppen — das Board zeigt eine Spalte pro Status. Füge eine Gruppe hinzu, um
-              Status zusammenzufassen.
+              {t('board_config.empty')}
             </p>
           ) : null}
 
@@ -186,7 +184,7 @@ export function BoardConfigDialog({
                     className="text-muted-foreground hover:text-foreground disabled:opacity-30"
                     onClick={() => move(g.id, -1)}
                     disabled={i === 0}
-                    aria-label="Nach oben"
+                    aria-label={t('board_config.move_up')}
                   >
                     ▲
                   </button>
@@ -195,7 +193,7 @@ export function BoardConfigDialog({
                     className="text-muted-foreground hover:text-foreground disabled:opacity-30"
                     onClick={() => move(g.id, 1)}
                     disabled={i === groups.length - 1}
-                    aria-label="Nach unten"
+                    aria-label={t('board_config.move_down')}
                   >
                     ▼
                   </button>
@@ -206,15 +204,15 @@ export function BoardConfigDialog({
                   value={g.color ?? '#94a3b8'}
                   onChange={(e) => patch(g.id, { color: e.target.value })}
                   className="size-8 shrink-0 cursor-pointer rounded border bg-transparent"
-                  aria-label="Farbe"
+                  aria-label={t('board_config.color')}
                 />
                 <Input
                   value={g.name}
                   onChange={(e) => patch(g.id, { name: e.target.value })}
-                  placeholder="Spaltenname"
+                  placeholder={t('board_config.column_name_placeholder')}
                   className="flex-1"
                 />
-                <Button type="button" variant="ghost" size="icon" onClick={() => remove(g.id)} aria-label="Gruppe löschen">
+                <Button type="button" variant="ghost" size="icon" onClick={() => remove(g.id)} aria-label={t('board_config.delete_group')}>
                   <Trash2 className="size-4" />
                 </Button>
               </div>
@@ -245,10 +243,10 @@ export function BoardConfigDialog({
               {g.statusIds.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">Primärer Status (Drop-Ziel):</span>
+                    <span className="text-muted-foreground">{t('board_config.primary_status')}</span>
                     <Select value={g.primaryStatusId} onValueChange={(v) => patch(g.id, { primaryStatusId: v })}>
                       <SelectTrigger className="h-8 w-56">
-                        <SelectValue placeholder="wählen…" />
+                        <SelectValue placeholder={t('board_config.select_placeholder')} />
                       </SelectTrigger>
                       <SelectContent>
                         {g.statusIds.map((iri) => (
@@ -260,7 +258,7 @@ export function BoardConfigDialog({
                     </Select>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">WIP-Limit:</span>
+                    <span className="text-muted-foreground">{t('board_config.wip_limit')}</span>
                     <Input
                       type="number"
                       min={1}
@@ -280,11 +278,14 @@ export function BoardConfigDialog({
 
           <div className="flex items-center justify-between">
             <Button type="button" variant="outline" size="sm" onClick={addGroup}>
-              <Plus className="size-4" /> Gruppe hinzufügen
+              <Plus className="size-4" /> {t('board_config.add_group')}
             </Button>
             {ungrouped.length > 0 ? (
               <span className="text-xs text-muted-foreground">
-                {ungrouped.length} Status ohne Gruppe (eigene Spalte): {ungrouped.map((s) => s.name).join(', ')}
+                {t('board_config.ungrouped', {
+                  n: ungrouped.length,
+                  names: ungrouped.map((s) => s.name).join(', '),
+                })}
               </span>
             ) : null}
           </div>
@@ -292,14 +293,14 @@ export function BoardConfigDialog({
 
         <DialogFooter className="sm:justify-between">
           <Button type="button" variant="ghost" size="sm" onClick={resetToPerStatus}>
-            Auf „Spalte pro Status" zurücksetzen
+            {t('board_config.reset')}
           </Button>
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Abbrechen
+              {t('action.cancel')}
             </Button>
             <Button type="button" onClick={save} disabled={mutation.isPending}>
-              Speichern
+              {t('action.save')}
             </Button>
           </div>
         </DialogFooter>

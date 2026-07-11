@@ -22,12 +22,12 @@ const DEFAULT_WEIGHTS: Record<string, number> = {
 };
 
 const FIELDS: { key: string; label: string; hint: string }[] = [
-  { key: 'priority', label: 'Manuelle Priorität', hint: 'Das menschliche Grundsignal' },
-  { key: 'customer', label: 'Kundenwert', hint: 'Umsatz / Retainer des Kunden' },
-  { key: 'timeCrit', label: 'Fälligkeit', hint: 'Nähe zum Abgabedatum' },
-  { key: 'blocker', label: 'Blocker-Hebel', hint: 'Blockiert andere Tickets' },
-  { key: 'demand', label: 'Nachfrage', hint: 'Verknüpfte Konversationen' },
-  { key: 'aging', label: 'Alter', hint: 'Anti-Starvation für offene Tickets' },
+  { key: 'priority', label: 'prio_scoring.label_priority', hint: 'prio_scoring.hint_priority' },
+  { key: 'customer', label: 'prio_scoring.label_customer', hint: 'prio_scoring.hint_customer' },
+  { key: 'timeCrit', label: 'prio_scoring.label_timeCrit', hint: 'prio_scoring.hint_timeCrit' },
+  { key: 'blocker', label: 'prio_scoring.label_blocker', hint: 'prio_scoring.hint_blocker' },
+  { key: 'demand', label: 'prio_scoring.label_demand', hint: 'prio_scoring.hint_demand' },
+  { key: 'aging', label: 'prio_scoring.label_aging', hint: 'prio_scoring.hint_aging' },
 ];
 
 type Settings = Record<string, unknown> & {
@@ -86,10 +86,9 @@ function PriorityScoringForm({ workspaceId, settings }: { workspaceId: string; s
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Prioritäts-Score</CardTitle>
+        <CardTitle>{t('prio_scoring.title')}</CardTitle>
         <CardDescription>
-          Gewichte des intern berechneten Ticket-Scores (0–100). Reiner Rechenwert — die manuell
-          gesetzte Priorität bleibt unberührt. Relativ zueinander gewichtet (Summe egal).
+          {t('prio_scoring.desc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -97,7 +96,7 @@ function PriorityScoringForm({ workspaceId, settings }: { workspaceId: string; s
           {FIELDS.map((f) => (
             <div key={f.key} className="space-y-1">
               <Label htmlFor={`w-${f.key}`} className="text-xs">
-                {f.label}
+                {t(f.label)}
               </Label>
               <Input
                 id={`w-${f.key}`}
@@ -110,12 +109,12 @@ function PriorityScoringForm({ workspaceId, settings }: { workspaceId: string; s
                 }}
                 className="h-8"
               />
-              <p className="text-[10px] text-muted-foreground">{f.hint}</p>
+              <p className="text-[10px] text-muted-foreground">{t(f.hint)}</p>
             </div>
           ))}
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">Summe: {sum}</span>
+          <span className="text-xs text-muted-foreground">{t('prio_scoring.sum', { sum })}</span>
           <div className="flex gap-2">
             <Button
               type="button"
@@ -123,10 +122,10 @@ function PriorityScoringForm({ workspaceId, settings }: { workspaceId: string; s
               size="sm"
               onClick={() => setWeights({ ...DEFAULT_WEIGHTS })}
             >
-              Zurücksetzen
+              {t('prio_scoring.reset')}
             </Button>
             <Button type="button" size="sm" onClick={save} disabled={mutation.isPending}>
-              Speichern
+              {t('action.save')}
             </Button>
           </div>
         </div>

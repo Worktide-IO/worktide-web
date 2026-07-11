@@ -295,7 +295,7 @@ export function SocialPostComposer(props: Mode) {
         (e as { response?: { data?: { 'hydra:description'?: string } } })?.response?.data?.[
           'hydra:description'
         ] ??
-        'Aktion fehlgeschlagen.';
+        translate('social_composer.action_failed');
       toast.error(msg);
     } finally {
       setBusyAction(null);
@@ -335,7 +335,7 @@ export function SocialPostComposer(props: Mode) {
     } catch (e) {
       const msg =
         (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-        'KI-Vorschlag nicht verfügbar (ANTHROPIC_API_KEY?).';
+        translate('social_composer.ai_unavailable');
       toast.error(msg);
     } finally {
       setBusyAction(null);
@@ -362,9 +362,9 @@ export function SocialPostComposer(props: Mode) {
             <ArrowLeft className="size-4" />
           </Button>
           <div>
-            <h2 className="text-2xl">{isEdit ? 'Beitrag bearbeiten' : 'Neuer Beitrag'}</h2>
+            <h2 className="text-2xl">{isEdit ? translate('social_composer.edit_title') : translate('social_composer.new_title')}</h2>
             <p className="text-sm text-muted-foreground">
-              Einmal verfassen, in mehrere Netzwerke veröffentlichen.
+              {translate('social_composer.subtitle')}
             </p>
           </div>
           {isEdit && badge ? (
@@ -377,7 +377,7 @@ export function SocialPostComposer(props: Mode) {
           {canEditContent ? (
             <Button onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-              {isEdit ? 'Speichern' : 'Entwurf speichern'}
+              {isEdit ? translate('action.save') : translate('social_composer.save_draft')}
             </Button>
           ) : null}
         </div>
@@ -387,7 +387,7 @@ export function SocialPostComposer(props: Mode) {
         {/* ---- Shared content ------------------------------------------- */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle>Inhalt</CardTitle>
+            <CardTitle>{translate('social_composer.content')}</CardTitle>
             {isEdit ? (
               <Button
                 type="button"
@@ -401,23 +401,23 @@ export function SocialPostComposer(props: Mode) {
                 ) : (
                   <Sparkles className="size-4" />
                 )}
-                KI-Vorschläge
+                {translate('social_composer.ai_suggestions')}
               </Button>
             ) : null}
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="body">Beitragstext</Label>
+              <Label htmlFor="body">{translate('social_composer.body_label')}</Label>
               <Textarea
                 id="body"
                 rows={6}
                 value={body}
                 disabled={!canEditContent}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder="Was möchtest du teilen?"
+                placeholder={translate('social_composer.body_placeholder')}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Geteilter Text — pro Netzwerk unten anpassbar.</span>
+                <span>{translate('social_composer.shared_text_hint')}</span>
                 {sharedLimit !== Infinity ? (
                   <span className={body.length > sharedLimit ? 'font-medium text-destructive' : ''}>
                     {body.length} / {sharedLimit}
@@ -427,13 +427,12 @@ export function SocialPostComposer(props: Mode) {
             </div>
 
             <div className="rounded-md border border-dashed border-input p-3 text-xs text-muted-foreground">
-              Medien-Upload (Bilder/Video) folgt — der Beitrag wird vorerst als
-              Text veröffentlicht.
+              {translate('social_composer.media_upload_soon')}
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="scheduledAt" className="flex items-center gap-1.5">
-                <CalendarClock className="size-4" /> Planen (optional)
+                <CalendarClock className="size-4" /> {translate('social_composer.schedule_optional')}
               </Label>
               <Input
                 id="scheduledAt"
@@ -444,7 +443,7 @@ export function SocialPostComposer(props: Mode) {
                 className="w-64"
               />
               <p className="text-xs text-muted-foreground">
-                Leer = nicht zeitgesteuert; Veröffentlichung erfolgt manuell nach Freigabe.
+                {translate('social_composer.schedule_hint')}
               </p>
             </div>
           </CardContent>
@@ -453,13 +452,16 @@ export function SocialPostComposer(props: Mode) {
         {/* ---- Networks ------------------------------------------------- */}
         <Card>
           <CardHeader>
-            <CardTitle>Netzwerke</CardTitle>
+            <CardTitle>{translate('social_composer.networks')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {socialChannels.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Keine Social-Kanäle verbunden. Lege unter <strong>Quellen</strong> einen
-                <code className="mx-1">social_*</code>-Kanal an.
+                {translate('social_composer.no_channels_prefix')}{' '}
+                <strong>{translate('social_composer.sources')}</strong>{' '}
+                {translate('social_composer.no_channels_mid')}
+                <code className="mx-1">social_*</code>
+                {translate('social_composer.no_channels_suffix')}
               </p>
             ) : (
               socialChannels.map((c) => {
@@ -501,7 +503,7 @@ export function SocialPostComposer(props: Mode) {
                     {enabled ? (
                       <div className="mt-3 space-y-2">
                         <div className="flex items-center justify-between">
-                          <Label className="text-xs">Eigene Variante</Label>
+                          <Label className="text-xs">{translate('social_composer.own_variant')}</Label>
                           <Switch
                             checked={!!t?.useOverride}
                             disabled={!canEditContent}
@@ -514,11 +516,11 @@ export function SocialPostComposer(props: Mode) {
                             value={t.override}
                             disabled={!canEditContent}
                             onChange={(e) => setOverride(iri, e.target.value)}
-                            placeholder={`Variante für ${meta.label}…`}
+                            placeholder={translate('social_composer.variant_for', { network: meta.label })}
                           />
                         ) : null}
                         <div className="flex justify-between text-[11px] text-muted-foreground">
-                          <span>{t?.useOverride ? 'Variante' : 'geteilter Text'}</span>
+                          <span>{t?.useOverride ? translate('social_composer.variant') : translate('social_composer.shared_text')}</span>
                           <span className={over ? 'font-medium text-destructive' : ''}>
                             {text.length} / {meta.charLimit}
                           </span>
@@ -533,7 +535,7 @@ export function SocialPostComposer(props: Mode) {
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
                           >
-                            <ExternalLink className="size-3" /> Beitrag ansehen
+                            <ExternalLink className="size-3" /> {translate('social_composer.view_post')}
                           </a>
                         ) : null}
                         {isEdit && t?.status === 'failed' && t.targetId ? (
@@ -547,11 +549,11 @@ export function SocialPostComposer(props: Mode) {
                               runAction(
                                 `retry-${t.targetId}`,
                                 () => socialActions.retryTarget(t.targetId!),
-                                'Erneuter Versuch eingereiht.',
+                                translate('social_composer.retry_queued'),
                               )
                             }
                           >
-                            <RefreshCw className="size-3" /> Erneut versuchen
+                            <RefreshCw className="size-3" /> {translate('social_composer.retry')}
                           </Button>
                         ) : null}
                       </div>
@@ -568,7 +570,7 @@ export function SocialPostComposer(props: Mode) {
       {isEdit ? (
         <Card>
           <CardHeader>
-            <CardTitle>Veröffentlichung</CardTitle>
+            <CardTitle>{translate('social_composer.publishing')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex flex-wrap gap-2">
@@ -585,7 +587,7 @@ export function SocialPostComposer(props: Mode) {
                 ) : (
                   <Eye className="size-4" />
                 )}
-                Vorschau prüfen
+                {translate('social_composer.check_preview')}
               </Button>
 
               {status === 'draft' ? (
@@ -593,10 +595,10 @@ export function SocialPostComposer(props: Mode) {
                   type="button"
                   disabled={busyAction === 'submit'}
                   onClick={() =>
-                    runAction('submit', () => socialActions.submit(props.id), 'Zur Freigabe eingereicht.')
+                    runAction('submit', () => socialActions.submit(props.id), translate('social_composer.submitted_for_approval'))
                   }
                 >
-                  <Send className="size-4" /> Zur Freigabe einreichen
+                  <Send className="size-4" /> {translate('social_composer.submit_for_approval')}
                 </Button>
               ) : null}
 
@@ -605,10 +607,10 @@ export function SocialPostComposer(props: Mode) {
                   type="button"
                   disabled={busyAction === 'approve'}
                   onClick={() =>
-                    runAction('approve', () => socialActions.approve(props.id), 'Freigegeben.')
+                    runAction('approve', () => socialActions.approve(props.id), translate('social_composer.approved'))
                   }
                 >
-                  <CheckCircle2 className="size-4" /> Freigeben
+                  <CheckCircle2 className="size-4" /> {translate('social_composer.approve')}
                 </Button>
               ) : null}
 
@@ -618,10 +620,10 @@ export function SocialPostComposer(props: Mode) {
                   variant="secondary"
                   disabled={busyAction === 'publish'}
                   onClick={() =>
-                    runAction('publish', () => socialActions.publish(props.id), 'Veröffentlichung angestoßen.')
+                    runAction('publish', () => socialActions.publish(props.id), translate('social_composer.publish_triggered'))
                   }
                 >
-                  <Send className="size-4" /> Jetzt veröffentlichen
+                  <Send className="size-4" /> {translate('social_composer.publish_now')}
                 </Button>
               ) : null}
 
@@ -634,11 +636,11 @@ export function SocialPostComposer(props: Mode) {
                     runAction(
                       'schedule',
                       () => socialActions.schedule(props.id, toIso(scheduledAt)),
-                      'Geplant.',
+                      translate('social_composer.scheduled'),
                     )
                   }
                 >
-                  <CalendarClock className="size-4" /> Für {new Date(scheduledAt).toLocaleString()} planen
+                  <CalendarClock className="size-4" /> {translate('social_composer.schedule_for', { date: new Date(scheduledAt).toLocaleString() })}
                 </Button>
               ) : null}
 
@@ -649,23 +651,23 @@ export function SocialPostComposer(props: Mode) {
                   className="text-destructive"
                   disabled={busyAction === 'cancel'}
                   onClick={() =>
-                    runAction('cancel', () => socialActions.cancel(props.id), 'Abgebrochen.')
+                    runAction('cancel', () => socialActions.cancel(props.id), translate('social_composer.canceled'))
                   }
                 >
-                  <XCircle className="size-4" /> Abbrechen
+                  <XCircle className="size-4" /> {translate('action.cancel')}
                 </Button>
               ) : null}
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Externes Senden ist serverseitig durch die Egress-Freigabe
-              (<code>social_publish</code>) geschützt — ohne Freigabe verlässt nichts das System.
+              {translate('social_composer.egress_note_prefix')}
+              <code>social_publish</code>{translate('social_composer.egress_note_suffix')}
             </p>
 
             {preview ? (
               <div className="space-y-1 rounded-md border border-input p-3 text-sm">
                 <div className="font-medium">
-                  {preview.valid ? 'Vorschau gültig ✓' : 'Vorschau: Probleme gefunden'}
+                  {preview.valid ? translate('social_composer.preview_valid') : translate('social_composer.preview_problems')}
                 </div>
                 {(preview.targets ?? []).map((pt, i) => (
                   <div key={pt.targetId ?? i} className="flex items-center justify-between gap-2 text-xs">

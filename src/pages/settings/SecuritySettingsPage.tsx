@@ -29,6 +29,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { api } from '@/lib/api';
+import i18n from '@/i18n';
 
 import { SettingsLayout } from './SettingsLayout';
 
@@ -49,12 +50,12 @@ type Prefs = {
 };
 
 const IDLE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'off', label: 'Nie' },
-  { value: '5', label: '5 Minuten' },
-  { value: '15', label: '15 Minuten' },
-  { value: '30', label: '30 Minuten' },
-  { value: '60', label: '1 Stunde' },
-  { value: '120', label: '2 Stunden' },
+  { value: 'off', label: 'security.idle_never' },
+  { value: '5', label: 'security.idle_5min' },
+  { value: '15', label: 'security.idle_15min' },
+  { value: '30', label: 'security.idle_30min' },
+  { value: '60', label: 'security.idle_1h' },
+  { value: '120', label: 'security.idle_2h' },
 ];
 
 function relativeTime(iso: string | null): string {
@@ -62,12 +63,12 @@ function relativeTime(iso: string | null): string {
   const ts = new Date(iso).getTime();
   const diff = Date.now() - ts;
   const min = Math.floor(diff / 60_000);
-  if (min < 1) return 'gerade eben';
-  if (min < 60) return `vor ${min} min`;
+  if (min < 1) return i18n.t('security.time_just_now');
+  if (min < 60) return i18n.t('security.time_min_ago', { count: min });
   const h = Math.floor(min / 60);
-  if (h < 24) return `vor ${h} h`;
+  if (h < 24) return i18n.t('security.time_hours_ago', { count: h });
   const d = Math.floor(h / 24);
-  if (d < 30) return `vor ${d} Tag${d === 1 ? '' : 'en'}`;
+  if (d < 30) return i18n.t(d === 1 ? 'security.time_day_ago' : 'security.time_days_ago', { count: d });
   return new Date(iso).toLocaleDateString();
 }
 
@@ -166,9 +167,9 @@ function NotificationsCard() {
       const { data } = await api.put<ChatStatus>('/me/chat-webhook', { provider, url: url.trim(), enabled: true });
       setChat(data);
       setUrl('');
-      setMsg('Verbindung gespeichert.');
+      setMsg(t('security.conn_saved'));
     } catch {
-      setMsg('Ungültige oder unsichere URL.');
+      setMsg(t('security.url_invalid'));
     } finally {
       setBusy(false);
     }
@@ -179,9 +180,9 @@ function NotificationsCard() {
     setMsg(null);
     try {
       const { data } = await api.post<{ sent: boolean }>('/me/chat-webhook/test');
-      setMsg(data.sent ? 'Testnachricht gesendet ✓' : 'Senden fehlgeschlagen (Versand aktiviert?).');
+      setMsg(data.sent ? t('security.test_sent') : t('security.send_failed_enabled'));
     } catch {
-      setMsg('Senden fehlgeschlagen.');
+      setMsg(t('security.send_failed'));
     } finally {
       setBusy(false);
     }
@@ -203,10 +204,10 @@ function NotificationsCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bell className="size-5 text-muted-foreground" />
-          Benachrichtigungen
+          {t('security.notifications')}
         </CardTitle>
         <CardDescription>
-          In-App (die Glocke) ist immer aktiv. Zusätzlich per E-Mail oder Chat.
+          {t('security.notifications_desc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -216,7 +217,7 @@ function NotificationsCard() {
           <>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
-                <Mail className="size-4 text-muted-foreground" /> E-Mail
+                <Mail className="size-4 text-muted-foreground" /> {t('security.channel_email')}
               </div>
               <Switch checked={prefs.email} onCheckedChange={(v) => savePrefs({ email: v })} />
             </div>
@@ -232,16 +233,16 @@ function NotificationsCard() {
         {chat ? (
           <div className="space-y-3 rounded-md border p-3">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <MessageSquare className="size-4 text-muted-foreground" /> Chat-Verbindung
+              <MessageSquare className="size-4 text-muted-foreground" /> {t('security.chat_connection')}
               {chat.configured ? (
                 <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
-                  {CHAT_PROVIDERS.find((p) => p.value === chat.provider)?.label ?? chat.provider} · eingerichtet
+                  {CHAT_PROVIDERS.find((p) => p.value === chat.provider)?.label ?? chat.provider} · {t('security.configured')}
                 </span>
               ) : null}
             </div>
             <div className="flex flex-wrap items-end gap-2">
               <div className="grid gap-1">
-                <Label className="text-xs">Dienst</Label>
+                <Label className="text-xs">{t('security.service')}</Label>
                 <Select value={provider} onValueChange={setProvider}>
                   <SelectTrigger className="w-40">
                     <SelectValue />
@@ -256,20 +257,20 @@ function NotificationsCard() {
                 </Select>
               </div>
               <div className="grid min-w-56 grow gap-1">
-                <Label className="text-xs">Incoming-Webhook-URL {chat.configured ? '(neu setzen)' : ''}</Label>
+                <Label className="text-xs">Incoming-Webhook-URL {chat.configured ? t('security.set_new') : ''}</Label>
                 <Input type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://hooks.slack.com/services/…" />
               </div>
               <Button type="button" onClick={saveWebhook} disabled={busy || !url.trim()}>
-                Speichern
+                {t('action.save')}
               </Button>
             </div>
             {chat.configured ? (
               <div className="flex gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={testWebhook} disabled={busy}>
-                  Test senden
+                  {t('security.send_test')}
                 </Button>
                 <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={removeWebhook} disabled={busy}>
-                  Entfernen
+                  {t('security.remove')}
                 </Button>
               </div>
             ) : null}
@@ -306,7 +307,7 @@ function SessionsCard() {
   }, []);
 
   const revoke = async (id: number) => {
-    if (!window.confirm('Diese Sitzung wirklich beenden? Das betroffene Gerät wird bei der nächsten Aktion abgemeldet.')) {
+    if (!window.confirm(t('security.confirm_end_session'))) {
       return;
     }
     setBusy(id);
@@ -324,7 +325,7 @@ function SessionsCard() {
   };
 
   const revokeOthers = async () => {
-    if (!window.confirm('Alle anderen Sitzungen abmelden? Alle anderen Geräte werden bei der nächsten Aktion ausgeloggt.')) {
+    if (!window.confirm(t('security.confirm_end_others'))) {
       return;
     }
     setBusy('others');
@@ -347,12 +348,10 @@ function SessionsCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MonitorSmartphone className="size-5 text-muted-foreground" />
-          Aktive Sitzungen
+          {t('security.active_sessions')}
         </CardTitle>
         <CardDescription>
-          Geräte und Browser, die aktuell bei deinem Account angemeldet sind.
-          Jede Sitzung entspricht einem Refresh-Token. Schließen entfernt das
-          Token sofort — der schon erteilte Zugriff läuft binnen 1 h ab.
+          {t('security.active_sessions_desc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -363,8 +362,7 @@ function SessionsCard() {
           </>
         ) : sessions === null || sessions.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Keine aktiven Sitzungen — das kann eigentlich nicht sein, du bist
-            ja gerade angemeldet 🤔
+            {t('security.no_sessions')}
           </p>
         ) : (
           <ul className="divide-y rounded-md border">
@@ -383,7 +381,7 @@ function SessionsCard() {
                       <span>{os}</span>
                       {s.isCurrent ? (
                         <Badge variant="default" className="ml-1 h-5 text-[10px]">
-                          diese Sitzung
+                          {t('security.this_session')}
                         </Badge>
                       ) : null}
                     </div>
@@ -396,7 +394,7 @@ function SessionsCard() {
                       ) : null}
                       <span className="inline-flex items-center gap-1">
                         <Clock className="size-3" />
-                        Zuletzt: {relativeTime(s.lastSeenAt)}
+                        {t('security.last_seen')} {relativeTime(s.lastSeenAt)}
                       </span>
                     </div>
                   </div>
@@ -409,7 +407,7 @@ function SessionsCard() {
                       className="shrink-0"
                     >
                       <Trash2 className="size-4" />
-                      <span className="ml-1">Beenden</span>
+                      <span className="ml-1">{t('security.end')}</span>
                     </Button>
                   )}
                 </li>
@@ -427,7 +425,7 @@ function SessionsCard() {
               disabled={busy === 'others'}
             >
               <LogOut className="size-4" />
-              Alle anderen abmelden ({othersCount})
+              {t('security.logout_others', { count: othersCount })}
             </Button>
           </div>
         ) : null}
@@ -475,12 +473,10 @@ function IdleTimeoutCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock className="size-5 text-muted-foreground" />
-          Automatisch abmelden bei Inaktivität
+          {t('security.idle_logout')}
         </CardTitle>
         <CardDescription>
-          Sinnvoll auf Geräten, die unbeaufsichtigt bleiben können (Kundentermin,
-          gemeinsam genutzter Laptop). Maus-, Tastatur- oder Scroll-Aktivität
-          setzt den Timer zurück.
+          {t('security.idle_logout_desc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -496,7 +492,7 @@ function IdleTimeoutCard() {
               <SelectContent>
                 {IDLE_OPTIONS.map((o) => (
                   <SelectItem key={o.value} value={o.value}>
-                    {o.label}
+                    {t(o.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

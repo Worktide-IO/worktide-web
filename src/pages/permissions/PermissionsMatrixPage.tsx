@@ -53,65 +53,65 @@ const ROLES: { value: Role; label: string; icon: typeof Crown }[] = [
 
 const CAP_GROUPS: { label: string; caps: { key: Capability; label: string; hint?: string }[] }[] = [
   {
-    label: 'Workspace',
+    label: 'perm.group_workspace',
     caps: [
-      { key: 'workspace.manage_settings', label: 'Einstellungen verwalten' },
-      { key: 'workspace.manage_members', label: 'Mitglieder verwalten' },
-      { key: 'workspace.manage_billing', label: 'Abrechnung verwalten' },
+      { key: 'workspace.manage_settings', label: 'perm.cap.manage_settings' },
+      { key: 'workspace.manage_members', label: 'perm.cap.manage_members' },
+      { key: 'workspace.manage_billing', label: 'perm.cap.manage_billing' },
     ],
   },
   {
-    label: 'Projekte',
+    label: 'perm.group_projects',
     caps: [
-      { key: 'project.create', label: 'Anlegen' },
-      { key: 'project.update', label: 'Bearbeiten' },
-      { key: 'project.archive', label: 'Archivieren' },
-      { key: 'project.delete', label: 'Löschen' },
-      { key: 'project.manage_members', label: 'Mitglieder verwalten' },
+      { key: 'project.create', label: 'perm.cap.create' },
+      { key: 'project.update', label: 'action.edit' },
+      { key: 'project.archive', label: 'perm.cap.archive' },
+      { key: 'project.delete', label: 'action.delete' },
+      { key: 'project.manage_members', label: 'perm.cap.manage_members' },
     ],
   },
   {
-    label: 'Aufgaben',
+    label: 'perm.group_tasks',
     caps: [
-      { key: 'task.create', label: 'Anlegen' },
-      { key: 'task.update', label: 'Bearbeiten' },
-      { key: 'task.assign', label: 'Zuweisen' },
-      { key: 'task.delete_own', label: 'Eigene löschen' },
-      { key: 'task.delete_others', label: 'Fremde löschen' },
+      { key: 'task.create', label: 'perm.cap.create' },
+      { key: 'task.update', label: 'action.edit' },
+      { key: 'task.assign', label: 'perm.cap.assign' },
+      { key: 'task.delete_own', label: 'perm.cap.delete_own' },
+      { key: 'task.delete_others', label: 'perm.cap.delete_others' },
     ],
   },
   {
-    label: 'Zeit',
+    label: 'perm.group_time',
     caps: [
-      { key: 'time_entry.create', label: 'Eintrag anlegen' },
-      { key: 'time_entry.update_own', label: 'Eigene bearbeiten' },
-      { key: 'time_entry.update_others', label: 'Fremde bearbeiten' },
+      { key: 'time_entry.create', label: 'perm.cap.entry_create' },
+      { key: 'time_entry.update_own', label: 'perm.cap.update_own' },
+      { key: 'time_entry.update_others', label: 'perm.cap.update_others' },
       {
         key: 'time_entry.toggle_billed_own',
-        label: 'Eigene abrechnen',
-        hint: 'Darf den „abgerechnet"-Status auf eigenen Einträgen setzen. Abschalten für Buchhaltungs-Trennung.',
+        label: 'perm.cap.toggle_billed_own',
+        hint: 'perm.hint.toggle_billed_own',
       },
-      { key: 'time_entry.delete_own', label: 'Eigene löschen' },
-      { key: 'time_entry.delete_others', label: 'Fremde löschen' },
+      { key: 'time_entry.delete_own', label: 'perm.cap.delete_own' },
+      { key: 'time_entry.delete_others', label: 'perm.cap.delete_others' },
     ],
   },
   {
-    label: 'Kommunikation',
+    label: 'perm.group_communication',
     caps: [
-      { key: 'file.upload', label: 'Datei hochladen' },
-      { key: 'file.delete_others', label: 'Fremde Dateien löschen' },
-      { key: 'comment.create', label: 'Kommentar schreiben' },
-      { key: 'comment.delete_others', label: 'Fremde Kommentare löschen' },
-      { key: 'document.create', label: 'Dokument anlegen' },
-      { key: 'document.delete_others', label: 'Fremde Dokumente löschen' },
+      { key: 'file.upload', label: 'perm.cap.file_upload' },
+      { key: 'file.delete_others', label: 'perm.cap.file_delete_others' },
+      { key: 'comment.create', label: 'perm.cap.comment_create' },
+      { key: 'comment.delete_others', label: 'perm.cap.comment_delete_others' },
+      { key: 'document.create', label: 'perm.cap.document_create' },
+      { key: 'document.delete_others', label: 'perm.cap.document_delete_others' },
     ],
   },
   {
-    label: 'Automation & Reports',
+    label: 'perm.group_automation',
     caps: [
-      { key: 'automation.manage', label: 'Automationen verwalten' },
-      { key: 'webhook.manage', label: 'Webhooks verwalten' },
-      { key: 'reports.view', label: 'Reports einsehen' },
+      { key: 'automation.manage', label: 'perm.cap.automation_manage' },
+      { key: 'webhook.manage', label: 'perm.cap.webhook_manage' },
+      { key: 'reports.view', label: 'perm.cap.reports_view' },
     ],
   },
 ];
@@ -231,7 +231,7 @@ export function PermissionsMatrixPage() {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-destructive">
-          Kein aktiver Workspace.
+          {t('perm.no_workspace')}
         </CardContent>
       </Card>
     );
@@ -242,13 +242,10 @@ export function PermissionsMatrixPage() {
       <div>
         <h2 className="flex items-center gap-2 text-2xl">
           <Shield className="size-6 text-muted-foreground" />
-          Berechtigungen
+          {t('perm.heading')}
         </h2>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Welche Rolle darf was in diesem Workspace. Grün = erlaubt, rot =
-          verboten. Klick auf eine Zelle dreht den Default um — abweichende
-          Werte sind durch einen kleinen Punkt markiert und lassen sich
-          jederzeit auf den Default zurücksetzen.
+          {t('perm.intro')}
         </p>
       </div>
 
@@ -257,8 +254,7 @@ export function PermissionsMatrixPage() {
           <CardTitle>Matrix</CardTitle>
           <CardDescription>
             <span className="inline-flex items-center gap-1">
-              <Crown className="size-3.5 text-amber-500" /> Owner ist immer
-              voll-berechtigt und nicht editierbar.
+              <Crown className="size-3.5 text-amber-500" /> {t('perm.owner_note')}
             </span>
           </CardDescription>
         </CardHeader>
@@ -296,14 +292,14 @@ export function PermissionsMatrixPage() {
                           colSpan={ROLES.length + 1}
                           className="bg-muted/40 py-1 text-xs font-medium text-muted-foreground"
                         >
-                          {group.label}
+                          {t(group.label)}
                         </TableCell>
                       </TableRow>
                       {group.caps.map((cap) => (
                         <TableRow key={cap.key}>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-1.5">
-                              {cap.label}
+                              {t(cap.label)}
                               <span className="font-mono text-[10px] text-muted-foreground">
                                 {cap.key}
                               </span>
@@ -312,7 +308,7 @@ export function PermissionsMatrixPage() {
                                   <TooltipTrigger asChild>
                                     <Info className="size-3 text-muted-foreground" />
                                   </TooltipTrigger>
-                                  <TooltipContent>{cap.hint}</TooltipContent>
+                                  <TooltipContent>{t(cap.hint)}</TooltipContent>
                                 </Tooltip>
                               ) : null}
                             </div>
@@ -337,8 +333,8 @@ export function PermissionsMatrixPage() {
                                     isOwner && 'opacity-60 cursor-not-allowed',
                                     busy && 'opacity-40',
                                   )}
-                                  aria-label={`${r.label}: ${cap.label} — aktuell ${granted ? 'erlaubt' : 'verboten'}`}
-                                  title={isOwner ? 'Owner ist immer voll-berechtigt' : ''}
+                                  aria-label={`${r.label}: ${t(cap.label)} — ${granted ? t('perm.state_allowed') : t('perm.state_denied')}`}
+                                  title={isOwner ? t('perm.owner_full') : ''}
                                 >
                                   {busy ? (
                                     <Loader2 className="size-4 animate-spin" />
@@ -358,8 +354,8 @@ export function PermissionsMatrixPage() {
                                       onClick={() => reset(r.value, cap.key)}
                                       disabled={busy}
                                       className="text-muted-foreground hover:text-foreground"
-                                      title="Auf Default zurücksetzen"
-                                      aria-label="Auf Default zurücksetzen"
+                                      title={t('perm.reset_to_default')}
+                                      aria-label={t('perm.reset_to_default')}
                                     >
                                       <RotateCcw className="size-3" />
                                     </button>

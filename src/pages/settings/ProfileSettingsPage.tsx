@@ -51,11 +51,12 @@ const AUTO_LANGUAGE = '__auto__';
  * own story and lives outside this MVP.
  */
 export function ProfileSettingsPage() {
+  const { t } = useTranslation();
   return (
     <SettingsLayout>
       <div>
-        <h2 className="text-2xl">Profil</h2>
-        <p className="text-sm text-muted-foreground">Deine Account-Daten und Sicherheit.</p>
+        <h2 className="text-2xl">{t('profile.heading')}</h2>
+        <p className="text-sm text-muted-foreground">{t('profile.subtitle')}</p>
       </div>
       <ProfileForm />
       <PasswordForm />
@@ -123,7 +124,7 @@ function ProfileForm() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Persönliche Daten</CardTitle>
+          <CardTitle>{t('profile.personal_data')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <Skeleton className="h-9 w-full" />
@@ -137,7 +138,7 @@ function ProfileForm() {
     return (
       <Card>
         <CardContent>
-          <p className="text-sm text-destructive">Profil konnte nicht geladen werden.</p>
+          <p className="text-sm text-destructive">{t('profile.load_failed')}</p>
         </CardContent>
       </Card>
     );
@@ -156,7 +157,7 @@ function ProfileForm() {
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="firstName">Vorname</Label>
+            <Label htmlFor="firstName">{t('profile.first_name')}</Label>
             <Input
               id="firstName"
               value={firstName}
@@ -165,7 +166,7 @@ function ProfileForm() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="lastName">Nachname</Label>
+            <Label htmlFor="lastName">{t('profile.last_name')}</Label>
             <Input
               id="lastName"
               value={lastName}
@@ -178,11 +179,11 @@ function ProfileForm() {
           <Label htmlFor="email">Email</Label>
           <Input id="email" type="email" value={profile.email} readOnly disabled />
           <p className="text-xs text-muted-foreground">
-            Email-Wechsel ist noch nicht implementiert.
+            {t('profile.email_change_note')}
           </p>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="preferredLanguage">Sprache</Label>
+          <Label htmlFor="preferredLanguage">{t('profile.language')}</Label>
           <Select
             value={preferredLanguage ?? AUTO_LANGUAGE}
             onValueChange={(value) =>
@@ -193,7 +194,7 @@ function ProfileForm() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={AUTO_LANGUAGE}>Automatisch (Workspace-Standard)</SelectItem>
+              <SelectItem value={AUTO_LANGUAGE}>{t('profile.auto_language')}</SelectItem>
               {profile.supportedLanguages.map((code) => (
                 <SelectItem key={code} value={code}>
                   {languageLabel(code)}
@@ -202,12 +203,12 @@ function ProfileForm() {
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            Bestimmt die Sprache übersetzbarer Inhalte (Status, Typen, Tags, Vorlagen …).
+            {t('profile.language_hint')}
           </p>
         </div>
         <div>
           <Button type="button" onClick={() => void handleSave()} disabled={saving || !dirty}>
-            {saving ? 'Speichere…' : 'Speichern'}
+            {saving ? t('profile.saving') : t('action.save')}
           </Button>
         </div>
       </CardContent>
@@ -241,7 +242,7 @@ function PasswordForm() {
     } catch (err) {
       const message =
         ((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail) ??
-        'Passwort konnte nicht geändert werden.';
+        t('profile.password_change_failed');
       toast.error(message);
     } finally {
       setSaving(false);
@@ -251,11 +252,11 @@ function PasswordForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Passwort ändern</CardTitle>
+        <CardTitle>{t('profile.change_password')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="currentPassword">Aktuelles Passwort</Label>
+          <Label htmlFor="currentPassword">{t('profile.current_password')}</Label>
           <Input
             id="currentPassword"
             type="password"
@@ -266,7 +267,7 @@ function PasswordForm() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="newPassword">Neues Passwort</Label>
+            <Label htmlFor="newPassword">{t('profile.new_password')}</Label>
             <Input
               id="newPassword"
               type="password"
@@ -277,7 +278,7 @@ function PasswordForm() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="newPasswordRepeat">Wiederholen</Label>
+            <Label htmlFor="newPasswordRepeat">{t('profile.repeat_password')}</Label>
             <Input
               id="newPasswordRepeat"
               type="password"
@@ -294,7 +295,7 @@ function PasswordForm() {
             onClick={() => void handleChange()}
             disabled={saving || !currentPassword || !newPassword}
           >
-            {saving ? 'Speichere…' : 'Passwort ändern'}
+            {saving ? t('profile.saving') : t('profile.change_password')}
           </Button>
         </div>
       </CardContent>

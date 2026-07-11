@@ -76,19 +76,16 @@ function OAuthConnectBlock({ channelId, adapterCode, hasToken }: { channelId: st
     <fieldset className="space-y-2 rounded-md border p-3">
       <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">OAuth</legend>
       <p className="text-xs text-muted-foreground">
-        Für {providerLabel} ist keine Passwort-Eingabe nötig. Klicke unten,
-        um Worktide bei {providerLabel} freizugeben — Du wirst auf
-        deren Anmelde-Seite weitergeleitet und kommst nach Bestätigung
-        hierher zurück.
+        {t('ws_channels.oauth_hint', { provider: providerLabel })}
       </p>
       {hasToken ? (
         <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
           <CheckCircle2 className="mr-1 inline size-4" />
-          Verbunden — Token gespeichert.
+          {t('ws_channels.oauth_connected')}
         </div>
       ) : (
         <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Noch nicht verbunden.
+          {t('ws_channels.oauth_not_connected')}
         </div>
       )}
       <Button
@@ -100,7 +97,7 @@ function OAuthConnectBlock({ channelId, adapterCode, hasToken }: { channelId: st
         disabled={busy || !channelId}
       >
         {busy ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}
-        {hasToken ? `Mit ${providerLabel} neu verbinden` : `Mit ${providerLabel} anmelden`}
+        {hasToken ? t('ws_channels.oauth_reconnect', { provider: providerLabel }) : t('ws_channels.oauth_connect', { provider: providerLabel })}
       </Button>
     </fieldset>
   );
@@ -126,6 +123,7 @@ const ADAPTER_LABEL: Record<string, string> = {
  * listener — the SPA sees and sends cleartext, the DB never holds it.
  */
 export function WorkspaceChannelsCard() {
+  const { t } = useTranslation();
   const [editing, setEditing] = useState<Row<ChannelJsonld> | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -145,16 +143,14 @@ export function WorkspaceChannelsCard() {
           Channels
         </CardTitle>
         <CardDescription>
-          Mailboxen, Slack-Bots, Zabbix-Webhooks und alles weitere, was Worktide
-          mit der Außenwelt verbindet. Auth-Daten werden libsodium-verschlüsselt
-          in der DB abgelegt.
+          {t('ws_channels.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex justify-end">
           <Button size="sm" onClick={() => setCreating(true)}>
             <Plus className="size-4" />
-            Neuer Channel
+            {t('ws_channels.new_channel')}
           </Button>
         </div>
 
@@ -165,17 +161,17 @@ export function WorkspaceChannelsCard() {
           </div>
         ) : channels.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            Keine Channels. Lege das erste Mail-Postfach an.
+            {t('ws_channels.empty')}
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-8" />
-                <TableHead>Name / Adresse</TableHead>
-                <TableHead className="w-44">Typ</TableHead>
+                <TableHead>{t('ws_channels.col_name_address')}</TableHead>
+                <TableHead className="w-44">{t('ws_channels.col_type')}</TableHead>
                 <TableHead className="w-32">Capabilities</TableHead>
-                <TableHead className="w-44">Letzter Sync</TableHead>
+                <TableHead className="w-44">{t('ws_channels.col_last_sync')}</TableHead>
                 <TableHead className="w-20 text-right" />
               </TableRow>
             </TableHeader>
@@ -212,7 +208,7 @@ function ChannelRow({
 
   const remove = async () => {
     if (!channel.id) return;
-    if (!window.confirm(`Channel "${channel.name}" wirklich löschen? Konversationen + Events werden mit kaskadiert.`)) return;
+    if (!window.confirm(t('ws_channels.confirm_delete', { name: channel.name }))) return;
     setDeleting(true);
     try {
       await api.delete(`/channels/${channel.id}`);
@@ -239,7 +235,7 @@ function ChannelRow({
         <div className="flex items-center gap-1.5">
           <span className="font-medium">{channel.name}</span>
           <Badge variant="outline" className="text-[9px]">
-            {(channel as unknown as { isShared?: boolean }).isShared === false ? 'Persönlich' : 'Team'}
+            {(channel as unknown as { isShared?: boolean }).isShared === false ? t('ws_channels.personal') : t('ws_channels.team')}
           </Badge>
         </div>
         {channel.address ? (
@@ -268,7 +264,7 @@ function ChannelRow({
             {new Date((channel as unknown as { lastSyncedAt: string }).lastSyncedAt).toLocaleString('de-DE')}
           </span>
         ) : (
-          'nie'
+          t('ws_channels.never')
         )}
       </TableCell>
       <TableCell className="text-right">
@@ -394,35 +390,34 @@ function ChannelDialog(props: DialogProps) {
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? `Channel „${initial?.name}" bearbeiten` : 'Neuen Channel anlegen'}
+            {isEdit ? t('ws_channels.dialog_title_edit', { name: initial?.name }) : t('ws_channels.dialog_title_create')}
           </DialogTitle>
           <DialogDescription>
-            Konfiguration für die Verbindung zum Mail-Server. Passwort
-            wird verschlüsselt gespeichert.
+            {t('ws_channels.dialog_description')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="ch-name">Name</Label>
-              <Input id="ch-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="z. B. Support-Postfach" />
+              <Label htmlFor="ch-name">{t('ws_channels.field_name')}</Label>
+              <Input id="ch-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('ws_channels.name_placeholder')} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ch-adapter">Typ</Label>
+              <Label htmlFor="ch-adapter">{t('ws_channels.field_type')}</Label>
               <Select value={adapterCode} onValueChange={setAdapterCode}>
                 <SelectTrigger id="ch-adapter">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="email_imap">E-Mail (IMAP/SMTP)</SelectItem>
-                  <SelectItem value="email_graph">E-Mail (Microsoft 365)</SelectItem>
-                  <SelectItem value="email_gmail">E-Mail (Google Workspace / Gmail)</SelectItem>
+                  <SelectItem value="email_imap">{t('ws_channels.adapter_imap')}</SelectItem>
+                  <SelectItem value="email_graph">{t('ws_channels.adapter_graph')}</SelectItem>
+                  <SelectItem value="email_gmail">{t('ws_channels.adapter_gmail')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="ch-address">Adresse</Label>
+            <Label htmlFor="ch-address">{t('ws_channels.field_address')}</Label>
             <Input id="ch-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="support@firma.de" />
           </div>
 
@@ -431,11 +426,11 @@ function ChannelDialog(props: DialogProps) {
           <div className="grid grid-cols-2 gap-2 rounded-md border bg-muted/30 p-3">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={inboundEnabled} onChange={(e) => setInboundEnabled(e.target.checked)} />
-              Eingehend
+              {t('ws_channels.inbound')}
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={outboundEnabled} onChange={(e) => setOutboundEnabled(e.target.checked)} />
-              Ausgehend
+              {t('ws_channels.outbound')}
             </label>
           </div>
 
@@ -455,7 +450,7 @@ function ChannelDialog(props: DialogProps) {
                       <SelectContent>
                         <SelectItem value="ssl">SSL</SelectItem>
                         <SelectItem value="tls">TLS</SelectItem>
-                        <SelectItem value="none">keine</SelectItem>
+                        <SelectItem value="none">{t('ws_channels.encryption_none')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -477,22 +472,22 @@ function ChannelDialog(props: DialogProps) {
                       <SelectContent>
                         <SelectItem value="ssl">SSL</SelectItem>
                         <SelectItem value="tls">STARTTLS</SelectItem>
-                        <SelectItem value="none">keine</SelectItem>
+                        <SelectItem value="none">{t('ws_channels.encryption_none')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <Input value={smtpFrom} onChange={(e) => setSmtpFrom(e.target.value)} placeholder="From-Adresse (sonst = Adresse oben)" />
+                  <Input value={smtpFrom} onChange={(e) => setSmtpFrom(e.target.value)} placeholder={t('ws_channels.smtp_from_placeholder')} />
                 </fieldset>
               ) : null}
 
               <fieldset className="space-y-2 rounded-md border p-3">
                 <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Auth</legend>
-                <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Benutzername" />
+                <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder={t('ws_channels.username_placeholder')} />
                 <Input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={isEdit ? 'Passwort (leer = unverändert)' : 'Passwort'}
+                  placeholder={isEdit ? t('ws_channels.password_placeholder_edit') : t('ws_channels.password_placeholder')}
                   autoComplete="new-password"
                 />
               </fieldset>
@@ -502,10 +497,10 @@ function ChannelDialog(props: DialogProps) {
           )}
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={props.onClose} disabled={saving}>Abbrechen</Button>
+          <Button variant="ghost" onClick={props.onClose} disabled={saving}>{t('action.cancel')}</Button>
           <Button onClick={submit} disabled={saving}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : isEdit ? <Pencil className="size-4" /> : <Plus className="size-4" />}
-            {isEdit ? 'Speichern' : 'Anlegen'}
+            {isEdit ? t('action.save') : t('ws_channels.create')}
           </Button>
         </DialogFooter>
       </DialogContent>

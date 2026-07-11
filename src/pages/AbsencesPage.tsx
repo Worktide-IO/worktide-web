@@ -28,10 +28,10 @@ type ContactRow = Row<{ '@id': string; firstName?: string; lastName?: string }>;
 type CustomerRow = Row<{ '@id': string; name?: string }>;
 
 const ABSENCE_TYPES: { value: string; label: string }[] = [
-  { value: 'vacation', label: 'Urlaub' },
-  { value: 'sick', label: 'Krank' },
-  { value: 'training', label: 'Fortbildung' },
-  { value: 'other', label: 'Sonstiges' },
+  { value: 'vacation', label: 'absences.type_vacation' },
+  { value: 'sick', label: 'absences.type_sick' },
+  { value: 'training', label: 'absences.type_training' },
+  { value: 'other', label: 'absences.type_other' },
 ];
 
 const typeLabel = (t: string) => ABSENCE_TYPES.find((x) => x.value === t)?.label ?? t;
@@ -174,7 +174,7 @@ export function AbsencesPage() {
   const idOf = (r: { '@id': string; id?: string }) => r.id ?? r['@id'].split('/').pop() ?? '';
 
   const removeClosure = async (r: WorkspaceAbsenceRow) => {
-    if (!window.confirm(`„${r.name}" löschen?`)) return;
+    if (!window.confirm(translate('absences.confirm_delete_closure', { name: r.name }))) return;
     try {
       await api.delete(`/workspace_absences/${idOf(r)}`);
       await closuresQ.refetch();
@@ -183,7 +183,7 @@ export function AbsencesPage() {
     }
   };
   const removeAbsence = async (r: AbsenceRow) => {
-    if (!window.confirm('Abwesenheit löschen?')) return;
+    if (!window.confirm(translate('absences.confirm_delete_absence'))) return;
     try {
       await api.delete(`/absences/${idOf(r)}`);
       await absencesQ.refetch();
@@ -192,7 +192,7 @@ export function AbsencesPage() {
     }
   };
   const removeContactAbsence = async (r: ContactAbsenceRow) => {
-    if (!window.confirm('Abwesenheit löschen?')) return;
+    if (!window.confirm(translate('absences.confirm_delete_absence'))) return;
     try {
       await api.delete(`/contact_absences/${idOf(r)}`);
       await contactAbsencesQ.refetch();
@@ -205,42 +205,41 @@ export function AbsencesPage() {
     <div className="space-y-4">
       <div>
         <h2 className="flex items-center gap-2 text-2xl">
-          <CalendarOff className="size-6 text-muted-foreground" /> Abwesenheiten
+          <CalendarOff className="size-6 text-muted-foreground" /> {translate('absences.heading')}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Tage, an denen niemand buchbar ist. Betriebsschließungen gelten für alle, persönliche
-          Abwesenheiten nur für die jeweilige Person — beide blenden Buchungs-Slots aus.
+          {translate('absences.intro')}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Betriebsschließungen</CardTitle>
+          <CardTitle>{translate('absences.closures_title')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-end gap-2">
             <div className="grow space-y-1">
-              <Label>Bezeichnung</Label>
-              <Input placeholder="z. B. Betriebsferien" value={cName} onChange={(e) => setCName(e.target.value)} />
+              <Label>{translate('absences.label')}</Label>
+              <Input placeholder={translate('absences.closure_placeholder')} value={cName} onChange={(e) => setCName(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label>Von</Label>
+              <Label>{translate('absences.from')}</Label>
               <Input type="date" value={cStart} onChange={(e) => setCStart(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label>Bis</Label>
+              <Label>{translate('absences.to')}</Label>
               <Input type="date" value={cEnd} onChange={(e) => setCEnd(e.target.value)} />
             </div>
             <Button type="button" onClick={addClosure} disabled={cBusy || !cName.trim()}>
               {cBusy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-              Hinzufügen
+              {translate('action.add')}
             </Button>
           </div>
 
           {closuresQ.isLoading ? (
-            <p className="text-sm text-muted-foreground">Lädt…</p>
+            <p className="text-sm text-muted-foreground">{translate('app.loading')}</p>
           ) : (closures?.data ?? []).length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">Keine Betriebsschließungen.</p>
+            <p className="py-4 text-center text-sm text-muted-foreground">{translate('absences.no_closures')}</p>
           ) : (
             <div className="divide-y">
               {(closures?.data ?? []).map((r) => (
@@ -259,33 +258,33 @@ export function AbsencesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Mitarbeiter-Abwesenheiten</CardTitle>
+          <CardTitle>{translate('absences.member_title')}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Blendet Buchungs-Slots aus, wenn die Person Gastgeber einer Terminart ist. Mit
-            <span className="mx-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">Gastgeber</span>
-            markierte Mitglieder wirken sich auf Buchungen aus.
+            {translate('absences.member_hint_prefix')}
+            <span className="mx-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">{translate('absences.host')}</span>
+            {translate('absences.member_hint_suffix')}
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-end gap-2">
             <div className="min-w-48 grow space-y-1">
-              <Label>Person</Label>
+              <Label>{translate('absences.person')}</Label>
               <Select value={aUser} onValueChange={setAUser}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Mitglied wählen" />
+                  <SelectValue placeholder={translate('absences.select_member')} />
                 </SelectTrigger>
                 <SelectContent>
                   {memberOptions.map((o) => (
                     <SelectItem key={o.iri} value={o.iri}>
                       {o.label}
-                      {o.isHost ? ' · Gastgeber' : ''}
+                      {o.isHost ? ` · ${translate('absences.host')}` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>Art</Label>
+              <Label>{translate('absences.kind')}</Label>
               <Select value={aType} onValueChange={setAType}>
                 <SelectTrigger className="w-36">
                   <SelectValue />
@@ -293,30 +292,30 @@ export function AbsencesPage() {
                 <SelectContent>
                   {ABSENCE_TYPES.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                      {translate(t.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>Von</Label>
+              <Label>{translate('absences.from')}</Label>
               <Input type="date" value={aStart} onChange={(e) => setAStart(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label>Bis</Label>
+              <Label>{translate('absences.to')}</Label>
               <Input type="date" value={aEnd} onChange={(e) => setAEnd(e.target.value)} />
             </div>
             <Button type="button" onClick={addAbsence} disabled={aBusy || !aUser}>
               {aBusy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-              Hinzufügen
+              {translate('action.add')}
             </Button>
           </div>
 
           {absencesQ.isLoading ? (
-            <p className="text-sm text-muted-foreground">Lädt…</p>
+            <p className="text-sm text-muted-foreground">{translate('app.loading')}</p>
           ) : (absences?.data ?? []).length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">Keine Abwesenheiten.</p>
+            <p className="py-4 text-center text-sm text-muted-foreground">{translate('absences.no_absences')}</p>
           ) : (
             <div className="divide-y">
               {(absences?.data ?? []).map((r) => (
@@ -325,11 +324,11 @@ export function AbsencesPage() {
                     {usersByIri[r.user] ?? '—'}
                     {hostIris.has(r.user) ? (
                       <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-normal text-primary">
-                        Gastgeber
+                        {translate('absences.host')}
                       </span>
                     ) : null}
                   </div>
-                  <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{typeLabel(r.type)}</span>
+                  <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{translate(typeLabel(r.type))}</span>
                   <span className="shrink-0 text-xs text-muted-foreground">{fmtRange(r.startsOn, r.endsOn)}</span>
                   <Button type="button" variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => removeAbsence(r)}>
                     <Trash2 className="size-3" />
@@ -343,16 +342,16 @@ export function AbsencesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Kunden-Abwesenheiten</CardTitle>
+          <CardTitle>{translate('absences.customer_title')}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Von Kunden im Portal eingetragene Abwesenheiten — rein informativ.
+            {translate('absences.customer_intro')}
           </p>
         </CardHeader>
         <CardContent>
           {contactAbsencesQ.isLoading ? (
-            <p className="text-sm text-muted-foreground">Lädt…</p>
+            <p className="text-sm text-muted-foreground">{translate('app.loading')}</p>
           ) : (contactAbsences?.data ?? []).length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">Keine Kunden-Abwesenheiten.</p>
+            <p className="py-4 text-center text-sm text-muted-foreground">{translate('absences.no_customer_absences')}</p>
           ) : (
             <div className="divide-y">
               {(contactAbsences?.data ?? []).map((r) => (

@@ -335,10 +335,14 @@ export function ProjectBoardTab({ projectIri }: Props) {
     if (dim === 'none') return null;
     const label = (key: string) => {
       if (key === LANE_NONE)
-        return dim === 'assignee' ? 'Nicht zugewiesen' : dim === 'tracker' ? 'Kein Tracker' : 'Ohne Priorität';
+        return dim === 'assignee'
+          ? translate('board.lane_unassigned')
+          : dim === 'tracker'
+            ? translate('board.lane_no_tracker')
+            : translate('board.lane_no_priority');
       if (dim === 'priority') return PRIORITY_LABEL[key] ? translate(PRIORITY_LABEL[key]) : key;
-      if (dim === 'tracker') return trackerByIri[key]?.name ?? 'Tracker';
-      return userByIri[key] ? userDisplayName(userByIri[key]) : 'Benutzer';
+      if (dim === 'tracker') return trackerByIri[key]?.name ?? translate('board.lane_tracker');
+      return userByIri[key] ? userDisplayName(userByIri[key]) : translate('board.lane_user');
     };
     const keyOf = (t: Row<TaskJsonld>) =>
       dim === 'assignee'
@@ -527,7 +531,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
   if (columns.length === 0) {
     return (
       <p className="text-center text-sm text-muted-foreground py-12">
-        Keine Task-Status definiert.
+        {translate('board.no_statuses')}
       </p>
     );
   }
@@ -538,10 +542,10 @@ export function ProjectBoardTab({ projectIri }: Props) {
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {[
           { label: 'WIP', value: String(flowMetrics.wip) },
-          { label: 'Throughput 7 T', value: String(flowMetrics.tp7) },
-          { label: 'Throughput 30 T', value: String(flowMetrics.tp30) },
+          { label: translate('board.throughput_7d'), value: String(flowMetrics.tp7) },
+          { label: translate('board.throughput_30d'), value: String(flowMetrics.tp30) },
           { label: 'Ø Cycle p50', value: fmtHoursShort(cycleStat?.percentiles?.p50) },
-          { label: 'Älteste offene', value: `${flowMetrics.oldestOpenDays} d` },
+          { label: translate('board.oldest_open'), value: `${flowMetrics.oldestOpenDays} d` },
         ].map((m) => (
           <div key={m.label} className="rounded-md border bg-muted/30 px-2.5 py-1">
             <span className="text-muted-foreground">{m.label}</span>{' '}
@@ -556,7 +560,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
             <Input
               value={filter.q}
               onChange={(e) => setFilter({ q: e.target.value })}
-              placeholder="Suche…"
+              placeholder={translate('board.search')}
               className="h-8 w-44 pl-7"
             />
           </div>
@@ -565,10 +569,10 @@ export function ProjectBoardTab({ projectIri }: Props) {
             onValueChange={(v) => setFilter({ priority: v === 'all' ? '' : v })}
           >
             <SelectTrigger className="h-8 w-36">
-              <SelectValue placeholder="Priorität" />
+              <SelectValue placeholder={translate('board.priority')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Alle Prioritäten</SelectItem>
+              <SelectItem value="all">{translate('board.all_priorities')}</SelectItem>
               {(['urgent', 'high', 'normal', 'low'] as const).map((p) => (
                 <SelectItem key={p} value={p}>
                   {translate(PRIORITY_LABEL[p])}
@@ -582,7 +586,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
             variant={filter.mine ? 'default' : 'outline'}
             onClick={() => setFilter({ mine: !filter.mine })}
           >
-            Nur meine
+            {translate('board.only_mine')}
           </Button>
           <Button
             type="button"
@@ -590,7 +594,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
             variant={filter.hideDone ? 'default' : 'outline'}
             onClick={() => setFilter({ hideDone: !filter.hideDone })}
           >
-            Erledigte ausblenden
+            {translate('board.hide_done')}
           </Button>
           <Select
             value={filter.swimlane}
@@ -600,20 +604,20 @@ export function ProjectBoardTab({ projectIri }: Props) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Keine Swimlanes</SelectItem>
-              <SelectItem value="assignee">Nach Zuständige:r</SelectItem>
-              <SelectItem value="priority">Nach Priorität</SelectItem>
-              <SelectItem value="tracker">Nach Tracker</SelectItem>
+              <SelectItem value="none">{translate('board.no_swimlanes')}</SelectItem>
+              <SelectItem value="assignee">{translate('board.by_assignee')}</SelectItem>
+              <SelectItem value="priority">{translate('board.by_priority')}</SelectItem>
+              <SelectItem value="tracker">{translate('board.by_tracker')}</SelectItem>
             </SelectContent>
           </Select>
           {filterActive ? (
             <Button type="button" size="sm" variant="ghost" onClick={() => setFilter(EMPTY_FILTER)}>
-              <X className="size-4" /> Zurücksetzen
+              <X className="size-4" /> {translate('board.reset')}
             </Button>
           ) : null}
         </div>
         <Button type="button" variant="outline" size="sm" onClick={() => setConfigOpen(true)}>
-          <SlidersHorizontal className="size-4" /> Board konfigurieren
+          <SlidersHorizontal className="size-4" /> {translate('board.configure')}
         </Button>
       </div>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -692,6 +696,7 @@ function BoardColumn({
   showAging?: boolean;
   onOpenTask: (iri: string) => void;
 }) {
+  const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -717,7 +722,7 @@ function BoardColumn({
         type="button"
         ref={setNodeRef}
         onClick={onToggleCollapse}
-        title={`${column.name} ausklappen`}
+        title={t('board.expand_column', { name: column.name })}
         className={cn(
           'flex h-[calc(100vh-14rem)] w-11 shrink-0 flex-col items-center gap-2 rounded-lg border bg-muted/30 py-3 transition-colors hover:bg-muted/60',
           isOver && 'border-primary bg-primary/5',
@@ -761,7 +766,7 @@ function BoardColumn({
                 'text-xs font-medium tabular-nums',
                 overWip ? 'text-red-600 dark:text-red-400' : atWip ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground',
               )}
-              title={overWip ? `WIP-Limit überschritten (${tasks.length}/${wip})` : `WIP ${tasks.length} von ${wip}`}
+              title={overWip ? t('board.wip_over', { count: tasks.length, limit: wip }) : t('board.wip_of', { count: tasks.length, limit: wip })}
             >
               {tasks.length} / {wip}
             </span>
@@ -772,7 +777,7 @@ function BoardColumn({
             <button
               type="button"
               onClick={onToggleCollapse}
-              title="Spalte einklappen"
+              title={t('board.collapse_column')}
               className="text-muted-foreground/60 hover:text-foreground"
             >
               <ChevronsLeft className="size-4" />
@@ -781,7 +786,7 @@ function BoardColumn({
         </div>
       </div>
       {tasks.length === 0 && hiddenOlder === 0 ? (
-        <p className="text-center text-xs text-muted-foreground/70 py-6">Keine Aufgaben</p>
+        <p className="text-center text-xs text-muted-foreground/70 py-6">{t('board.no_tasks')}</p>
       ) : (
         <div ref={scrollRef} className="-mr-1 flex-1 overflow-y-auto pr-1">
           <div style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
@@ -810,7 +815,7 @@ function BoardColumn({
       )}
       {hiddenOlder > 0 ? (
         <p className="pt-2 text-center text-[11px] text-muted-foreground/70">
-          +{hiddenOlder} ältere ausgeblendet
+          {t('board.hidden_older', { count: hiddenOlder })}
         </p>
       ) : null}
     </div>
@@ -1005,20 +1010,20 @@ function TaskCard({
             {isBlocked ? (
               <Ban
                 className="size-3 text-orange-500"
-                aria-label="Blockiert durch andere Aufgabe"
+                aria-label={translate('board.blocked_aria')}
               />
             ) : null}
             {subtaskCount > 0 ? (
               <span
                 className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground"
-                aria-label={`${subtaskCount} Subtasks`}
+                aria-label={translate('board.subtasks_aria', { count: subtaskCount })}
               >
                 <ListTree className="size-3" />
                 {subtaskCount}
               </span>
             ) : null}
             {task.isPrio ? (
-              <Flag className="size-3 text-orange-500" aria-label="Priorisiert" />
+              <Flag className="size-3 text-orange-500" aria-label={translate('board.prioritized_aria')} />
             ) : null}
           </div>
         </div>
@@ -1048,7 +1053,7 @@ function TaskCard({
             {agingDays >= 7 ? (
               <span
                 className={cn('inline-flex items-center gap-0.5 text-[10px] font-medium', agingColor)}
-                title={`Seit ${agingDays} Tagen nicht aktualisiert`}
+                title={translate('board.aging_title', { count: agingDays })}
               >
                 <Clock className="size-3" />
                 {agingDays}d

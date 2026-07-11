@@ -221,11 +221,11 @@ export function TasksListPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl">Aufgaben</h2>
+            <h2 className="text-2xl">{translate('tasks.heading')}</h2>
             <LiveBadge connected={liveConnected} />
           </div>
           <p className="text-sm text-muted-foreground">
-            {total} Aufgaben im Workspace
+            {translate('tasks.count_in_workspace', { count: total })}
           </p>
         </div>
         <SavedViewsBar currentFilters={filters} onApply={applySavedFilters} />
@@ -233,12 +233,12 @@ export function TasksListPage() {
 
       <Card>
         <CardHeader className="gap-4">
-          <CardTitle>Übersicht</CardTitle>
+          <CardTitle>{translate('tasks.overview')}</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[240px] max-w-md">
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
-                placeholder="Im Titel suchen…"
+                placeholder={translate('tasks.search_placeholder')}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -258,7 +258,7 @@ export function TasksListPage() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
+                <SelectItem value="all">{translate('tasks.all_statuses')}</SelectItem>
                 {(statuses?.data ?? []).map((s) => (
                   <SelectItem key={s['@id']} value={s['@id'] ?? ''}>
                     {s.name}
@@ -274,14 +274,14 @@ export function TasksListPage() {
               }}
             >
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Priorität" />
+                <SelectValue placeholder={translate('tasks.priority')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Prios</SelectItem>
-                <SelectItem value="low">Niedrig</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
-                <SelectItem value="high">Hoch</SelectItem>
-                <SelectItem value="urgent">Dringend</SelectItem>
+                <SelectItem value="all">{translate('tasks.all_priorities')}</SelectItem>
+                <SelectItem value="low">{translate('priority.low')}</SelectItem>
+                <SelectItem value="normal">{translate('priority.normal')}</SelectItem>
+                <SelectItem value="high">{translate('priority.high')}</SelectItem>
+                <SelectItem value="urgent">{translate('priority.urgent')}</SelectItem>
               </SelectContent>
             </Select>
             <TagPicker
@@ -292,7 +292,7 @@ export function TasksListPage() {
               }}
               scope="task"
               disableCreate
-              placeholder="Nach Tags filtern…"
+              placeholder={translate('tasks.filter_by_tags')}
             />
           </div>
         </CardHeader>
@@ -306,8 +306,8 @@ export function TasksListPage() {
           ) : rows.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-12">
               {search || statusFilter !== 'all' || priorityFilter !== 'all'
-                ? 'Keine Treffer mit diesen Filtern.'
-                : 'Noch keine Aufgaben angelegt.'}
+                ? translate('tasks.no_matches')
+                : translate('tasks.empty')}
             </p>
           ) : (
             <Table>
@@ -319,20 +319,20 @@ export function TasksListPage() {
                         allSelected ? true : someSelected ? 'indeterminate' : false
                       }
                       onCheckedChange={(v) => togglePage(v === true)}
-                      aria-label="Alle auf dieser Seite auswählen"
+                      aria-label={translate('tasks.select_all_page')}
                     />
                   </TableHead>
                   <TableHead className="w-24">ID</TableHead>
                   <TableHead className="w-8" />
-                  <TableHead>Titel</TableHead>
+                  <TableHead>{translate('tasks.col_title')}</TableHead>
                   <TableHead className="w-32">Status</TableHead>
-                  <TableHead className="w-28">Prio</TableHead>
+                  <TableHead className="w-28">{translate('tasks.col_priority')}</TableHead>
                   <TableHead className="w-24">
                     <button
                       type="button"
                       onClick={toggleScoreSort}
                       className="inline-flex items-center gap-1 hover:text-foreground"
-                      title="Nach Prioritäts-Score sortieren"
+                      title={translate('tasks.sort_by_score')}
                     >
                       Score
                       {scoreSort === 'desc' ? (
@@ -344,8 +344,8 @@ export function TasksListPage() {
                       )}
                     </button>
                   </TableHead>
-                  <TableHead className="w-44">Projekt</TableHead>
-                  <TableHead className="w-32">Fällig</TableHead>
+                  <TableHead className="w-44">{translate('tasks.col_project')}</TableHead>
+                  <TableHead className="w-32">{translate('tasks.col_due')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -371,7 +371,7 @@ export function TasksListPage() {
                         <Checkbox
                           checked={isChecked}
                           onCheckedChange={(v) => toggleOne(iri, v === true)}
-                          aria-label="Diesen Task auswählen"
+                          aria-label={translate('tasks.select_task')}
                         />
                       </TableCell>
                       <TableCell className="font-mono text-xs">{t.identifier}</TableCell>
@@ -418,7 +418,7 @@ export function TasksListPage() {
                             <span className="text-foreground/70">{project.name}</span>
                           </span>
                         ) : (
-                          '— Privat —'
+                          translate('tasks.private')
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">

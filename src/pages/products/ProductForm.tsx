@@ -51,6 +51,7 @@ const slugify = (s: string) =>
     .replace(/^-+|-+$/g, '');
 
 export function ProductForm(props: Mode) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const invalidate = useInvalidate();
   const isEdit = props.action === 'edit';
@@ -98,11 +99,11 @@ export function ProductForm(props: Mode) {
               <ArrowLeft className="size-4" />
             </Button>
             <h2 className="text-2xl">
-              {isEdit ? (current?.name ?? 'Bearbeiten') : 'Neu im Katalog'}
+              {isEdit ? (current?.name ?? t('action.edit')) : t('product_form.new_in_catalog')}
             </h2>
           </div>
           <Button type="submit" disabled={isSubmitting || formLoading}>
-            <Save className="size-4" /> Speichern
+            <Save className="size-4" /> {t('action.save')}
           </Button>
         </div>
 
@@ -120,14 +121,14 @@ export function ProductForm(props: Mode) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="slug">Schlüssel (slug)</Label>
-                <Input id="slug" placeholder="z. B. worktide-cms" {...register('slug')} />
+                <Label htmlFor="slug">{t('product_form.key_slug')}</Label>
+                <Input id="slug" placeholder={t('product_form.slug_placeholder')} {...register('slug')} />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label>Typ</Label>
+                <Label>{t('product_form.type')}</Label>
                 <Controller
                   control={control}
                   name="type"
@@ -137,8 +138,8 @@ export function ProductForm(props: Mode) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="product">Produkt (versioniert)</SelectItem>
-                        <SelectItem value="service">Service (versionslos)</SelectItem>
+                        <SelectItem value="product">{t('product_form.type_product')}</SelectItem>
+                        <SelectItem value="service">{t('product_form.type_service')}</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
@@ -155,8 +156,8 @@ export function ProductForm(props: Mode) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="active">Aktiv</SelectItem>
-                        <SelectItem value="deprecated">Abgekündigt</SelectItem>
+                        <SelectItem value="active">{t('product_form.status_active')}</SelectItem>
+                        <SelectItem value="deprecated">{t('product_form.status_deprecated')}</SelectItem>
                         <SelectItem value="eol">EOL</SelectItem>
                       </SelectContent>
                     </Select>
@@ -164,13 +165,13 @@ export function ProductForm(props: Mode) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="category">Kategorie</Label>
+                <Label htmlFor="category">{t('product_form.category')}</Label>
                 <Input id="category" {...register('category')} />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="description">Beschreibung</Label>
+              <Label htmlFor="description">{t('product_form.description')}</Label>
               <Textarea id="description" rows={3} {...register('description')} />
             </div>
 
@@ -181,7 +182,7 @@ export function ProductForm(props: Mode) {
                 <TranslationsFields
                   fields={[
                     { key: 'name', label: 'Name' },
-                    { key: 'description', label: 'Beschreibung' },
+                    { key: 'description', label: t('product_form.description') },
                   ]}
                   locales={languages}
                   value={(field.value as TranslationsMap | undefined) ?? {}}
@@ -197,7 +198,7 @@ export function ProductForm(props: Mode) {
         <ProductVersionsCard productId={props.id} productIri={productIri} onChange={() => invalidate({ resource: 'products', invalidates: ['detail'], id: props.id })} />
       ) : null}
       {isEdit && type === 'service' ? (
-        <p className="text-sm text-muted-foreground">Services sind versionslos.</p>
+        <p className="text-sm text-muted-foreground">{t('product_form.services_versionless')}</p>
       ) : null}
       {isEdit ? <ProductMarketingCard productId={props.id} /> : null}
     </div>
@@ -279,17 +280,16 @@ function ProductMarketingCard({ productId }: { productId: string }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Sparkles className="size-4" /> Marketing-Agent
+          <Sparkles className="size-4" /> {t('product_form.marketing_agent')}
         </CardTitle>
         <Button type="button" size="sm" onClick={() => void request()} disabled={requesting}>
-          {requesting ? <Loader2 className="size-4 animate-spin" /> : 'Marketing-Entwurf erzeugen'}
+          {requesting ? <Loader2 className="size-4 animate-spin" /> : t('product_form.generate_marketing_draft')}
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">
         {recs.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Noch keine Empfehlungen. Erzeuge einen Entwurf – der Agent schlägt pro Kanal einen Post
-            vor (Freigabe bleibt bei dir).
+            {t('product_form.no_recommendations')}
           </p>
         ) : (
           recs.map((rec) => (
@@ -300,13 +300,13 @@ function ProductMarketingCard({ productId }: { productId: string }) {
                     {rec.status}
                   </Badge>
                   <span className="text-sm text-muted-foreground line-clamp-1">
-                    {rec.suggestion?.summary ?? '(keine Zusammenfassung)'}
+                    {rec.suggestion?.summary ?? t('product_form.no_summary')}
                   </span>
                 </div>
                 {rec.status === 'pending' ? (
                   <div className="flex shrink-0 gap-2">
                     <Button size="sm" onClick={() => void accept(rec)} disabled={busyId === rec.id}>
-                      <Check className="size-4" /> Übernehmen
+                      <Check className="size-4" /> {t('product_form.adopt')}
                     </Button>
                     <Button
                       size="sm"
@@ -314,7 +314,7 @@ function ProductMarketingCard({ productId }: { productId: string }) {
                       onClick={() => void reject(rec)}
                       disabled={busyId === rec.id}
                     >
-                      <X className="size-4" /> Verwerfen
+                      <X className="size-4" /> {t('product_form.reject')}
                     </Button>
                   </div>
                 ) : null}
@@ -396,7 +396,7 @@ function ProductVersionsCard({
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle className="flex items-center gap-2">
-          <Tag className="size-4 text-muted-foreground" /> Versionen
+          <Tag className="size-4 text-muted-foreground" /> {t('product_form.versions')}
         </CardTitle>
         <Button type="button" size="sm" variant="outline" onClick={() => setOpen(true)}>
           <Plus className="size-4" /> Release
@@ -405,7 +405,7 @@ function ProductVersionsCard({
       <CardContent>
         {rows.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            Noch keine Version veröffentlicht.
+            {t('product_form.no_versions')}
           </p>
         ) : (
           <ul className="divide-y">
@@ -437,20 +437,20 @@ function ProductVersionsCard({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Neue Version veröffentlichen</DialogTitle>
+            <DialogTitle>{t('product_form.publish_new_version')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="ver">Version</Label>
               <Input
                 id="ver"
-                placeholder="z. B. 2.4.0"
+                placeholder={t('product_form.version_placeholder')}
                 value={version}
                 onChange={(e) => setVersion(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="reldate">Release-Datum</Label>
+              <Label htmlFor="reldate">{t('product_form.release_date')}</Label>
               <Input
                 id="reldate"
                 type="date"
@@ -468,17 +468,16 @@ function ProductVersionsCard({
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Wird automatisch als „aktuell" markiert; die bisherige aktuelle Version
-              wird auf „unterstützt" gesetzt.
+              {t('product_form.release_hint')}
             </p>
           </div>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={saving}>
-              Abbrechen
+              {t('action.cancel')}
             </Button>
             <Button type="button" onClick={submit} disabled={saving}>
               {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-              Veröffentlichen
+              {t('product_form.publish')}
             </Button>
           </DialogFooter>
         </DialogContent>

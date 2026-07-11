@@ -29,6 +29,7 @@ const CATEGORIES: SourceCategory[] = ['mail', 'ticketing', 'chat', 'monitoring',
  * admins who land there expecting it, but new users hit /sources.
  */
 export function SourcesPage() {
+  const { t: translate } = useTranslation();
   const [wizardCode, setWizardCode] = useState<string | null>(null);
   const [wizardChannelId, setWizardChannelId] = useState<string | null>(null);
 
@@ -64,18 +65,17 @@ export function SourcesPage() {
       <div>
         <h2 className="text-2xl flex items-center gap-2">
           <Plug className="size-6 text-muted-foreground" />
-          Quellen
+          {translate('sources.title')}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Worktide nimmt aus jeder verknüpften Quelle Events entgegen — Mails,
-          Webhooks, Chat-Nachrichten — und verarbeitet sie zentral im Inbox-Stream.
+          {translate('sources.intro')}
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Neue Quelle hinzufügen</CardTitle>
+            <CardTitle>{translate('sources.add_new')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             {CATEGORIES.map((cat) => {
@@ -111,7 +111,7 @@ export function SourcesPage() {
                                 <span className="text-sm font-medium">{t.label}</span>
                                 {!t.available ? (
                                   <Badge variant="outline" className="text-[9px]">
-                                    Demnächst
+                                    {translate('sources.coming_soon')}
                                   </Badge>
                                 ) : null}
                               </div>
@@ -133,7 +133,7 @@ export function SourcesPage() {
         <Card className="self-start">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Aktive Quellen</span>
+              <span>{translate('sources.active')}</span>
               <Badge variant="outline">{channels.length}</Badge>
             </CardTitle>
           </CardHeader>
@@ -145,7 +145,7 @@ export function SourcesPage() {
               </>
             ) : channels.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">
-                Noch keine Quellen. Wähle links eine Vorlage aus.
+                {translate('sources.empty')}
               </p>
             ) : (
               channels.map((c) => (
@@ -186,6 +186,7 @@ function ActiveSourceRow({
   channel: Row<ChannelJsonld>;
   onEdit: () => void;
 }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const [deleting, setDeleting] = useState(false);
   const def = findSourceType(channel.adapterCode);
@@ -195,9 +196,8 @@ function ActiveSourceRow({
   const lastSynced = (channel as unknown as { lastSyncedAt?: string | null }).lastSyncedAt;
 
   const remove = async () => {
-  const { t: translate } = useTranslation();
     if (!channel.id) return;
-    if (!window.confirm(`Quelle „${channel.name}" löschen? Konversationen + Events werden mit gelöscht.`)) return;
+    if (!window.confirm(translate('sources.confirm_delete', { name: channel.name }))) return;
     setDeleting(true);
     try {
       await api.delete(`/channels/${channel.id}`);
@@ -218,7 +218,7 @@ function ActiveSourceRow({
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-medium truncate">{channel.name}</span>
           {(channel as unknown as { isShared?: boolean }).isShared === false ? (
-            <Badge variant="outline" className="text-[9px]">Persönlich</Badge>
+            <Badge variant="outline" className="text-[9px]">{translate('sources.personal')}</Badge>
           ) : null}
           {!enabled ? <Power className="size-3 text-muted-foreground/50" /> : null}
         </div>
@@ -234,16 +234,16 @@ function ActiveSourceRow({
         ) : lastSynced ? (
           <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
             <Activity className="size-3 shrink-0" />
-            Letzter Sync: {new Date(lastSynced).toLocaleString('de-DE')}
+            {translate('sources.last_sync', { time: new Date(lastSynced).toLocaleString('de-DE') })}
           </div>
         ) : (
           <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
             <CheckCircle2 className="size-3 shrink-0" />
-            Bereit, noch nicht synchronisiert
+            {translate('sources.ready_not_synced')}
           </div>
         )}
       </button>
-      <Button variant="ghost" size="icon" className="size-7" onClick={remove} disabled={deleting} aria-label="Löschen">
+      <Button variant="ghost" size="icon" className="size-7" onClick={remove} disabled={deleting} aria-label={translate('action.delete')}>
         {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
       </Button>
     </div>

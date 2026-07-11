@@ -57,17 +57,18 @@ const formSchema = z
 type FormValues = z.infer<typeof formSchema>;
 
 function CheckRow({ label, check }: { label: string; check: Check | undefined }) {
+  const { t } = useTranslation();
   let icon = <Loader2 className="size-4 animate-spin text-muted-foreground" />;
   let detail: string | undefined;
   if (check) {
     if (check.skipped) {
       icon = <MinusCircle className="size-4 text-muted-foreground" />;
-      detail = check.reason ?? 'übersprungen';
+      detail = check.reason ?? t('setup.check_skipped');
     } else if (check.ok) {
       icon = <CheckCircle2 className="size-4 text-emerald-600" />;
     } else {
       icon = <XCircle className="size-4 text-destructive" />;
-      detail = check.error ?? 'nicht erreichbar';
+      detail = check.error ?? t('setup.check_unreachable');
     }
   }
   return (
@@ -168,7 +169,7 @@ export function SetupWizardPage() {
       const fields = (err as { response?: { data?: { fields?: Record<string, string> } } })?.response
         ?.data?.fields;
       setSubmitError(
-        fields ? Object.values(fields).join(' ') : 'Setup fehlgeschlagen. Bitte erneut versuchen.',
+        fields ? Object.values(fields).join(' ') : t('setup.generic_error'),
       );
     } finally {
       setSaving(false);
@@ -181,11 +182,11 @@ export function SetupWizardPage() {
         <CardHeader className="text-center items-center space-y-2">
           <BrandLogo className="h-9 w-auto" />
           <div>
-            <CardTitle className="text-base">Willkommen bei Worktide</CardTitle>
+            <CardTitle className="text-base">{t('setup.welcome')}</CardTitle>
             <CardDescription>
               {phase === 'form'
-                ? 'Erstes Administrator-Konto anlegen'
-                : 'Ersteinrichtung — Systemprüfung'}
+                ? t('setup.subtitle_form')
+                : t('setup.subtitle_check')}
             </CardDescription>
           </div>
         </CardHeader>
@@ -211,7 +212,7 @@ export function SetupWizardPage() {
                   className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
                 >
                   <AlertCircle className="size-4 shrink-0 mt-0.5" />
-                  <span>Die Datenbank ist nicht erreichbar. Bitte Konfiguration prüfen.</span>
+                  <span>{t('setup.db_unreachable')}</span>
                 </div>
               ) : null}
 
@@ -228,7 +229,7 @@ export function SetupWizardPage() {
                   ) : (
                     <RefreshCw className="mr-2 size-4" />
                   )}
-                  Erneut prüfen
+                  {t('setup.recheck')}
                 </Button>
                 <Button
                   type="button"
@@ -236,7 +237,7 @@ export function SetupWizardPage() {
                   disabled={!dbOk || checking}
                   onClick={() => setPhase('form')}
                 >
-                  Weiter <ArrowRight className="ml-2 size-4" />
+                  {t('setup.next')} <ArrowRight className="ml-2 size-4" />
                 </Button>
               </div>
             </>
@@ -245,30 +246,30 @@ export function SetupWizardPage() {
           {phase === 'form' ? (
             <form onSubmit={onSubmit} noValidate className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="workspaceName">Workspace-Name</Label>
-                <Input id="workspaceName" autoFocus placeholder="z.B. Meine Firma" {...register('workspaceName')} />
+                <Label htmlFor="workspaceName">{t('setup.workspace_name')}</Label>
+                <Input id="workspaceName" autoFocus placeholder={t('setup.workspace_name_placeholder')} {...register('workspaceName')} />
                 {errors.workspaceName ? (
                   <p className="text-xs text-destructive">{errors.workspaceName.message}</p>
                 ) : null}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="firstName">Dein Name (optional)</Label>
+                <Label htmlFor="firstName">{t('setup.your_name')}</Label>
                 <Input id="firstName" autoComplete="name" {...register('firstName')} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('setup.email')}</Label>
                 <Input id="email" type="email" autoComplete="email" {...register('email')} />
                 {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="password">Passwort</Label>
+                <Label htmlFor="password">{t('setup.password')}</Label>
                 <Input id="password" type="password" autoComplete="new-password" {...register('password')} />
                 {errors.password ? (
                   <p className="text-xs text-destructive">{errors.password.message}</p>
                 ) : null}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="password2">Passwort wiederholen</Label>
+                <Label htmlFor="password2">{t('setup.password_repeat')}</Label>
                 <Input id="password2" type="password" autoComplete="new-password" {...register('password2')} />
                 {errors.password2 ? (
                   <p className="text-xs text-destructive">{errors.password2.message}</p>
@@ -293,16 +294,16 @@ export function SetupWizardPage() {
                   onClick={() => setPhase('check')}
                   disabled={saving}
                 >
-                  Zurück
+                  {t('setup.back')}
                 </Button>
                 <Button type="submit" className="flex-1" disabled={saving}>
                   {saving ? (
                     <>
-                      <Loader2 className="mr-2 size-4 animate-spin" /> Wird eingerichtet …
+                      <Loader2 className="mr-2 size-4 animate-spin" /> {t('setup.setting_up')}
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="mr-2 size-4" /> Fertigstellen
+                      <CheckCircle2 className="mr-2 size-4" /> {t('setup.finish')}
                     </>
                   )}
                 </Button>
