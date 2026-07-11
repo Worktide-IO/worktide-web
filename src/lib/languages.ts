@@ -26,6 +26,16 @@ type I18nProfile = { supportedLanguages: string[]; preferredLanguage: string | n
 let cache: I18nProfile | null = null;
 let inflight: Promise<I18nProfile> | null = null;
 
+// Subscribers (useActiveLocale / useSupportedLanguages instances) that must
+// re-read after the cache is invalidated — otherwise a language change in
+// Profile Settings wouldn't apply until a full page reload, since their
+// fetch effects only run on mount.
+const cacheListeners = new Set<() => void>();
+function subscribeI18nProfile(fn: () => void): () => void {
+  cacheListeners.add(fn);
+  return () => cacheListeners.delete(fn);
+}
+
 async function fetchI18nProfile(): Promise<I18nProfile> {
   if (cache) return cache;
   if (!inflight) {
@@ -52,6 +62,9 @@ async function fetchI18nProfile(): Promise<I18nProfile> {
 /** Invalidate the cache after the user changes their profile language. */
 export function resetI18nProfileCache(): void {
   cache = null;
+  inflight = null;
+  // Wake every mounted hook so the new language applies without a reload.
+  for (const fn of cacheListeners) fn();
 }
 
 /**
@@ -64,14 +77,18 @@ export function useSupportedLanguages(): { languages: string[]; loading: boolean
 
   useEffect(() => {
     let cancelled = false;
-    void fetchI18nProfile().then((p) => {
-      if (!cancelled) {
-        setLanguages(p.supportedLanguages);
-        setLoading(false);
-      }
-    });
+    const load = () =>
+      void fetchI18nProfile().then((p) => {
+        if (!cancelled) {
+          setLanguages(p.supportedLanguages);
+          setLoading(false);
+        }
+      });
+    load();
+    const unsub = subscribeI18nProfile(load);
     return () => {
       cancelled = true;
+      unsub();
     };
   }, []);
 
@@ -91,11 +108,15 @@ export function useActiveLocale(): string {
 
   useEffect(() => {
     let cancelled = false;
-    void fetchI18nProfile().then((p) => {
-      if (!cancelled) setLocale(p.preferredLanguage ?? p.supportedLanguages[0] ?? 'en');
-    });
+    const load = () =>
+      void fetchI18nProfile().then((p) => {
+        if (!cancelled) setLocale(p.preferredLanguage ?? p.supportedLanguages[0] ?? 'en');
+      });
+    load();
+    const unsub = subscribeI18nProfile(load);
     return () => {
       cancelled = true;
+      unsub();
     };
   }, []);
 
