@@ -21,6 +21,8 @@ import './calendar.css';
 type Identity = { id?: string };
 type Filter = 'all' | 'mine' | 'customers';
 type BookingRow = Row<{ '@id': string; id?: string; startAt: string; endAt: string; inviteeName: string; status: string }>;
+type ContactAbsenceRow = Row<{ '@id': string; contact: string; startsOn: string; endsOn: string }>;
+type AbsenceContactRow = Row<{ '@id': string; firstName?: string; lastName?: string }>;
 
 /**
  * Calendar view at `/calendar`.
@@ -55,6 +57,14 @@ export function CalendarPage() {
   });
   const { result: bookings } = useList<BookingRow>({
     resource: 'bookings',
+    pagination: { mode: 'off' },
+  });
+  const { result: contactAbsences } = useList<ContactAbsenceRow>({
+    resource: 'contact_absences',
+    pagination: { mode: 'off' },
+  });
+  const { result: absenceContacts } = useList<AbsenceContactRow>({
+    resource: 'contacts',
     pagination: { mode: 'off' },
   });
   const { connected } = useLiveResource('tasks');
@@ -117,11 +127,44 @@ export function CalendarPage() {
       }));
   }, [bookings]);
 
-  const allEvents = useMemo<EventInput[]>(() => [...events, ...bookingEvents], [events, bookingEvents]);
+  // Client (contact) absences as muted all-day spans (informational).
+  const absenceContactsByIri = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of absenceContacts?.data ?? []) {
+      if (c['@id']) map[c['@id']] = `${c.firstName ?? ''} ${c.lastName ?? ''}`.trim();
+    }
+    return map;
+  }, [absenceContacts]);
+
+  const absenceEvents = useMemo<EventInput[]>(() => {
+    return (contactAbsences?.data ?? []).map((a) => {
+      const endExclusive = new Date(a.endsOn);
+      endExclusive.setDate(endExclusive.getDate() + 1);
+      return {
+        id: a['@id'] ?? '',
+        title: `🌴 ${absenceContactsByIri[a.contact] ?? 'Kunde'} abwesend`,
+        start: a.startsOn.slice(0, 10),
+        end: endExclusive.toISOString().slice(0, 10),
+        allDay: true,
+        backgroundColor: '#94a3b8',
+        borderColor: '#94a3b8',
+        extendedProps: { type: 'contactAbsence' },
+      };
+    });
+  }, [contactAbsences, absenceContactsByIri]);
+
+  const allEvents = useMemo<EventInput[]>(
+    () => [...events, ...bookingEvents, ...absenceEvents],
+    [events, bookingEvents, absenceEvents],
+  );
 
   const handleClick = (arg: EventClickArg) => {
     if (arg.event.extendedProps.type === 'booking') {
       navigate('/buchungen');
+      return;
+    }
+    if (arg.event.extendedProps.type === 'contactAbsence') {
+      navigate('/abwesenheiten');
       return;
     }
     const projectId = arg.event.extendedProps.projectId as string | null;

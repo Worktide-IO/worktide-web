@@ -22,6 +22,9 @@ type AbsenceRow = Row<{ '@id': string; id?: string; user: string; type: string; 
 type UserRow = Row<{ '@id': string; firstName?: string; lastName?: string; email?: string }>;
 type MemberRow = Row<{ '@id': string; user?: string | null }>;
 type MeetingTypeRow = Row<{ '@id': string; host?: string | null }>;
+type ContactAbsenceRow = Row<{ '@id': string; id?: string; contact: string; customer: string; startsOn: string; endsOn: string; note?: string | null }>;
+type ContactRow = Row<{ '@id': string; firstName?: string; lastName?: string }>;
+type CustomerRow = Row<{ '@id': string; name?: string }>;
 
 const ABSENCE_TYPES: { value: string; label: string }[] = [
   { value: 'vacation', label: 'Urlaub' },
@@ -66,6 +69,26 @@ export function AbsencesPage() {
   const { result: members } = useList<MemberRow>({ resource: 'workspace_members', pagination: { mode: 'off' } });
   const { result: users } = useList<UserRow>({ resource: 'users', pagination: { mode: 'off' } });
   const { result: meetingTypes } = useList<MeetingTypeRow>({ resource: 'meeting_types', pagination: { mode: 'off' } });
+  const { result: contactAbsences, query: contactAbsencesQ } = useList<ContactAbsenceRow>({
+    resource: 'contact_absences',
+    pagination: { mode: 'off' },
+    sorters: [{ field: 'startsOn', order: 'desc' }],
+  });
+  const { result: contacts } = useList<ContactRow>({ resource: 'contacts', pagination: { mode: 'off' } });
+  const { result: customers } = useList<CustomerRow>({ resource: 'customers', pagination: { mode: 'off' } });
+
+  const contactsByIri = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of contacts?.data ?? []) {
+      if (c['@id']) map[c['@id']] = `${c.firstName ?? ''} ${c.lastName ?? ''}`.trim() || (c['@id'].split('/').pop() ?? '');
+    }
+    return map;
+  }, [contacts]);
+  const customersByIri = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of customers?.data ?? []) if (c['@id']) map[c['@id']] = c.name ?? '';
+    return map;
+  }, [customers]);
 
   // Staff who host a bookable Terminart — only THEIR absences remove booking slots.
   const hostIris = useMemo(
@@ -162,6 +185,15 @@ export function AbsencesPage() {
     try {
       await api.delete(`/absences/${idOf(r)}`);
       await absencesQ.refetch();
+    } catch {
+      toast.error('Löschen fehlgeschlagen.');
+    }
+  };
+  const removeContactAbsence = async (r: ContactAbsenceRow) => {
+    if (!window.confirm('Abwesenheit löschen?')) return;
+    try {
+      await api.delete(`/contact_absences/${idOf(r)}`);
+      await contactAbsencesQ.refetch();
     } catch {
       toast.error('Löschen fehlgeschlagen.');
     }
@@ -298,6 +330,40 @@ export function AbsencesPage() {
                   <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{typeLabel(r.type)}</span>
                   <span className="shrink-0 text-xs text-muted-foreground">{fmtRange(r.startsOn, r.endsOn)}</span>
                   <Button type="button" variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => removeAbsence(r)}>
+                    <Trash2 className="size-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Kunden-Abwesenheiten</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Von Kunden im Portal eingetragene Abwesenheiten — rein informativ.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {contactAbsencesQ.isLoading ? (
+            <p className="text-sm text-muted-foreground">Lädt…</p>
+          ) : (contactAbsences?.data ?? []).length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">Keine Kunden-Abwesenheiten.</p>
+          ) : (
+            <div className="divide-y">
+              {(contactAbsences?.data ?? []).map((r) => (
+                <div key={idOf(r)} className="flex items-center gap-2 py-2 text-sm">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">
+                      {contactsByIri[r.contact] ?? '—'}
+                      <span className="ml-1 text-muted-foreground">· {customersByIri[r.customer] ?? ''}</span>
+                    </div>
+                    {r.note ? <div className="truncate text-xs text-muted-foreground">{r.note}</div> : null}
+                  </div>
+                  <span className="shrink-0 text-xs text-muted-foreground">{fmtRange(r.startsOn, r.endsOn)}</span>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => removeContactAbsence(r)}>
                     <Trash2 className="size-3" />
                   </Button>
                 </div>
