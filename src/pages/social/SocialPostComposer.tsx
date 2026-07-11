@@ -1,4 +1,5 @@
 import { useInvalidate, useList, useOne } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   CalendarClock,
@@ -79,6 +80,7 @@ function toIso(local: string): string | null {
  * behind the backend's EgressGuard (social_publish) regardless of what's clicked.
  */
 export function SocialPostComposer(props: Mode) {
+  const { t: translate } = useTranslation();
   const navigate = useNavigate();
   const invalidate = useInvalidate();
   const isEdit = props.action === 'edit';
@@ -367,7 +369,7 @@ export function SocialPostComposer(props: Mode) {
           </div>
           {isEdit && badge ? (
             <Badge variant={badge.variant} className="ml-2">
-              {badge.label}
+              {translate(badge.label)}
             </Badge>
           ) : null}
         </div>
@@ -482,7 +484,7 @@ export function SocialPostComposer(props: Mode) {
                       </div>
                       {targetBadge ? (
                         <Badge variant={targetBadge.variant} className="text-[10px]">
-                          {targetBadge.label}
+                          {translate(targetBadge.label)}
                         </Badge>
                       ) : null}
                       <Switch

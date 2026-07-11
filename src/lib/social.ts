@@ -143,25 +143,25 @@ export const POST_STATUS_BADGE: Record<
   SocialPostStatus,
   { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
 > = {
-  draft: { label: 'Entwurf', variant: 'outline' },
-  pending_approval: { label: 'Freigabe ausstehend', variant: 'secondary' },
-  scheduled: { label: 'Geplant', variant: 'secondary' },
-  publishing: { label: 'Wird veröffentlicht', variant: 'secondary' },
-  published: { label: 'Veröffentlicht', variant: 'default' },
-  partially_failed: { label: 'Teilweise fehlgeschlagen', variant: 'destructive' },
-  failed: { label: 'Fehlgeschlagen', variant: 'destructive' },
-  canceled: { label: 'Abgebrochen', variant: 'outline' },
+  draft: { label: 'social.post_status.draft', variant: 'outline' },
+  pending_approval: { label: 'social.post_status.pending_approval', variant: 'secondary' },
+  scheduled: { label: 'social.post_status.scheduled', variant: 'secondary' },
+  publishing: { label: 'social.post_status.publishing', variant: 'secondary' },
+  published: { label: 'social.post_status.published', variant: 'default' },
+  partially_failed: { label: 'social.post_status.partially_failed', variant: 'destructive' },
+  failed: { label: 'social.post_status.failed', variant: 'destructive' },
+  canceled: { label: 'social.post_status.canceled', variant: 'outline' },
 };
 
 export const TARGET_STATUS_BADGE: Record<
   SocialPostTargetStatus,
   { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
 > = {
-  queued: { label: 'Warteschlange', variant: 'outline' },
-  publishing: { label: 'Sendet …', variant: 'secondary' },
-  published: { label: 'Veröffentlicht', variant: 'default' },
-  failed: { label: 'Fehler', variant: 'destructive' },
-  skipped: { label: 'Übersprungen', variant: 'outline' },
+  queued: { label: 'social.target_status.queued', variant: 'outline' },
+  publishing: { label: 'social.target_status.publishing', variant: 'secondary' },
+  published: { label: 'social.target_status.published', variant: 'default' },
+  failed: { label: 'social.target_status.failed', variant: 'destructive' },
+  skipped: { label: 'social.target_status.skipped', variant: 'outline' },
 };
 
 /** A single AI text suggestion for one network. */

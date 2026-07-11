@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, CheckCircle2, FileSignature, Loader2, Pencil } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -75,6 +76,7 @@ export function CustomerAgreementsTab({
   customerId: string;
   customerIri: string;
 }) {
+  const { t } = useTranslation();
   const { result: types, query: typesQuery } = useList<Row<AgreementTypeJsonld>>({
     resource: 'agreement_types',
     pagination: { mode: 'off' },
@@ -207,7 +209,7 @@ export function CustomerAgreementsTab({
                     </TableCell>
                     <TableCell>
                       <Badge variant={badge.variant} className="text-[10px]">
-                        {badge.label}
+                        {t(badge.label)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -260,7 +262,7 @@ export function CustomerAgreementsTab({
                   <SelectContent>
                     {SETTABLE_STATUSES.map((s) => (
                       <SelectItem key={s.value} value={s.value}>
-                        {s.label}
+                        {t(s.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>

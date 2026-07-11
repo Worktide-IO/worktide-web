@@ -1,4 +1,5 @@
 import { useList, useInvalidate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useForm } from '@refinedev/react-hook-form';
 import { ArrowLeft, Check, Loader2, Plus, Save, Sparkles, Tag, X } from 'lucide-react';
 import { useState } from 'react';
@@ -345,6 +346,7 @@ function ProductVersionsCard({
   productIri: string;
   onChange: () => void;
 }) {
+  const { t } = useTranslation();
   const { result: versions, query } = useList<Row<ProductVersionJsonld>>({
     resource: 'product_versions',
     filters: [{ field: 'product', operator: 'eq', value: productIri }],
@@ -418,7 +420,7 @@ function ProductVersionsCard({
                       </Badge>
                     ) : null}
                     <Badge variant={badge.variant} className="text-[10px]">
-                      {badge.label}
+                      {t(badge.label)}
                     </Badge>
                   </span>
                   <span className="text-xs text-muted-foreground">

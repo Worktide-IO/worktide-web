@@ -1,4 +1,5 @@
 import { useTable } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { CalendarClock, CheckCircle2, Megaphone, Plus, Search, Send, Wifi, WifiOff } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
@@ -36,6 +37,7 @@ import {
  * composer (one click in), keeping this list a single cheap query.
  */
 export function SocialPostsListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -116,7 +118,7 @@ export function SocialPostsListPage() {
                 {(Object.entries(POST_STATUS_BADGE) as [SocialPostStatus, { label: string }][]).map(
                   ([value, b]) => (
                     <SelectItem key={value} value={value}>
-                      {b.label}
+                      {t(b.label)}
                     </SelectItem>
                   ),
                 )}
@@ -164,7 +166,7 @@ export function SocialPostsListPage() {
                       <TableCell>
                         {badge ? (
                           <Badge variant={badge.variant} className="text-[10px]">
-                            {badge.label}
+                            {t(badge.label)}
                           </Badge>
                         ) : null}
                       </TableCell>
