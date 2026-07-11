@@ -26,6 +26,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { NewsletterIssuesDialog } from './NewsletterIssuesDialog';
+import { NewsletterTemplatesDialog } from './NewsletterTemplatesDialog';
 
 /** Minimal shape of a Newsletter node (we call the API directly, like IndustriesPage). */
 type NewsletterRow = Row<{
@@ -66,6 +67,7 @@ export function NewslettersPage() {
   const [busy, setBusy] = useState(false);
   const [edit, setEdit] = useState<EditState | null>(null);
   const [sendFor, setSendFor] = useState<{ iri: string; title: string } | null>(null);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [draggingIri, setDraggingIri] = useState<string | null>(null);
   const [dropHint, setDropHint] = useState<{ iri: string; zone: DropZone } | null>(null);
 
@@ -243,14 +245,19 @@ export function NewslettersPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="flex items-center gap-2 text-2xl">
-          <Mail className="size-6 text-muted-foreground" /> Newsletter
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Themenbaum, den Kunden im Portal abonnieren. Pro Kunde einzeln freischaltbar (Reiter
-          „Newsletter" beim Kunden).
-        </p>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h2 className="flex items-center gap-2 text-2xl">
+            <Mail className="size-6 text-muted-foreground" /> Newsletter
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Themenbaum, den Kunden im Portal abonnieren. Pro Kunde einzeln freischaltbar (Reiter
+            „Newsletter" beim Kunden).
+          </p>
+        </div>
+        <Button type="button" variant="outline" onClick={() => setTemplatesOpen(true)}>
+          Vorlagen
+        </Button>
       </div>
 
       <Card>
@@ -336,6 +343,8 @@ export function NewslettersPage() {
           onOpenChange={(o) => !o && setSendFor(null)}
         />
       ) : null}
+
+      <NewsletterTemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} />
 
       <Dialog open={edit !== null} onOpenChange={(o) => !o && setEdit(null)}>
         <DialogContent>
