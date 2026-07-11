@@ -1,6 +1,6 @@
 import { useList } from '@refinedev/core';
 import { ChevronRight, Loader2, Mail, Pencil, Plus, Send, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { type DragEvent, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
@@ -46,6 +46,8 @@ type EditState = {
 
 const ROOT = '__root__';
 
+type DropZone = 'before' | 'after' | 'inside';
+
 /**
  * Newsletter tree management — the per-workspace topic tree customers subscribe
  * to in the portal. Create / rename / move (via a parent picker) / delete, with
@@ -64,6 +66,8 @@ export function NewslettersPage() {
   const [busy, setBusy] = useState(false);
   const [edit, setEdit] = useState<EditState | null>(null);
   const [sendFor, setSendFor] = useState<{ iri: string; title: string } | null>(null);
+  const [draggingIri, setDraggingIri] = useState<string | null>(null);
+  const [dropHint, setDropHint] = useState<{ iri: string; zone: DropZone } | null>(null);
 
   const rows = useMemo(() => result?.data ?? [], [result]);
 
@@ -164,6 +168,53 @@ export function NewslettersPage() {
     }
   };
 
+  // Drag-and-drop reorder/nest. Dropping in a row's top/bottom quarter reorders
+  // it before/after that node (same parent); the middle nests it as a child.
+  // Position is a float so a node slots between two siblings without renumbering.
+  const moveNode = async (draggedIri: string, target: NewsletterRow, zone: DropZone) => {
+    const dragged = rows.find((r) => iriOf(r) === draggedIri);
+    if (!dragged || draggedIri === iriOf(target)) return;
+    const forbidden = descendantIris(draggedIri);
+    forbidden.add(draggedIri);
+    if (forbidden.has(iriOf(target))) {
+      toast.error('Ein Thema kann nicht in sich selbst verschoben werden.');
+      return;
+    }
+
+    let parent: string | null;
+    let position: number;
+    if (zone === 'inside') {
+      parent = iriOf(target);
+      const kids = childrenByParent[iriOf(target)] ?? [];
+      position = kids.length ? Math.max(...kids.map((k) => k.position ?? 0)) + 1 : 0;
+    } else {
+      parent = target.parent ?? null;
+      const sibs = (childrenByParent[target.parent ?? ROOT] ?? []).filter(
+        (s) => iriOf(s) !== draggedIri,
+      );
+      const idx = sibs.findIndex((s) => iriOf(s) === iriOf(target));
+      const targetPos = target.position ?? 0;
+      if (zone === 'before') {
+        const prev = sibs[idx - 1];
+        position = prev ? ((prev.position ?? 0) + targetPos) / 2 : targetPos - 1;
+      } else {
+        const next = sibs[idx + 1];
+        position = next ? (targetPos + (next.position ?? 0)) / 2 : targetPos + 1;
+      }
+    }
+
+    try {
+      await api.patch(
+        `/newsletters/${idOf(dragged)}`,
+        { parent, position },
+        { headers: { 'Content-Type': 'application/merge-patch+json' } },
+      );
+      await query.refetch();
+    } catch {
+      toast.error('Verschieben fehlgeschlagen.');
+    }
+  };
+
   // Options for the parent picker in the dialog: every node except the one being
   // edited and its descendants (would create a cycle).
   const parentOptions = useMemo(() => {
@@ -257,6 +308,19 @@ export function NewslettersPage() {
                   }
                   onSend={(r) => setSendFor({ iri: iriOf(r), title: r.title })}
                   onDelete={remove}
+                  draggingIri={draggingIri}
+                  dropHint={dropHint}
+                  onDragStartNode={setDraggingIri}
+                  onDragOverNode={(iri, zone) => setDropHint({ iri, zone })}
+                  onDropNode={(t, zone) => {
+                    if (draggingIri) void moveNode(draggingIri, t, zone);
+                    setDraggingIri(null);
+                    setDropHint(null);
+                  }}
+                  onDragEndNode={() => {
+                    setDraggingIri(null);
+                    setDropHint(null);
+                  }}
                 />
               ))}
             </div>
@@ -340,6 +404,12 @@ function NewsletterNode({
   onEdit,
   onSend,
   onDelete,
+  draggingIri,
+  dropHint,
+  onDragStartNode,
+  onDragOverNode,
+  onDropNode,
+  onDragEndNode,
 }: {
   node: NewsletterRow;
   depth: number;
@@ -349,13 +419,45 @@ function NewsletterNode({
   onEdit: (r: NewsletterRow) => void;
   onSend: (r: NewsletterRow) => void;
   onDelete: (r: NewsletterRow) => void;
+  draggingIri: string | null;
+  dropHint: { iri: string; zone: DropZone } | null;
+  onDragStartNode: (iri: string) => void;
+  onDragOverNode: (iri: string, zone: DropZone) => void;
+  onDropNode: (target: NewsletterRow, zone: DropZone) => void;
+  onDragEndNode: () => void;
 }) {
   const iri = iriOf(node);
   const children = childrenByParent[iri] ?? [];
+  const hint = dropHint?.iri === iri ? dropHint.zone : null;
+  const zoneFrom = (e: DragEvent<HTMLDivElement>): DropZone => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    return y < rect.height * 0.25 ? 'before' : y > rect.height * 0.75 ? 'after' : 'inside';
+  };
   return (
     <>
       <div
-        className="group flex items-center gap-2 py-2"
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.effectAllowed = 'move';
+          onDragStartNode(iri);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (draggingIri && draggingIri !== iri) onDragOverNode(iri, zoneFrom(e));
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          onDropNode(node, zoneFrom(e));
+        }}
+        onDragEnd={onDragEndNode}
+        className={[
+          'group flex items-center gap-2 py-2',
+          draggingIri === iri ? 'opacity-40' : '',
+          hint === 'inside' ? 'rounded bg-primary/10 ring-1 ring-primary/40' : '',
+          hint === 'before' ? 'border-t-2 border-primary' : '',
+          hint === 'after' ? 'border-b-2 border-primary' : '',
+        ].join(' ')}
         style={{ paddingLeft: depth * 20 }}
       >
         {children.length > 0 ? (
@@ -395,6 +497,12 @@ function NewsletterNode({
           onEdit={onEdit}
           onSend={onSend}
           onDelete={onDelete}
+          draggingIri={draggingIri}
+          dropHint={dropHint}
+          onDragStartNode={onDragStartNode}
+          onDragOverNode={onDragOverNode}
+          onDropNode={onDropNode}
+          onDragEndNode={onDragEndNode}
         />
       ))}
     </>
