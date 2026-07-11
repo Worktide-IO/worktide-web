@@ -1,5 +1,5 @@
 import { useList } from '@refinedev/core';
-import { ChevronRight, Loader2, Mail, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ChevronRight, Loader2, Mail, Pencil, Plus, Send, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { NewsletterIssuesDialog } from './NewsletterIssuesDialog';
 
 /** Minimal shape of a Newsletter node (we call the API directly, like IndustriesPage). */
 type NewsletterRow = Row<{
@@ -62,6 +63,7 @@ export function NewslettersPage() {
   const [rootTitle, setRootTitle] = useState('');
   const [busy, setBusy] = useState(false);
   const [edit, setEdit] = useState<EditState | null>(null);
+  const [sendFor, setSendFor] = useState<{ iri: string; title: string } | null>(null);
 
   const rows = useMemo(() => result?.data ?? [], [result]);
 
@@ -253,6 +255,7 @@ export function NewslettersPage() {
                       parentIri: r.parent ?? null,
                     })
                   }
+                  onSend={(r) => setSendFor({ iri: iriOf(r), title: r.title })}
                   onDelete={remove}
                 />
               ))}
@@ -260,6 +263,15 @@ export function NewslettersPage() {
           )}
         </CardContent>
       </Card>
+
+      {sendFor ? (
+        <NewsletterIssuesDialog
+          nodeIri={sendFor.iri}
+          nodeTitle={sendFor.title}
+          open={sendFor !== null}
+          onOpenChange={(o) => !o && setSendFor(null)}
+        />
+      ) : null}
 
       <Dialog open={edit !== null} onOpenChange={(o) => !o && setEdit(null)}>
         <DialogContent>
@@ -326,6 +338,7 @@ function NewsletterNode({
   childrenByParent,
   onAddChild,
   onEdit,
+  onSend,
   onDelete,
 }: {
   node: NewsletterRow;
@@ -334,6 +347,7 @@ function NewsletterNode({
   childrenByParent: Record<string, NewsletterRow[]>;
   onAddChild: (parentIri: string) => void;
   onEdit: (r: NewsletterRow) => void;
+  onSend: (r: NewsletterRow) => void;
   onDelete: (r: NewsletterRow) => void;
 }) {
   const iri = iriOf(node);
@@ -356,6 +370,9 @@ function NewsletterNode({
           ) : null}
         </div>
         <div className="flex shrink-0 gap-1 opacity-0 transition group-hover:opacity-100">
+          <Button type="button" variant="ghost" size="sm" className="h-7" onClick={() => onSend(node)}>
+            <Send className="size-3" /> Versenden
+          </Button>
           <Button type="button" variant="ghost" size="sm" className="h-7" onClick={() => onAddChild(iri)}>
             <Plus className="size-3" /> Unterthema
           </Button>
@@ -376,6 +393,7 @@ function NewsletterNode({
           childrenByParent={childrenByParent}
           onAddChild={onAddChild}
           onEdit={onEdit}
+          onSend={onSend}
           onDelete={onDelete}
         />
       ))}
