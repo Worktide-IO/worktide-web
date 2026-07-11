@@ -1,4 +1,5 @@
 import { ArrowRight, Bot, Loader2, Send, User as UserIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -36,6 +37,7 @@ type Turn = { role: 'agent' | 'user'; content: string; questions?: ClarifyQuesti
  * spinner and surface a 409 (LLM/egress not configured) as a toast.
  */
 export function ResearchMissionCreatePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [prompt, setPrompt] = useState('');
@@ -147,7 +149,7 @@ export function ResearchMissionCreatePage() {
                     <SelectItem value="auto">Automatisch erkennen</SelectItem>
                     {Object.entries(OBJECTIVE_LABEL).map(([value, label]) => (
                       <SelectItem key={value} value={value}>
-                        {label}
+                        {t(label)}
                       </SelectItem>
                     ))}
                   </SelectContent>

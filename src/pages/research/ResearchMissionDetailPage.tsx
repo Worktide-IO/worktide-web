@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Bot, Play, User as UserIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -25,6 +26,7 @@ import { LeadsTable } from './LeadsTable';
 const CAN_RUN = new Set(['ready', 'paused', 'completed', 'failed']);
 
 export function ResearchMissionDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const [busy, setBusy] = useState(false);
 
@@ -98,10 +100,10 @@ export function ResearchMissionDetailPage() {
             <h2 className="text-xl line-clamp-1">{mission.prompt}</h2>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs">
-                {OBJECTIVE_LABEL[mission.objective] ?? mission.objective}
+                {OBJECTIVE_LABEL[mission.objective] ? t(OBJECTIVE_LABEL[mission.objective]) : mission.objective}
               </Badge>
               <Badge variant={MISSION_STATUS_VARIANT[mission.status] ?? 'outline'} className="text-xs">
-                {MISSION_STATUS_LABEL[mission.status] ?? mission.status}
+                {MISSION_STATUS_LABEL[mission.status] ? t(MISSION_STATUS_LABEL[mission.status]) : mission.status}
               </Badge>
             </div>
           </div>

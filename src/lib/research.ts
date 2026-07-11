@@ -128,14 +128,14 @@ export type LeadActivityType =
   | 'note';
 
 export const LEAD_ACTIVITY_LABEL: Record<string, string> = {
-  discovered: 'Entdeckt',
-  enriched: 'Angereichert',
-  stage_change: 'Statuswechsel',
-  email_sent: 'E-Mail gesendet',
-  reply: 'Antwort',
-  forum_post: 'Forenbeitrag',
-  call: 'Anruf',
-  note: 'Notiz',
+  discovered: 'lead.activity.discovered',
+  enriched: 'lead.activity.enriched',
+  stage_change: 'lead.activity.stage_change',
+  email_sent: 'lead.activity.email_sent',
+  reply: 'lead.activity.reply',
+  forum_post: 'lead.activity.forum_post',
+  call: 'lead.activity.call',
+  note: 'lead.activity.note',
 };
 
 /** Response shape of the create/answer clarification endpoints. */
@@ -152,22 +152,22 @@ export type ClarifyResponse = {
 // -- label maps -------------------------------------------------------------
 
 export const OBJECTIVE_LABEL: Record<ResearchObjective, string> = {
-  lead_generation: 'Neukunden',
-  partner_search: 'Partnersuche',
-  market_research: 'Marktrecherche',
-  content_distribution: 'Content-Verbreitung',
-  general: 'Allgemein',
+  lead_generation: 'research.objective.lead_generation',
+  partner_search: 'research.objective.partner_search',
+  market_research: 'research.objective.market_research',
+  content_distribution: 'research.objective.content_distribution',
+  general: 'research.objective.general',
 };
 
 export const MISSION_STATUS_LABEL: Record<ResearchMissionStatus, string> = {
-  draft: 'Entwurf',
-  clarifying: 'Rückfragen',
-  ready: 'Bereit',
-  running: 'Läuft',
-  paused: 'Pausiert',
-  completed: 'Abgeschlossen',
-  failed: 'Fehlgeschlagen',
-  archived: 'Archiviert',
+  draft: 'mission.status.draft',
+  clarifying: 'mission.status.clarifying',
+  ready: 'mission.status.ready',
+  running: 'mission.status.running',
+  paused: 'mission.status.paused',
+  completed: 'mission.status.completed',
+  failed: 'mission.status.failed',
+  archived: 'mission.status.archived',
 };
 
 export const MISSION_STATUS_VARIANT: Record<ResearchMissionStatus, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -182,13 +182,13 @@ export const MISSION_STATUS_VARIANT: Record<ResearchMissionStatus, 'default' | '
 };
 
 export const LEAD_STAGE_LABEL: Record<LeadStage, string> = {
-  discovered: 'Entdeckt',
-  qualified: 'Qualifiziert',
-  contacted: 'Kontaktiert',
-  engaged: 'Im Gespräch',
-  won: 'Gewonnen',
-  lost: 'Verloren',
-  on_hold: 'Zurückgestellt',
+  discovered: 'lead.stage.discovered',
+  qualified: 'lead.stage.qualified',
+  contacted: 'lead.stage.contacted',
+  engaged: 'lead.stage.engaged',
+  won: 'lead.stage.won',
+  lost: 'lead.stage.lost',
+  on_hold: 'lead.stage.on_hold',
 };
 
 /** Stages in pipeline order — for the stage <Select> and board-ish ordering. */
@@ -203,13 +203,13 @@ export const LEAD_STAGES: LeadStage[] = [
 ];
 
 export const LEAD_SOURCE_LABEL: Record<LeadSource, string> = {
-  web_search: 'Websuche',
-  forum: 'Forum',
-  linkedin: 'LinkedIn',
-  directory: 'Verzeichnis',
-  referral: 'Empfehlung',
-  manual: 'Manuell',
-  import: 'Import',
+  web_search: 'lead.source.web_search',
+  forum: 'lead.source.forum',
+  linkedin: 'lead.source.linkedin',
+  directory: 'lead.source.directory',
+  referral: 'lead.source.referral',
+  manual: 'lead.source.manual',
+  import: 'lead.source.import',
 };
 
 // -- custom-endpoint actions ------------------------------------------------
