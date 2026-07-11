@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useMembersWithAvatar } from '@/hooks/useMembersWithAvatar';
 import { useUserDirectory, userDisplayName, userInitials } from '@/hooks/useUserDirectory';
 import type { Row } from '@/lib/refine';
 import { cn } from '@/lib/utils';
@@ -41,6 +42,7 @@ export function TeamMembersListPage() {
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<{ m: Row<WorkspaceMemberJsonld>; u: Row<UserJsonld> | null } | null>(null);
   const { byIri, isLoading: usersLoading } = useUserDirectory();
+  const usersWithAvatar = useMembersWithAvatar();
 
   const { result: members, query: membersQuery } = useList<Row<WorkspaceMemberJsonld>>({
     resource: 'workspace_members',
@@ -146,6 +148,7 @@ export function TeamMembersListPage() {
                 <CardContent className="flex items-center gap-3 p-4">
                   <AuthedAvatar
                     memberId={m.id}
+                    hasAvatar={Boolean(u?.id && usersWithAvatar.has(u.id))}
                     fallback={u ? userInitials(u) : '?'}
                     size="lg"
                     className="shrink-0"
@@ -203,6 +206,7 @@ export function TeamMembersListPage() {
         <MemberEditDialog
           member={editing.m}
           user={editing.u}
+          hasAvatar={Boolean(editing.u?.id && usersWithAvatar.has(editing.u.id))}
           reassignCandidates={(members?.data ?? [])
             .filter(
               (mm) =>
