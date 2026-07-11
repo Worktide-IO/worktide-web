@@ -10,6 +10,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useGetIdentity, useInvalidate, useList, useOne, useUpdate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Ban, ChevronsLeft, Clock, Flag, ListTree, Search, SlidersHorizontal, X } from 'lucide-react';
@@ -61,10 +62,10 @@ const PRIORITY_VARIANT: Record<string, 'outline' | 'secondary' | 'default' | 'de
 };
 
 const PRIORITY_LABEL: Record<string, string> = {
-  low: 'Niedrig',
-  normal: 'Normal',
-  high: 'Hoch',
-  urgent: 'Dringend',
+  low: 'priority.low',
+  normal: 'priority.normal',
+  high: 'priority.high',
+  urgent: 'priority.urgent',
 };
 
 type SwimlaneDim = 'none' | 'assignee' | 'priority' | 'tracker';
@@ -135,6 +136,7 @@ type Props = {
  * any other tabs.
  */
 export function ProjectBoardTab({ projectIri }: Props) {
+  const { t: translate } = useTranslation();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
   );
@@ -334,7 +336,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
     const label = (key: string) => {
       if (key === LANE_NONE)
         return dim === 'assignee' ? 'Nicht zugewiesen' : dim === 'tracker' ? 'Kein Tracker' : 'Ohne Priorität';
-      if (dim === 'priority') return PRIORITY_LABEL[key] ?? key;
+      if (dim === 'priority') return PRIORITY_LABEL[key] ? translate(PRIORITY_LABEL[key]) : key;
       if (dim === 'tracker') return trackerByIri[key]?.name ?? 'Tracker';
       return userByIri[key] ? userDisplayName(userByIri[key]) : 'Benutzer';
     };
@@ -569,7 +571,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
               <SelectItem value="all">Alle Prioritäten</SelectItem>
               {(['urgent', 'high', 'normal', 'low'] as const).map((p) => (
                 <SelectItem key={p} value={p}>
-                  {PRIORITY_LABEL[p]}
+                  {translate(PRIORITY_LABEL[p])}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -951,6 +953,7 @@ function TaskCard({
   showAging?: boolean;
   onOpen?: () => void;
 }) {
+  const { t: translate } = useTranslation();
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: task['@id'] ?? '',
     disabled: dragging,
@@ -1033,7 +1036,7 @@ function TaskCard({
                 variant={PRIORITY_VARIANT[task.priority] ?? 'outline'}
                 className="text-[10px]"
               >
-                {PRIORITY_LABEL[task.priority] ?? task.priority}
+                {PRIORITY_LABEL[task.priority] ? translate(PRIORITY_LABEL[task.priority]) : task.priority}
               </Badge>
             ) : null}
             <PriorityScoreBadge entry={scoreEntryFromTask(task)} compact />

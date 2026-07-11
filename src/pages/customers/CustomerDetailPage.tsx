@@ -1,4 +1,5 @@
 import { useOne } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Building2, Globe, Hash, Mail, Phone } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 
@@ -32,11 +33,11 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'dest
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  prospect: 'Prospect',
-  active: 'Aktiv',
-  inactive: 'Inaktiv',
-  churned: 'Churned',
-  archived: 'Archiviert',
+  prospect: 'customer_status.prospect',
+  active: 'customer_status.active',
+  inactive: 'customer_status.inactive',
+  churned: 'customer_status.churned',
+  archived: 'customer_status.archived',
 };
 
 /**
@@ -56,6 +57,7 @@ const STATUS_LABEL: Record<string, string> = {
  * land on the right pane.
  */
 export function CustomerDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [search, setSearch] = useSearchParams();
@@ -103,7 +105,7 @@ export function CustomerDetailPage() {
             <Building2 className="size-5 text-muted-foreground" />
             <h2 className="text-2xl">{c.name}</h2>
             <Badge variant={STATUS_VARIANT[statusKey] ?? 'outline'} className="text-xs">
-              {STATUS_LABEL[statusKey] ?? statusKey}
+              {STATUS_LABEL[statusKey] ? t(STATUS_LABEL[statusKey]) : statusKey}
             </Badge>
             {c.isCompany === false ? (
               <Badge variant="outline" className="text-xs">

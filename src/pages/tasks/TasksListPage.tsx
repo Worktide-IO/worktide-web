@@ -1,4 +1,5 @@
 import { useList, useTable } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -54,20 +55,21 @@ import {
  * second design pass.
  */
 const PRIORITY_LABEL = {
-  low: 'Niedrig',
-  normal: 'Normal',
-  high: 'Hoch',
-  urgent: 'Dringend',
+  low: 'priority.low',
+  normal: 'priority.normal',
+  high: 'priority.high',
+  urgent: 'priority.urgent',
 } as const;
 
 const PRIORITY_VARIANT: Record<string, 'outline' | 'secondary' | 'default' | 'destructive'> = {
-  low: 'outline',
-  normal: 'secondary',
-  high: 'default',
-  urgent: 'destructive',
+  low: 'priority.low',
+  normal: 'priority.normal',
+  high: 'priority.high',
+  urgent: 'priority.urgent',
 };
 
 export function TasksListPage() {
+  const { t: translate } = useTranslation();
   const [search, setSearch] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -402,7 +404,7 @@ export function TasksListPage() {
                             variant={PRIORITY_VARIANT[t.priority] ?? 'outline'}
                             className="text-xs"
                           >
-                            {PRIORITY_LABEL[t.priority]}
+                            {translate(PRIORITY_LABEL[t.priority])}
                           </Badge>
                         ) : null}
                       </TableCell>

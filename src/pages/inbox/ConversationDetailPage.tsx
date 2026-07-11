@@ -1,4 +1,5 @@
 import { useInvalidate, useOne } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Mail, Paperclip, Send } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
@@ -30,19 +31,19 @@ import { useKeysetList } from '@/lib/useKeysetList';
 import { cn } from '@/lib/utils';
 
 const STATUS_LABEL: Record<string, string> = {
-  open: 'Offen',
-  pending: 'Wartet',
-  closed: 'Erledigt',
-  spam: 'Spam',
+  open: 'conversation_status.open',
+  pending: 'conversation_status.pending',
+  closed: 'conversation_status.closed',
+  spam: 'conversation_status.spam',
 };
 const STATUS_OPTIONS = ['open', 'pending', 'closed', 'spam'];
 
 const OUTBOUND_STATUS_LABEL: Record<string, string> = {
-  queued: 'In Warteschlange',
-  sending: 'Sende…',
-  sent: 'Gesendet',
-  failed: 'Fehlgeschlagen',
-  bounced: 'Bounce',
+  queued: 'outbound_status.queued',
+  sending: 'outbound_status.sending',
+  sent: 'outbound_status.sent',
+  failed: 'outbound_status.failed',
+  bounced: 'outbound_status.bounced',
 };
 
 type Bubble = {
@@ -66,6 +67,7 @@ type Bubble = {
  * Select. Reassignment + tagging come in C.4.x.
  */
 export function ConversationDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const invalidate = useInvalidate();
@@ -145,7 +147,7 @@ export function ConversationDetailPage() {
         { headers: { 'Content-Type': 'application/merge-patch+json' } },
       );
       void invalidate({ resource: 'conversations', invalidates: ['list', 'detail'], id });
-      toast.success(`Status: ${STATUS_LABEL[next] ?? next}`);
+      toast.success(`Status: ${STATUS_LABEL[next] ? t(STATUS_LABEL[next]) : next}`);
     } catch {
       toast.error('Konnte Status nicht ändern.');
     }
@@ -180,7 +182,7 @@ export function ConversationDetailPage() {
           <SelectContent>
             {STATUS_OPTIONS.map((s) => (
               <SelectItem key={s} value={s}>
-                {STATUS_LABEL[s]}
+                {t(STATUS_LABEL[s])}
               </SelectItem>
             ))}
           </SelectContent>
@@ -232,6 +234,7 @@ export function ConversationDetailPage() {
 }
 
 function MessageBubble({ bubble }: { bubble: Bubble }) {
+  const { t } = useTranslation();
   const isInbound = bubble.kind === 'inbound';
   const e = bubble.event;
   const m = bubble.message;
@@ -248,7 +251,7 @@ function MessageBubble({ bubble }: { bubble: Bubble }) {
         </span>
         {!isInbound && m?.status ? (
           <Badge variant="outline" className="text-[10px]">
-            {OUTBOUND_STATUS_LABEL[m.status as string] ?? m.status}
+            {OUTBOUND_STATUS_LABEL[m.status as string] ? t(OUTBOUND_STATUS_LABEL[m.status as string]) : m.status}
           </Badge>
         ) : null}
       </CardHeader>
