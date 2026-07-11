@@ -1,4 +1,4 @@
-import { Check, Loader2, Pencil, Trash2, X } from 'lucide-react';
+import { Loader2, Pencil, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -11,20 +11,23 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
-type Template = { id?: string; '@id'?: string; name: string; subject: string };
+type Template = { id?: string; '@id'?: string; name: string; subject: string; body?: string | null };
+type Editing = { id: string; name: string; subject: string; body: string };
 
 const MERGE_PATCH = { headers: { 'Content-Type': 'application/merge-patch+json' } };
 
 /**
- * Manage reusable newsletter templates — rename + delete. New templates are
- * created from the issue composer ("Als Vorlage speichern"); this is the tidy-up
- * surface.
+ * Manage reusable newsletter templates — edit (name + subject + markdown body)
+ * and delete. New templates are created from the issue composer ("Als Vorlage
+ * speichern"); here they can be fully maintained.
  */
 export function NewsletterTemplatesDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(false);
-  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
+  const [editing, setEditing] = useState<Editing | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
@@ -42,15 +45,22 @@ export function NewsletterTemplatesDialog({ open, onOpenChange }: { open: boolea
 
   const idOf = (t: Template) => t.id ?? t['@id']?.split('/').pop() ?? '';
 
-  const saveRename = async () => {
-    if (!editing || !editing.name.trim()) return;
+  const startEdit = (t: Template) =>
+    setEditing({ id: idOf(t), name: t.name, subject: t.subject, body: t.body ?? '' });
+
+  const saveEdit = async () => {
+    if (!editing || !editing.name.trim() || !editing.subject.trim()) return;
     setBusy(true);
     try {
-      await api.patch(`/newsletter_templates/${editing.id}`, { name: editing.name.trim() }, MERGE_PATCH);
+      await api.patch(
+        `/newsletter_templates/${editing.id}`,
+        { name: editing.name.trim(), subject: editing.subject.trim(), body: editing.body.trim() || null },
+        MERGE_PATCH,
+      );
       setEditing(null);
       load();
     } catch {
-      toast.error('Umbenennen fehlgeschlagen.');
+      toast.error('Speichern fehlgeschlagen.');
     } finally {
       setBusy(false);
     }
@@ -60,6 +70,7 @@ export function NewsletterTemplatesDialog({ open, onOpenChange }: { open: boolea
     if (!window.confirm(`Vorlage „${t.name}" löschen?`)) return;
     try {
       await api.delete(`/newsletter_templates/${idOf(t)}`);
+      if (editing?.id === idOf(t)) setEditing(null);
       load();
     } catch {
       toast.error('Löschen fehlgeschlagen.');
@@ -68,12 +79,45 @@ export function NewsletterTemplatesDialog({ open, onOpenChange }: { open: boolea
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Newsletter-Vorlagen</DialogTitle>
         </DialogHeader>
 
-        {loading ? (
+        {editing ? (
+          <div className="space-y-3 rounded-md border p-3">
+            <div className="space-y-1">
+              <Label>Name der Vorlage</Label>
+              <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <Label>Betreff</Label>
+              <Input value={editing.subject} onChange={(e) => setEditing({ ...editing, subject: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <Label>Inhalt (Markdown)</Label>
+              <Textarea
+                rows={8}
+                value={editing.body}
+                onChange={(e) => setEditing({ ...editing, body: e.target.value })}
+                className="font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                Platzhalter: <code>{'{{ firstName }}'}</code>, <code>{'{{ lastName }}'}</code>,{' '}
+                <code>{'{{ company }}'}</code>.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setEditing(null)} disabled={busy}>
+                Abbrechen
+              </Button>
+              <Button type="button" onClick={saveEdit} disabled={busy || !editing.name.trim() || !editing.subject.trim()}>
+                {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+                Speichern
+              </Button>
+            </div>
+          </div>
+        ) : loading ? (
           <p className="text-sm text-muted-foreground">Lädt…</p>
         ) : templates.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
@@ -81,44 +125,20 @@ export function NewsletterTemplatesDialog({ open, onOpenChange }: { open: boolea
           </p>
         ) : (
           <div className="divide-y">
-            {templates.map((t) => {
-              const id = idOf(t);
-              const isEditing = editing?.id === id;
-              return (
-                <div key={id} className="flex items-center gap-2 py-2 text-sm">
-                  {isEditing ? (
-                    <>
-                      <Input
-                        autoFocus
-                        value={editing.name}
-                        onChange={(e) => setEditing({ id, name: e.target.value })}
-                        onKeyDown={(e) => e.key === 'Enter' && saveRename()}
-                        className="h-8 flex-1"
-                      />
-                      <Button type="button" variant="ghost" size="sm" className="h-7" disabled={busy} onClick={saveRename}>
-                        {busy ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
-                      </Button>
-                      <Button type="button" variant="ghost" size="sm" className="h-7" onClick={() => setEditing(null)}>
-                        <X className="size-3" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate font-medium">{t.name}</div>
-                        <div className="truncate text-xs text-muted-foreground">{t.subject}</div>
-                      </div>
-                      <Button type="button" variant="ghost" size="sm" className="h-7" onClick={() => setEditing({ id, name: t.name })}>
-                        <Pencil className="size-3" />
-                      </Button>
-                      <Button type="button" variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => remove(t)}>
-                        <Trash2 className="size-3" />
-                      </Button>
-                    </>
-                  )}
+            {templates.map((t) => (
+              <div key={idOf(t)} className="flex items-center gap-2 py-2 text-sm">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-medium">{t.name}</div>
+                  <div className="truncate text-xs text-muted-foreground">{t.subject}</div>
                 </div>
-              );
-            })}
+                <Button type="button" variant="ghost" size="sm" className="h-7" onClick={() => startEdit(t)}>
+                  <Pencil className="size-3" /> Bearbeiten
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => remove(t)}>
+                  <Trash2 className="size-3" />
+                </Button>
+              </div>
+            ))}
           </div>
         )}
       </DialogContent>
