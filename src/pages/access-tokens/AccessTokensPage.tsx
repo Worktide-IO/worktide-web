@@ -185,7 +185,7 @@ function TokenRow({ token }: { token: Row<Pat> }) {
     setRevoking(true);
     try {
       await api.delete(`/personal_access_tokens/${token.id}`);
-      toast.success(`Token "${token.name}" widerrufen.`);
+      toast.success(translate('toast.token_revoked_named', { name: token.name }));
       void invalidate({ resource: 'personal_access_tokens', invalidates: ['list'] });
     } catch {
       toast.error(translate('toast.could_not_revoke_token'));
@@ -277,7 +277,7 @@ function CreateDialog({
       onCreated(data);
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Token nicht anlegen.');
+      toast.error(detail ?? translate('toast.could_not_create_token'));
     } finally {
       setSaving(false);
     }

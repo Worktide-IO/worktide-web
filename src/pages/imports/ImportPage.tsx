@@ -133,7 +133,7 @@ export function ImportPage() {
         setStep(2);
       },
       error: (err) => {
-        toast.error(`CSV-Parsing fehlgeschlagen: ${err.message}`);
+        toast.error(t('toast.csv_parse_failed', { msg: err.message }));
       },
     });
   };

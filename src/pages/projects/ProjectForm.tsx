@@ -469,6 +469,7 @@ function NewCustomerInlineDialog({
   onOpenChange: (open: boolean) => void;
   onCreated: (customerIri: string) => void;
 }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
@@ -491,10 +492,10 @@ function NewCustomerInlineDialog({
       if (data['@id']) onCreated(data['@id']);
       onOpenChange(false);
       setName('');
-      toast.success(`Kunde "${trimmed}" angelegt — Stammdaten kannst du jederzeit unter Kunden ergänzen.`);
+      toast.success(translate('toast.customer_created_hint', { name: trimmed }));
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Kunde nicht anlegen.');
+      toast.error(detail ?? translate('toast.could_not_create_customer'));
     } finally {
       setSaving(false);
     }

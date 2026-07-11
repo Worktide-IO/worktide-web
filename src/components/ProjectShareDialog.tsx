@@ -119,12 +119,12 @@ export function ProjectShareDialog({ projectId, projectName, open, onOpenChange 
         project: projectIri,
         workspace: `/v1/workspaces/${workspaceId}`,
       });
-      toast.success(`Freigabe-Einladung an ${trimmed} versendet.`);
+      toast.success(t('toast.share_invitation_sent', { email: trimmed }));
       setEmail('');
       void load();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Einladung konnte nicht erstellt werden.');
+      toast.error(detail ?? t('toast.invitation_create_failed'));
     } finally {
       setBusy(false);
     }
@@ -138,7 +138,7 @@ export function ProjectShareDialog({ projectId, projectName, open, onOpenChange 
       void load();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Zurückziehen fehlgeschlagen.');
+      toast.error(detail ?? t('toast.revoke_failed'));
     }
   };
 

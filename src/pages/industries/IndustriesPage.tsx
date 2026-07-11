@@ -65,7 +65,7 @@ export function IndustriesPage() {
     setBusy(true);
     try {
       await api.post('/industries', { name: n, workspace: workspaceIri });
-      toast.success(`„${n}" angelegt.`);
+      toast.success(t('toast.created_named_dq', { name: n }));
       setName('');
       await query.refetch();
     } catch (e) {

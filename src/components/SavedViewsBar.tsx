@@ -119,7 +119,7 @@ export function SavedViewsBar({ currentFilters, onApply, onSaved }: Props) {
     deleteView(
       { resource: 'task_views', id: view.id, successNotification: false },
       {
-        onSuccess: () => toast.success(`"${view.name}" gelöscht.`),
+        onSuccess: () => toast.success(t('toast.deleted_named_sq', { name: view.name })),
         onError: () => toast.error(t('toast.could_not_delete')),
       },
     );

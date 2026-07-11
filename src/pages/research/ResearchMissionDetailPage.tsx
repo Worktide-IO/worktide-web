@@ -71,7 +71,7 @@ export function ResearchMissionDetailPage() {
         void leadsQuery.refetch();
       }, 1500);
     } catch (err) {
-      toast.error(aiErrorMessage(err, 'Start nicht möglich (externe Suche/Egress prüfen).'));
+      toast.error(aiErrorMessage(err, t('toast.start_failed_egress')));
     } finally {
       setBusy(false);
     }

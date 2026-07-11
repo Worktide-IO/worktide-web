@@ -147,7 +147,7 @@ export function MeetingTypesPage() {
       await query.refetch();
     } catch (e) {
       const status = (e as { response?: { status?: number } })?.response?.status;
-      toast.error(status === 422 ? 'Dieser Slug ist bereits vergeben.' : 'Speichern fehlgeschlagen.');
+      toast.error(status === 422 ? t('toast.slug_taken') : t('toast.save_failed'));
     } finally {
       setBusy(false);
     }

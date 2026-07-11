@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { DynamicIcon } from 'lucide-react/dynamic';
 import { Layers, Loader2, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -141,6 +142,7 @@ function TrackerRow({
   tracker: Row<TrackerJsonld>;
   onEdit: () => void;
 }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const localize = useLocalize();
   const [deleting, setDeleting] = useState(false);
@@ -159,10 +161,10 @@ function TrackerRow({
     try {
       await api.delete(`/trackers/${tracker.id}`);
       void invalidate({ resource: 'trackers', invalidates: ['list'] });
-      toast.success(`Tracker "${tracker.name}" gelöscht.`);
+      toast.success(translate('toast.tracker_deleted_named', { name: tracker.name }));
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Tracker nicht löschen — referenziert ihn noch eine Aufgabe?');
+      toast.error(detail ?? translate('toast.could_not_delete_tracker'));
     } finally {
       setDeleting(false);
     }
@@ -212,6 +214,7 @@ type DialogProps =
   | { mode: 'edit'; tracker: Row<TrackerJsonld>; onClose: () => void };
 
 function TrackerDialog(props: DialogProps) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const { result } = useList<Row<TrackerJsonld>>({
     resource: 'trackers',
@@ -276,7 +279,7 @@ function TrackerDialog(props: DialogProps) {
           { name: trimmed, icon, color, isDefault, translations },
           { headers: { 'Content-Type': 'application/merge-patch+json' } },
         );
-        toast.success(`Tracker "${trimmed}" aktualisiert.`);
+        toast.success(translate('toast.tracker_updated_named', { name: trimmed }));
       } else {
         const workspaceId =
           typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
@@ -292,13 +295,13 @@ function TrackerDialog(props: DialogProps) {
           position: allTrackers.length,
           workspace: `/v1/workspaces/${workspaceId}`,
         });
-        toast.success(`Tracker "${trimmed}" angelegt.`);
+        toast.success(translate('toast.tracker_created_named', { name: trimmed }));
       }
       void invalidate({ resource: 'trackers', invalidates: ['list'] });
       props.onClose();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Tracker nicht speichern.');
+      toast.error(detail ?? translate('toast.could_not_save_tracker'));
     } finally {
       setSaving(false);
     }

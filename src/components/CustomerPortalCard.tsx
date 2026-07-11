@@ -1,4 +1,5 @@
 import { useOne, useUpdate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -24,6 +25,7 @@ type CustomerRow = Row<CustomerJsonld> & { portalEnabled?: boolean };
  * per-contact step that only takes effect once this switch is on.
  */
 export function CustomerPortalCard({ customerId }: { customerId: string }) {
+  const { t } = useTranslation();
   const { result: customer, query } = useOne<CustomerRow>({ resource: 'customers', id: customerId });
   const { mutate: update, mutation } = useUpdate<CustomerRow>();
   const saving = mutation.isPending;
@@ -37,10 +39,10 @@ export function CustomerPortalCard({ customerId }: { customerId: string }) {
       { resource: 'customers', id: customerId, values: { portalEnabled: next }, successNotification: false },
       {
         onSuccess: () =>
-          toast.success(next ? 'Kundenportal freigeschaltet.' : 'Kundenportal gesperrt.'),
+          toast.success(next ? t('toast.portal_enabled') : t('toast.portal_disabled')),
         onError: (err) => {
           const status = (err as { response?: { status?: number } })?.response?.status;
-          toast.error(status === 403 ? 'Keine Berechtigung.' : 'Konnte nicht speichern.');
+          toast.error(status === 403 ? t('toast.no_permission') : t('toast.could_not_save'));
         },
       },
     );

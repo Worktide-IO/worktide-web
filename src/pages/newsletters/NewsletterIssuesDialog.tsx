@@ -136,7 +136,7 @@ export function NewsletterIssuesDialog({
   const sendId = async (id: string) => {
     try {
       const res = await api.post(`/newsletter_issues/${id}/send`, { includeDescendants });
-      toast.success(`An ${res.data.recipientCount} Empfänger gesendet.`);
+      toast.success(translate('toast.sent_recipients', { count: res.data.recipientCount }));
       load();
     } catch (e) {
       const status = (e as { response?: { status?: number } })?.response?.status;

@@ -76,7 +76,7 @@ export function ResearchMissionCreatePage() {
       });
       applyResponse(res);
     } catch (err) {
-      toast.error(aiErrorMessage(err, 'Anfrage fehlgeschlagen (LLM/Egress prüfen).'));
+      toast.error(aiErrorMessage(err, t('toast.llm_request_failed')));
     } finally {
       setBusy(false);
     }
@@ -92,7 +92,7 @@ export function ResearchMissionCreatePage() {
       const res = await researchMission.answer(missionId, mine);
       applyResponse(res);
     } catch (err) {
-      toast.error(aiErrorMessage(err, 'Antwort fehlgeschlagen.'));
+      toast.error(aiErrorMessage(err, t('toast.reply_failed')));
     } finally {
       setBusy(false);
     }
@@ -106,7 +106,7 @@ export function ResearchMissionCreatePage() {
       toast.success(t('toast.search_started_mission'));
       navigate(`/research/missions/${missionId}`);
     } catch (err) {
-      toast.error(aiErrorMessage(err, 'Start nicht möglich (externe Suche/Egress prüfen).'));
+      toast.error(aiErrorMessage(err, t('toast.start_failed_egress')));
     } finally {
       setBusy(false);
     }

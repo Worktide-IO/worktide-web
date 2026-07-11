@@ -88,7 +88,7 @@ export function AiTicketSuggestionPanel({ conversationId, onApplied }: Props) {
       }, RESULT_FALLBACK_MS);
     } catch (err) {
       setLoading(false);
-      toast.error(aiErrorMessage(err, 'Ticketvorschlag konnte nicht angefordert werden.'));
+      toast.error(aiErrorMessage(err, t('toast.ticket_suggestion_failed')));
     }
   };
 
@@ -105,7 +105,7 @@ export function AiTicketSuggestionPanel({ conversationId, onApplied }: Props) {
       setReco(null);
       onApplied?.();
     } catch (err) {
-      toast.error(aiErrorMessage(err, 'Ticket konnte nicht erstellt werden.'));
+      toast.error(aiErrorMessage(err, t('toast.ticket_create_failed')));
     } finally {
       setBusy(false);
     }
@@ -119,7 +119,7 @@ export function AiTicketSuggestionPanel({ conversationId, onApplied }: Props) {
       toast.success(t('toast.suggestion_dismissed'));
       setReco(null);
     } catch (err) {
-      toast.error(aiErrorMessage(err, 'Konnte Vorschlag nicht verwerfen.'));
+      toast.error(aiErrorMessage(err, t('toast.could_not_dismiss_suggestion')));
     } finally {
       setBusy(false);
     }

@@ -373,7 +373,7 @@ function ProductVersionsCard({
         releaseDate: releaseDate || null,
         releaseNotes: releaseNotes || null,
       });
-      toast.success(`Version ${version} veröffentlicht.`);
+      toast.success(t('toast.version_published', { version }));
       setOpen(false);
       setVersion('');
       setReleaseDate('');

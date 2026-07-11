@@ -886,6 +886,7 @@ function AddDependencyForm({
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const { t: translate } = useTranslation();
   const [direction, setDirection] = useState<'incoming' | 'outgoing'>('incoming');
   const [otherTaskId, setOtherTaskId] = useState<string>('');
   const [type, setType] = useState<TaskDependencyJsonldTypeEnum>('finish_to_start');
@@ -931,7 +932,7 @@ function AddDependencyForm({
       onClose();
     } catch (err) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(msg ?? 'Konnte Dependency nicht anlegen.');
+      toast.error(msg ?? translate('toast.could_not_create_dependency'));
     } finally {
       setSaving(false);
     }

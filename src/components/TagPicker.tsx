@@ -114,7 +114,7 @@ export function TagPicker({
         onChange([...value, data['@id']]);
       }
       setQuery('');
-      toast.success(`Tag "${name}" angelegt`);
+      toast.success(translate('toast.tag_created_sq', { name }));
     } catch {
       toast.error(translate('toast.could_not_create_tag'));
     } finally {

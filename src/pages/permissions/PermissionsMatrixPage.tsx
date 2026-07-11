@@ -205,7 +205,7 @@ export function PermissionsMatrixPage() {
       refresh();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Berechtigung nicht ändern.');
+      toast.error(detail ?? t('toast.could_not_change_permission'));
     } finally {
       setPendingCell(null);
     }

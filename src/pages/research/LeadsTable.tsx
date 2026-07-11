@@ -56,7 +56,7 @@ export function LeadsTable({
       await leadActions.setStage(lead.id, stage);
       onChanged();
     } catch (err) {
-      toast.error(aiErrorMessage(err, 'Statuswechsel fehlgeschlagen.'));
+      toast.error(aiErrorMessage(err, t('toast.stage_change_failed')));
     } finally {
       setBusyId(null);
     }
@@ -67,10 +67,10 @@ export function LeadsTable({
     setBusyId(lead.id);
     try {
       await leadActions.convert(lead.id);
-      toast.success(`„${lead.name}" als Kunde angelegt.`);
+      toast.success(t('toast.lead_to_customer', { name: lead.name }));
       onChanged();
     } catch (err) {
-      toast.error(aiErrorMessage(err, 'Umwandlung fehlgeschlagen.'));
+      toast.error(aiErrorMessage(err, t('toast.conversion_failed')));
     } finally {
       setBusyId(null);
     }

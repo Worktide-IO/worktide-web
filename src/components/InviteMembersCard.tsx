@@ -94,12 +94,12 @@ export function InviteMembersCard() {
         role,
         workspace: `/v1/workspaces/${workspaceId}`,
       });
-      toast.success(`Einladung an ${trimmed} versendet.`);
+      toast.success(t('toast.invitation_sent', { email: trimmed }));
       setEmail('');
       void load();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Einladung konnte nicht erstellt werden.');
+      toast.error(detail ?? t('toast.invitation_create_failed'));
     } finally {
       setBusy(false);
     }
@@ -109,11 +109,11 @@ export function InviteMembersCard() {
     if (!inv.id) return;
     try {
       await api.post(`/workspace_invitations/${inv.id}/resend`);
-      toast.success(`Einladung an ${inv.email} erneut versendet.`);
+      toast.success(t('toast.invitation_resent', { email: inv.email }));
       void load();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Erneutes Senden fehlgeschlagen.');
+      toast.error(detail ?? t('toast.resend_failed'));
     }
   };
 
@@ -125,7 +125,7 @@ export function InviteMembersCard() {
       void load();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Zurückziehen fehlgeschlagen.');
+      toast.error(detail ?? t('toast.revoke_failed'));
     }
   };
 

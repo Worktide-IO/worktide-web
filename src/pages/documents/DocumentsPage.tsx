@@ -93,7 +93,7 @@ export function DocumentsPage() {
       if (data.id) setActiveId(data.id);
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Seite nicht anlegen.');
+      toast.error(detail ?? t('toast.could_not_create_page'));
     }
   };
 
@@ -110,7 +110,7 @@ export function DocumentsPage() {
         workspace: workspaceIri,
       });
       void invalidate({ resource: 'document_spaces', invalidates: ['list'] });
-      toast.success(`Space "${name.trim()}" angelegt.`);
+      toast.success(t('toast.space_created', { name: name.trim() }));
     } catch {
       toast.error(t('toast.could_not_create_space'));
     }

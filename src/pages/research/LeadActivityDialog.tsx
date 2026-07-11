@@ -79,7 +79,7 @@ export function LeadActivityDialog({
       setNote('');
       await query.refetch();
     } catch (err) {
-      toast.error(aiErrorMessage(err, 'Notiz konnte nicht gespeichert werden.'));
+      toast.error(aiErrorMessage(err, t('toast.note_save_failed')));
     } finally {
       setBusy(false);
     }

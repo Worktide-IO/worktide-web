@@ -84,7 +84,7 @@ export function IndustryCombobox({ value, onChange, placeholder = 'Branche wähl
       });
       void invalidate({ resource: 'industries', invalidates: ['list'] });
       if (data['@id']) pick(data['@id']);
-      toast.success(`Branche „${name}" angelegt`);
+      toast.success(t('toast.industry_created', { name }));
     } catch {
       toast.error(t('toast.could_not_create_industry'));
     } finally {

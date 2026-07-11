@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useList } from '@refinedev/core';
 import { Check, ChevronsUpDown, Settings } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -36,6 +37,7 @@ import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
  *   navigates away.
  */
 export function WorkspaceSwitcher() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -58,7 +60,7 @@ export function WorkspaceSwitcher() {
     }
     localStorage.setItem(WORKSPACE_STORAGE_KEY, ws.id);
     await qc.invalidateQueries(); // refetch everything under the new tenant
-    toast.success(`Workspace: ${ws.name ?? ws.slug}`);
+    toast.success(t('toast.workspace_switched', { name: ws.name ?? ws.slug }));
     setOpen(false);
   };
 
