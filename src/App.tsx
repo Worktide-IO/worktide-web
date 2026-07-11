@@ -133,12 +133,12 @@ export default function App() {
           resources={[
             // ---- Arbeit ----------------------------------------------------
             {
-              
+              name: 'wall',
               list: '/wall',
               meta: { label: 'nav.wall', icon: 'LayoutDashboard', category: 'Arbeit' },
             },
             {
-              
+              name: 'projects',
               list: '/projects',
               create: '/projects/create',
               edit: '/projects/:id/edit',
@@ -146,70 +146,70 @@ export default function App() {
               meta: { label: 'nav.projects', icon: 'FolderKanban', category: 'Arbeit' },
             },
             {
-              
+              name: 'tasks',
               list: '/tasks',
               meta: { label: 'nav.tasks', icon: 'CheckSquare', category: 'Arbeit' },
             },
             {
-              
+              name: 'ai_agents',
               list: '/ki-agenten',
               meta: { label: 'nav.ai_agents', icon: 'Sparkles', category: 'Arbeit' },
             },
             {
-              
+              name: 'time_entries',
               list: '/time-entries',
               meta: { label: 'nav.time_entries', icon: 'Clock', category: 'Arbeit' },
             },
             {
-              
+              name: 'activity',
               list: '/activity',
               meta: { label: 'nav.activity', icon: 'Activity', category: 'Arbeit' },
             },
             {
-              
+              name: 'calendar',
               list: '/calendar',
               meta: { label: 'nav.calendar', icon: 'CalendarDays', category: 'Arbeit' },
             },
             {
-              
+              name: 'planner',
               list: '/planner',
               meta: { label: 'nav.planner', icon: 'CalendarRange', category: 'Arbeit' },
             },
             {
-              
+              name: 'sprints',
               list: '/sprints',
               meta: { label: 'nav.sprints', icon: 'Zap', category: 'Arbeit' },
             },
             {
-              
+              name: 'documents',
               list: '/documents',
               meta: { label: 'nav.documents', icon: 'FileText', category: 'Arbeit' },
             },
             {
-              
+              name: 'team_members',
               list: '/personen',
               meta: { label: 'nav.team_members', icon: 'Users', category: 'Admin' },
             },
             {
-              
+              name: 'reports',
               list: '/auswertungen',
               meta: { label: 'nav.reports', icon: 'BarChart3', category: 'Arbeit' },
             },
             {
-              
+              name: 'conversations',
               list: '/inbox',
               show: '/inbox/:id',
               meta: { label: 'nav.conversations', icon: 'Inbox', category: 'Arbeit' },
             },
             {
-              
+              name: 'sources',
               list: '/sources',
               meta: { label: 'nav.sources', icon: 'Plug', category: 'Admin' },
             },
 
             // ---- CRM -------------------------------------------------------
             {
-              
+              name: 'customers',
               list: '/customers',
               create: '/customers/create',
               edit: '/customers/:id',
@@ -217,101 +217,101 @@ export default function App() {
               meta: { label: 'nav.customers', icon: 'Building2', category: 'CRM' },
             },
             {
-              
+              name: 'contacts',
               list: '/contacts',
               create: '/contacts/create',
               edit: '/contacts/:id',
               meta: { label: 'nav.contacts', icon: 'Contact', category: 'CRM' },
             },
             {
-              
+              name: 'customer_systems',
               list: '/customer-systems',
               create: '/customer-systems/create',
               edit: '/customer-systems/:id',
               meta: { label: 'nav.customer_systems', icon: 'Server', category: 'CRM' },
             },
             {
-              
+              name: 'service_subscriptions',
               list: '/subscriptions',
               create: '/subscriptions/create',
               edit: '/subscriptions/:id',
               meta: { label: 'nav.service_subscriptions', icon: 'Receipt', category: 'CRM' },
             },
             {
-              
+              name: 'social_posts',
               list: '/social',
               create: '/social/create',
               edit: '/social/:id',
               meta: { label: 'nav.social_posts', icon: 'Megaphone', category: 'CRM' },
             },
             {
-              
+              name: 'products',
               list: '/produkte',
               create: '/produkte/create',
               edit: '/produkte/:id',
               meta: { label: 'nav.products', icon: 'Boxes', category: 'CRM' },
             },
             {
-              
+              name: 'industries',
               list: '/branchen',
               meta: { label: 'nav.industries', icon: 'Building', category: 'CRM' },
             },
             {
-              
+              name: 'newsletters',
               list: '/newsletter',
               meta: { label: 'nav.newsletters', icon: 'Mail', category: 'CRM' },
             },
             {
-              
+              name: 'meeting_types',
               list: '/terminarten',
               meta: { label: 'nav.meeting_types', icon: 'CalendarClock', category: 'CRM' },
             },
             {
-              
+              name: 'bookings',
               list: '/buchungen',
               meta: { label: 'nav.bookings', icon: 'CalendarDays', category: 'CRM' },
             },
             {
-              
+              name: 'staff_calendar_connections',
               list: '/kalender-sync',
               meta: { label: 'nav.staff_calendar_connections', icon: 'RefreshCw', category: 'CRM' },
             },
             {
-              
+              name: 'absences',
               list: '/abwesenheiten',
               meta: { label: 'nav.absences', icon: 'CalendarOff', category: 'CRM' },
             },
             {
-              
+              name: 'research_missions',
               list: '/research/missions',
               create: '/research/missions/create',
               show: '/research/missions/:id',
               meta: { label: 'nav.research_missions', icon: 'Compass', category: 'CRM' },
             },
             {
-              
+              name: 'leads',
               list: '/research/leads',
               meta: { label: 'nav.leads', icon: 'Target', category: 'CRM' },
             },
 
             // ---- Admin -----------------------------------------------------
             {
-              
+              name: 'role_permission_overrides',
               list: '/permissions',
               meta: { label: 'nav.role_permission_overrides', icon: 'Shield', category: 'Admin' },
             },
             {
-              
+              name: 'webhooks',
               list: '/webhooks',
               meta: { label: 'nav.webhooks', icon: 'Webhook', category: 'Admin' },
             },
             {
-              
+              name: 'personal_access_tokens',
               list: '/access-tokens',
               meta: { label: 'nav.personal_access_tokens', icon: 'KeyRound', category: 'Admin' },
             },
             {
-              
+              name: 'imports',
               list: '/imports',
               meta: { label: 'nav.imports', icon: 'Upload', category: 'Admin' },
             },
