@@ -152,7 +152,7 @@ function ProfileForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Persönliche Daten</CardTitle>
+        <CardTitle>{t('profile.personal_data')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
