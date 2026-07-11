@@ -67,6 +67,7 @@ import { NewslettersPage } from '@/pages/newsletters/NewslettersPage';
 import { MeetingTypesPage } from '@/pages/meetings/MeetingTypesPage';
 import { BookingsPage } from '@/pages/meetings/BookingsPage';
 import { CalendarSyncPage } from '@/pages/meetings/CalendarSyncPage';
+import { AbsencesPage } from '@/pages/AbsencesPage';
 import { TasksListPage } from '@/pages/tasks/TasksListPage';
 import { TimeEntriesListPage } from '@/pages/timeEntries/TimeEntriesListPage';
 import { AiAgentsOverviewPage } from '@/pages/ai-agents/AiAgentsOverviewPage';
@@ -261,6 +262,11 @@ export default function App() {
               meta: { label: 'Kalender-Sync', icon: 'RefreshCw', category: 'CRM' },
             },
             {
+              name: 'absences',
+              list: '/abwesenheiten',
+              meta: { label: 'Abwesenheiten', icon: 'CalendarOff', category: 'CRM' },
+            },
+            {
               name: 'research_missions',
               list: '/research/missions',
               create: '/research/missions/create',
@@ -366,6 +372,7 @@ export default function App() {
               <Route path="/terminarten" element={<MeetingTypesPage />} />
               <Route path="/buchungen" element={<BookingsPage />} />
               <Route path="/kalender-sync" element={<CalendarSyncPage />} />
+              <Route path="/abwesenheiten" element={<AbsencesPage />} />
               <Route path="/research/missions" element={<ResearchMissionsListPage />} />
               <Route path="/research/missions/create" element={<ResearchMissionCreatePage />} />
               <Route path="/research/missions/:id" element={<ResearchMissionDetailPage />} />
