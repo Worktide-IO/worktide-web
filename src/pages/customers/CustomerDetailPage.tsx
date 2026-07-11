@@ -15,6 +15,7 @@ import { CustomerSlaCard } from '@/components/CustomerSlaCard';
 import { CustomerAgreementsTab } from './CustomerAgreementsTab';
 import { CustomerProductsTab } from './CustomerProductsTab';
 import { CustomerNewslettersTab } from './CustomerNewslettersTab';
+import { CustomerAbsencesCard } from './CustomerAbsencesCard';
 import { CustomerForm } from './CustomerForm';
 import {
   CustomerContactsTab,
@@ -176,6 +177,7 @@ export function CustomerDetailPage() {
         <TabsContent value="contacts" className="space-y-4 pt-4">
           <CustomerPortalCard customerId={id} />
           <CustomerContactsTab customerIri={iri} />
+          <CustomerAbsencesCard customerIri={iri} />
         </TabsContent>
         <TabsContent value="systems" className="pt-4">
           <CustomerSystemsTab customerIri={iri} />

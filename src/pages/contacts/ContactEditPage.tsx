@@ -3,6 +3,7 @@ import { useParams } from 'react-router';
 import { ContactPortalAccess } from '@/components/ContactPortalAccess';
 import { ContactPortalFeatures } from '@/components/ContactPortalFeatures';
 import { ContactForm } from './ContactForm';
+import { ContactAbsencesCard } from './ContactAbsencesCard';
 
 export function ContactEditPage() {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +15,7 @@ export function ContactEditPage() {
       <ContactForm action="edit" id={id} />
       <ContactPortalAccess contactId={id} />
       <ContactPortalFeatures contactId={id} />
+      <ContactAbsencesCard contactId={id} />
     </div>
   );
 }
