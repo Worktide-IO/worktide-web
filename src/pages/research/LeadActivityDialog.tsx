@@ -117,7 +117,7 @@ export function LeadActivityDialog({
                       </Badge>
                       <span className="text-xs text-muted-foreground">{formatDate(a.occurredAt)}</span>
                     </div>
-                    <p className="text-sm whitespace-pre-wrap">{summarize(a)}</p>
+                    <p className="text-sm whitespace-pre-wrap">{summarize(a, t)}</p>
                   </div>
                 </div>
               );
@@ -150,7 +150,7 @@ function formatDate(iso?: string): string {
 }
 
 /** Human one-liner from the activity's payload/outcome. */
-function summarize(a: Row<LeadActivityJsonld>): string {
+function summarize(a: Row<LeadActivityJsonld>, t: (key: string) => string): string {
   const p = (a.payload ?? {}) as Record<string, unknown>;
   switch (a.type) {
     case 'stage_change': {

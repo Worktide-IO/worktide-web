@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,10 +36,10 @@ type HealthResponse = {
 };
 
 const CHECK_LABELS: Record<keyof HealthResponse, string> = {
-  database: 'Datenbank',
-  storage: 'Datei-Speicher (S3)',
-  search: 'Suche',
-  mercure: 'Realtime (Mercure)',
+  database: 'setup_check.database',
+  storage: 'setup_check.storage',
+  search: 'setup_check.search',
+  mercure: 'setup_check.mercure',
 };
 
 const formSchema = z
@@ -81,6 +82,7 @@ function CheckRow({ label, check }: { label: string; check: Check | undefined })
 }
 
 export function SetupWizardPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [phase, setPhase] = useState<'loading' | 'check' | 'form'>('loading');
   const [health, setHealth] = useState<HealthResponse | null>(null);
@@ -199,7 +201,7 @@ export function SetupWizardPage() {
             <>
               <div className="space-y-3 rounded-md border p-3">
                 {(Object.keys(CHECK_LABELS) as (keyof HealthResponse)[]).map((key) => (
-                  <CheckRow key={key} label={CHECK_LABELS[key]} check={health?.[key]} />
+                  <CheckRow key={key} label={t(CHECK_LABELS[key])} check={health?.[key]} />
                 ))}
               </div>
 

@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { CheckSquare, Crown, Mail, Pencil, Search, ShieldCheck, UserCog } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -20,10 +21,10 @@ import type { Row } from '@/lib/refine';
 import { cn } from '@/lib/utils';
 
 const ROLE_LABEL: Record<string, { label: string; icon: typeof Crown; tone: string }> = {
-  owner: { label: 'Owner', icon: Crown, tone: 'text-amber-600 bg-amber-100 border-amber-200' },
-  admin: { label: 'Admin', icon: ShieldCheck, tone: 'text-violet-600 bg-violet-100 border-violet-200' },
-  member: { label: 'Member', icon: UserCog, tone: 'text-slate-600 bg-slate-100 border-slate-200' },
-  guest: { label: 'Gast', icon: UserCog, tone: 'text-slate-500 bg-slate-50 border-slate-200' },
+  owner: { label: 'team_role.owner', icon: Crown, tone: 'text-amber-600 bg-amber-100 border-amber-200' },
+  admin: { label: 'team_role.admin', icon: ShieldCheck, tone: 'text-violet-600 bg-violet-100 border-violet-200' },
+  member: { label: 'team_role.member', icon: UserCog, tone: 'text-slate-600 bg-slate-100 border-slate-200' },
+  guest: { label: 'team_role.guest', icon: UserCog, tone: 'text-slate-500 bg-slate-50 border-slate-200' },
 };
 
 /**
@@ -39,6 +40,7 @@ const ROLE_LABEL: Record<string, { label: string; icon: typeof Crown; tone: stri
  * dashboard-konsistent bleiben.
  */
 export function TeamMembersListPage() {
+  const { t: translate } = useTranslation();
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<{ m: Row<WorkspaceMemberJsonld>; u: Row<UserJsonld> | null } | null>(null);
   const { byIri, isLoading: usersLoading } = useUserDirectory();
@@ -172,7 +174,7 @@ export function TeamMembersListPage() {
                         className={cn('gap-1 text-[10px]', roleInfo.tone)}
                       >
                         <RoleIcon className="size-3" />
-                        {roleInfo.label}
+                        {translate(roleInfo.label)}
                       </Badge>
                       {inactive ? (
                         <Badge variant="outline" className="gap-1 text-[10px] text-destructive border-destructive/30 bg-destructive/5">

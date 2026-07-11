@@ -1,4 +1,5 @@
 import { Mail, Send, Share2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -29,9 +30,9 @@ type ShareInvitation = {
 // The collaboration role the target workspace gets on the shared project.
 // Mirrors ProjectMemberRole (manager | contributor | viewer) on the backend.
 const ROLES = [
-  { value: 'contributor', label: 'Mitarbeit (bearbeiten)' },
-  { value: 'manager', label: 'Verwaltung (voller Zugriff)' },
-  { value: 'viewer', label: 'Betrachten (nur lesen)' },
+  { value: 'contributor', label: 'share_role_long.contributor' },
+  { value: 'manager', label: 'share_role_long.manager' },
+  { value: 'viewer', label: 'share_role_long.viewer' },
 ];
 
 const STATUS_TONE: Record<ShareInvitation['status'], string> = {
@@ -41,15 +42,15 @@ const STATUS_TONE: Record<ShareInvitation['status'], string> = {
   revoked: 'text-slate-500 bg-slate-100 border-slate-200',
 };
 const STATUS_LABEL: Record<ShareInvitation['status'], string> = {
-  pending: 'Ausstehend',
-  accepted: 'Angenommen',
-  expired: 'Abgelaufen',
-  revoked: 'Zurückgezogen',
+  pending: 'invitation_status.pending',
+  accepted: 'invitation_status.accepted',
+  expired: 'invitation_status.expired',
+  revoked: 'invitation_status.revoked',
 };
 const ROLE_LABEL: Record<string, string> = {
-  contributor: 'Mitarbeit',
-  manager: 'Verwaltung',
-  viewer: 'Betrachten',
+  contributor: 'share_role.contributor',
+  manager: 'share_role.manager',
+  viewer: 'share_role.viewer',
 };
 
 function readCollection(data: unknown): ShareInvitation[] {
@@ -74,6 +75,7 @@ type Props = {
  * `workspace` is the active (host) workspace A, matching the project's owner.
  */
 export function ProjectShareDialog({ projectId, projectName, open, onOpenChange }: Props) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('contributor');
   const [invitations, setInvitations] = useState<ShareInvitation[]>([]);
@@ -176,7 +178,7 @@ export function ProjectShareDialog({ projectId, projectName, open, onOpenChange 
           >
             {ROLES.map((r) => (
               <option key={r.value} value={r.value}>
-                {r.label}
+                {t(r.label)}
               </option>
             ))}
           </select>
@@ -192,10 +194,10 @@ export function ProjectShareDialog({ projectId, projectName, open, onOpenChange 
               <li key={inv['@id'] ?? inv.email} className="flex items-center gap-3 px-3 py-2 text-sm">
                 <span className="min-w-0 flex-1 truncate">{inv.email}</span>
                 <span className="hidden text-xs text-muted-foreground sm:inline">
-                  {ROLE_LABEL[inv.role] ?? inv.role}
+                  {ROLE_LABEL[inv.role] ? t(ROLE_LABEL[inv.role]) : inv.role}
                 </span>
                 <Badge variant="outline" className={cn('text-[10px]', STATUS_TONE[inv.status])}>
-                  {STATUS_LABEL[inv.status]}
+                  {t(STATUS_LABEL[inv.status])}
                 </Badge>
                 {inv.status === 'pending' ? (
                   <Button

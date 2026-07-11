@@ -62,10 +62,10 @@ const PRIORITY_LABEL = {
 } as const;
 
 const PRIORITY_VARIANT: Record<string, 'outline' | 'secondary' | 'default' | 'destructive'> = {
-  low: 'priority.low',
-  normal: 'priority.normal',
-  high: 'priority.high',
-  urgent: 'priority.urgent',
+  low: 'outline',
+  normal: 'secondary',
+  high: 'default',
+  urgent: 'destructive',
 };
 
 export function TasksListPage() {

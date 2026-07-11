@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { CalendarDays, ExternalLink, Mail, Phone, Server, Star } from 'lucide-react';
 import { Link } from 'react-router';
 
@@ -33,24 +34,24 @@ const STATUS_BADGE: Record<
   string,
   { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
 > = {
-  trial: { label: 'Trial', variant: 'outline' },
-  active: { label: 'Aktiv', variant: 'default' },
-  paused: { label: 'Pausiert', variant: 'secondary' },
-  cancelled: { label: 'Gekündigt', variant: 'destructive' },
+  trial: { label: 'subscription_status.trial', variant: 'outline' },
+  active: { label: 'subscription_status.active', variant: 'default' },
+  paused: { label: 'subscription_status.paused', variant: 'secondary' },
+  cancelled: { label: 'subscription_status.cancelled', variant: 'destructive' },
 };
 
 const BILLING_LABEL: Record<string, string> = {
-  monthly: 'Mtl.',
-  quarterly: 'Q',
-  half_yearly: 'HJ',
-  yearly: 'Jährl.',
-  once: 'Einmal',
+  monthly: 'billing_short.monthly',
+  quarterly: 'billing_short.quarterly',
+  half_yearly: 'billing_short.half_yearly',
+  yearly: 'billing_short.yearly',
+  once: 'billing_short.once',
 };
 
 const ENV_BADGE: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
-  production: { label: 'Prod', variant: 'default' },
-  staging: { label: 'Stage', variant: 'secondary' },
-  development: { label: 'Dev', variant: 'outline' },
+  production: { label: 'env_badge.production', variant: 'default' },
+  staging: { label: 'env_badge.staging', variant: 'secondary' },
+  development: { label: 'env_badge.development', variant: 'outline' },
 };
 
 export function CustomerContactsTab({ customerIri }: { customerIri: string }) {
@@ -144,6 +145,7 @@ export function CustomerContactsTab({ customerIri }: { customerIri: string }) {
 }
 
 export function CustomerSystemsTab({ customerIri }: { customerIri: string }) {
+  const { t } = useTranslation();
   const { result, query } = useList<Row<CustomerSystemJsonld>>({
     resource: 'customer_systems',
     pagination: { mode: 'off' },
@@ -198,7 +200,7 @@ export function CustomerSystemsTab({ customerIri }: { customerIri: string }) {
                     <TableCell>
                       {env ? (
                         <Badge variant={env.variant} className="text-[10px]">
-                          {env.label}
+                          {t(env.label)}
                         </Badge>
                       ) : null}
                     </TableCell>
@@ -234,6 +236,7 @@ export function CustomerSystemsTab({ customerIri }: { customerIri: string }) {
 }
 
 export function CustomerSubscriptionsTab({ customerIri }: { customerIri: string }) {
+  const { t } = useTranslation();
   const { result, query } = useList<Row<ServiceSubscriptionJsonld>>({
     resource: 'service_subscriptions',
     pagination: { mode: 'off' },
@@ -305,12 +308,12 @@ export function CustomerSubscriptionsTab({ customerIri }: { customerIri: string 
                     <TableCell>
                       {statusBadge ? (
                         <Badge variant={statusBadge.variant} className="text-[10px]">
-                          {statusBadge.label}
+                          {t(statusBadge.label)}
                         </Badge>
                       ) : null}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {BILLING_LABEL[s.billingCycle ?? 'monthly'] ?? s.billingCycle}
+                      {BILLING_LABEL[s.billingCycle ?? 'monthly'] ? t(BILLING_LABEL[s.billingCycle ?? 'monthly']) : s.billingCycle}
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm tabular-nums">
                       {formatMoney(s.priceCents ?? 0, s.currency ?? 'eur')}

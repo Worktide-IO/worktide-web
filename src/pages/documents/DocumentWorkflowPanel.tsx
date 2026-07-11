@@ -1,4 +1,5 @@
 import { useGetIdentity, useInvalidate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, ChevronDown, Send, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -36,17 +37,17 @@ type Props = {
 
 const STATE_BADGE: Record<WorkflowState, { label: string; classes: string }> = {
   draft: {
-    label: 'Entwurf',
+    label: 'doc_state.draft',
     classes:
       'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200',
   },
   review: {
-    label: 'In Review',
+    label: 'doc_state.review',
     classes:
       'border-violet-300 bg-violet-50 text-violet-800 dark:border-violet-700 dark:bg-violet-900/30 dark:text-violet-200',
   },
   published: {
-    label: 'Veröffentlicht',
+    label: 'doc_state.published',
     classes:
       'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200',
   },
@@ -73,6 +74,7 @@ export function DocumentWorkflowPanel({
   submittedBy: _submittedBy,
   publishedBy: _publishedBy,
 }: Props) {
+  const { t } = useTranslation();
   const { data: identity } = useGetIdentity<{ id?: string }>();
   const me = identity?.id ? `/v1/users/${identity.id}` : null;
   const isReviewer = me ? reviewers.includes(me) : false;
@@ -85,9 +87,9 @@ export function DocumentWorkflowPanel({
           'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
           badge.classes,
         )}
-        title={`Workflow: ${badge.label}`}
+        title={`Workflow: ${t(badge.label)}`}
       >
-        {badge.label}
+        {t(badge.label)}
       </span>
       {state === 'draft' ? (
         <SubmitForReviewButton documentId={documentId} initialReviewers={reviewers} />

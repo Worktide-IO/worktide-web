@@ -1,4 +1,5 @@
 import { Mail, RefreshCw, Send, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -22,9 +23,9 @@ type Invitation = {
 };
 
 const ROLES = [
-  { value: 'member', label: 'Member' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'guest', label: 'Gast' },
+  { value: 'member', label: 'team_role.member' },
+  { value: 'admin', label: 'team_role.admin' },
+  { value: 'guest', label: 'team_role.guest' },
 ];
 
 const STATUS_TONE: Record<Invitation['status'], string> = {
@@ -34,10 +35,10 @@ const STATUS_TONE: Record<Invitation['status'], string> = {
   revoked: 'text-slate-500 bg-slate-100 border-slate-200',
 };
 const STATUS_LABEL: Record<Invitation['status'], string> = {
-  pending: 'Ausstehend',
-  accepted: 'Angenommen',
-  expired: 'Abgelaufen',
-  revoked: 'Zurückgezogen',
+  pending: 'invitation_status.pending',
+  accepted: 'invitation_status.accepted',
+  expired: 'invitation_status.expired',
+  revoked: 'invitation_status.revoked',
 };
 
 function readCollection(data: unknown): Invitation[] {
@@ -52,6 +53,7 @@ function readCollection(data: unknown): Invitation[] {
  * All calls are workspace-scoped via the X-Workspace-Id header.
  */
 export function InviteMembersCard() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('member');
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -158,7 +160,7 @@ export function InviteMembersCard() {
           >
             {ROLES.map((r) => (
               <option key={r.value} value={r.value}>
-                {r.label}
+                {t(r.label)}
               </option>
             ))}
           </select>
@@ -177,7 +179,7 @@ export function InviteMembersCard() {
               >
                 <span className="min-w-0 flex-1 truncate">{inv.email}</span>
                 <Badge variant="outline" className={cn('text-[10px]', STATUS_TONE[inv.status])}>
-                  {STATUS_LABEL[inv.status]}
+                  {t(STATUS_LABEL[inv.status])}
                 </Badge>
                 {inv.sendCount ? (
                   <span className="hidden text-xs text-muted-foreground sm:inline">
