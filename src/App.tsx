@@ -172,7 +172,7 @@ export default function App() {
             {
               name: 'team_members',
               list: '/personen',
-              meta: { label: 'Personen', icon: 'Users', category: 'Arbeit' },
+              meta: { label: 'Mitglieder', icon: 'Users', category: 'Admin' },
             },
             {
               name: 'reports',
@@ -275,11 +275,6 @@ export default function App() {
 
             // ---- Admin -----------------------------------------------------
             {
-              name: 'workspace_members',
-              list: '/workspace-members',
-              meta: { label: 'Mitglieder', icon: 'Users', category: 'Admin' },
-            },
-            {
               name: 'role_permission_overrides',
               list: '/permissions',
               meta: { label: 'Berechtigungen', icon: 'Shield', category: 'Admin' },
@@ -375,7 +370,6 @@ export default function App() {
               <Route path="/research/missions/create" element={<ResearchMissionCreatePage />} />
               <Route path="/research/missions/:id" element={<ResearchMissionDetailPage />} />
               <Route path="/research/leads" element={<LeadsListPage />} />
-              <Route path="/workspace-members" element={<PlaceholderPage resource="workspace_members" />} />
               <Route path="/permissions" element={<PermissionsMatrixPage />} />
               <Route path="/webhooks" element={<PlaceholderPage resource="webhooks" />} />
               <Route path="/access-tokens" element={<AccessTokensPage />} />
