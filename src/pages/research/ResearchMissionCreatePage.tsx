@@ -120,33 +120,33 @@ export function ResearchMissionCreatePage() {
   if (missionId === null) {
     return (
       <div className="space-y-4">
-        <h2 className="text-2xl">Neue Recherche-Mission</h2>
+        <h2 className="text-2xl">{t('mission_create.new_title')}</h2>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Bot className="size-4" /> Auftrag beschreiben
+              <Bot className="size-4" /> {t('mission_create.describe_brief')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="prompt">Was soll der Agent finden?</Label>
+              <Label htmlFor="prompt">{t('mission_create.what_to_find')}</Label>
               <Textarea
                 id="prompt"
                 rows={4}
-                placeholder="z. B. Finde 1000 Key Accounts im DACH-Raum, die als Partner geeignet wären."
+                placeholder={t('mission_create.prompt_placeholder')}
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
               />
             </div>
             <div className="flex flex-wrap gap-4">
               <div className="space-y-2">
-                <Label>Ziel (optional)</Label>
+                <Label>{t('mission_create.objective_label')}</Label>
                 <Select value={objective} onValueChange={(v) => setObjective(v as ResearchObjective | 'auto')}>
                   <SelectTrigger className="w-56">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="auto">Automatisch erkennen</SelectItem>
+                    <SelectItem value="auto">{t('mission_create.auto_detect')}</SelectItem>
                     {Object.entries(OBJECTIVE_LABEL).map(([value, label]) => (
                       <SelectItem key={value} value={value}>
                         {t(label)}
@@ -156,13 +156,13 @@ export function ResearchMissionCreatePage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="target">Zielanzahl (optional)</Label>
+                <Label htmlFor="target">{t('mission_create.target_count_label')}</Label>
                 <Input
                   id="target"
                   type="number"
                   min={0}
                   className="w-40"
-                  placeholder="z. B. 1000"
+                  placeholder={t('mission_create.target_count_placeholder')}
                   value={targetCount}
                   onChange={(e) => setTargetCount(e.target.value)}
                 />
@@ -170,7 +170,7 @@ export function ResearchMissionCreatePage() {
             </div>
             <Button onClick={() => void onCreate()} disabled={busy || prompt.trim() === ''}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-              Recherche starten
+              {t('mission_create.start_research')}
             </Button>
           </CardContent>
         </Card>
@@ -182,9 +182,9 @@ export function ResearchMissionCreatePage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl">Recherche-Mission</h2>
+        <h2 className="text-2xl">{t('mission_create.mission_title')}</h2>
         <Button variant="ghost" onClick={() => navigate(`/research/missions/${missionId}`)}>
-          Zur Mission <ArrowRight className="size-4" />
+          {t('mission_create.to_mission')} <ArrowRight className="size-4" />
         </Button>
       </div>
 
@@ -230,20 +230,20 @@ export function ResearchMissionCreatePage() {
 
           {busy ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" /> Agent denkt nach…
+              <Loader2 className="size-4 animate-spin" /> {t('mission_create.agent_thinking')}
             </div>
           ) : null}
 
           {ready ? (
             <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 p-3">
-              <Badge variant="secondary">Bereit</Badge>
-              <span className="text-sm">Der Auftrag ist klar. Jetzt die Suche starten?</span>
+              <Badge variant="secondary">{t('mission_create.ready')}</Badge>
+              <span className="text-sm">{t('mission_create.brief_clear')}</span>
               <div className="ml-auto flex gap-2">
                 <Button variant="outline" onClick={() => navigate(`/research/missions/${missionId}`)}>
-                  Nur speichern
+                  {t('mission_create.only_save')}
                 </Button>
                 <Button onClick={() => void onRun()} disabled={busy}>
-                  Suche starten
+                  {t('mission_create.start_search')}
                 </Button>
               </div>
             </div>
@@ -251,7 +251,7 @@ export function ResearchMissionCreatePage() {
             <div className="flex items-end gap-2">
               <Textarea
                 rows={2}
-                placeholder="Antwort eingeben (oder Optionen oben antippen)…"
+                placeholder={t('mission_create.answer_placeholder')}
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 onKeyDown={(e) => {
@@ -262,7 +262,7 @@ export function ResearchMissionCreatePage() {
                 }}
               />
               <Button onClick={() => void onAnswer()} disabled={busy || answer.trim() === ''}>
-                <Send className="size-4" /> Senden
+                <Send className="size-4" /> {t('mission_create.send')}
               </Button>
             </div>
           )}

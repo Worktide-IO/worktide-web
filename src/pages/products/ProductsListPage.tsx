@@ -67,27 +67,27 @@ export function ProductsListPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-2xl">
-            <Boxes className="size-6 text-muted-foreground" /> Produkte & Services
+            <Boxes className="size-6 text-muted-foreground" /> {t('product_list.title')}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Euer Katalog — Produkte (versioniert) und Services, zuordenbar zu Kunden.
+            {t('product_list.subtitle')}
           </p>
         </div>
         <Button asChild>
           <Link to="/produkte/create">
-            <Plus className="size-4" /> Neu
+            <Plus className="size-4" /> {t('product_list.new')}
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader className="gap-4">
-          <CardTitle>Katalog</CardTitle>
+          <CardTitle>{t('product_list.catalog')}</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[240px] max-w-md">
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
-                placeholder="Name suchen…"
+                placeholder={t('product_list.search_name')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-8"
@@ -95,12 +95,12 @@ export function ProductsListPage() {
             </div>
             <Select value={typeFilter} onValueChange={applyType}>
               <SelectTrigger className="w-44">
-                <SelectValue placeholder="Typ" />
+                <SelectValue placeholder={t('product_list.type')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Typen</SelectItem>
-                <SelectItem value="product">Produkte</SelectItem>
-                <SelectItem value="service">Services</SelectItem>
+                <SelectItem value="all">{t('product_list.all_types')}</SelectItem>
+                <SelectItem value="product">{t('product_list.products')}</SelectItem>
+                <SelectItem value="service">{t('product_list.services')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -113,16 +113,16 @@ export function ProductsListPage() {
             </div>
           ) : rows.length === 0 ? (
             <p className="py-12 text-center text-sm text-muted-foreground">
-              {all.length === 0 ? 'Noch nichts im Katalog.' : 'Keine Treffer.'}
+              {all.length === 0 ? t('product_list.empty') : t('product_list.no_matches')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="w-28">Typ</TableHead>
-                  <TableHead className="w-32">Status</TableHead>
-                  <TableHead className="w-40">Kategorie</TableHead>
+                  <TableHead>{t('product_list.col_name')}</TableHead>
+                  <TableHead className="w-28">{t('product_list.col_type')}</TableHead>
+                  <TableHead className="w-32">{t('product_list.col_status')}</TableHead>
+                  <TableHead className="w-40">{t('product_list.col_category')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { languageLabel, usePrimaryLocale, type TranslationsMap } from '@/lib/languages';
@@ -27,6 +29,7 @@ export function TranslationsFields({
   value: TranslationsMap;
   onChange: (next: TranslationsMap) => void;
 }) {
+  const { t } = useTranslation();
   // The workspace's own language authors the base columns, so it needs no
   // separate translation entry — only offer the *other* supported locales.
   const primaryLocale = usePrimaryLocale();
@@ -48,7 +51,7 @@ export function TranslationsFields({
 
   return (
     <div className="space-y-3 rounded-md border border-dashed p-3">
-      <p className="text-xs font-medium text-muted-foreground">Übersetzungen</p>
+      <p className="text-xs font-medium text-muted-foreground">{t('translations_fields.title')}</p>
       {visibleLocales.map((locale) => (
         <div key={locale} className="space-y-2">
           <p className="text-xs font-semibold">{languageLabel(locale)}</p>
@@ -67,7 +70,7 @@ export function TranslationsFields({
         </div>
       ))}
       <p className="text-[11px] text-muted-foreground">
-        Leer lassen = Standardwert (oben) verwenden.
+        {t('translations_fields.empty_hint')}
       </p>
     </div>
   );

@@ -66,7 +66,7 @@ export function ResearchMissionsListPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl">Recherche / Akquise</h2>
+            <h2 className="text-2xl">{t('mission_list.title')}</h2>
             {connected ? (
               <Badge variant="secondary" className="gap-1 text-xs">
                 <Wifi className="size-3" /> Live
@@ -77,11 +77,11 @@ export function ResearchMissionsListPage() {
               </Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">{total} Missionen im Workspace</p>
+          <p className="text-sm text-muted-foreground">{t('mission_list.count_in_workspace', { count: total })}</p>
         </div>
         <Button asChild>
           <Link to="/research/missions/create">
-            <Plus className="size-4" /> Neue Mission
+            <Plus className="size-4" /> {t('mission_list.new_mission')}
           </Link>
         </Button>
       </div>
@@ -89,15 +89,15 @@ export function ResearchMissionsListPage() {
       <Card>
         <CardHeader className="gap-4">
           <CardTitle className="flex items-center gap-2">
-            <Compass className="size-4" /> Missionen
+            <Compass className="size-4" /> {t('mission_list.missions')}
           </CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <Select value={statusFilter} onValueChange={onStatus}>
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder={t('mission_list.status')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
+                <SelectItem value="all">{t('mission_list.all_statuses')}</SelectItem>
                 {Object.entries(MISSION_STATUS_LABEL).map(([value, label]) => (
                   <SelectItem key={value} value={value}>
                     {t(label)}
@@ -117,17 +117,17 @@ export function ResearchMissionsListPage() {
           ) : rows.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-12">
               {statusFilter !== 'all'
-                ? 'Keine Missionen mit diesem Status.'
-                : 'Noch keine Missionen. Starte eine neue Recherche.'}
+                ? t('mission_list.empty_filtered')
+                : t('mission_list.empty')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Auftrag</TableHead>
-                  <TableHead className="w-40">Ziel</TableHead>
-                  <TableHead className="w-32">Status</TableHead>
-                  <TableHead className="w-28 text-right">Leads</TableHead>
+                  <TableHead>{t('mission_list.col_brief')}</TableHead>
+                  <TableHead className="w-40">{t('mission_list.col_objective')}</TableHead>
+                  <TableHead className="w-32">{t('mission_list.col_status')}</TableHead>
+                  <TableHead className="w-28 text-right">{t('mission_list.col_leads')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
