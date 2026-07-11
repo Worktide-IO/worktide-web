@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { resetI18nProfileCache } from '@/lib/languages';
 import {
   Select,
   SelectContent,
@@ -152,7 +153,13 @@ function WorkspaceForm() {
         successNotification: false,
       },
       {
-        onSuccess: () => toast.success('Workspace gespeichert.'),
+        onSuccess: () => {
+          // The workspace locale feeds the resolved display language for users
+          // without a personal preference — drop the i18n cache so the change
+          // applies immediately instead of only after a reload.
+          resetI18nProfileCache();
+          toast.success('Workspace gespeichert.');
+        },
         onError: (err) => {
           const status = (err as { response?: { status?: number } })?.response?.status;
           toast.error(

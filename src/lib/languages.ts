@@ -19,7 +19,12 @@ export function languageLabel(code: string): string {
 /** `{ field: { locale: value } }` — mirrors the backend `translations` column. */
 export type TranslationsMap = Record<string, Record<string, string>>;
 
-type I18nProfile = { supportedLanguages: string[]; preferredLanguage: string | null };
+type I18nProfile = {
+  supportedLanguages: string[];
+  preferredLanguage: string | null;
+  // Backend-resolved display locale: preference → workspace locale → default.
+  resolvedLanguage: string | null;
+};
 
 // Small + static per deployment, so fetch the i18n bits of the profile once and
 // cache process-wide. Every translation editor + the active-locale hook share it.
@@ -40,16 +45,21 @@ async function fetchI18nProfile(): Promise<I18nProfile> {
   if (cache) return cache;
   if (!inflight) {
     inflight = api
-      .get<{ supportedLanguages?: string[]; preferredLanguage?: string | null }>('/me/profile')
+      .get<{
+        supportedLanguages?: string[];
+        preferredLanguage?: string | null;
+        resolvedLanguage?: string | null;
+      }>('/me/profile')
       .then(({ data }) => {
         cache = {
           supportedLanguages: data.supportedLanguages ?? ['en'],
           preferredLanguage: data.preferredLanguage ?? null,
+          resolvedLanguage: data.resolvedLanguage ?? null,
         };
         return cache;
       })
       .catch(() => {
-        cache = { supportedLanguages: ['en'], preferredLanguage: null };
+        cache = { supportedLanguages: ['en'], preferredLanguage: null, resolvedLanguage: null };
         return cache;
       })
       .finally(() => {
@@ -102,15 +112,17 @@ export function useSupportedLanguages(): { languages: string[]; loading: boolean
  * in {@link localize}, so an imperfect guess never blanks content.
  */
 export function useActiveLocale(): string {
-  const [locale, setLocale] = useState<string | null>(
-    cache ? (cache.preferredLanguage ?? cache.supportedLanguages[0] ?? 'en') : null,
-  );
+  // Prefer the backend-resolved locale (preference → workspace → default);
+  // fall back to the local precedence only if an old API omits it.
+  const pick = (p: I18nProfile): string =>
+    p.resolvedLanguage ?? p.preferredLanguage ?? p.supportedLanguages[0] ?? 'en';
+  const [locale, setLocale] = useState<string | null>(cache ? pick(cache) : null);
 
   useEffect(() => {
     let cancelled = false;
     const load = () =>
       void fetchI18nProfile().then((p) => {
-        if (!cancelled) setLocale(p.preferredLanguage ?? p.supportedLanguages[0] ?? 'en');
+        if (!cancelled) setLocale(pick(p));
       });
     load();
     const unsub = subscribeI18nProfile(load);
