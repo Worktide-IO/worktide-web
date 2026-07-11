@@ -1,8 +1,12 @@
 import { Authenticated, Refine } from '@refinedev/core';
 import { DevtoolsPanel, DevtoolsProvider } from '@refinedev/devtools';
 import routerProvider from '@refinedev/react-router';
+import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router';
 
+import i18n from '@/i18n';
+import { i18nProvider } from '@/i18n/refine';
+import { useActiveLocale } from '@/lib/languages';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { AppLayout } from '@/components/AppLayout';
 import { Toaster } from '@/components/ui/sonner';
@@ -105,16 +109,27 @@ function DevtoolsGate({ children }: { children: React.ReactNode }): React.JSX.El
   );
 }
 
+/** Keeps i18next's active language in sync with the user's stored preference. */
+function LocaleSync() {
+  const locale = useActiveLocale();
+  useEffect(() => {
+    void i18n.changeLanguage(locale);
+  }, [locale]);
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <BrandingProvider>
       <TooltipProvider delayDuration={300}>
       <DevtoolsGate>
+        <LocaleSync />
         <Refine
           dataProvider={dataProvider}
           authProvider={authProvider}
           routerProvider={routerProvider}
+          i18nProvider={i18nProvider}
           resources={[
             // ---- Arbeit ----------------------------------------------------
             {
@@ -315,7 +330,7 @@ export default function App() {
                   fallback={<Navigate to="/login" replace />}
                   loading={
                     <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-                      Lädt…
+                      {i18n.t('app.loading')}
                     </div>
                   }
                 >
