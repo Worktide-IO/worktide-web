@@ -12,20 +12,24 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
  */
 export function AuthedAvatar({
   memberId,
+  hasAvatar,
   fallback,
   size,
   className,
 }: {
   memberId?: string | null;
+  /** Whether this member actually has an avatar — gates the fetch so members
+   *  without a photo never hit (and log) the 404 avatar route. */
+  hasAvatar?: boolean;
   fallback: string;
   size?: 'default' | 'sm' | 'lg';
   className?: string;
 }) {
   const { data: url } = useQuery({
     queryKey: ['member-avatar', memberId],
-    enabled: Boolean(memberId),
+    enabled: Boolean(memberId) && hasAvatar === true,
     staleTime: 5 * 60 * 1000,
-    retry: false, // a 404 just means "no avatar" — don't hammer it
+    retry: false,
     queryFn: async () => {
       const res = await api.get(`/workspace_members/${memberId}/avatar`, { responseType: 'blob' });
       return URL.createObjectURL(res.data as Blob);
