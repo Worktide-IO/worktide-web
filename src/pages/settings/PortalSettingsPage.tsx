@@ -24,12 +24,13 @@ import { SettingsLayout } from './SettingsLayout';
  * (WorkspaceVoter EDIT — Owner/Admin), same as the other workspace cards.
  */
 export function PortalSettingsPage() {
+  const { t } = useTranslation();
   return (
     <SettingsLayout>
       <div>
-        <h2 className="text-2xl">Kundenportal</h2>
+        <h2 className="text-2xl">{t('portal_settings.title')}</h2>
         <p className="text-sm text-muted-foreground">
-          Konfiguration des Kundenportals für diesen Mandanten — nur Workspace-Admins können speichern.
+          {t('portal_settings.subtitle')}
         </p>
       </div>
       <PortalWelcomeTextCard />
@@ -99,22 +100,21 @@ function PortalWelcomeTextCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Begrüßungstext</CardTitle>
+        <CardTitle>{t('portal_settings.welcome_title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Wird in der Einladungs-E-Mail zum Kundenportal über dem Zugangslink angezeigt. Leer
-          lassen, um nur den Standardtext zu senden.
+          {t('portal_settings.welcome_hint')}
         </p>
         <Textarea
           rows={4}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="z. B. Herzlich willkommen in unserem Kundenportal! Hier finden Sie Ihre Tickets, Angebote und Dokumente."
+          placeholder={t('portal_settings.welcome_placeholder')}
         />
         <div className="flex justify-end">
           <Button onClick={save} disabled={!dirty || mutation.isPending}>
-            Speichern
+            {t('action.save')}
           </Button>
         </div>
       </CardContent>
@@ -167,15 +167,14 @@ function PortalWaitingStatusesCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Status „wartet auf Kunde"</CardTitle>
+        <CardTitle>{t('portal_settings.waiting_title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Tickets in einem markierten Status pausieren die SLA und erscheinen im Portal unter
-          „Wartet auf mich". (Abgeschlossene Status sind ausgenommen.)
+          {t('portal_settings.waiting_hint')}
         </p>
         {statuses.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Keine Status vorhanden.</p>
+          <p className="text-sm text-muted-foreground">{t('portal_settings.no_statuses')}</p>
         ) : (
           <div className="divide-y">
             {statuses.map((s) => (
@@ -195,10 +194,10 @@ type Leg = 'response' | 'resolution';
 
 // priority key · label · built-in defaults (mirror PortalSlaCalculator::DEFAULTS).
 const PRIORITIES: { key: string; label: string; response: number; resolution: number }[] = [
-  { key: 'urgent', label: 'Dringend', response: 1, resolution: 4 },
-  { key: 'high', label: 'Hoch', response: 2, resolution: 8 },
-  { key: 'normal', label: 'Mittel', response: 8, resolution: 48 },
-  { key: 'low', label: 'Niedrig', response: 24, resolution: 120 },
+  { key: 'urgent', label: 'priority.urgent', response: 1, resolution: 4 },
+  { key: 'high', label: 'priority.high', response: 2, resolution: 8 },
+  { key: 'normal', label: 'portal_settings.priority_normal', response: 8, resolution: 48 },
+  { key: 'low', label: 'priority.low', response: 24, resolution: 120 },
 ];
 
 type Vals = Record<string, { response: string; resolution: string }>;
@@ -297,24 +296,23 @@ function PortalSlaCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>SLA-Reaktionszeiten</CardTitle>
+        <CardTitle>{t('portal_settings.sla_title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Ziel-Zeiten je Ticket-Priorität, in Stunden ab Ticket-Erstellung: <b>Reaktion</b> (erste
-          Agentur-Antwort) und <b>Lösung</b> (Ticket erledigt). Bestimmt die SLA-Anzeige im Portal.{' '}
-          <span className="text-foreground">Leer</span> = Standardwert,{' '}
-          <span className="text-foreground">0</span> = keine SLA. Kunden mit eigenem SLA übersteuern das.
+          {t('portal_settings.sla_desc_1')} <b>{t('portal_settings.sla_response')}</b> {t('portal_settings.sla_desc_2')} <b>{t('portal_settings.sla_resolution')}</b> {t('portal_settings.sla_desc_3')}{' '}
+          <span className="text-foreground">{t('portal_settings.sla_empty')}</span> {t('portal_settings.sla_desc_4')}{' '}
+          <span className="text-foreground">0</span> {t('portal_settings.sla_desc_5')}
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           {PRIORITIES.map((p) => (
             <div key={p.key} className="space-y-2 rounded-md border p-3">
-              <div className="text-sm font-medium">{p.label}</div>
+              <div className="text-sm font-medium">{t(p.label)}</div>
               <div className="flex items-center gap-4">
                 {(['response', 'resolution'] as Leg[]).map((leg) => (
                   <div key={leg} className="flex-1 space-y-1">
                     <Label htmlFor={`sla-${p.key}-${leg}`} className="text-xs text-muted-foreground">
-                      {leg === 'response' ? 'Reaktion' : 'Lösung'}
+                      {leg === 'response' ? t('portal_settings.sla_response') : t('portal_settings.sla_resolution')}
                     </Label>
                     <div className="flex items-center gap-1.5">
                       <Input
@@ -327,7 +325,7 @@ function PortalSlaCard() {
                         placeholder={String(p[leg])}
                         className="min-w-0 flex-1"
                       />
-                      <span className="text-xs text-muted-foreground">Std.</span>
+                      <span className="text-xs text-muted-foreground">{t('portal_settings.hours_short')}</span>
                     </div>
                   </div>
                 ))}
@@ -335,10 +333,10 @@ function PortalSlaCard() {
             </div>
           ))}
         </div>
-        {invalid ? <p className="text-sm text-destructive">Bitte nur ganze Zahlen ≥ 0 eingeben.</p> : null}
+        {invalid ? <p className="text-sm text-destructive">{t('portal_settings.invalid_int')}</p> : null}
         <div>
           <Button type="button" onClick={handleSave} disabled={saving || !dirty || invalid}>
-            {saving ? 'Speichere…' : 'Speichern'}
+            {saving ? t('portal_settings.saving') : t('action.save')}
           </Button>
         </div>
       </CardContent>

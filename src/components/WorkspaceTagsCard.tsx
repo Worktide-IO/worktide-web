@@ -40,10 +40,10 @@ import type { Row } from '@/lib/refine';
 import { cn } from '@/lib/utils';
 
 const SCOPES: { value: TagJsonldScopeEnum; label: string }[] = [
-  { value: 'any', label: 'Überall' },
-  { value: 'project', label: 'Projekte' },
-  { value: 'task', label: 'Aufgaben' },
-  { value: 'customer', label: 'Kunden' },
+  { value: 'any', label: 'ws_tags.scope_any' },
+  { value: 'project', label: 'ws_tags.scope_project' },
+  { value: 'task', label: 'ws_tags.scope_task' },
+  { value: 'customer', label: 'ws_tags.scope_customer' },
 ];
 
 const SWATCHES = [
@@ -65,6 +65,7 @@ const SWATCHES = [
  * TagPicker (scope: 'any' shows everywhere).
  */
 export function WorkspaceTagsCard() {
+  const { t: translate } = useTranslation();
   const [scope, setScope] = useState<TagJsonldScopeEnum | 'all'>('all');
   const [editing, setEditing] = useState<Row<TagJsonld> | null>(null);
   const [creating, setCreating] = useState(false);
@@ -88,9 +89,8 @@ export function WorkspaceTagsCard() {
           Tags
         </CardTitle>
         <CardDescription>
-          Workspace-weite Tags zum Kennzeichnen von Projekten, Aufgaben und
-          Kunden. Der Scope grenzt ein, wo der Tag angeboten wird —{' '}
-          <em>Überall</em> erscheint in jeder Auswahl.
+          {translate('ws_tags.desc_lead')}{' '}
+          <em>{translate('ws_tags.scope_any')}</em> {translate('ws_tags.desc_tail')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -100,17 +100,17 @@ export function WorkspaceTagsCard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Alle Scopes</SelectItem>
+              <SelectItem value="all">{translate('ws_tags.all_scopes')}</SelectItem>
               {SCOPES.map((s) => (
                 <SelectItem key={s.value} value={s.value}>
-                  {s.label}
+                  {translate(s.label)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Button size="sm" onClick={() => setCreating(true)}>
             <Plus className="size-4" />
-            Neuer Tag
+            {translate('ws_tags.new_tag')}
           </Button>
         </div>
 
@@ -122,15 +122,15 @@ export function WorkspaceTagsCard() {
         ) : tags.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
             {scope === 'all'
-              ? 'Noch keine Tags. Lege den ersten an.'
-              : 'Keine Tags in diesem Scope.'}
+              ? translate('ws_tags.empty_all')
+              : translate('ws_tags.empty_scope')}
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12" aria-label="Farbe" />
-                <TableHead>Name</TableHead>
+                <TableHead className="w-12" aria-label={translate('ws_tags.color')} />
+                <TableHead>{translate('ws_tags.name')}</TableHead>
                 <TableHead className="w-32">Scope</TableHead>
                 <TableHead className="w-20 text-right" />
               </TableRow>
@@ -176,7 +176,7 @@ function TagRow({
 
   const remove = async () => {
     if (!tag.id) return;
-    if (!window.confirm(`Tag "${tag.name}" wirklich löschen? Die Markierungen an verknüpften Projekten/Aufgaben gehen verloren.`)) {
+    if (!window.confirm(translate('ws_tags.confirm_delete', { name: tag.name }))) {
       return;
     }
     setDeleting(true);
@@ -213,7 +213,10 @@ function TagRow({
         </span>
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">
-        {SCOPES.find((s) => s.value === tag.scope)?.label ?? tag.scope}
+        {(() => {
+          const s = SCOPES.find((s) => s.value === tag.scope);
+          return s ? translate(s.label) : tag.scope;
+        })()}
       </TableCell>
       <TableCell className="text-right">
         <Button variant="ghost" size="icon" className="size-7" onClick={onEdit}>
@@ -305,21 +308,22 @@ function TagDialog(props: DialogProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? `Tag "${initial?.name}" bearbeiten` : 'Neuen Tag anlegen'}
+            {isEdit
+              ? translate('ws_tags.edit_title', { name: initial?.name })
+              : translate('ws_tags.create_title')}
           </DialogTitle>
           <DialogDescription>
-            Name, Scope und Farbe — der Tag wird ab dem nächsten Render in
-            allen passenden Pickern und Listen sichtbar.
+            {translate('ws_tags.dialog_desc')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="tag-name">Name</Label>
+            <Label htmlFor="tag-name">{translate('ws_tags.name')}</Label>
             <Input
               id="tag-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="z. B. Frontend, Bug, Wartung"
+              placeholder={translate('ws_tags.name_placeholder')}
               autoFocus
             />
           </div>
@@ -332,18 +336,17 @@ function TagDialog(props: DialogProps) {
               <SelectContent>
                 {SCOPES.map((s) => (
                   <SelectItem key={s.value} value={s.value}>
-                    {s.label}
+                    {translate(s.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              <em>Überall</em> erscheint auch bei Projekt- und
-              Aufgaben-Pickern.
+              <em>{translate('ws_tags.scope_any')}</em> {translate('ws_tags.picker_hint')}
             </p>
           </div>
           <div className="space-y-1.5">
-            <Label>Farbe</Label>
+            <Label>{translate('ws_tags.color')}</Label>
             <div className="flex flex-wrap items-center gap-1.5">
               {SWATCHES.map((c) => (
                 <button
@@ -355,7 +358,7 @@ function TagDialog(props: DialogProps) {
                   )}
                   style={{ backgroundColor: c }}
                   onClick={() => setColor(c)}
-                  aria-label={`Farbe ${c}`}
+                  aria-label={translate('ws_tags.color_swatch', { color: c })}
                 />
               ))}
               <Input
@@ -374,12 +377,12 @@ function TagDialog(props: DialogProps) {
                   color,
                 }}
               >
-                {name.trim() || 'Vorschau'}
+                {name.trim() || translate('ws_tags.preview')}
               </span>
             </div>
           </div>
           <TranslationsFields
-            fields={[{ key: 'name', label: 'Name' }]}
+            fields={[{ key: 'name', label: translate('ws_tags.name') }]}
             locales={languages}
             value={translations}
             onChange={setTranslations}
@@ -387,11 +390,11 @@ function TagDialog(props: DialogProps) {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={props.onClose} disabled={saving}>
-            Abbrechen
+            {translate('action.cancel')}
           </Button>
           <Button onClick={submit} disabled={saving || !name.trim()}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : isEdit ? <Pencil className="size-4" /> : <Plus className="size-4" />}
-            {isEdit ? 'Speichern' : 'Anlegen'}
+            {isEdit ? translate('action.save') : translate('ws_tags.create')}
           </Button>
         </DialogFooter>
       </DialogContent>

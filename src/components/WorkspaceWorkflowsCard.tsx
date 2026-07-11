@@ -62,6 +62,7 @@ const BASELINE = '__baseline__';
  * customising per tracker.
  */
 export function WorkspaceWorkflowsCard() {
+  const { t: translate } = useTranslation();
   const [trackerFilter, setTrackerFilter] = useState<string>(BASELINE);
 
   const { result: trackers, query: trackersQuery } = useList<Row<TrackerJsonld>>({
@@ -106,14 +107,10 @@ export function WorkspaceWorkflowsCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Workflow className="size-5 text-muted-foreground" />
-          Workflows
+          {translate('ws_workflows.title')}
         </CardTitle>
         <CardDescription>
-          Definiert pro Tracker, welche Statuswechsel erlaubt sind und
-          welche Rollen sie durchführen dürfen. Solange für einen
-          Start-Status keine Regel existiert, sind alle Wechsel offen —
-          die erste Regel schaltet das auf strikten Workflow um.
-          Workspace-Owner und Admins umgehen die Regeln immer.
+          {translate('ws_workflows.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -123,7 +120,7 @@ export function WorkspaceWorkflowsCard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={BASELINE}>Baseline (alle Tracker)</SelectItem>
+              <SelectItem value={BASELINE}>{translate('ws_workflows.baseline_all')}</SelectItem>
               {(trackers?.data ?? []).map((t) => (
                 <SelectItem key={t['@id']} value={t['@id'] ?? ''}>
                   {t.name}
@@ -133,7 +130,7 @@ export function WorkspaceWorkflowsCard() {
           </Select>
           <Button size="sm" onClick={() => setCreating(true)}>
             <Plus className="size-4" />
-            Neue Regel
+            {translate('ws_workflows.new_rule')}
           </Button>
         </div>
 
@@ -144,17 +141,17 @@ export function WorkspaceWorkflowsCard() {
           </div>
         ) : filteredTransitions.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            Keine Regeln. Jeder Statuswechsel ist erlaubt.
+            {translate('ws_workflows.empty')}
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Von</TableHead>
+                <TableHead>{translate('ws_workflows.col_from')}</TableHead>
                 <TableHead className="w-8" />
-                <TableHead>Nach</TableHead>
-                <TableHead>Rollen</TableHead>
-                <TableHead>Label</TableHead>
+                <TableHead>{translate('ws_workflows.col_to')}</TableHead>
+                <TableHead>{translate('ws_workflows.col_roles')}</TableHead>
+                <TableHead>{translate('ws_workflows.col_label')}</TableHead>
                 <TableHead className="w-20 text-right" />
               </TableRow>
             </TableHeader>
@@ -215,7 +212,7 @@ function TransitionRow({
 
   const remove = async () => {
     if (!transition.id) return;
-    if (!window.confirm(`Regel „${from} → ${to}" löschen?`)) return;
+    if (!window.confirm(translate('ws_workflows.confirm_delete', { from, to }))) return;
     setDeleting(true);
     try {
       await api.delete(`/workflow_transitions/${transition.id}`);
@@ -238,9 +235,9 @@ function TransitionRow({
       <TableCell className="font-medium">{to}</TableCell>
       <TableCell className="text-xs">
         {roles === null || roles === undefined ? (
-          <span className="text-muted-foreground">Jede Rolle</span>
+          <span className="text-muted-foreground">{translate('ws_workflows.any_role')}</span>
         ) : roles.length === 0 ? (
-          <span className="text-destructive">Niemand (Kill-Switch)</span>
+          <span className="text-destructive">{translate('ws_workflows.nobody_killswitch')}</span>
         ) : (
           <span className="inline-flex flex-wrap gap-1">
             {roles.map((r) => (
@@ -378,23 +375,21 @@ function TransitionDialog(props: DialogProps) {
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? 'Workflow-Regel bearbeiten' : 'Neue Workflow-Regel'}
+            {isEdit ? translate('ws_workflows.edit_title') : translate('ws_workflows.new_title')}
           </DialogTitle>
           <DialogDescription>
-            Definiert einen erlaubten Statuswechsel. Lass die Rollenliste
-            leer und „Beliebige Rolle" wählen, wenn die Regel den
-            Wechsel nur strukturell zulassen, aber nicht einschränken soll.
+            {translate('ws_workflows.dialog_description')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="wt-tracker">Tracker</Label>
+            <Label htmlFor="wt-tracker">{translate('ws_workflows.tracker')}</Label>
             <Select value={tracker} onValueChange={setTracker}>
               <SelectTrigger id="wt-tracker">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={BASELINE}>Baseline (alle Tracker)</SelectItem>
+                <SelectItem value={BASELINE}>{translate('ws_workflows.baseline_all')}</SelectItem>
                 {props.trackers.map((t) => (
                   <SelectItem key={t['@id']} value={t['@id'] ?? ''}>
                     {t.name}
@@ -405,10 +400,10 @@ function TransitionDialog(props: DialogProps) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="wt-from">Von</Label>
+              <Label htmlFor="wt-from">{translate('ws_workflows.col_from')}</Label>
               <Select value={fromStatus} onValueChange={setFromStatus}>
                 <SelectTrigger id="wt-from">
-                  <SelectValue placeholder="Status wählen" />
+                  <SelectValue placeholder={translate('ws_workflows.status_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {props.statuses.map((s) => (
@@ -420,10 +415,10 @@ function TransitionDialog(props: DialogProps) {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="wt-to">Nach</Label>
+              <Label htmlFor="wt-to">{translate('ws_workflows.col_to')}</Label>
               <Select value={toStatus} onValueChange={setToStatus}>
                 <SelectTrigger id="wt-to">
-                  <SelectValue placeholder="Status wählen" />
+                  <SelectValue placeholder={translate('ws_workflows.status_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {props.statuses.map((s) => (
@@ -436,15 +431,15 @@ function TransitionDialog(props: DialogProps) {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Erlaubte Rollen</Label>
+            <Label>{translate('ws_workflows.allowed_roles')}</Label>
             <Select value={roleMode} onValueChange={(v) => setRoleMode(v as 'any' | 'specific' | 'none')}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="any">Jede Rolle</SelectItem>
-                <SelectItem value="specific">Nur ausgewählte Rollen…</SelectItem>
-                <SelectItem value="none">Niemand (Kill-Switch)</SelectItem>
+                <SelectItem value="any">{translate('ws_workflows.any_role')}</SelectItem>
+                <SelectItem value="specific">{translate('ws_workflows.only_selected_roles')}</SelectItem>
+                <SelectItem value="none">{translate('ws_workflows.nobody_killswitch')}</SelectItem>
               </SelectContent>
             </Select>
             {roleMode === 'specific' ? (
@@ -472,22 +467,22 @@ function TransitionDialog(props: DialogProps) {
             ) : null}
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="wt-label">Label (optional)</Label>
+            <Label htmlFor="wt-label">{translate('ws_workflows.label_optional')}</Label>
             <Input
               id="wt-label"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="z. B. „Zur Prüfung einreichen"
+              placeholder={translate('ws_workflows.label_placeholder')}
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={props.onClose} disabled={saving}>
-            Abbrechen
+            {translate('action.cancel')}
           </Button>
           <Button onClick={submit} disabled={saving}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : isEdit ? <Pencil className="size-4" /> : <Plus className="size-4" />}
-            {isEdit ? 'Speichern' : 'Anlegen'}
+            {isEdit ? translate('action.save') : translate('ws_workflows.create')}
           </Button>
         </DialogFooter>
       </DialogContent>

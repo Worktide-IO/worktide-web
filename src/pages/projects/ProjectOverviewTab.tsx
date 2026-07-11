@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { CalendarDays, Coins, PieChart, Receipt, Timer, User2, Users } from 'lucide-react';
 import { Cell, Pie, PieChart as ReChartsPie, ResponsiveContainer } from 'recharts';
 
@@ -26,14 +27,15 @@ function formatHoursFromMinutes(min: number | null | undefined): string {
 }
 
 export function ProjectOverviewTab({ project, customer }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>Beschreibung</CardTitle>
+          <CardTitle>{t('project_overview.description_title')}</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground whitespace-pre-wrap">
-          {project.description?.trim() ? project.description : 'Keine Beschreibung hinterlegt.'}
+          {project.description?.trim() ? project.description : t('project_overview.no_description')}
         </CardContent>
       </Card>
 
@@ -41,11 +43,11 @@ export function ProjectOverviewTab({ project, customer }: Props) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Eckdaten</CardTitle>
+          <CardTitle>{t('project_overview.key_data')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          <DataRow icon={<Users className="size-4" />} label="Kunde">
-            {customer ? customer.name : '— Intern —'}
+          <DataRow icon={<Users className="size-4" />} label={t('project_overview.customer')}>
+            {customer ? customer.name : t('project_overview.internal')}
           </DataRow>
           <DataRow icon={<User2 className="size-4" />} label="Owner">
             {project.owner ? (
@@ -54,32 +56,32 @@ export function ProjectOverviewTab({ project, customer }: Props) {
               '—'
             )}
           </DataRow>
-          <DataRow icon={<CalendarDays className="size-4" />} label="Startet am">
+          <DataRow icon={<CalendarDays className="size-4" />} label={t('project_overview.starts_on')}>
             {formatDate(project.startsOn)}
           </DataRow>
-          <DataRow icon={<CalendarDays className="size-4" />} label="Fällig am">
+          <DataRow icon={<CalendarDays className="size-4" />} label={t('project_overview.due_on')}>
             {formatDate(project.dueOn)}
           </DataRow>
           <DataRow icon={<Timer className="size-4" />} label="Budget">
             {formatHoursFromMinutes(project.budgetMinutes)}
           </DataRow>
-          <DataRow icon={<Coins className="size-4" />} label="Abrechnung">
+          <DataRow icon={<Coins className="size-4" />} label={t('project_overview.billing')}>
             <div className="flex flex-wrap gap-2">
               {project.isBillableByDefault ? (
-                <Badge variant="secondary" className="text-xs">abrechenbar (Default)</Badge>
+                <Badge variant="secondary" className="text-xs">{t('project_overview.billable_default')}</Badge>
               ) : (
-                <Badge variant="outline" className="text-xs">nicht abrechenbar</Badge>
+                <Badge variant="outline" className="text-xs">{t('project_overview.not_billable')}</Badge>
               )}
               {project.isRetainer ? (
                 <Badge variant="outline" className="text-xs">Retainer</Badge>
               ) : null}
               {project.deductNonBillableHours ? (
-                <Badge variant="outline" className="text-xs">Non-billable zieht Budget</Badge>
+                <Badge variant="outline" className="text-xs">{t('project_overview.non_billable_deducts')}</Badge>
               ) : null}
             </div>
           </DataRow>
-          <DataRow icon={<Receipt className="size-4" />} label="Mehrfach-Assignment">
-            {project.isMultiAssignmentAllowed ? 'erlaubt' : 'gesperrt'}
+          <DataRow icon={<Receipt className="size-4" />} label={t('project_overview.multi_assignment')}>
+            {project.isMultiAssignmentAllowed ? t('project_overview.allowed') : t('project_overview.locked')}
           </DataRow>
         </CardContent>
       </Card>
@@ -121,6 +123,7 @@ function DataRow({
  *   - >100%:        Destruktiv-rot (Überzogen)
  */
 function BudgetCard({ project }: { project: Row<ProjectJsonld> }) {
+  const { t } = useTranslation();
   const projectIri = project['@id'] ?? '';
 
   // Wide range to catch everything ever booked on this project. The
@@ -188,7 +191,7 @@ function BudgetCard({ project }: { project: Row<ProjectJsonld> }) {
         ) : budget === null || budget === 0 ? (
           <div className="space-y-2 text-sm">
             <p className="text-muted-foreground">
-              Kein Budget hinterlegt. {formatHoursFromMinutes(tracked)} bisher gebucht.
+              {t('project_overview.no_budget', { hours: formatHoursFromMinutes(tracked) })}
             </p>
           </div>
         ) : (
@@ -225,14 +228,14 @@ function BudgetCard({ project }: { project: Row<ProjectJsonld> }) {
                 >
                   {pctUsed ?? 0} %
                 </div>
-                <div className="text-xs text-muted-foreground">verbraucht</div>
+                <div className="text-xs text-muted-foreground">{t('project_overview.consumed')}</div>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
               <BudgetStat label="Budget" value={formatHoursFromMinutes(budget)} />
-              <BudgetStat label="Gebucht" value={formatHoursFromMinutes(tracked)} />
+              <BudgetStat label={t('project_overview.booked')} value={formatHoursFromMinutes(tracked)} />
               <BudgetStat
-                label={remaining !== null && tracked > budget ? 'Über' : 'Rest'}
+                label={remaining !== null && tracked > budget ? t('project_overview.over') : t('project_overview.rest')}
                 value={
                   tracked > (budget ?? 0)
                     ? `-${formatHoursFromMinutes(tracked - (budget ?? 0))}`
@@ -243,7 +246,7 @@ function BudgetCard({ project }: { project: Row<ProjectJsonld> }) {
             </div>
             {billable > 0 && billable !== tracked ? (
               <p className="text-center text-[10px] text-muted-foreground pt-1">
-                davon {formatHoursFromMinutes(billable)} abrechenbar
+                {t('project_overview.billable_of', { hours: formatHoursFromMinutes(billable) })}
               </p>
             ) : null}
           </>

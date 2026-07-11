@@ -138,13 +138,13 @@ export function ProjectStatusUpdatesTab({ projectIri }: { projectIri: string }) 
       {/* Editor */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Neues Status-Update</CardTitle>
+          <CardTitle className="text-base">{t('status_updates.new_heading')}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={submit} className="space-y-3">
             <div className="flex flex-wrap items-end gap-3">
               <div className="space-y-1.5">
-                <Label>Status</Label>
+                <Label>{t('status_updates.status_label')}</Label>
                 <Select value={health} onValueChange={(v) => setHealth(v as Health)}>
                   <SelectTrigger className="w-44">
                     <SelectValue />
@@ -162,50 +162,50 @@ export function ProjectStatusUpdatesTab({ projectIri }: { projectIri: string }) 
                 </Select>
               </div>
               <div className="min-w-56 flex-1 space-y-1.5">
-                <Label htmlFor="su-title">Titel (optional)</Label>
+                <Label htmlFor="su-title">{t('status_updates.title_label')}</Label>
                 <Input
                   id="su-title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="z. B. Sprint 12 — Zwischenstand"
+                  placeholder={t('status_updates.title_placeholder')}
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="su-summary">Was läuft</Label>
+              <Label htmlFor="su-summary">{t('status_updates.summary_label')}</Label>
               <Textarea
                 id="su-summary"
                 rows={3}
                 value={summary}
                 onChange={(e) => setSummary(e.target.value)}
-                placeholder="Zusammenfassung des aktuellen Stands…"
+                placeholder={t('status_updates.summary_placeholder')}
               />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="su-risks">Risiken</Label>
+                <Label htmlFor="su-risks">{t('status_updates.risks')}</Label>
                 <Textarea
                   id="su-risks"
                   rows={3}
                   value={risks}
                   onChange={(e) => setRisks(e.target.value)}
-                  placeholder="Blocker, offene Fragen…"
+                  placeholder={t('status_updates.risks_placeholder')}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="su-next">Nächste Schritte</Label>
+                <Label htmlFor="su-next">{t('status_updates.next_steps')}</Label>
                 <Textarea
                   id="su-next"
                   rows={3}
                   value={nextSteps}
                   onChange={(e) => setNextSteps(e.target.value)}
-                  placeholder="Was als Nächstes ansteht…"
+                  placeholder={t('status_updates.next_steps_placeholder')}
                 />
               </div>
             </div>
             <div className="flex justify-end">
               <Button type="submit" disabled={busy || !canSubmit}>
-                <Send className="size-4" /> Update posten
+                <Send className="size-4" /> {t('status_updates.post')}
               </Button>
             </div>
           </form>
@@ -217,7 +217,7 @@ export function ProjectStatusUpdatesTab({ projectIri }: { projectIri: string }) 
         <Skeleton className="h-24 w-full" />
       ) : updates.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
-          Noch keine Status-Updates für dieses Projekt.
+          {t('status_updates.empty')}
         </p>
       ) : (
         <ul className="space-y-3">
@@ -235,7 +235,7 @@ export function ProjectStatusUpdatesTab({ projectIri }: { projectIri: string }) 
                       </Badge>
                       {u.title ? <span className="font-medium">{u.title}</span> : null}
                       <span className="ml-auto text-xs text-muted-foreground">
-                        {author ? userDisplayName(author) : 'Unbekannt'}
+                        {author ? userDisplayName(author) : t('status_updates.unknown_author')}
                         {u.createdAt ? ` · ${new Date(u.createdAt).toLocaleDateString('de-DE')}` : ''}
                       </span>
                       {mine ? (
@@ -245,7 +245,7 @@ export function ProjectStatusUpdatesTab({ projectIri }: { projectIri: string }) 
                           size="icon"
                           className="size-7"
                           onClick={() => remove(u)}
-                          title="Löschen"
+                          title={t('action.delete')}
                         >
                           <Trash2 className="size-4" />
                         </Button>
@@ -255,7 +255,7 @@ export function ProjectStatusUpdatesTab({ projectIri }: { projectIri: string }) 
                     {u.risks ? (
                       <div className="text-sm">
                         <p className="mb-1 flex items-center gap-1.5 font-medium text-amber-700">
-                          <AlertTriangle className="size-3.5" /> Risiken
+                          <AlertTriangle className="size-3.5" /> {t('status_updates.risks')}
                         </p>
                         <p className="whitespace-pre-wrap text-muted-foreground">{u.risks}</p>
                       </div>
@@ -263,7 +263,7 @@ export function ProjectStatusUpdatesTab({ projectIri }: { projectIri: string }) 
                     {u.nextSteps ? (
                       <div className="text-sm">
                         <p className="mb-1 flex items-center gap-1.5 font-medium">
-                          <ListChecks className="size-3.5" /> Nächste Schritte
+                          <ListChecks className="size-3.5" /> {t('status_updates.next_steps')}
                         </p>
                         <p className="whitespace-pre-wrap text-muted-foreground">{u.nextSteps}</p>
                       </div>

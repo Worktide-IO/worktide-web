@@ -58,12 +58,13 @@ const TIMEZONES = [
  * axios interceptor uses to stamp X-Workspace-Id — single source of truth.
  */
 export function WorkspaceSettingsPage() {
+  const { t } = useTranslation();
   return (
     <SettingsLayout>
       <div>
         <h2 className="text-2xl">Workspace</h2>
         <p className="text-sm text-muted-foreground">
-          Stammdaten dieses Mandanten — nur Workspace-Admins können hier speichern.
+          {t('ws_settings.subtitle')}
         </p>
       </div>
       <WorkspaceForm />
@@ -119,7 +120,7 @@ function WorkspaceForm() {
       <Card>
         <CardContent>
           <p className="text-sm text-destructive">
-            Kein aktiver Workspace ausgewählt.
+            {t('ws_settings.no_active_workspace')}
           </p>
         </CardContent>
       </Card>
@@ -129,7 +130,7 @@ function WorkspaceForm() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Stammdaten</CardTitle>
+          <CardTitle>{t('ws_settings.master_data')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <Skeleton className="h-9 w-full" />
@@ -177,7 +178,7 @@ function WorkspaceForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Stammdaten</CardTitle>
+        <CardTitle>{t('ws_settings.master_data')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1.5">
@@ -193,12 +194,12 @@ function WorkspaceForm() {
             className="font-mono"
           />
           <p className="text-xs text-muted-foreground">
-            URL-Identifier, z. B. für Sub-Domain. Lowercase + Bindestriche.
+            {t('ws_settings.slug_hint')}
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label>Sprache</Label>
+            <Label>{t('ws_settings.language')}</Label>
             <Select value={locale} onValueChange={setLocale}>
               <SelectTrigger>
                 <SelectValue />
@@ -213,7 +214,7 @@ function WorkspaceForm() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Zeitzone</Label>
+            <Label>{t('ws_settings.timezone')}</Label>
             <Select value={timezone} onValueChange={setTimezone}>
               <SelectTrigger>
                 <SelectValue />
@@ -230,7 +231,7 @@ function WorkspaceForm() {
         </div>
         <div>
           <Button type="button" onClick={handleSave} disabled={saving || !dirty}>
-            {saving ? 'Speichere…' : 'Speichern'}
+            {saving ? t('ws_settings.saving') : t('action.save')}
           </Button>
         </div>
       </CardContent>
@@ -324,39 +325,37 @@ function WorkspaceSecurityCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sicherheit</CardTitle>
+        <CardTitle>{t('ws_settings.security')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="ws-access-ttl">Access-Token-Lifetime (Sekunden)</Label>
+          <Label htmlFor="ws-access-ttl">{t('ws_settings.access_ttl_label')}</Label>
           <Input
             id="ws-access-ttl"
             type="number"
             min={60}
             max={3600}
             step={60}
-            placeholder="Leer = 3600 (1 h, Standard)"
+            placeholder={t('ws_settings.access_ttl_placeholder')}
             value={accessSeconds}
             onChange={(e) => setAccessSeconds(e.target.value)}
             className="max-w-xs"
           />
           <p className="text-xs text-muted-foreground">
-            Strikter (kleiner) als die globale 1-Stunde-Vorgabe — höhere
-            Werte werden ignoriert. Bei mehreren Workspaces gewinnt das
-            kürzeste TTL pro User.
+            {t('ws_settings.access_ttl_hint')}
           </p>
         </div>
         <div className="space-y-1.5">
           <Label className="text-muted-foreground">
-            Refresh-Token-Lifetime (Tage)
+            {t('ws_settings.refresh_ttl_label')}
           </Label>
           <p className="text-sm">
-            30 Tage <span className="text-xs text-muted-foreground">— global, in <code className="font-mono">gesdinet_jwt_refresh_token.yaml</code></span>
+            {t('ws_settings.refresh_ttl_value')} <span className="text-xs text-muted-foreground">{t('ws_settings.refresh_ttl_global')} <code className="font-mono">gesdinet_jwt_refresh_token.yaml</code></span>
           </p>
         </div>
         <div>
           <Button type="button" onClick={handleSave} disabled={saving || !dirty}>
-            {saving ? 'Speichere…' : 'Speichern'}
+            {saving ? t('ws_settings.saving') : t('action.save')}
           </Button>
         </div>
       </CardContent>
@@ -371,6 +370,7 @@ function WorkspaceSecurityCard() {
  * funktioniert weiterhin, Pattern ist Convenience.
  */
 function WorkspaceProjectNumberCard() {
+  const { t } = useTranslation();
   const stored = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
   const { result: workspaces } = useList<Row<WorkspaceJsonld>>({
     resource: 'workspaces',
@@ -438,7 +438,7 @@ function WorkspaceProjectNumberCard() {
 
   // Live preview using "now" for date placeholders + a faux seq=42.
   const preview = (() => {
-    if (pattern.trim() === '') return '— (Auto-Fill deaktiviert)';
+    if (pattern.trim() === '') return t('ws_settings.preview_disabled');
     const now = new Date();
     return pattern
       .replace(/\{YEAR\}/g, String(now.getFullYear()))
@@ -453,7 +453,7 @@ function WorkspaceProjectNumberCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Projektnummer</CardTitle>
+        <CardTitle>{t('ws_settings.project_number')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1.5">
@@ -462,26 +462,26 @@ function WorkspaceProjectNumberCard() {
             id="ws-project-number-pattern"
             value={pattern}
             onChange={(e) => setPattern(e.target.value)}
-            placeholder="Leer = kein Auto-Fill"
+            placeholder={t('ws_settings.pattern_placeholder')}
             className="font-mono max-w-md"
           />
           <p className="text-xs text-muted-foreground">
-            Platzhalter:{' '}
+            {t('ws_settings.placeholders_label')}{' '}
             <code className="font-mono">{'{YEAR}'}</code>,{' '}
             <code className="font-mono">{'{YEAR2}'}</code>,{' '}
             <code className="font-mono">{'{MONTH}'}</code>,{' '}
-            <code className="font-mono">{'{SEQ}'}</code> oder{' '}
-            <code className="font-mono">{'{SEQ:3}'}</code> mit Breite,{' '}
+            <code className="font-mono">{'{SEQ}'}</code> {t('ws_settings.or')}{' '}
+            <code className="font-mono">{'{SEQ:3}'}</code> {t('ws_settings.with_width')}{' '}
             <code className="font-mono">{'{CUSTOMER_KEY}'}</code>.
           </p>
           <p className="text-xs">
-            <span className="text-muted-foreground">Vorschau: </span>
+            <span className="text-muted-foreground">{t('ws_settings.preview_label')} </span>
             <code className="font-mono text-foreground">{preview}</code>
           </p>
         </div>
         <div>
           <Button type="button" onClick={handleSave} disabled={saving || !dirty}>
-            {saving ? 'Speichere…' : 'Speichern'}
+            {saving ? t('ws_settings.saving') : t('action.save')}
           </Button>
         </div>
       </CardContent>
@@ -490,6 +490,7 @@ function WorkspaceProjectNumberCard() {
 }
 
 function WorkspaceStats() {
+  const { t } = useTranslation();
   // Cheap "pagination off + read totalItems" trick — would scale ugly past
   // tens of thousands of rows but agency workspaces stay well below that.
   const { result: projects } = useList<Row<ProjectJsonld>>({
@@ -507,12 +508,12 @@ function WorkspaceStats() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Statistiken</CardTitle>
+        <CardTitle>{t('ws_settings.statistics')}</CardTitle>
       </CardHeader>
       <CardContent>
         <dl className="grid gap-4 sm:grid-cols-3">
-          <Stat label="Projekte" value={projectCount} />
-          <Stat label="Aufgaben" value={taskCount} />
+          <Stat label={t('ws_settings.stat_projects')} value={projectCount} />
+          <Stat label={t('ws_settings.stat_tasks')} value={taskCount} />
         </dl>
       </CardContent>
     </Card>

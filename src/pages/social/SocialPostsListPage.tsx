@@ -85,25 +85,25 @@ export function SocialPostsListPage() {
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            {total} {total === 1 ? 'Beitrag' : 'Beiträge'} · einmal verfassen, in mehrere Netzwerke
-            veröffentlichen
+            {total} {total === 1 ? t('social_list.post_singular') : t('social_list.post_plural')} ·{' '}
+            {t('social_list.subtitle_tail')}
           </p>
         </div>
         <Button asChild>
           <Link to="/social/create">
-            <Plus className="size-4" /> Neuer Post
+            <Plus className="size-4" /> {t('social_list.new_post')}
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader className="gap-4">
-          <CardTitle>Übersicht</CardTitle>
+          <CardTitle>{t('social_list.overview')}</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[240px] max-w-md">
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
-                placeholder="Im Text suchen…"
+                placeholder={t('social_list.search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-8"
@@ -114,7 +114,7 @@ export function SocialPostsListPage() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
+                <SelectItem value="all">{t('social_list.all_status')}</SelectItem>
                 {(Object.entries(POST_STATUS_BADGE) as [SocialPostStatus, { label: string }][]).map(
                   ([value, b]) => (
                     <SelectItem key={value} value={value}>
@@ -136,17 +136,17 @@ export function SocialPostsListPage() {
           ) : rows.length === 0 ? (
             <div className="py-12 text-center text-sm text-muted-foreground">
               {allRows.length === 0
-                ? 'Noch keine Social Posts. Lege deinen ersten Beitrag an.'
-                : 'Keine Beiträge passen zur Suche.'}
+                ? t('social_list.empty')
+                : t('social_list.empty_search')}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Inhalt</TableHead>
+                  <TableHead>{t('social_list.col_content')}</TableHead>
                   <TableHead className="w-44">Status</TableHead>
-                  <TableHead className="w-24 text-center">Netzwerke</TableHead>
-                  <TableHead className="w-44">Geplant / veröffentlicht</TableHead>
+                  <TableHead className="w-24 text-center">{t('social_list.col_networks')}</TableHead>
+                  <TableHead className="w-44">{t('social_list.col_scheduled')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -160,7 +160,7 @@ export function SocialPostsListPage() {
                     >
                       <TableCell className="max-w-md">
                         <span className="line-clamp-2 text-sm">
-                          {p.body?.trim() || <span className="italic text-muted-foreground">— leer —</span>}
+                          {p.body?.trim() || <span className="italic text-muted-foreground">{t('social_list.empty_body')}</span>}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -186,7 +186,7 @@ export function SocialPostsListPage() {
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-muted-foreground/60">
-                            <Send className="size-3" /> nicht geplant
+                            <Send className="size-3" /> {t('social_list.not_scheduled')}
                           </span>
                         )}
                       </TableCell>

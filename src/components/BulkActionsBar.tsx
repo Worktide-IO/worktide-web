@@ -34,10 +34,10 @@ type Props = {
 };
 
 const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Niedrig' },
-  { value: 'normal', label: 'Normal' },
-  { value: 'high', label: 'Hoch' },
-  { value: 'urgent', label: 'Dringend' },
+  { value: 'low', label: 'priority.low' },
+  { value: 'normal', label: 'priority.normal' },
+  { value: 'high', label: 'priority.high' },
+  { value: 'urgent', label: 'priority.urgent' },
 ];
 
 /**
@@ -79,8 +79,8 @@ export function BulkActionsBar({ selectedIris, onClear }: Props) {
         skipped: number;
         errors: string[];
       }>('/tasks/batch', { ids, operation, fields });
-      const parts: string[] = [`${data.processed} bearbeitet`];
-      if (data.skipped > 0) parts.push(`${data.skipped} übersprungen`);
+      const parts: string[] = [t('bulk.processed_count', { count: data.processed })];
+      if (data.skipped > 0) parts.push(t('bulk.skipped_count', { count: data.skipped }));
       toast.success(`${label}: ${parts.join(', ')}`);
       await invalidate({ resource: 'tasks', invalidates: ['list', 'many'] });
       onClear();
@@ -98,7 +98,7 @@ export function BulkActionsBar({ selectedIris, onClear }: Props) {
     <>
       <div className="sticky bottom-4 z-30 mx-auto flex w-fit items-center gap-1 rounded-full border bg-background px-3 py-2 shadow-lg">
         <Badge variant="secondary" className="rounded-full">
-          {selectedIris.length} ausgewählt
+          {t('bulk.selected_count', { count: selectedIris.length })}
         </Badge>
         <span className="mx-1 h-5 w-px bg-border" aria-hidden />
 
@@ -109,7 +109,7 @@ export function BulkActionsBar({ selectedIris, onClear }: Props) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" side="top" className="w-56">
-            <DropdownMenuLabel>Status setzen</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('bulk.set_status')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {(statuses?.data ?? []).map((s) => (
               <DropdownMenuItem
@@ -118,7 +118,7 @@ export function BulkActionsBar({ selectedIris, onClear }: Props) {
                   void runBatch(
                     'set',
                     { status: s['@id'] ?? '' },
-                    `Status → ${s.name}`,
+                    t('bulk.status_set_label', { name: s.name }),
                   )
                 }
               >
@@ -136,20 +136,20 @@ export function BulkActionsBar({ selectedIris, onClear }: Props) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="sm" variant="ghost" disabled={busy}>
-              <Flag className="size-4" /> Prio
+              <Flag className="size-4" /> {t('bulk.priority_short')}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" side="top" className="w-48">
-            <DropdownMenuLabel>Priorität setzen</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('bulk.set_priority')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {PRIORITY_OPTIONS.map((p) => (
               <DropdownMenuItem
                 key={p.value}
                 onClick={() =>
-                  void runBatch('set', { priority: p.value }, `Prio → ${p.label}`)
+                  void runBatch('set', { priority: p.value }, t('bulk.priority_set_label', { label: t(p.label) }))
                 }
               >
-                {p.label}
+                {t(p.label)}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -162,7 +162,7 @@ export function BulkActionsBar({ selectedIris, onClear }: Props) {
           onClick={() => setDeleteConfirmOpen(true)}
           className="text-destructive hover:text-destructive"
         >
-          <Trash2 className="size-4" /> Löschen
+          <Trash2 className="size-4" /> {t('action.delete')}
         </Button>
 
         <span className="mx-1 h-5 w-px bg-border" aria-hidden />
@@ -171,7 +171,7 @@ export function BulkActionsBar({ selectedIris, onClear }: Props) {
           variant="ghost"
           className="size-7 rounded-full"
           onClick={onClear}
-          aria-label="Auswahl aufheben"
+          aria-label={t('bulk.clear_selection')}
         >
           <X className="size-3.5" />
         </Button>
@@ -180,25 +180,24 @@ export function BulkActionsBar({ selectedIris, onClear }: Props) {
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tasks löschen?</DialogTitle>
+            <DialogTitle>{t('bulk.delete_title')}</DialogTitle>
             <DialogDescription>
-              {selectedIris.length} ausgewählte Tasks werden gelöscht (soft-delete).
-              Aufgaben, für die du keine Delete-Rechte hast, werden übersprungen.
+              {t('bulk.delete_description', { count: selectedIris.length })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
-              Abbrechen
+              {t('action.cancel')}
             </Button>
             <Button
               variant="destructive"
               disabled={busy}
               onClick={async () => {
                 setDeleteConfirmOpen(false);
-                await runBatch('delete', {}, 'Tasks gelöscht');
+                await runBatch('delete', {}, t('bulk.tasks_deleted_label'));
               }}
             >
-              Endgültig löschen
+              {t('bulk.delete_permanent')}
             </Button>
           </DialogFooter>
         </DialogContent>

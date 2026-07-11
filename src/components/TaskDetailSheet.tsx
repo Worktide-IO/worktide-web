@@ -156,7 +156,7 @@ function ScheduleSection({ task }: { task: Row<TaskJsonld> }) {
   return (
     <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-md border bg-muted/20 p-3 text-sm sm:grid-cols-3">
       <div className="space-y-1">
-        <dt className="text-xs text-muted-foreground">Beginn</dt>
+        <dt className="text-xs text-muted-foreground">{translate('task_detail.start')}</dt>
         <dd>
           <Input
             type="date"
@@ -167,7 +167,7 @@ function ScheduleSection({ task }: { task: Row<TaskJsonld> }) {
         </dd>
       </div>
       <div className="space-y-1">
-        <dt className="text-xs text-muted-foreground">Fällig</dt>
+        <dt className="text-xs text-muted-foreground">{translate('task_detail.due')}</dt>
         <dd>
           <Input
             type="date"
@@ -178,7 +178,7 @@ function ScheduleSection({ task }: { task: Row<TaskJsonld> }) {
         </dd>
       </div>
       <div className="space-y-1">
-        <dt className="text-xs text-muted-foreground">Geschätzter Aufwand</dt>
+        <dt className="text-xs text-muted-foreground">{translate('task_detail.estimated_effort')}</dt>
         <dd className="flex items-center gap-1.5">
           <Input
             type="number"
@@ -191,18 +191,18 @@ function ScheduleSection({ task }: { task: Row<TaskJsonld> }) {
             }}
             className="h-8 w-20"
           />
-          <span className="text-xs text-muted-foreground">Std.</span>
+          <span className="text-xs text-muted-foreground">{translate('task_detail.hours_short')}</span>
         </dd>
       </div>
       {task.createdAt ? (
         <div className="space-y-1">
-          <dt className="text-xs text-muted-foreground">Erstellt</dt>
+          <dt className="text-xs text-muted-foreground">{translate('task_detail.created')}</dt>
           <dd className="pt-1.5">{new Date(task.createdAt).toLocaleDateString()}</dd>
         </div>
       ) : null}
       {task.updatedAt ? (
         <div className="space-y-1">
-          <dt className="text-xs text-muted-foreground">Aktualisiert</dt>
+          <dt className="text-xs text-muted-foreground">{translate('task_detail.updated')}</dt>
           <dd className="pt-1.5">{new Date(task.updatedAt).toLocaleDateString()}</dd>
         </div>
       ) : null}
@@ -228,12 +228,13 @@ async function patchTaskField(
 
 /** Inline-editable task title (saves on blur / Enter). */
 function TitleEditor({ task }: { task: Row<TaskJsonld> }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   return (
     <input
       key={task.id}
       defaultValue={task.title ?? ''}
-      aria-label="Titel"
+      aria-label={translate('task_detail.title')}
       onKeyDown={(e) => {
         if (e.key === 'Enter') e.currentTarget.blur();
       }}
@@ -276,20 +277,20 @@ function AssigneeEditor({ task }: { task: Row<TaskJsonld> }) {
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label="Zuständige bearbeiten"
+          aria-label={translate('task_detail.edit_assignees')}
           className="inline-flex items-center gap-1 rounded px-1 hover:bg-muted/50"
         >
           {current.length > 0 ? (
             <UserAvatarStack iris={current} size="sm" max={3} />
           ) : (
-            <span className="text-xs text-muted-foreground">+ Zuweisen</span>
+            <span className="text-xs text-muted-foreground">{translate('task_detail.assign')}</span>
           )}
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-60 p-1">
         <div className="max-h-64 overflow-y-auto">
           {users.length === 0 ? (
-            <p className="px-2 py-1.5 text-xs text-muted-foreground">Keine Nutzer</p>
+            <p className="px-2 py-1.5 text-xs text-muted-foreground">{translate('task_detail.no_users')}</p>
           ) : (
             users.map((u) => {
               const iri = u['@id'];
@@ -313,14 +314,15 @@ function AssigneeEditor({ task }: { task: Row<TaskJsonld> }) {
 
 /** Inline-editable description (saves on blur). */
 function DescriptionEditor({ task }: { task: Row<TaskJsonld> }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   return (
     <div className="space-y-1">
-      <div className="text-xs text-muted-foreground">Beschreibung</div>
+      <div className="text-xs text-muted-foreground">{translate('task_detail.description')}</div>
       <Textarea
         key={task.id}
         defaultValue={task.description ?? ''}
-        placeholder="Beschreibung hinzufügen …"
+        placeholder={translate('task_detail.description_placeholder')}
         onBlur={(e) => {
           const v = e.target.value;
           const next = v.trim() === '' ? null : v;
@@ -352,7 +354,7 @@ function PriorityEditor({ task }: { task: Row<TaskJsonld> }) {
   return (
     <Select value={task.priority ?? 'normal'} onValueChange={change}>
       <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
-        <SelectValue placeholder="Priorität" />
+        <SelectValue placeholder={translate('task_detail.priority')} />
       </SelectTrigger>
       <SelectContent>
         {(['urgent', 'high', 'normal', 'low'] as const).map((p) => (
@@ -396,7 +398,7 @@ function StatusEditor({ task }: { task: Row<TaskJsonld> }) {
   return (
     <Select value={task.status ?? ''} onValueChange={change}>
       <SelectTrigger className="h-7 w-auto gap-1.5 px-2 text-xs">
-        <SelectValue placeholder="Status" />
+        <SelectValue placeholder={translate('task_detail.status')} />
       </SelectTrigger>
       <SelectContent>
         {list.map((s) => (
@@ -451,7 +453,7 @@ function TaskDetailBody({ task }: { task: Row<TaskJsonld> }) {
             <Button
               variant="ghost"
               size="sm"
-              title="Deeplink zu diesem Ticket kopieren"
+              title={translate('task_detail.copy_deeplink')}
               onClick={() => {
                 const link = `${window.location.origin}/projects/${task.project!.split('/').pop()}?task=${task.id}`;
                 void navigator.clipboard
@@ -461,7 +463,7 @@ function TaskDetailBody({ task }: { task: Row<TaskJsonld> }) {
               }}
               className="ml-auto h-6 gap-1 px-2 text-xs"
             >
-              <Link2 className="size-3.5" /> Link kopieren
+              <Link2 className="size-3.5" /> {translate('task_detail.copy_link')}
             </Button>
           ) : null}
         </div>
@@ -557,17 +559,16 @@ function VersionSection({ task }: { task: Row<TaskJsonld> }) {
       </Label>
       {forProject.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          Noch keine Releases im Projekt — leg eine im Projekt-Tab an,
-          dann erscheinen sie hier.
+          {translate('task_detail.no_releases')}
         </p>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
           <Select value={current || '__none__'} onValueChange={updateVersion}>
             <SelectTrigger className="w-60">
-              <SelectValue placeholder="Keinem Release zugeordnet" />
+              <SelectValue placeholder={translate('task_detail.no_release_assigned')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__">— keinem Release —</SelectItem>
+              <SelectItem value="__none__">{translate('task_detail.no_release_option')}</SelectItem>
               {forProject.map((v) => (
                 <SelectItem key={v['@id']} value={v['@id'] ?? ''}>
                   {v.name}
@@ -668,7 +669,7 @@ function SubtasksSection({ parent }: { parent: Row<TaskJsonld> }) {
       {query.isLoading ? (
         <Skeleton className="h-12 w-full" />
       ) : items.length === 0 ? (
-        <p className="text-xs text-muted-foreground">Noch keine Subtasks.</p>
+        <p className="text-xs text-muted-foreground">{translate('task_detail.no_subtasks')}</p>
       ) : (
         <ul className="divide-y rounded-md border">
           {items.map((t) => (
@@ -693,7 +694,7 @@ function SubtasksSection({ parent }: { parent: Row<TaskJsonld> }) {
 
       <div className="flex items-center gap-2">
         <Input
-          placeholder="Neue Subtask … (Enter speichert)"
+          placeholder={translate('task_detail.new_subtask_placeholder')}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
@@ -742,7 +743,7 @@ function DependenciesSection({ task }: { task: Row<TaskJsonld> }) {
   const outgoing = blocking?.data ?? [];
 
   const remove = async (id: string) => {
-    if (!window.confirm('Dependency wirklich entfernen?')) return;
+    if (!window.confirm(translate('task_detail.confirm_remove_dependency'))) return;
     try {
       await api.delete(`/task_dependencies/${id}`);
       void invalidate({ resource: 'task_dependencies', invalidates: ['list'] });
@@ -756,11 +757,11 @@ function DependenciesSection({ task }: { task: Row<TaskJsonld> }) {
       <div className="flex items-center justify-between">
         <h3 className="flex items-center gap-2 text-sm font-medium">
           <GitBranch className="size-4 text-muted-foreground" />
-          Abhängigkeiten
+          {translate('task_detail.dependencies')}
         </h3>
         <Button size="sm" variant="outline" onClick={() => setShowAdd((v) => !v)}>
           <Plus className="size-3.5" />
-          Hinzufügen
+          {translate('action.add')}
         </Button>
       </div>
 
@@ -775,7 +776,7 @@ function DependenciesSection({ task }: { task: Row<TaskJsonld> }) {
       {/* Wird blockiert von */}
       <div className="space-y-1">
         <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-          <ArrowDown className="size-3" /> Wird blockiert von
+          <ArrowDown className="size-3" /> {translate('task_detail.blocked_by')}
         </p>
         {blockedByQ.isLoading ? (
           <Skeleton className="h-8 w-full" />
@@ -798,7 +799,7 @@ function DependenciesSection({ task }: { task: Row<TaskJsonld> }) {
       {/* Blockiert */}
       <div className="space-y-1">
         <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-          <ArrowUp className="size-3" /> Blockiert
+          <ArrowUp className="size-3" /> {translate('task_detail.blocks')}
         </p>
         {blockingQ.isLoading ? (
           <Skeleton className="h-8 w-full" />
@@ -857,7 +858,7 @@ function DependencyRow({
           <span className="flex-1 truncate text-sm">{other.title}</span>
         </>
       ) : (
-        <span className="flex-1 text-sm text-muted-foreground">Lädt …</span>
+        <span className="flex-1 text-sm text-muted-foreground">{translate('task_detail.loading')}</span>
       )}
       {lag !== 0 ? (
         <Badge variant="outline" className="text-[10px]">
@@ -869,7 +870,7 @@ function DependencyRow({
         size="icon"
         className="size-7"
         onClick={onDelete}
-        aria-label="Dependency entfernen"
+        aria-label={translate('task_detail.remove_dependency')}
       >
         <Trash2 className="size-3.5" />
       </Button>
@@ -941,11 +942,10 @@ function AddDependencyForm({
   if (!task.project) {
     return (
       <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
-        Dependencies sind nur innerhalb eines Projekts möglich. Diese
-        Aufgabe ist privat — füge sie erst einem Projekt hinzu.
+        {translate('task_detail.dependencies_project_only')}
         <div className="mt-2 text-right">
           <Button variant="ghost" size="sm" onClick={onClose}>
-            Schließen
+            {translate('task_detail.close')}
           </Button>
         </div>
       </div>
@@ -956,19 +956,19 @@ function AddDependencyForm({
     <div className="rounded-md border bg-muted/30 p-3 space-y-3">
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1">
-          <Label className="text-xs">Richtung</Label>
+          <Label className="text-xs">{translate('task_detail.direction')}</Label>
           <Select value={direction} onValueChange={(v) => setDirection(v as 'incoming' | 'outgoing')}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="incoming">Wird blockiert von …</SelectItem>
-              <SelectItem value="outgoing">Blockiert …</SelectItem>
+              <SelectItem value="incoming">{translate('task_detail.direction_blocked_by')}</SelectItem>
+              <SelectItem value="outgoing">{translate('task_detail.direction_blocks')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Typ</Label>
+          <Label className="text-xs">{translate('task_detail.type')}</Label>
           <Select value={type} onValueChange={(v) => setType(v as TaskDependencyJsonldTypeEnum)}>
             <SelectTrigger>
               <SelectValue />
@@ -985,11 +985,11 @@ function AddDependencyForm({
 
       <div className="space-y-1">
         <Label className="text-xs">
-          Aufgabe {project ? `aus „${project.name}"` : ''}
+          {translate('task_detail.task')}{project ? ` ${translate('task_detail.from_project', { name: project.name })}` : ''}
         </Label>
         <Select value={otherTaskId} onValueChange={setOtherTaskId}>
           <SelectTrigger>
-            <SelectValue placeholder="Andere Aufgabe wählen…" />
+            <SelectValue placeholder={translate('task_detail.select_other_task')} />
           </SelectTrigger>
           <SelectContent>
             {candidates.map((t) => (
@@ -1007,7 +1007,7 @@ function AddDependencyForm({
       </div>
 
       <div className="space-y-1">
-        <Label className="text-xs">Lag (Minuten — negativ = lead)</Label>
+        <Label className="text-xs">{translate('task_detail.lag_label')}</Label>
         <Input
           type="number"
           value={lag}
@@ -1018,11 +1018,11 @@ function AddDependencyForm({
 
       <div className="flex justify-end gap-2">
         <Button variant="ghost" size="sm" onClick={onClose} disabled={saving}>
-          Abbrechen
+          {translate('action.cancel')}
         </Button>
         <Button size="sm" onClick={submit} disabled={saving || !otherTaskId}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-          Hinzufügen
+          {translate('action.add')}
         </Button>
       </div>
     </div>

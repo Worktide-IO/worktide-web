@@ -121,8 +121,8 @@ export function ProjectForm(props: Mode) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       toast.error(
         status === 403
-          ? 'Keine Berechtigung — nur Workspace-Admins können Projekte löschen.'
-          : 'Konnte nicht löschen.',
+          ? translate('toast.project_delete_forbidden')
+          : translate('toast.project_delete_failed'),
       );
     } finally {
       setDeleting(false);
@@ -147,12 +147,12 @@ export function ProjectForm(props: Mode) {
           </Button>
           <h2 className="text-2xl">
             {props.action === 'create'
-              ? 'Neues Projekt'
-              : current?.name ?? 'Projekt bearbeiten'}
+              ? translate('project_form.new_title')
+              : current?.name ?? translate('project_form.edit_title')}
           </h2>
           {props.action === 'edit' && (current as { number?: string | null } | undefined)?.number ? (
             <span className="font-mono text-xs text-muted-foreground">
-              Nr. {(current as { number?: string | null }).number}
+              {translate('project_form.number_prefix', { number: (current as { number?: string | null }).number })}
             </span>
           ) : null}
         </div>
@@ -165,12 +165,12 @@ export function ProjectForm(props: Mode) {
               onClick={() => setConfirmDelete(true)}
               disabled={deleting}
             >
-              <Trash2 className="size-4" /> Löschen
+              <Trash2 className="size-4" /> {translate('action.delete')}
             </Button>
           ) : null}
           <Button type="submit" disabled={isSubmitting || formLoading}>
             <Save className="size-4" />
-            {isSubmitting ? 'Speichern …' : 'Speichern'}
+            {isSubmitting ? translate('project_form.saving') : translate('action.save')}
           </Button>
         </div>
       </div>
@@ -187,44 +187,44 @@ export function ProjectForm(props: Mode) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Stammdaten</CardTitle>
+              <CardTitle>{translate('project_form.master_data')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Field
                 id="name"
-                label="Name"
+                label={translate('project_form.name')}
                 required
                 {...register('name', { required: 'Pflichtfeld' })}
               />
               <div className="grid grid-cols-2 gap-4">
                 <Field
                   id="key"
-                  label="Key (Slug für Task-IDs, z. B. WORK)"
+                  label={translate('project_form.key_label')}
                   required
                   className="font-mono uppercase"
                   {...register('key', { required: 'Pflichtfeld' })}
                 />
                 <Field
                   id="number"
-                  label="Projektnummer (leer = Workspace-Pattern)"
+                  label={translate('project_form.number_label')}
                   className="font-mono"
                   {...register('number' as keyof Row<ProjectJsonld>)}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="description">Beschreibung</Label>
+                <Label htmlFor="description">{translate('project_form.description')}</Label>
                 <Textarea id="description" rows={3} {...register('description')} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <Field
                   id="startsOn"
-                  label="Start"
+                  label={translate('project_form.start')}
                   type="date"
                   {...register('startsOn')}
                 />
                 <Field
                   id="dueOn"
-                  label="Fällig am"
+                  label={translate('project_form.due')}
                   type="date"
                   {...register('dueOn')}
                 />
@@ -234,11 +234,11 @@ export function ProjectForm(props: Mode) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Einordnung</CardTitle>
+              <CardTitle>{translate('project_form.classification')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Status</Label>
+                <Label>{translate('project_form.status')}</Label>
                 <Controller
                   name="status"
                   control={control}
@@ -246,7 +246,7 @@ export function ProjectForm(props: Mode) {
                   render={({ field }) => (
                     <Select value={field.value ?? ''} onValueChange={field.onChange}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Status wählen…" />
+                        <SelectValue placeholder={translate('project_form.status_placeholder')} />
                       </SelectTrigger>
                       <SelectContent>
                         {(statuses?.data ?? []).map((s) => (
@@ -261,7 +261,7 @@ export function ProjectForm(props: Mode) {
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label>Kunde</Label>
+                  <Label>{translate('project_form.customer')}</Label>
                   <Button
                     type="button"
                     variant="ghost"
@@ -269,7 +269,7 @@ export function ProjectForm(props: Mode) {
                     onClick={() => setCustomerDialogOpen(true)}
                     className="h-6 gap-1 px-2 text-xs"
                   >
-                    <Plus className="size-3" /> Neuer Kunde
+                    <Plus className="size-3" /> {translate('project_form.new_customer')}
                   </Button>
                 </div>
                 <Controller
@@ -281,7 +281,7 @@ export function ProjectForm(props: Mode) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Projekttyp</Label>
+                <Label>{translate('project_form.project_type')}</Label>
                 <Controller
                   name="projectType"
                   control={control}
@@ -291,10 +291,10 @@ export function ProjectForm(props: Mode) {
                       onValueChange={(v) => field.onChange(v === '__none__' ? null : v)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Typ wählen…" />
+                        <SelectValue placeholder={translate('project_form.type_placeholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__none__">— Ohne Typ</SelectItem>
+                        <SelectItem value="__none__">{translate('project_form.no_type')}</SelectItem>
                         {(projectTypes?.data ?? []).map((t) => (
                           <SelectItem key={t['@id']} value={t['@id'] ?? ''}>
                             <span className="inline-flex items-center gap-2">
@@ -309,7 +309,7 @@ export function ProjectForm(props: Mode) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="color">Farbe</Label>
+                <Label htmlFor="color">{translate('project_form.color')}</Label>
                 <Controller
                   name="color"
                   control={control}
@@ -343,20 +343,20 @@ export function ProjectForm(props: Mode) {
                 <SwitchRow
                   control={control}
                   name="isPrivate"
-                  label="Privat"
-                  hint="Nur Projekt-Mitglieder sehen das Projekt."
+                  label={translate('project_form.private')}
+                  hint={translate('project_form.private_hint')}
                 />
                 <SwitchRow
                   control={control}
                   name="isRetainer"
-                  label="Retainer (Dauerläufer)"
-                  hint="Wiederkehrende Service-Stunden, kein Ende-Datum."
+                  label={translate('project_form.retainer')}
+                  hint={translate('project_form.retainer_hint')}
                 />
                 <SwitchRow
                   control={control}
                   name="isExternal"
-                  label="Connect-Projekt"
-                  hint="Sichtbar für externe Mitglieder und das Customer-Portal."
+                  label={translate('project_form.connect_project')}
+                  hint={translate('project_form.connect_project_hint')}
                 />
               </div>
             </CardContent>
@@ -367,22 +367,19 @@ export function ProjectForm(props: Mode) {
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Projekt löschen?</AlertDialogTitle>
+            <AlertDialogTitle>{translate('project_form.delete_title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Das Projekt wird soft-deleted und ist über die normale
-              Projektliste nicht mehr sichtbar. Tasks, Zeiteinträge und
-              Dokumente bleiben mit dem Projekt verknüpft erhalten und
-              können bei Bedarf wiederhergestellt werden.
+              {translate('project_form.delete_desc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{translate('action.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={doDelete}
               disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? 'Lösche …' : 'Endgültig löschen'}
+              {deleting ? translate('project_form.deleting') : translate('project_form.delete_confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -513,30 +510,28 @@ function NewCustomerInlineDialog({
         }}
       >
         <DialogHeader>
-          <DialogTitle>Neuer Kunde</DialogTitle>
+          <DialogTitle>{translate('project_form.new_customer')}</DialogTitle>
           <DialogDescription>
-            Schneller Anlegen — nur der Name reicht. Restliche Stammdaten
-            (Email, Adresse, USt-ID …) kannst du später unter Kunden
-            nachpflegen.
+            {translate('project_form.new_customer_desc')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-1.5">
-          <Label htmlFor="quick-customer-name">Name</Label>
+          <Label htmlFor="quick-customer-name">{translate('project_form.name')}</Label>
           <Input
             id="quick-customer-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoFocus
-            placeholder="Firmenname"
+            placeholder={translate('project_form.company_name_placeholder')}
           />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
-            Abbrechen
+            {translate('action.cancel')}
           </Button>
           <Button onClick={submit} disabled={saving || !name.trim()}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-            Anlegen
+            {translate('project_form.create')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -87,7 +87,7 @@ export function DocumentWorkflowPanel({
           'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
           badge.classes,
         )}
-        title={`Workflow: ${t(badge.label)}`}
+        title={t('doc_wf.badge_title', { state: t(badge.label) })}
       >
         {t(badge.label)}
       </span>
@@ -105,15 +105,16 @@ export function DocumentWorkflowPanel({
 }
 
 function ReviewerChips({ reviewers }: { reviewers: string[] }) {
+  const { t } = useTranslation();
   const { byIri } = useUserDirectory();
   if (reviewers.length === 0) return null;
   return (
     <span className="text-xs text-muted-foreground">
-      Wartet auf:{' '}
+      {t('doc_wf.waiting_for')}{' '}
       {reviewers
         .map((iri) => {
           const u = byIri[iri];
-          return u ? userDisplayName(u) : 'Unbekannt';
+          return u ? userDisplayName(u) : t('doc_wf.unknown_user');
         })
         .join(', ')}
     </span>
@@ -161,27 +162,27 @@ function SubmitForReviewButton({
       <PopoverTrigger asChild>
         <Button size="sm" variant="outline" className="h-7 gap-1">
           <Send className="size-3" />
-          Zur Prüfung einreichen
+          {t('doc_wf.submit_for_review')}
           <ChevronDown className="size-3" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72">
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Reviewer wählen
+          {t('doc_wf.pick_reviewers')}
         </p>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="w-full justify-between">
               <span className="truncate">
                 {selected.length === 0
-                  ? 'Niemand ausgewählt'
-                  : `${selected.length} ausgewählt`}
+                  ? t('doc_wf.none_selected')
+                  : t('doc_wf.n_selected', { count: selected.length })}
               </span>
               <ChevronDown className="size-3 opacity-60" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="max-h-64 overflow-y-auto">
-            <DropdownMenuLabel>Workspace-Mitglieder</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('doc_wf.workspace_members')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {userList.map((u) => {
               const iri = `/v1/users/${u.id}`;
@@ -209,7 +210,7 @@ function SubmitForReviewButton({
         </DropdownMenu>
         <div className="mt-3 flex justify-end">
           <Button size="sm" onClick={submit} disabled={busy}>
-            Einreichen
+            {t('doc_wf.submit')}
           </Button>
         </div>
       </PopoverContent>
@@ -268,7 +269,7 @@ function ReviewActions({ documentId }: { documentId: string }) {
         disabled={busy}
       >
         <CheckCircle2 className="size-3" />
-        Freigeben
+        {t('doc_wf.approve')}
       </Button>
       <Popover open={rejecting} onOpenChange={setRejecting}>
         <PopoverTrigger asChild>
@@ -279,25 +280,25 @@ function ReviewActions({ documentId }: { documentId: string }) {
             disabled={busy}
           >
             <XCircle className="size-3" />
-            Änderungen anfordern
+            {t('doc_wf.request_changes')}
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-80">
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Was soll geändert werden?
+            {t('doc_wf.what_to_change')}
           </p>
           <Textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Bitte konkret beschreiben — der Autor sieht diese Notiz."
+            placeholder={t('doc_wf.change_note_placeholder')}
             className="h-24 text-sm"
           />
           <div className="mt-3 flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setRejecting(false)}>
-              Abbrechen
+              {t('action.cancel')}
             </Button>
             <Button size="sm" onClick={requestChanges} disabled={busy}>
-              Absenden
+              {t('doc_wf.send')}
             </Button>
           </div>
         </PopoverContent>

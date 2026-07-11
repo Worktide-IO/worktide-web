@@ -70,6 +70,7 @@ export function ProjectReleasesTab({
   projectIri: string;
   projectId: string;
 }) {
+  const { t } = useTranslation();
   const { forProject, isLoading } = useProjectVersions(projectIri);
   const [editing, setEditing] = useState<Row<ProjectVersionJsonld> | null>(null);
   const [creating, setCreating] = useState(false);
@@ -82,17 +83,14 @@ export function ProjectReleasesTab({
           Releases
         </CardTitle>
         <CardDescription>
-          Plane Releases / Versionen und hänge Aufgaben über das
-          „Release / Version"-Feld im Aufgaben-Sheet daran. Geschlossene
-          Releases bleiben sichtbar — die Auswahl in Pickern verschwindet
-          aber.
+          {t('releases.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex justify-end">
           <Button size="sm" onClick={() => setCreating(true)}>
             <Plus className="size-4" />
-            Neues Release
+            {t('releases.new_release')}
           </Button>
         </div>
 
@@ -103,17 +101,16 @@ export function ProjectReleasesTab({
           </div>
         ) : forProject.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            Noch keine Releases. Lege das erste an, um Aufgaben zu
-            bündeln.
+            {t('releases.empty')}
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="w-32">Ship-Datum</TableHead>
-                <TableHead className="w-36">Status</TableHead>
-                <TableHead className="w-44">Sichtbarkeit</TableHead>
+                <TableHead>{t('releases.name')}</TableHead>
+                <TableHead className="w-32">{t('releases.ship_date')}</TableHead>
+                <TableHead className="w-36">{t('releases.status')}</TableHead>
+                <TableHead className="w-44">{t('releases.visibility')}</TableHead>
                 <TableHead className="w-20 text-right" />
               </TableRow>
             </TableHeader>
@@ -170,7 +167,7 @@ function VersionRow({
     if (!version.id) return;
     if (
       !window.confirm(
-        `Release "${version.name}" wirklich löschen? Verknüpfte Aufgaben bleiben erhalten, verlieren aber die Zuordnung.`,
+        t('releases.delete_confirm', { name: version.name }),
       )
     )
       return;
@@ -314,37 +311,36 @@ function VersionDialog(props: DialogProps) {
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? `Release "${initial?.name}" bearbeiten` : 'Neues Release anlegen'}
+            {isEdit ? t('releases.dialog_title_edit', { name: initial?.name }) : t('releases.dialog_title_create')}
           </DialogTitle>
           <DialogDescription>
-            Name, geplantes Ship-Datum und Status. Aufgaben werden über
-            das Sheet hinzugefügt — nicht hier.
+            {t('releases.dialog_description')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="ver-name">Name</Label>
+            <Label htmlFor="ver-name">{t('releases.name')}</Label>
             <Input
               id="ver-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="z. B. 1.2.0 oder Q3-Release"
+              placeholder={t('releases.name_placeholder')}
               autoFocus
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="ver-desc">Beschreibung (optional)</Label>
+            <Label htmlFor="ver-desc">{t('releases.description_label')}</Label>
             <Textarea
               id="ver-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="h-20 text-sm"
-              placeholder="Highlights, Migrations-Hinweise, …"
+              placeholder={t('releases.description_placeholder')}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="ver-date">Ship-Datum</Label>
+              <Label htmlFor="ver-date">{t('releases.ship_date')}</Label>
               <Input
                 id="ver-date"
                 type="date"
@@ -353,7 +349,7 @@ function VersionDialog(props: DialogProps) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ver-status">Status</Label>
+              <Label htmlFor="ver-status">{t('releases.status')}</Label>
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger id="ver-status">
                   <SelectValue />
@@ -369,7 +365,7 @@ function VersionDialog(props: DialogProps) {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="ver-sharing">Sichtbarkeit</Label>
+            <Label htmlFor="ver-sharing">{t('releases.visibility')}</Label>
             <Select value={sharing} onValueChange={setSharing}>
               <SelectTrigger id="ver-sharing">
                 <SelectValue />
@@ -383,18 +379,17 @@ function VersionDialog(props: DialogProps) {
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              <em>Workspace-weit</em> macht das Release in jedem Projekt
-              auswählbar — sinnvoll für organisationsweite Release-Trains.
+              <em>{t('releases.sharing_hint_emph')}</em> {t('releases.sharing_hint_rest')}
             </p>
           </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={props.onClose} disabled={saving}>
-            Abbrechen
+            {t('action.cancel')}
           </Button>
           <Button onClick={submit} disabled={saving || !name.trim()}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : isEdit ? <Pencil className="size-4" /> : <Plus className="size-4" />}
-            {isEdit ? 'Speichern' : 'Anlegen'}
+            {isEdit ? t('action.save') : t('releases.create_submit')}
           </Button>
         </DialogFooter>
       </DialogContent>

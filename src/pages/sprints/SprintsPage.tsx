@@ -111,6 +111,7 @@ function fmtDate(d?: string | null): string {
  * Project-scoped — sprints belong to one project (same as the burndown report).
  */
 export function SprintsPage() {
+  const { t } = useTranslation();
   const [projectId, setProjectId] = useState<string>('');
   const projectIri = projectId ? `/v1/projects/${projectId}` : '';
 
@@ -128,16 +129,16 @@ export function SprintsPage() {
           Sprints
         </h2>
         <p className="text-sm text-muted-foreground">
-          Backlog und Sprints eines Projekts — Aufgaben per Drag &amp; Drop zuordnen.
+          {t('sprints.description')}
         </p>
       </div>
 
       <div className="flex items-end gap-3">
         <div className="space-y-1.5">
-          <Label htmlFor="sprint-project" className="text-xs">Projekt</Label>
+          <Label htmlFor="sprint-project" className="text-xs">{t('sprints.project_label')}</Label>
           <Select value={projectId} onValueChange={setProjectId}>
             <SelectTrigger id="sprint-project" className="w-64">
-              <SelectValue placeholder="Projekt wählen…" />
+              <SelectValue placeholder={t('sprints.project_placeholder')} />
             </SelectTrigger>
             <SelectContent>
               {(projects?.data ?? []).map((p) => (
@@ -152,7 +153,7 @@ export function SprintsPage() {
         <SprintBoard projectId={projectId} projectIri={projectIri} />
       ) : (
         <p className="py-12 text-center text-sm text-muted-foreground">
-          Bitte ein Projekt wählen, um Backlog und Sprints zu sehen.
+          {t('sprints.pick_project')}
         </p>
       )}
     </div>
@@ -160,6 +161,7 @@ export function SprintsPage() {
 }
 
 function SprintBoard({ projectId, projectIri }: { projectId: string; projectIri: string }) {
+  const { t: translate } = useTranslation();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const { result: sprints, query: sprintsQuery } = useList<SprintRow>({
@@ -246,7 +248,7 @@ function SprintBoard({ projectId, projectIri }: { projectId: string; projectIri:
     <div className="space-y-5">
       <div className="flex justify-end">
         <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <Plus className="size-4" /> Neuer Sprint
+          <Plus className="size-4" /> {translate('sprints.new_sprint')}
         </Button>
       </div>
 
@@ -322,7 +324,7 @@ function Column({
               {fmtDate(sprint.startDate)} – {fmtDate(sprint.endDate)}
             </p>
           ) : (
-            <p className="text-[11px] text-muted-foreground">Nicht eingeplant</p>
+            <p className="text-[11px] text-muted-foreground">{translate('sprints.not_scheduled')}</p>
           )}
         </div>
         {sprint?.state ? (
@@ -337,7 +339,7 @@ function Column({
           <div className="flex items-center justify-between text-[11px] text-muted-foreground">
             <span>{hrs(velocity.completedMinutes)} / {hrs(velocity.committedMinutes)} h</span>
             <button type="button" onClick={onBurndown} className="underline hover:text-foreground">
-              Burndown
+              {translate('sprints.burndown')}
             </button>
           </div>
           <Progress value={pct} className="h-1.5" />
@@ -345,12 +347,12 @@ function Column({
       ) : null}
 
       <div className="flex items-center justify-between pb-1 text-xs text-muted-foreground">
-        <span>{tasks.length} Aufgaben</span>
+        <span>{translate('sprints.tasks_count', { count: tasks.length })}</span>
       </div>
 
       <div className="space-y-2">
         {tasks.length === 0 ? (
-          <p className="py-6 text-center text-xs text-muted-foreground/70">Keine Aufgaben</p>
+          <p className="py-6 text-center text-xs text-muted-foreground/70">{translate('sprints.no_tasks')}</p>
         ) : (
           tasks.map((t) => <SprintTaskCard key={t['@id']} task={t} />)
         )}
@@ -360,6 +362,7 @@ function Column({
 }
 
 function SprintTaskCard({ task, dragging = false }: { task: TaskRow; dragging?: boolean }) {
+  const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: task['@id'] ?? '',
     disabled: dragging,
@@ -380,7 +383,7 @@ function SprintTaskCard({ task, dragging = false }: { task: TaskRow; dragging?: 
       <CardContent className="space-y-1.5 px-3">
         <div className="flex items-center gap-1.5">
           <span className="font-mono text-[10px] text-muted-foreground">{task.identifier}</span>
-          {task.isPrio ? <Flag className="size-3 text-orange-500" aria-label="Priorisiert" /> : null}
+          {task.isPrio ? <Flag className="size-3 text-orange-500" aria-label={t('sprints.prioritized')} /> : null}
         </div>
         <p className="text-sm font-medium leading-snug">{task.title}</p>
         <div className="flex items-center justify-between gap-2 pt-0.5">
@@ -403,6 +406,7 @@ function VelocityPanel({
   velocityById: Record<string, VelocityRow>;
   loading: boolean;
 }) {
+  const { t } = useTranslation();
   const data = useMemo(
     () =>
       sprints
@@ -421,11 +425,11 @@ function VelocityPanel({
   return (
     <Card>
       <CardContent className="p-4">
-        <h3 className="mb-3 text-sm font-medium">Velocity (Stunden je Sprint)</h3>
+        <h3 className="mb-3 text-sm font-medium">{t('sprints.velocity_heading')}</h3>
         {loading ? (
           <Skeleton className="h-56 w-full" />
         ) : data.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">Noch keine Sprints.</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">{t('sprints.no_sprints')}</p>
         ) : (
           <div className="h-56 w-full">
             <ResponsiveContainer>
@@ -435,8 +439,8 @@ function VelocityPanel({
                 <YAxis tick={{ fontSize: 11 }} unit=" h" />
                 <Tooltip formatter={(v) => `${Number(v) || 0} h`} />
                 <Legend />
-                <Bar dataKey="committed" name="Geplant" fill="#94a3b8" />
-                <Bar dataKey="completed" name="Erledigt" fill="#22c55e" />
+                <Bar dataKey="committed" name={t('sprints.planned')} fill="#94a3b8" />
+                <Bar dataKey="completed" name={t('sprints.completed')} fill="#22c55e" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -457,6 +461,7 @@ function CreateSprintDialog({
   projectIri: string;
   nextPosition: number;
 }) {
+  const { t } = useTranslation();
   const { mutate: create, mutation } = useCreate<SprintRow>();
   const [name, setName] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -494,28 +499,28 @@ function CreateSprintDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Neuer Sprint</DialogTitle>
-          <DialogDescription>Eine Iteration mit Start- und Enddatum anlegen.</DialogDescription>
+          <DialogTitle>{t('sprints.new_sprint')}</DialogTitle>
+          <DialogDescription>{t('sprints.create_description')}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="s-name" className="text-xs">Name</Label>
+            <Label htmlFor="s-name" className="text-xs">{t('sprints.name_label')}</Label>
             <Input id="s-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Sprint 1" />
           </div>
           <div className="flex gap-3">
             <div className="flex-1 space-y-1.5">
-              <Label htmlFor="s-start" className="text-xs">Start</Label>
+              <Label htmlFor="s-start" className="text-xs">{t('sprints.start_label')}</Label>
               <Input id="s-start" type="date" value={startDate} max={endDate || undefined} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div className="flex-1 space-y-1.5">
-              <Label htmlFor="s-end" className="text-xs">Ende</Label>
+              <Label htmlFor="s-end" className="text-xs">{t('sprints.end_label')}</Label>
               <Input id="s-end" type="date" value={endDate} min={startDate || undefined} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Abbrechen</Button>
-          <Button onClick={submit} disabled={!name.trim() || mutation.isPending}>Anlegen</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('action.cancel')}</Button>
+          <Button onClick={submit} disabled={!name.trim() || mutation.isPending}>{t('sprints.create_submit')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -525,6 +530,7 @@ function CreateSprintDialog({
 type BurndownResponse = { sprint: string | null; totalTasks: number; series: { date: string; open: number }[] };
 
 function BurndownDialog({ sprint, onOpenChange }: { sprint: SprintRow | null; onOpenChange: (o: boolean) => void }) {
+  const { t } = useTranslation();
   const sprintId = sprint?.id ?? null;
   const from = sprint?.startDate ?? null;
   const to = sprint?.endDate ?? null;
@@ -544,12 +550,12 @@ function BurndownDialog({ sprint, onOpenChange }: { sprint: SprintRow | null; on
     <Dialog open={Boolean(sprint)} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Burndown — {sprint?.name}</DialogTitle>
-          <DialogDescription>Offene Aufgaben je Tag im Sprint-Zeitraum.</DialogDescription>
+          <DialogTitle>{t('sprints.burndown')} — {sprint?.name}</DialogTitle>
+          <DialogDescription>{t('sprints.burndown_description')}</DialogDescription>
         </DialogHeader>
         {!from || !to ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Dieser Sprint hat kein Start-/Enddatum.
+            {t('sprints.no_dates')}
           </p>
         ) : isLoading ? (
           <Skeleton className="h-64 w-full" />
@@ -561,7 +567,7 @@ function BurndownDialog({ sprint, onOpenChange }: { sprint: SprintRow | null; on
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
-                <Area type="monotone" dataKey="open" name="Offen" stroke="#6366f1" fill="#6366f1" fillOpacity={0.4} />
+                <Area type="monotone" dataKey="open" name={t('sprints.open')} stroke="#6366f1" fill="#6366f1" fillOpacity={0.4} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

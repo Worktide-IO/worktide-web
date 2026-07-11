@@ -13,15 +13,15 @@ import type { Row } from '@/lib/refine';
 
 // Portal feature key → label. `tickets` is the core screen and never gateable.
 const FEATURES: { key: string; label: string }[] = [
-  { key: 'dashboard', label: 'Dashboard' },
-  { key: 'monitoring', label: 'Monitoring' },
-  { key: 'agreements', label: 'Angebote & Verträge' },
-  { key: 'invoices', label: 'Rechnungen' },
-  { key: 'ideas', label: 'Ziele & Ideen' },
-  { key: 'proposals', label: 'Vorschläge' },
-  { key: 'social', label: 'Social-Freigabe' },
-  { key: 'documents', label: 'Wissen / Dateien' },
-  { key: 'forms', label: 'Fragebögen' },
+  { key: 'dashboard', label: 'contact_portal.feat_dashboard' },
+  { key: 'monitoring', label: 'contact_portal.feat_monitoring' },
+  { key: 'agreements', label: 'contact_portal.feat_agreements' },
+  { key: 'invoices', label: 'contact_portal.feat_invoices' },
+  { key: 'ideas', label: 'contact_portal.feat_ideas' },
+  { key: 'proposals', label: 'contact_portal.feat_proposals' },
+  { key: 'social', label: 'contact_portal.feat_social' },
+  { key: 'documents', label: 'contact_portal.feat_documents' },
+  { key: 'forms', label: 'contact_portal.feat_forms' },
 ];
 
 type ContactRow = Row<ContactJsonld> & { portalHiddenFeatures?: string[] | null };
@@ -72,17 +72,16 @@ export function ContactPortalFeatures({ contactId }: { contactId: string }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <SlidersHorizontal className="size-4" /> Portal-Sichtbarkeit
+          <SlidersHorizontal className="size-4" /> {t('contact_portal.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Welche freigeschalteten Portal-Bereiche dieser Kontakt sieht. Aus = für diesen Kontakt
-          ausgeblendet, auch wenn der Workspace den Bereich aktiviert hat.
+          {t('contact_portal.description')}
         </p>
         {enabled.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Für diesen Workspace sind (außer Tickets) keine Portal-Bereiche aktiviert.
+            {t('contact_portal.none_enabled')}
           </p>
         ) : (
           <div className="divide-y">
@@ -90,7 +89,7 @@ export function ContactPortalFeatures({ contactId }: { contactId: string }) {
               const visible = !hidden.includes(f.key);
               return (
                 <div key={f.key} className="flex items-center justify-between py-2">
-                  <Label htmlFor={`pf-${f.key}`} className="font-normal">{f.label}</Label>
+                  <Label htmlFor={`pf-${f.key}`} className="font-normal">{t(f.label)}</Label>
                   <Switch
                     id={`pf-${f.key}`}
                     checked={visible}

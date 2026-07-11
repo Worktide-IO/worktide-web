@@ -145,13 +145,13 @@ export function SourceWizard({
       <Dialog open onOpenChange={(o) => !o && onClose()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Unbekannte Quelle</DialogTitle>
+            <DialogTitle>{t('source_wizard.unknown_source')}</DialogTitle>
             <DialogDescription>
-              Kein Source-Typ für „{adapterCode}".
+              {t('source_wizard.unknown_source_desc', { code: adapterCode })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={onClose}>Schließen</Button>
+            <Button onClick={onClose}>{t('source_wizard.close')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -314,7 +314,7 @@ export function SourceWizard({
       setTestVerdict(data);
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setTestVerdict({ status: 'failed', message: detail ?? 'Test fehlgeschlagen.' });
+      setTestVerdict({ status: 'failed', message: detail ?? t('source_wizard.test_failed') });
     } finally {
       setTesting(false);
     }
@@ -336,7 +336,7 @@ export function SourceWizard({
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {isEdit ? 'Quelle bearbeiten' : 'Neue Quelle: '}
+            {isEdit ? t('source_wizard.edit_title') : t('source_wizard.new_title')}
             <Badge variant="outline">{def.label}</Badge>
           </DialogTitle>
           <DialogDescription>{def.description}</DialogDescription>
@@ -398,19 +398,19 @@ export function SourceWizard({
               onClick={() => setStep(step === 'test' ? 'configure' : 'identify')}
               disabled={saving || testing}
             >
-              Zurück
+              {t('source_wizard.back')}
             </Button>
           ) : null}
           {step === 'identify' ? (
             <Button onClick={submitIdentify} disabled={saving || !name.trim()}>
               {saving ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
-              Weiter
+              {t('source_wizard.next')}
             </Button>
           ) : null}
           {step === 'configure' ? (
             <Button onClick={submitConfigure} disabled={saving}>
               {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-              Speichern &amp; testen
+              {t('source_wizard.save_and_test')}
             </Button>
           ) : null}
           {step === 'test' ? (
@@ -419,12 +419,12 @@ export function SourceWizard({
               disabled={testing || (testVerdict?.status === 'failed')}
               variant={testVerdict?.status === 'ok' ? 'default' : 'outline'}
             >
-              {testVerdict?.status === 'ok' ? 'Fertigstellen' : 'Trotzdem fertigstellen'}
+              {testVerdict?.status === 'ok' ? t('source_wizard.finish') : t('source_wizard.finish_anyway')}
               <ArrowRight className="size-4" />
             </Button>
           ) : null}
           {step === 'done' ? (
-            <Button onClick={onClose}>Schließen</Button>
+            <Button onClick={onClose}>{t('source_wizard.close')}</Button>
           ) : null}
         </DialogFooter>
       </DialogContent>
@@ -433,11 +433,12 @@ export function SourceWizard({
 }
 
 function Stepper({ step, hasOAuth }: { step: Step; hasOAuth: boolean }) {
+  const { t } = useTranslation();
   const steps: { id: Step; label: string }[] = [
-    { id: 'identify', label: 'Bezeichnung' },
-    { id: 'configure', label: hasOAuth ? 'Verbinden' : 'Konfigurieren' },
-    { id: 'test', label: 'Test' },
-    { id: 'done', label: 'Fertig' },
+    { id: 'identify', label: t('source_wizard.step_identify') },
+    { id: 'configure', label: hasOAuth ? t('source_wizard.step_connect') : t('source_wizard.step_configure') },
+    { id: 'test', label: t('source_wizard.step_test') },
+    { id: 'done', label: t('source_wizard.step_done') },
   ];
   const activeIdx = steps.findIndex((s) => s.id === step);
   return (
@@ -463,15 +464,16 @@ function Stepper({ step, hasOAuth }: { step: Step; hasOAuth: boolean }) {
 function IdentifyStep({
   name, setName, address, setAddress, hint,
 }: { name: string; setName: (v: string) => void; address: string; setAddress: (v: string) => void; hint?: string }) {
+  const { t } = useTranslation();
   return (
     <>
       <div className="space-y-1.5">
-        <Label htmlFor="wiz-name">Name</Label>
-        <Input id="wiz-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="z. B. Support-Postfach" autoFocus />
-        <p className="text-xs text-muted-foreground">Wird als Channel-Bezeichnung in Listen angezeigt.</p>
+        <Label htmlFor="wiz-name">{t('source_wizard.name')}</Label>
+        <Input id="wiz-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('source_wizard.name_placeholder')} autoFocus />
+        <p className="text-xs text-muted-foreground">{t('source_wizard.name_hint')}</p>
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="wiz-address">Adresse / Identifier (optional)</Label>
+        <Label htmlFor="wiz-address">{t('source_wizard.address_label')}</Label>
         <Input id="wiz-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="support@firma.de" />
       </div>
       {hint ? (
@@ -486,10 +488,11 @@ function IdentifyStep({
 function ImapConfigure({
   cfg, setField, isEdit,
 }: { cfg: Record<string, string>; setField: (k: string, v: string) => void; isEdit: boolean }) {
+  const { t } = useTranslation();
   return (
     <>
       <fieldset className="space-y-2 rounded-md border p-3">
-        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">IMAP (eingehend)</legend>
+        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('source_wizard.imap_inbound')}</legend>
         <div className="grid grid-cols-[1fr_100px_120px] gap-2">
           <Input value={cfg.imapHost ?? ''} onChange={(e) => setField('imapHost', e.target.value)} placeholder="imap.firma.de" />
           <Input value={cfg.imapPort ?? '993'} onChange={(e) => setField('imapPort', e.target.value)} placeholder="Port" />
@@ -501,14 +504,14 @@ function ImapConfigure({
             <SelectContent>
               <SelectItem value="ssl">SSL</SelectItem>
               <SelectItem value="tls">TLS</SelectItem>
-              <SelectItem value="none">keine</SelectItem>
+              <SelectItem value="none">{t('source_wizard.encryption_none')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <Input value={cfg.imapFolder ?? 'INBOX'} onChange={(e) => setField('imapFolder', e.target.value)} placeholder="Folder (INBOX)" />
       </fieldset>
       <fieldset className="space-y-2 rounded-md border p-3">
-        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">SMTP (ausgehend)</legend>
+        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('source_wizard.smtp_outbound')}</legend>
         <div className="grid grid-cols-[1fr_100px_120px] gap-2">
           <Input value={cfg.smtpHost ?? ''} onChange={(e) => setField('smtpHost', e.target.value)} placeholder="smtp.firma.de" />
           <Input value={cfg.smtpPort ?? '587'} onChange={(e) => setField('smtpPort', e.target.value)} placeholder="Port" />
@@ -520,20 +523,20 @@ function ImapConfigure({
             <SelectContent>
               <SelectItem value="ssl">SSL</SelectItem>
               <SelectItem value="tls">STARTTLS</SelectItem>
-              <SelectItem value="none">keine</SelectItem>
+              <SelectItem value="none">{t('source_wizard.encryption_none')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <Input value={cfg.smtpFrom ?? ''} onChange={(e) => setField('smtpFrom', e.target.value)} placeholder="From-Adresse" />
+        <Input value={cfg.smtpFrom ?? ''} onChange={(e) => setField('smtpFrom', e.target.value)} placeholder={t('source_wizard.from_address')} />
       </fieldset>
       <fieldset className="space-y-2 rounded-md border p-3">
         <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Auth</legend>
-        <Input value={cfg.username ?? ''} onChange={(e) => setField('username', e.target.value)} placeholder="Benutzername" />
+        <Input value={cfg.username ?? ''} onChange={(e) => setField('username', e.target.value)} placeholder={t('source_wizard.username')} />
         <Input
           type="password"
           value={cfg.password ?? ''}
           onChange={(e) => setField('password', e.target.value)}
-          placeholder={isEdit ? 'Passwort (leer = unverändert)' : 'Passwort'}
+          placeholder={isEdit ? t('source_wizard.password_edit') : t('source_wizard.password')}
           autoComplete="new-password"
         />
       </fieldset>
@@ -549,8 +552,7 @@ function WebhookConfigure({ token }: { token: string }) {
     <fieldset className="space-y-2 rounded-md border p-3">
       <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Webhook-URL</legend>
       <p className="text-xs text-muted-foreground">
-        Gib diese URL bei Deinem Sender (Zabbix, Slack, eigenes Skript) als Webhook-Ziel an.
-        Der Token in der URL authentifiziert — behandle ihn wie ein Passwort.
+        {t('source_wizard.webhook_intro')}
       </p>
       <div className="flex items-center gap-2">
         <code className="flex-1 truncate rounded border bg-muted px-2 py-1 text-xs">{url}</code>
@@ -564,11 +566,11 @@ function WebhookConfigure({ token }: { token: string }) {
           }}
         >
           <Copy className="size-3" />
-          Kopieren
+          {t('source_wizard.copy')}
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">
-        Beispiel-curl zum Testen:
+        {t('source_wizard.curl_example')}
       </p>
       <pre className="overflow-x-auto rounded border bg-muted px-2 py-1 text-[11px]">
 {`curl -X POST '${url}' \\
@@ -582,26 +584,26 @@ function WebhookConfigure({ token }: { token: string }) {
 function OAuthConfigure({
   providerLabel, connected, onConnect,
 }: { providerLabel: string; connected: boolean; onConnect: () => void }) {
+  const { t } = useTranslation();
   return (
     <fieldset className="space-y-2 rounded-md border p-3">
       <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">OAuth-Login</legend>
       <p className="text-xs text-muted-foreground">
-        Klick startet die {providerLabel}-Anmeldung — kein App-Passwort nötig. Du landest nach
-        der Zustimmung automatisch wieder hier.
+        {t('source_wizard.oauth_intro', { provider: providerLabel })}
       </p>
       {connected ? (
         <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
           <CheckCircle2 className="mr-1 inline size-4" />
-          Bereits verbunden.
+          {t('source_wizard.already_connected')}
         </div>
       ) : (
         <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300">
-          Noch nicht verbunden.
+          {t('source_wizard.not_connected')}
         </div>
       )}
       <Button type="button" variant="outline" className="w-full" onClick={onConnect}>
         <Link2 className="size-4" />
-        {connected ? `Mit ${providerLabel} neu verbinden` : `Mit ${providerLabel} anmelden`}
+        {connected ? t('source_wizard.reconnect_with', { provider: providerLabel }) : t('source_wizard.signin_with', { provider: providerLabel })}
       </Button>
     </fieldset>
   );
@@ -610,14 +612,15 @@ function OAuthConfigure({
 function TestStep({
   verdict, onRun, testing,
 }: { verdict: TestVerdict | null; onRun: () => void; testing: boolean }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Verbindungs-Test prüft Auth + Erreichbarkeit, ohne Daten zu ziehen oder zu senden.
+        {t('source_wizard.test_intro')}
       </p>
       <Button onClick={onRun} disabled={testing} variant="outline" className="w-full">
         {testing ? <Loader2 className="size-4 animate-spin" /> : <RotateCw className="size-4" />}
-        Test starten
+        {t('source_wizard.run_test')}
       </Button>
       {verdict ? (
         <div
@@ -637,13 +640,13 @@ function TestStep({
 }
 
 function DoneStep({ label }: { label: string }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-2 rounded-md border border-emerald-300 bg-emerald-50 p-4 text-center text-sm text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
       <CheckCircle2 className="mx-auto size-8" />
-      <p className="font-medium">{label}-Quelle ist aktiv.</p>
+      <p className="font-medium">{t('source_wizard.done_active', { label })}</p>
       <p className="text-xs">
-        Neue Events erscheinen im Inbox-Stream sobald der Sync-Worker das nächste Mal läuft
-        (typischerweise innerhalb 60 s).
+        {t('source_wizard.done_hint')}
       </p>
     </div>
   );
@@ -665,8 +668,7 @@ function WebhookUrlBlock({ token, providerHint }: { token: string; providerHint:
         Push-URL (Webhook)
       </legend>
       <p className="text-xs text-muted-foreground">
-        {providerHint} Klick auf Kopieren, dann im jeweiligen
-        Admin-Backend als Webhook-URL eintragen.
+        {providerHint} {t('source_wizard.webhook_paste_hint')}
       </p>
       <div className="flex items-center gap-2">
         <code className="flex-1 truncate rounded border bg-muted px-2 py-1 text-xs">{url}</code>
@@ -680,7 +682,7 @@ function WebhookUrlBlock({ token, providerHint }: { token: string; providerHint:
           }}
         >
           <Copy className="size-3" />
-          Kopieren
+          {t('source_wizard.copy')}
         </Button>
       </div>
     </fieldset>
@@ -690,6 +692,7 @@ function WebhookUrlBlock({ token, providerHint }: { token: string; providerHint:
 function RedmineConfigure({
   cfg, setField, isEdit,
 }: { cfg: Record<string, string>; setField: (k: string, v: string) => void; isEdit: boolean }) {
+  const { t } = useTranslation();
   return (
     <>
       <fieldset className="space-y-2 rounded-md border p-3">
@@ -702,29 +705,27 @@ function RedmineConfigure({
         <Input
           value={cfg.projectId ?? ''}
           onChange={(e) => setField('projectId', e.target.value)}
-          placeholder="Redmine-Projekt-ID oder -Key (optional, leer = alle)"
+          placeholder={t('source_wizard.redmine_project_placeholder')}
         />
       </fieldset>
       <fieldset className="space-y-2 rounded-md border p-3">
-        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter (optional)</legend>
+        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('source_wizard.filter_optional')}</legend>
         <Input
           value={cfg.trackerId ?? ''}
           onChange={(e) => setField('trackerId', e.target.value)}
-          placeholder="Tracker-ID (optional, leer = alle Tracker)"
+          placeholder={t('source_wizard.tracker_placeholder')}
         />
         <Input
           value={cfg.assignedToId ?? ''}
           onChange={(e) => setField('assignedToId', e.target.value)}
-          placeholder="Zugewiesen an: me oder Benutzer-ID (optional)"
+          placeholder={t('source_wizard.assigned_placeholder')}
         />
         <p className="text-xs text-muted-foreground">
-          Nur Tickets eines Trackers und/oder bestimmter Zuweisung importieren.
-          „me" = der Benutzer des API-Keys. Tracker-ID findest Du in Redmine unter
-          Administration → Tracker (in der URL).
+          {t('source_wizard.redmine_filter_hint')}
         </p>
       </fieldset>
       <fieldset className="space-y-2 rounded-md border p-3">
-        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Synchronisation</legend>
+        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('source_wizard.synchronization')}</legend>
         <label className="flex items-start gap-2 text-sm">
           <Checkbox
             checked={cfg.readOnly === '1'}
@@ -732,10 +733,9 @@ function RedmineConfigure({
             className="mt-0.5"
           />
           <span>
-            <span className="font-medium">Nur lesen (read-only)</span>
+            <span className="font-medium">{t('source_wizard.read_only')}</span>
             <span className="block text-xs text-muted-foreground">
-              Tickets werden nur importiert. Änderungen in Worktide werden NICHT nach
-              Redmine zurückgeschrieben. Später auf bidirektional umstellbar.
+              {t('source_wizard.read_only_hint')}
             </span>
           </span>
         </label>
@@ -746,18 +746,17 @@ function RedmineConfigure({
           type="password"
           value={cfg.apiKey ?? ''}
           onChange={(e) => setField('apiKey', e.target.value)}
-          placeholder={isEdit ? 'API-Key (leer = unverändert)' : 'API-Key aus Redmine-Profil'}
+          placeholder={isEdit ? t('source_wizard.api_key_edit') : t('source_wizard.api_key_placeholder')}
           autoComplete="new-password"
         />
         <p className="text-xs text-muted-foreground">
-          Profil → „API-Zugriffsschlüssel anzeigen". Wird X-Redmine-API-Key
-          Header gesendet, nicht in URL (sicher in Access-Logs).
+          {t('source_wizard.redmine_api_key_hint')}
         </p>
       </fieldset>
       {cfg.webhookToken ? (
         <WebhookUrlBlock
           token={cfg.webhookToken}
-          providerHint="Optional: installiere das redmine_webhook-Plugin und trage die folgende URL in Verwaltung → Einstellungen → Webhooks ein, damit Worktide live über Änderungen informiert wird (statt 60s-Pull)."
+          providerHint={t('source_wizard.redmine_webhook_hint')}
         />
       ) : null}
     </>
@@ -767,6 +766,7 @@ function RedmineConfigure({
 function JiraConfigure({
   cfg, setField, isEdit,
 }: { cfg: Record<string, string>; setField: (k: string, v: string) => void; isEdit: boolean }) {
+  const { t } = useTranslation();
   const apiVersion = cfg.jiraApiVersion ?? '2';
   return (
     <>
@@ -788,7 +788,7 @@ function JiraConfigure({
           <Input
             value={cfg.projectKey ?? ''}
             onChange={(e) => setField('projectKey', e.target.value)}
-            placeholder="Projekt-Key (LW, PROJ ...) — optional"
+            placeholder={t('source_wizard.jira_project_key_placeholder')}
           />
         </div>
       </fieldset>
@@ -799,13 +799,11 @@ function JiraConfigure({
             type="password"
             value={cfg.jiraPat ?? ''}
             onChange={(e) => setField('jiraPat', e.target.value)}
-            placeholder={isEdit ? 'PAT (leer = unverändert)' : 'Personal Access Token'}
+            placeholder={isEdit ? t('source_wizard.pat_edit') : 'Personal Access Token'}
             autoComplete="new-password"
           />
           <p className="text-xs text-muted-foreground">
-            Bei Jira Server/DC: Profil → Persönliche Zugangstokens → Token
-            anlegen mit Scope "Read + Write Issues". Wird als
-            Authorization: Bearer Header gesendet.
+            {t('source_wizard.jira_pat_hint')}
           </p>
         </fieldset>
       ) : (
@@ -814,13 +812,13 @@ function JiraConfigure({
           <Input
             value={cfg.jiraEmail ?? ''}
             onChange={(e) => setField('jiraEmail', e.target.value)}
-            placeholder="Atlassian-Account-Email"
+            placeholder={t('source_wizard.atlassian_email')}
           />
           <Input
             type="password"
             value={cfg.jiraApiToken ?? ''}
             onChange={(e) => setField('jiraApiToken', e.target.value)}
-            placeholder={isEdit ? 'API-Token (leer = unverändert)' : 'API-Token (id.atlassian.com → Security → Create API token)'}
+            placeholder={isEdit ? t('source_wizard.api_token_edit') : 'API-Token (id.atlassian.com → Security → Create API token)'}
             autoComplete="new-password"
           />
         </fieldset>
@@ -828,7 +826,7 @@ function JiraConfigure({
       {cfg.webhookToken ? (
         <WebhookUrlBlock
           token={cfg.webhookToken}
-          providerHint="Trage die folgende URL in Jira → Administration → System → WebHooks ein und aktiviere die Events Issue Created / Updated / Deleted, damit Worktide live über Änderungen informiert wird (statt 60s-Pull)."
+          providerHint={t('source_wizard.jira_webhook_hint')}
         />
       ) : null}
     </>

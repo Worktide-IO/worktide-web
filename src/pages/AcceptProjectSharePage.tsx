@@ -1,4 +1,5 @@
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
@@ -29,6 +30,7 @@ type Phase = 'working' | 'success' | 'needsLogin' | 'error';
  * so that round-trip is painless).
  */
 export function AcceptProjectSharePage() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const token = params.get('token') ?? '';
@@ -37,7 +39,7 @@ export function AcceptProjectSharePage() {
   // inside the effect (react-hooks/set-state-in-effect).
   const [phase, setPhase] = useState<Phase>(token ? 'working' : 'error');
   const [message, setMessage] = useState<string | null>(
-    token ? null : 'Ungültiger oder fehlender Freigabe-Link.',
+    token ? null : t('accept_share.invalid_link'),
   );
   const [result, setResult] = useState<AcceptResponse | null>(null);
   const attempted = useRef(false);
@@ -62,20 +64,17 @@ export function AcceptProjectSharePage() {
           setPhase('needsLogin');
         } else if (status === 404) {
           setPhase('error');
-          setMessage('Diese Freigabe ist ungültig oder abgelaufen.');
+          setMessage(t('accept_share.expired'));
         } else if (status === 400) {
           // e.g. no active workspace, or trying to share into the host workspace.
           setPhase('error');
-          setMessage(
-            detail?.detail ??
-              'Freigabe nicht möglich. Bitte wechseln Sie in den Ziel-Workspace und öffnen Sie den Link erneut.',
-          );
+          setMessage(detail?.detail ?? t('accept_share.no_workspace'));
         } else if (status === 403) {
           setPhase('error');
-          setMessage('Sie sind kein Mitglied des aktiven Workspaces.');
+          setMessage(t('accept_share.not_member'));
         } else {
           setPhase('error');
-          setMessage(detail?.detail ?? detail?.message ?? 'Freigabe konnte nicht angenommen werden.');
+          setMessage(detail?.detail ?? detail?.message ?? t('accept_share.accept_failed'));
         }
       }
     })();
@@ -87,13 +86,13 @@ export function AcceptProjectSharePage() {
         <Card className="w-full">
           <CardHeader className="text-center items-center">
             <BrandLogo className="h-9 w-auto" />
-            <CardDescription>Projekt-Freigabe</CardDescription>
+            <CardDescription>{t('accept_share.subtitle')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {phase === 'working' ? (
               <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
                 <Loader2 className="size-4 animate-spin" />
-                Freigabe wird angenommen …
+                {t('accept_share.accepting')}
               </div>
             ) : null}
 
@@ -103,8 +102,8 @@ export function AcceptProjectSharePage() {
                   <CheckCircle2 className="size-4 shrink-0" />
                   <span>
                     {result?.projectName
-                      ? `„${result.projectName}“ wurde für Ihren Workspace freigegeben.`
-                      : 'Das Projekt wurde für Ihren Workspace freigegeben.'}
+                      ? t('accept_share.success_named', { name: result.projectName })
+                      : t('accept_share.success')}
                   </span>
                 </div>
                 <Button
@@ -115,7 +114,7 @@ export function AcceptProjectSharePage() {
                     })
                   }
                 >
-                  Zum Projekt
+                  {t('accept_share.to_project')}
                 </Button>
               </>
             ) : null}
@@ -123,11 +122,10 @@ export function AcceptProjectSharePage() {
             {phase === 'needsLogin' ? (
               <>
                 <p className="text-sm text-muted-foreground">
-                  Bitte melden Sie sich in dem Workspace an, für den das Projekt freigegeben werden
-                  soll, und öffnen Sie diesen Link anschließend erneut.
+                  {t('accept_share.needs_login')}
                 </p>
                 <Button className="w-full" onClick={() => navigate('/login')}>
-                  Anmelden
+                  {t('accept_share.login')}
                 </Button>
               </>
             ) : null}
@@ -139,7 +137,7 @@ export function AcceptProjectSharePage() {
                   <span>{message}</span>
                 </div>
                 <Button variant="outline" className="w-full" onClick={() => navigate('/')}>
-                  Zur Startseite
+                  {t('accept_share.to_home')}
                 </Button>
               </>
             ) : null}

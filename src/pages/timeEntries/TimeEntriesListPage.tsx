@@ -1,4 +1,5 @@
 import { useGetIdentity, useInvalidate, useList, useTable } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -62,6 +63,7 @@ function formatDuration(minutes: number): string {
 type Identity = { id?: string };
 
 export function TimeEntriesListPage() {
+  const { t: translate } = useTranslation();
   const [search, setSearch] = useState('');
   const [billableFilter, setBillableFilter] = useState<string>('all');
   const [projectFilter, setProjectFilter] = useState<string>('all');
@@ -151,23 +153,23 @@ export function TimeEntriesListPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl">Zeiteinträge</h2>
+            <h2 className="text-2xl">{translate('time_entries.heading')}</h2>
             <LiveBadge connected={liveConnected} />
           </div>
           <p className="text-sm text-muted-foreground">
-            {total} Einträge im Workspace
+            {translate('time_entries.count', { count: total })}
           </p>
         </div>
       </div>
 
       <Card>
         <CardHeader className="gap-4">
-          <CardTitle>Übersicht</CardTitle>
+          <CardTitle>{translate('time_entries.overview')}</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[240px] max-w-md">
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
-                placeholder="In Notiz suchen…"
+                placeholder={translate('time_entries.search_placeholder')}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -184,10 +186,10 @@ export function TimeEntriesListPage() {
               }}
             >
               <SelectTrigger className="w-56">
-                <SelectValue placeholder="Projekt" />
+                <SelectValue placeholder={translate('time_entries.project')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Projekte</SelectItem>
+                <SelectItem value="all">{translate('time_entries.all_projects')}</SelectItem>
                 {(projects?.data ?? []).map((p) => (
                   <SelectItem key={p['@id']} value={p['@id'] ?? ''}>
                     {p.key} · {p.name}
@@ -203,12 +205,12 @@ export function TimeEntriesListPage() {
               }}
             >
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Verrechenbar" />
+                <SelectValue placeholder={translate('time_entries.billable')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle</SelectItem>
-                <SelectItem value="yes">Verrechenbar</SelectItem>
-                <SelectItem value="no">Nicht verrechenbar</SelectItem>
+                <SelectItem value="all">{translate('time_entries.all')}</SelectItem>
+                <SelectItem value="yes">{translate('time_entries.billable')}</SelectItem>
+                <SelectItem value="no">{translate('time_entries.not_billable')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -223,21 +225,21 @@ export function TimeEntriesListPage() {
           ) : rows.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-12">
               {search || billableFilter !== 'all' || projectFilter !== 'all'
-                ? 'Keine Treffer mit diesen Filtern.'
-                : 'Noch keine Zeiteinträge erfasst.'}
+                ? translate('time_entries.no_matches')
+                : translate('time_entries.empty')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-32">Datum</TableHead>
-                  <TableHead className="w-20 text-right">Dauer</TableHead>
-                  <TableHead className="w-40">Person</TableHead>
-                  <TableHead className="w-44">Projekt</TableHead>
-                  <TableHead className="w-40">Aufgabe</TableHead>
-                  <TableHead className="w-36">Tätigkeit</TableHead>
-                  <TableHead>Notiz</TableHead>
-                  <TableHead className="w-24 text-right">Status</TableHead>
+                  <TableHead className="w-32">{translate('time_entries.col_date')}</TableHead>
+                  <TableHead className="w-20 text-right">{translate('time_entries.col_duration')}</TableHead>
+                  <TableHead className="w-40">{translate('time_entries.col_person')}</TableHead>
+                  <TableHead className="w-44">{translate('time_entries.col_project')}</TableHead>
+                  <TableHead className="w-40">{translate('time_entries.col_task')}</TableHead>
+                  <TableHead className="w-36">{translate('time_entries.col_activity')}</TableHead>
+                  <TableHead>{translate('time_entries.col_note')}</TableHead>
+                  <TableHead className="w-24 text-right">{translate('time_entries.col_status')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -259,7 +261,7 @@ export function TimeEntriesListPage() {
                       <TableCell className="text-right font-mono text-xs">
                         {e.running ? (
                           <Badge variant="default" className="text-xs">
-                            läuft…
+                            {translate('time_entries.running')}
                           </Badge>
                         ) : (
                           formatDuration(e.durationMinutes ?? 0)
@@ -338,6 +340,7 @@ export function TimeEntriesListPage() {
  * offline is queued and replayed on reconnect instead of silently lost.
  */
 function BilledCell({ entry, isOwn }: { entry: Row<TimeEntryJsonld>; isOwn: boolean }) {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const { mutate, isPending } = useResilientMutation();
 
@@ -348,11 +351,11 @@ function BilledCell({ entry, isOwn }: { entry: Row<TimeEntryJsonld>; isOwn: bool
       <div className="flex justify-end gap-1">
         {entry.isBilled ? (
           <Badge variant="secondary" className="text-xs">
-            abgerechnet
+            {t('time_entries.billed')}
           </Badge>
         ) : entry.isBillable ? (
           <Badge variant="outline" className="text-xs">
-            verrechenbar
+            {t('time_entries.billable_badge')}
           </Badge>
         ) : null}
       </div>
@@ -367,7 +370,7 @@ function BilledCell({ entry, isOwn }: { entry: Row<TimeEntryJsonld>; isOwn: bool
         url: `/time_entries/${entry.id}`,
         body: { isBilled: next },
         contentType: 'application/merge-patch+json',
-        label: `Abrechnungsstatus für Eintrag`,
+        label: t('time_entries.billing_status_label'),
       });
       void invalidate({ resource: 'time_entries', invalidates: ['list'] });
     } catch (err) {
@@ -382,12 +385,12 @@ function BilledCell({ entry, isOwn }: { entry: Row<TimeEntryJsonld>; isOwn: bool
 
   return (
     <div className="flex items-center justify-end gap-2">
-      <span className="text-xs text-muted-foreground">abgerechnet</span>
+      <span className="text-xs text-muted-foreground">{t('time_entries.billed')}</span>
       <Switch
         checked={!!entry.isBilled}
         onCheckedChange={onToggle}
         disabled={isPending}
-        aria-label="Abrechnungsstatus umschalten"
+        aria-label={t('time_entries.toggle_billed_aria')}
       />
     </div>
   );

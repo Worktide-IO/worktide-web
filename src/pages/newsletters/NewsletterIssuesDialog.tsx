@@ -150,7 +150,7 @@ export function NewsletterIssuesDialog({
 
   const composeAndSend = async () => {
     if (!subject.trim()) return;
-    if (!window.confirm(`„${subject.trim()}" jetzt an alle Abonnenten von „${nodeTitle}" senden?`)) return;
+    if (!window.confirm(translate('nl.confirm_send', { subject: subject.trim(), node: nodeTitle }))) return;
     setBusy(true);
     try {
       const id = await persistDraft();
@@ -164,7 +164,7 @@ export function NewsletterIssuesDialog({
   };
 
   const sendExisting = async (i: Issue) => {
-    if (!window.confirm(`„${i.subject}" jetzt an alle Abonnenten von „${nodeTitle}" senden?`)) return;
+    if (!window.confirm(translate('nl.confirm_send', { subject: i.subject, node: nodeTitle }))) return;
     setBusy(true);
     await sendId(idOf(i));
     setBusy(false);
@@ -178,7 +178,7 @@ export function NewsletterIssuesDialog({
 
   const duplicate = (i: Issue) => {
     setEditingId(null);
-    setSubject(`Kopie: ${i.subject}`);
+    setSubject(translate('nl.copy_prefix', { subject: i.subject }));
     setBody(i.body ?? '');
   };
 
@@ -194,7 +194,7 @@ export function NewsletterIssuesDialog({
 
   const saveAsTemplate = async () => {
     if (!subject.trim()) return;
-    const name = window.prompt('Name der Vorlage:', subject.trim().slice(0, 60));
+    const name = window.prompt(translate('nl.template_name_prompt'), subject.trim().slice(0, 60));
     if (!name || !name.trim()) return;
     try {
       await api.post('/newsletter_templates', {
@@ -211,7 +211,7 @@ export function NewsletterIssuesDialog({
   };
 
   const remove = async (i: Issue) => {
-    if (!window.confirm('Entwurf löschen?')) return;
+    if (!window.confirm(translate('nl.confirm_delete_draft'))) return;
     try {
       await api.delete(`/newsletter_issues/${idOf(i)}`);
       if (editingId === idOf(i)) resetComposer();
@@ -233,20 +233,20 @@ export function NewsletterIssuesDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Newsletter · {nodeTitle}</DialogTitle>
+          <DialogTitle>{translate('nl.dialog_title', { node: nodeTitle })}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-3 rounded-md border p-3">
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-medium">
-                {editingId ? 'Entwurf bearbeiten' : 'Neuer Newsletter'}
+                {editingId ? translate('nl.edit_draft') : translate('nl.new_newsletter')}
               </span>
               <div className="flex items-center gap-2">
                 {templates.length > 0 ? (
                   <Select value="" onValueChange={applyTemplate}>
                     <SelectTrigger className="h-8 w-52">
-                      <SelectValue placeholder="Vorlage laden…" />
+                      <SelectValue placeholder={translate('nl.load_template')} />
                     </SelectTrigger>
                     <SelectContent>
                       {templates.map((t) => (
@@ -258,25 +258,25 @@ export function NewsletterIssuesDialog({
                   </Select>
                 ) : null}
                 <Button type="button" variant="ghost" size="sm" className="h-8" onClick={saveAsTemplate} disabled={!subject.trim()}>
-                  Als Vorlage speichern
+                  {translate('nl.save_as_template')}
                 </Button>
                 {editingId ? (
                   <Button type="button" variant="ghost" size="sm" className="h-8" onClick={resetComposer}>
-                    <X className="size-3" /> Neu
+                    <X className="size-3" /> {translate('nl.new')}
                   </Button>
                 ) : null}
               </div>
             </div>
             <div className="space-y-1">
-              <Label>Betreff</Label>
+              <Label>{translate('nl.subject')}</Label>
               <Input
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="z. B. Produkt-Update Juli"
+                placeholder={translate('nl.subject_placeholder')}
               />
             </div>
             <div className="space-y-1">
-              <Label>Inhalt (Markdown)</Label>
+              <Label>{translate('nl.content_markdown')}</Label>
               <Textarea
                 rows={8}
                 value={body}
@@ -295,7 +295,7 @@ export function NewsletterIssuesDialog({
                 checked={includeDescendants}
                 onCheckedChange={(v) => setIncludeDescendants(v === true)}
               />
-              Unterthemen einschließen (auch Abonnenten der Unterthemen)
+              {translate('nl.include_descendants')}
             </label>
             <div className="flex justify-end gap-2">
               <Button
@@ -304,22 +304,22 @@ export function NewsletterIssuesDialog({
                 onClick={saveDraft}
                 disabled={busy || !subject.trim()}
               >
-                Als Entwurf speichern
+                {translate('nl.save_draft')}
               </Button>
               <Button type="button" onClick={composeAndSend} disabled={busy || !subject.trim()}>
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                Senden
+                {translate('nl.send')}
               </Button>
             </div>
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-medium">Verlauf</div>
+            <div className="mb-2 text-sm font-medium">{translate('nl.history')}</div>
             {loading ? (
-              <p className="text-sm text-muted-foreground">Lädt…</p>
+              <p className="text-sm text-muted-foreground">{translate('app.loading')}</p>
             ) : issues.length === 0 ? (
               <p className="py-4 text-center text-sm text-muted-foreground">
-                Noch nichts angelegt.
+                {translate('nl.empty')}
               </p>
             ) : (
               <div className="divide-y">
@@ -329,22 +329,22 @@ export function NewsletterIssuesDialog({
                     {i.status === 'sent' ? (
                       <>
                         <span className="shrink-0 text-xs text-muted-foreground">
-                          {i.sentAt ? dateFmt.format(new Date(i.sentAt)) : ''} · {i.recipientCount ?? 0} Empf.
+                          {i.sentAt ? dateFmt.format(new Date(i.sentAt)) : ''} · {i.recipientCount ?? 0} {translate('nl.recipients_abbr')}
                         </span>
                         <Button type="button" variant="ghost" size="sm" className="h-7" onClick={() => duplicate(i)}>
-                          <Copy className="size-3" /> Duplizieren
+                          <Copy className="size-3" /> {translate('nl.duplicate')}
                         </Button>
                       </>
                     ) : (
                       <>
                         <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-                          Entwurf
+                          {translate('nl.draft_badge')}
                         </span>
                         <Button type="button" variant="ghost" size="sm" className="h-7" onClick={() => editDraft(i)}>
                           <Pencil className="size-3" />
                         </Button>
                         <Button type="button" variant="ghost" size="sm" className="h-7" disabled={busy} onClick={() => sendExisting(i)}>
-                          <Send className="size-3" /> Senden
+                          <Send className="size-3" /> {translate('nl.send')}
                         </Button>
                         <Button type="button" variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => remove(i)}>
                           <Trash2 className="size-3" />

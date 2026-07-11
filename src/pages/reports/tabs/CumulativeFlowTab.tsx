@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import {
@@ -62,6 +63,7 @@ function todayIso() { return new Date().toISOString().slice(0, 10); }
  * layout, so "done" accumulates underneath the work still in flight).
  */
 export function CumulativeFlowTab() {
+  const { t } = useTranslation();
   const [from, setFrom] = useState(() => isoDaysAgo(30));
   const [to, setTo] = useState(() => todayIso());
   const [projectId, setProjectId] = useState<string>('');
@@ -105,17 +107,17 @@ export function CumulativeFlowTab() {
   return (
     <ReportShell
       title="Cumulative Flow"
-      description="Aufgaben pro Status und Tag, gestapelt. Breiter werdende Bänder zeigen Engpässe; eine stetig wachsende Gesamthöhe deutet auf Scope-Creep."
+      description={t('cfd.description')}
       from={from}
       to={to}
       onFromChange={setFrom}
       onToChange={setTo}
       extras={
         <div className="space-y-1.5">
-          <Label htmlFor="cfd-project" className="text-xs">Projekt</Label>
+          <Label htmlFor="cfd-project" className="text-xs">{t('cfd.project_label')}</Label>
           <Select value={projectId} onValueChange={setProjectId}>
             <SelectTrigger id="cfd-project" className="w-56">
-              <SelectValue placeholder="Projekt wählen…" />
+              <SelectValue placeholder={t('cfd.project_placeholder')} />
             </SelectTrigger>
             <SelectContent>
               {(projects?.data ?? []).map((p) => (
@@ -131,19 +133,19 @@ export function CumulativeFlowTab() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            {projectId ? 'Status-Verteilung im Zeitverlauf' : 'Bitte erst ein Projekt wählen.'}
+            {projectId ? t('cfd.title_data') : t('cfd.title_pick')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {!projectId ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              Das Cumulative-Flow-Diagramm braucht einen Projekt-Kontext.
+              {t('cfd.needs_project')}
             </p>
           ) : isLoading ? (
             <Skeleton className="h-72 w-full" />
           ) : !hasData ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              Keine Daten im Zeitraum.
+              {t('cfd.no_data')}
             </p>
           ) : (
             <>
@@ -171,8 +173,7 @@ export function CumulativeFlowTab() {
                 </ResponsiveContainer>
               </div>
               <p className="pt-3 text-xs text-muted-foreground">
-                Historische Bänder werden aus protokollierten Status-Wechseln rekonstruiert;
-                Wechsel vor Einführung des Ereignis-Logs erscheinen im jeweils frühesten bekannten Status.
+                {t('cfd.footnote')}
               </p>
             </>
           )}

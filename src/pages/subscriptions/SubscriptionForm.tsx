@@ -3,6 +3,7 @@ import { useForm } from '@refinedev/react-hook-form';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { Controller, type FieldValues } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
 import type { CustomerSystemJsonld } from '@/api/types/customerSystem/Jsonld';
@@ -27,18 +28,18 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 
 const BILLING_CYCLES = [
-  { value: 'monthly', label: 'Monatlich' },
-  { value: 'quarterly', label: 'Quartalsweise' },
-  { value: 'half_yearly', label: 'Halbjährlich' },
-  { value: 'yearly', label: 'Jährlich' },
-  { value: 'once', label: 'Einmalig' },
+  { value: 'monthly', label: 'subscription_form.cycle_monthly' },
+  { value: 'quarterly', label: 'subscription_form.cycle_quarterly' },
+  { value: 'half_yearly', label: 'subscription_form.cycle_half_yearly' },
+  { value: 'yearly', label: 'subscription_form.cycle_yearly' },
+  { value: 'once', label: 'subscription_form.cycle_once' },
 ];
 
 const STATUSES = [
-  { value: 'trial', label: 'Trial' },
-  { value: 'active', label: 'Aktiv' },
-  { value: 'paused', label: 'Pausiert' },
-  { value: 'cancelled', label: 'Gekündigt' },
+  { value: 'trial', label: 'subscription_form.status_trial' },
+  { value: 'active', label: 'subscription_form.status_active' },
+  { value: 'paused', label: 'subscription_form.status_paused' },
+  { value: 'cancelled', label: 'subscription_form.status_cancelled' },
 ];
 
 const CURRENCIES = [
@@ -65,6 +66,7 @@ type Mode = { action: 'create' } | { action: 'edit'; id: string };
  * accumulates float drift.
  */
 export function SubscriptionForm(props: Mode) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { show } = useNavigation();
   void show;
@@ -151,11 +153,11 @@ export function SubscriptionForm(props: Mode) {
           </Button>
           <div>
             <h2 className="text-2xl">
-              {props.action === 'create' ? 'Neues Abo' : current?.name ?? 'Abo bearbeiten'}
+              {props.action === 'create' ? t('subscription_form.new_title') : current?.name ?? t('subscription_form.edit_title')}
             </h2>
             {props.action === 'edit' && current?.nextBillingOn ? (
               <p className="text-sm text-muted-foreground">
-                Nächste Abrechnung am {new Date(current.nextBillingOn).toLocaleDateString()}
+                {t('subscription_form.next_billing', { date: new Date(current.nextBillingOn).toLocaleDateString() })}
               </p>
             ) : null}
           </div>
@@ -168,12 +170,12 @@ export function SubscriptionForm(props: Mode) {
         <div className="flex items-center gap-2">
           {props.action === 'edit' ? (
             <Button type="button" variant="outline" size="sm" disabled>
-              <Trash2 className="size-4" /> Löschen
+              <Trash2 className="size-4" /> {t('action.delete')}
             </Button>
           ) : null}
           <Button type="submit" disabled={isSubmitting || formLoading}>
             <Save className="size-4" />
-            {isSubmitting ? 'Speichern …' : 'Speichern'}
+            {isSubmitting ? t('subscription_form.saving') : t('action.save')}
           </Button>
         </div>
       </div>
@@ -190,25 +192,25 @@ export function SubscriptionForm(props: Mode) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Leistung</CardTitle>
+              <CardTitle>{t('subscription_form.service')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Field
                 id="name"
-                label="Name"
+                label={t('subscription_form.name')}
                 required
-                placeholder="z. B. TYPO3 Hosting + Maintenance"
-                {...register('name', { required: 'Pflichtfeld' })}
+                placeholder={t('subscription_form.name_placeholder')}
+                {...register('name', { required: t('subscription_form.required') })}
               />
               <div className="space-y-1.5">
-                <Label htmlFor="description">Beschreibung</Label>
+                <Label htmlFor="description">{t('subscription_form.description')}</Label>
                 <Textarea id="description" rows={3} {...register('description')} />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="priceMajor">
-                    Preis <span className="text-destructive">*</span>
+                    {t('subscription_form.price')} <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="priceMajor"
@@ -224,7 +226,7 @@ export function SubscriptionForm(props: Mode) {
                   </p>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="currency">Währung</Label>
+                  <Label htmlFor="currency">{t('subscription_form.currency')}</Label>
                   <Controller
                     name="currency"
                     control={control}
@@ -246,7 +248,7 @@ export function SubscriptionForm(props: Mode) {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="billingCycle">
-                    Zyklus <span className="text-destructive">*</span>
+                    {t('subscription_form.cycle')} <span className="text-destructive">*</span>
                   </Label>
                   <Controller
                     name="billingCycle"
@@ -259,7 +261,7 @@ export function SubscriptionForm(props: Mode) {
                         <SelectContent>
                           {BILLING_CYCLES.map((b) => (
                             <SelectItem key={b.value} value={b.value}>
-                              {b.label}
+                              {t(b.label)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -272,15 +274,15 @@ export function SubscriptionForm(props: Mode) {
               <div className="grid grid-cols-2 gap-4">
                 <Field
                   id="startedOn"
-                  label="Startet am"
+                  label={t('subscription_form.started_on')}
                   type="date"
                   required
-                  {...register('startedOn', { required: 'Pflichtfeld' })}
+                  {...register('startedOn', { required: t('subscription_form.required') })}
                 />
-                <Field id="endedOn" label="Endet am (optional)" type="date" {...register('endedOn')} />
+                <Field id="endedOn" label={t('subscription_form.ended_on')} type="date" {...register('endedOn')} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="notes">Notizen</Label>
+                <Label htmlFor="notes">{t('subscription_form.notes')}</Label>
                 <Textarea id="notes" rows={3} {...register('notes')} />
               </div>
             </CardContent>
@@ -288,17 +290,17 @@ export function SubscriptionForm(props: Mode) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Zuordnung & Status</CardTitle>
+              <CardTitle>{t('subscription_form.assignment_status')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="customer">
-                  Kunde <span className="text-destructive">*</span>
+                  {t('subscription_form.customer')} <span className="text-destructive">*</span>
                 </Label>
                 <Controller
                   name="customer"
                   control={control}
-                  rules={{ required: 'Pflichtfeld' }}
+                  rules={{ required: t('subscription_form.required') }}
                   render={({ field, fieldState }) => (
                     <>
                       <CustomerCombobox
@@ -318,7 +320,7 @@ export function SubscriptionForm(props: Mode) {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="system">System (optional)</Label>
+                <Label htmlFor="system">{t('subscription_form.system')}</Label>
                 <Controller
                   name="system"
                   control={control}
@@ -330,11 +332,11 @@ export function SubscriptionForm(props: Mode) {
                     >
                       <SelectTrigger id="system">
                         <SelectValue
-                          placeholder={selectedCustomer ? '— Kundenweit —' : 'Erst Kunde wählen'}
+                          placeholder={selectedCustomer ? t('subscription_form.customer_wide') : t('subscription_form.pick_customer_first')}
                         />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">— Kundenweit (kein System) —</SelectItem>
+                        <SelectItem value="none">{t('subscription_form.customer_wide_no_system')}</SelectItem>
                         {filteredSystems.map((s) => (
                           <SelectItem key={s['@id']} value={s['@id'] ?? ''}>
                             {s.name}
@@ -345,13 +347,12 @@ export function SubscriptionForm(props: Mode) {
                   )}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Leer lassen für Leistungen, die sich auf den gesamten Kunden beziehen
-                  (z. B. Retainer).
+                  {t('subscription_form.system_hint')}
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">{t('subscription_form.status')}</Label>
                 <Controller
                   name="status"
                   control={control}
@@ -363,7 +364,7 @@ export function SubscriptionForm(props: Mode) {
                       <SelectContent>
                         {STATUSES.map((s) => (
                           <SelectItem key={s.value} value={s.value}>
-                            {s.label}
+                            {t(s.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -374,9 +375,9 @@ export function SubscriptionForm(props: Mode) {
 
               <div className="flex items-center justify-between rounded-md border border-input p-3">
                 <div className="space-y-0.5">
-                  <Label htmlFor="autoRenew">Auto-Verlängerung</Label>
+                  <Label htmlFor="autoRenew">{t('subscription_form.auto_renew')}</Label>
                   <p className="text-xs text-muted-foreground">
-                    Beeinflusst, wann "Nächste Abrechnung" automatisch fortgeschrieben wird.
+                    {t('subscription_form.auto_renew_hint')}
                   </p>
                 </div>
                 <Controller
