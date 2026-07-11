@@ -1,13 +1,16 @@
 import { useList } from '@refinedev/core';
-import { CheckSquare, Crown, Mail, Search, ShieldCheck, UserCog } from 'lucide-react';
+import { CheckSquare, Crown, Mail, Pencil, Search, ShieldCheck, UserCog } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
+import type { UserJsonld } from '@/api/types/user/Jsonld';
 import type { WorkspaceMemberJsonld } from '@/api/types/workspaceMember/Jsonld';
 import { InviteMembersCard } from '@/components/InviteMembersCard';
+import { MemberEditDialog } from '@/components/MemberEditDialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -36,6 +39,7 @@ const ROLE_LABEL: Record<string, { label: string; icon: typeof Crown; tone: stri
  */
 export function TeamMembersListPage() {
   const [query, setQuery] = useState('');
+  const [editing, setEditing] = useState<{ m: Row<WorkspaceMemberJsonld>; u: Row<UserJsonld> | null } | null>(null);
   const { byIri, isLoading: usersLoading } = useUserDirectory();
 
   const { result: members, query: membersQuery } = useList<Row<WorkspaceMemberJsonld>>({
@@ -136,8 +140,9 @@ export function TeamMembersListPage() {
             const roleInfo = ROLE_LABEL[m.role ?? 'member'] ?? ROLE_LABEL.member;
             const RoleIcon = roleInfo.icon;
             const openCount = u?.['@id'] ? openTasksPerUser[u['@id']] ?? 0 : 0;
+            const inactive = (m as { isActive?: boolean }).isActive === false;
             return (
-              <Card key={m['@id']} className="overflow-hidden">
+              <Card key={m['@id']} className={cn('overflow-hidden', inactive && 'opacity-60')}>
                 <CardContent className="flex items-center gap-3 p-4">
                   <Avatar size="lg" className="shrink-0">
                     <AvatarFallback>
@@ -157,7 +162,7 @@ export function TeamMembersListPage() {
                         {u.email}
                       </a>
                     ) : null}
-                    <div className="flex items-center gap-2 pt-1">
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
                       <Badge
                         variant="outline"
                         className={cn('gap-1 text-[10px]', roleInfo.tone)}
@@ -165,18 +170,42 @@ export function TeamMembersListPage() {
                         <RoleIcon className="size-3" />
                         {roleInfo.label}
                       </Badge>
+                      {inactive ? (
+                        <Badge variant="outline" className="gap-1 text-[10px] text-destructive border-destructive/30 bg-destructive/5">
+                          Gesperrt
+                        </Badge>
+                      ) : null}
                       <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                         <CheckSquare className="size-3" />
                         {openCount} {openCount === 1 ? 'Aufgabe' : 'Aufgaben'} offen
                       </span>
                     </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 self-start text-muted-foreground"
+                    onClick={() => setEditing({ m, u })}
+                    title="Mitglied bearbeiten"
+                    aria-label="Mitglied bearbeiten"
+                  >
+                    <Pencil className="size-4" />
+                  </Button>
                 </CardContent>
               </Card>
             );
           })}
         </div>
       )}
+
+      {editing ? (
+        <MemberEditDialog
+          member={editing.m}
+          user={editing.u}
+          open
+          onOpenChange={(o) => !o && setEditing(null)}
+        />
+      ) : null}
     </div>
   );
 }
