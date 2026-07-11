@@ -2,7 +2,7 @@ import { Copy, Loader2, Pencil, Send, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { api } from '@/lib/api';
+import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -13,6 +13,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
 type Issue = {
@@ -24,6 +31,8 @@ type Issue = {
   sentAt?: string | null;
   recipientCount?: number;
 };
+
+type Template = { id?: string; '@id'?: string; name: string; subject: string; body?: string | null };
 
 const MERGE_PATCH = { headers: { 'Content-Type': 'application/merge-patch+json' } };
 
@@ -46,12 +55,18 @@ export function NewsletterIssuesDialog({
   onOpenChange: (o: boolean) => void;
 }) {
   const [issues, setIssues] = useState<Issue[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(false);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [includeDescendants, setIncludeDescendants] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const workspaceIri = (() => {
+    const id = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
+    return id ? `/v1/workspaces/${id}` : undefined;
+  })();
 
   const load = useCallback(() => {
     setLoading(true);
@@ -65,9 +80,22 @@ export function NewsletterIssuesDialog({
       .finally(() => setLoading(false));
   }, [nodeIri]);
 
+  const loadTemplates = useCallback(() => {
+    api
+      .get('/newsletter_templates', {
+        params: { 'order[name]': 'asc' },
+        headers: { Accept: 'application/ld+json' },
+      })
+      .then((r) => setTemplates(r.data['member'] ?? r.data['hydra:member'] ?? []))
+      .catch(() => setTemplates([]));
+  }, []);
+
   useEffect(() => {
-    if (open) load();
-  }, [open, load]);
+    if (open) {
+      load();
+      loadTemplates();
+    }
+  }, [open, load, loadTemplates]);
 
   const idOf = (i: Issue) => i.id ?? i['@id']?.split('/').pop() ?? '';
 
@@ -152,6 +180,34 @@ export function NewsletterIssuesDialog({
     setBody(i.body ?? '');
   };
 
+  const tplIdOf = (t: Template) => t.id ?? t['@id']?.split('/').pop() ?? '';
+
+  const applyTemplate = (id: string) => {
+    const t = templates.find((x) => tplIdOf(x) === id);
+    if (!t) return;
+    setEditingId(null);
+    setSubject(t.subject);
+    setBody(t.body ?? '');
+  };
+
+  const saveAsTemplate = async () => {
+    if (!subject.trim()) return;
+    const name = window.prompt('Name der Vorlage:', subject.trim().slice(0, 60));
+    if (!name || !name.trim()) return;
+    try {
+      await api.post('/newsletter_templates', {
+        name: name.trim(),
+        subject: subject.trim(),
+        body: body.trim() || null,
+        workspace: workspaceIri,
+      });
+      toast.success('Als Vorlage gespeichert.');
+      loadTemplates();
+    } catch {
+      toast.error('Speichern der Vorlage fehlgeschlagen.');
+    }
+  };
+
   const remove = async (i: Issue) => {
     if (!window.confirm('Entwurf löschen?')) return;
     try {
@@ -180,15 +236,34 @@ export function NewsletterIssuesDialog({
 
         <div className="space-y-4">
           <div className="space-y-3 rounded-md border p-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-medium">
                 {editingId ? 'Entwurf bearbeiten' : 'Neuer Newsletter'}
               </span>
-              {editingId ? (
-                <Button type="button" variant="ghost" size="sm" className="h-7" onClick={resetComposer}>
-                  <X className="size-3" /> Neu
+              <div className="flex items-center gap-2">
+                {templates.length > 0 ? (
+                  <Select value="" onValueChange={applyTemplate}>
+                    <SelectTrigger className="h-8 w-52">
+                      <SelectValue placeholder="Vorlage laden…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((t) => (
+                        <SelectItem key={tplIdOf(t)} value={tplIdOf(t)}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : null}
+                <Button type="button" variant="ghost" size="sm" className="h-8" onClick={saveAsTemplate} disabled={!subject.trim()}>
+                  Als Vorlage speichern
                 </Button>
-              ) : null}
+                {editingId ? (
+                  <Button type="button" variant="ghost" size="sm" className="h-8" onClick={resetComposer}>
+                    <X className="size-3" /> Neu
+                  </Button>
+                ) : null}
+              </div>
             </div>
             <div className="space-y-1">
               <Label>Betreff</Label>
