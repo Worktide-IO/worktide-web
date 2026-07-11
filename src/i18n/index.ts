@@ -21,6 +21,10 @@ void i18n.use(initReactI18next).init({
   lng: 'en',
   fallbackLng: 'en',
   supportedLngs: ['en', 'de'],
+  // Semantic keys are flat, dotted strings (e.g. `nav.wall`, `action.save`) —
+  // treat the whole key literally instead of nesting on `.`.
+  keySeparator: false,
+  nsSeparator: false,
   interpolation: { escapeValue: false }, // React already escapes
   returnEmptyString: false,
 });

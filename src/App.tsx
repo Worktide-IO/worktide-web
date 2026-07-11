@@ -133,187 +133,187 @@ export default function App() {
           resources={[
             // ---- Arbeit ----------------------------------------------------
             {
-              name: 'wall',
+              
               list: '/wall',
-              meta: { label: 'The Wall', icon: 'LayoutDashboard', category: 'Arbeit' },
+              meta: { label: 'nav.wall', icon: 'LayoutDashboard', category: 'Arbeit' },
             },
             {
-              name: 'projects',
+              
               list: '/projects',
               create: '/projects/create',
               edit: '/projects/:id/edit',
               show: '/projects/:id',
-              meta: { label: 'Projekte', icon: 'FolderKanban', category: 'Arbeit' },
+              meta: { label: 'nav.projects', icon: 'FolderKanban', category: 'Arbeit' },
             },
             {
-              name: 'tasks',
+              
               list: '/tasks',
-              meta: { label: 'Aufgaben', icon: 'CheckSquare', category: 'Arbeit' },
+              meta: { label: 'nav.tasks', icon: 'CheckSquare', category: 'Arbeit' },
             },
             {
-              name: 'ai_agents',
+              
               list: '/ki-agenten',
-              meta: { label: 'KI-Agenten', icon: 'Sparkles', category: 'Arbeit' },
+              meta: { label: 'nav.ai_agents', icon: 'Sparkles', category: 'Arbeit' },
             },
             {
-              name: 'time_entries',
+              
               list: '/time-entries',
-              meta: { label: 'Zeiteinträge', icon: 'Clock', category: 'Arbeit' },
+              meta: { label: 'nav.time_entries', icon: 'Clock', category: 'Arbeit' },
             },
             {
-              name: 'activity',
+              
               list: '/activity',
-              meta: { label: 'Aktivität', icon: 'Activity', category: 'Arbeit' },
+              meta: { label: 'nav.activity', icon: 'Activity', category: 'Arbeit' },
             },
             {
-              name: 'calendar',
+              
               list: '/calendar',
-              meta: { label: 'Kalender', icon: 'CalendarDays', category: 'Arbeit' },
+              meta: { label: 'nav.calendar', icon: 'CalendarDays', category: 'Arbeit' },
             },
             {
-              name: 'planner',
+              
               list: '/planner',
-              meta: { label: 'Planer', icon: 'CalendarRange', category: 'Arbeit' },
+              meta: { label: 'nav.planner', icon: 'CalendarRange', category: 'Arbeit' },
             },
             {
-              name: 'sprints',
+              
               list: '/sprints',
-              meta: { label: 'Sprints', icon: 'Zap', category: 'Arbeit' },
+              meta: { label: 'nav.sprints', icon: 'Zap', category: 'Arbeit' },
             },
             {
-              name: 'documents',
+              
               list: '/documents',
-              meta: { label: 'Dokumente', icon: 'FileText', category: 'Arbeit' },
+              meta: { label: 'nav.documents', icon: 'FileText', category: 'Arbeit' },
             },
             {
-              name: 'team_members',
+              
               list: '/personen',
-              meta: { label: 'Mitglieder', icon: 'Users', category: 'Admin' },
+              meta: { label: 'nav.team_members', icon: 'Users', category: 'Admin' },
             },
             {
-              name: 'reports',
+              
               list: '/auswertungen',
-              meta: { label: 'Auswertungen', icon: 'BarChart3', category: 'Arbeit' },
+              meta: { label: 'nav.reports', icon: 'BarChart3', category: 'Arbeit' },
             },
             {
-              name: 'conversations',
+              
               list: '/inbox',
               show: '/inbox/:id',
-              meta: { label: 'Inbox', icon: 'Inbox', category: 'Arbeit' },
+              meta: { label: 'nav.conversations', icon: 'Inbox', category: 'Arbeit' },
             },
             {
-              name: 'sources',
+              
               list: '/sources',
-              meta: { label: 'Quellen', icon: 'Plug', category: 'Admin' },
+              meta: { label: 'nav.sources', icon: 'Plug', category: 'Admin' },
             },
 
             // ---- CRM -------------------------------------------------------
             {
-              name: 'customers',
+              
               list: '/customers',
               create: '/customers/create',
               edit: '/customers/:id',
               show: '/customers/:id',
-              meta: { label: 'Kunden', icon: 'Building2', category: 'CRM' },
+              meta: { label: 'nav.customers', icon: 'Building2', category: 'CRM' },
             },
             {
-              name: 'contacts',
+              
               list: '/contacts',
               create: '/contacts/create',
               edit: '/contacts/:id',
-              meta: { label: 'Kontakte', icon: 'Contact', category: 'CRM' },
+              meta: { label: 'nav.contacts', icon: 'Contact', category: 'CRM' },
             },
             {
-              name: 'customer_systems',
+              
               list: '/customer-systems',
               create: '/customer-systems/create',
               edit: '/customer-systems/:id',
-              meta: { label: 'Systeme', icon: 'Server', category: 'CRM' },
+              meta: { label: 'nav.customer_systems', icon: 'Server', category: 'CRM' },
             },
             {
-              name: 'service_subscriptions',
+              
               list: '/subscriptions',
               create: '/subscriptions/create',
               edit: '/subscriptions/:id',
-              meta: { label: 'Abos', icon: 'Receipt', category: 'CRM' },
+              meta: { label: 'nav.service_subscriptions', icon: 'Receipt', category: 'CRM' },
             },
             {
-              name: 'social_posts',
+              
               list: '/social',
               create: '/social/create',
               edit: '/social/:id',
-              meta: { label: 'Social Posts', icon: 'Megaphone', category: 'CRM' },
+              meta: { label: 'nav.social_posts', icon: 'Megaphone', category: 'CRM' },
             },
             {
-              name: 'products',
+              
               list: '/produkte',
               create: '/produkte/create',
               edit: '/produkte/:id',
-              meta: { label: 'Produkte', icon: 'Boxes', category: 'CRM' },
+              meta: { label: 'nav.products', icon: 'Boxes', category: 'CRM' },
             },
             {
-              name: 'industries',
+              
               list: '/branchen',
-              meta: { label: 'Branchen', icon: 'Building', category: 'CRM' },
+              meta: { label: 'nav.industries', icon: 'Building', category: 'CRM' },
             },
             {
-              name: 'newsletters',
+              
               list: '/newsletter',
-              meta: { label: 'Newsletter', icon: 'Mail', category: 'CRM' },
+              meta: { label: 'nav.newsletters', icon: 'Mail', category: 'CRM' },
             },
             {
-              name: 'meeting_types',
+              
               list: '/terminarten',
-              meta: { label: 'Terminarten', icon: 'CalendarClock', category: 'CRM' },
+              meta: { label: 'nav.meeting_types', icon: 'CalendarClock', category: 'CRM' },
             },
             {
-              name: 'bookings',
+              
               list: '/buchungen',
-              meta: { label: 'Buchungen', icon: 'CalendarDays', category: 'CRM' },
+              meta: { label: 'nav.bookings', icon: 'CalendarDays', category: 'CRM' },
             },
             {
-              name: 'staff_calendar_connections',
+              
               list: '/kalender-sync',
-              meta: { label: 'Kalender-Sync', icon: 'RefreshCw', category: 'CRM' },
+              meta: { label: 'nav.staff_calendar_connections', icon: 'RefreshCw', category: 'CRM' },
             },
             {
-              name: 'absences',
+              
               list: '/abwesenheiten',
-              meta: { label: 'Abwesenheiten', icon: 'CalendarOff', category: 'CRM' },
+              meta: { label: 'nav.absences', icon: 'CalendarOff', category: 'CRM' },
             },
             {
-              name: 'research_missions',
+              
               list: '/research/missions',
               create: '/research/missions/create',
               show: '/research/missions/:id',
-              meta: { label: 'Recherche/Akquise', icon: 'Compass', category: 'CRM' },
+              meta: { label: 'nav.research_missions', icon: 'Compass', category: 'CRM' },
             },
             {
-              name: 'leads',
+              
               list: '/research/leads',
-              meta: { label: 'Leads', icon: 'Target', category: 'CRM' },
+              meta: { label: 'nav.leads', icon: 'Target', category: 'CRM' },
             },
 
             // ---- Admin -----------------------------------------------------
             {
-              name: 'role_permission_overrides',
+              
               list: '/permissions',
-              meta: { label: 'Berechtigungen', icon: 'Shield', category: 'Admin' },
+              meta: { label: 'nav.role_permission_overrides', icon: 'Shield', category: 'Admin' },
             },
             {
-              name: 'webhooks',
+              
               list: '/webhooks',
-              meta: { label: 'Webhooks', icon: 'Webhook', category: 'Admin' },
+              meta: { label: 'nav.webhooks', icon: 'Webhook', category: 'Admin' },
             },
             {
-              name: 'personal_access_tokens',
+              
               list: '/access-tokens',
-              meta: { label: 'API-Tokens', icon: 'KeyRound', category: 'Admin' },
+              meta: { label: 'nav.personal_access_tokens', icon: 'KeyRound', category: 'Admin' },
             },
             {
-              name: 'imports',
+              
               list: '/imports',
-              meta: { label: 'Import', icon: 'Upload', category: 'Admin' },
+              meta: { label: 'nav.imports', icon: 'Upload', category: 'Admin' },
             },
           ]}
           options={{

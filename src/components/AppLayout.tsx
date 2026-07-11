@@ -1,5 +1,6 @@
 import { useMenu } from '@refinedev/core';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
 import * as Icons from 'lucide-react';
 
@@ -53,6 +54,7 @@ type Resource = ReturnType<typeof useMenu>['menuItems'][number];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { menuItems } = useMenu();
+  const { t } = useTranslation();
   const grouped = groupByCategory(menuItems);
 
   // Idle-logout reads the user's setting on first mount and re-syncs
@@ -90,7 +92,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarContent>
           {grouped.map((group) => (
             <SidebarGroup key={group.label}>
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupLabel>{t(CATEGORY_LABEL_KEY[group.label] ?? group.label)}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {group.items.map((item) => (
@@ -140,6 +142,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
 function NavItem({ item }: { item: Resource }) {
   const location = useLocation();
+  const { t } = useTranslation();
   // `item.route` may be a path or undefined for resource groups with no list
   // route. Skip those — they wouldn't navigate anywhere.
   const to = item.route;
@@ -151,7 +154,8 @@ function NavItem({ item }: { item: Resource }) {
   const Icon =
     (Icons[iconName as keyof typeof Icons] as React.ElementType | undefined) ??
     Icons.Circle;
-  const label = (item.meta?.label as string | undefined) ?? item.label ?? item.name;
+  // meta.label holds an i18n key (e.g. `nav.wall`); fall back to the raw name.
+  const label = t((item.meta?.label as string | undefined) ?? item.label ?? item.name);
 
   return (
     <SidebarMenuItem>
@@ -174,6 +178,15 @@ function NavItem({ item }: { item: Resource }) {
  * users find Projekte / Aufgaben without scanning the whole sidebar.
  */
 const CATEGORY_ORDER = ['App', 'Arbeit', 'CRM', 'Admin'] as const;
+
+// The category id ('Arbeit', …) is a stable grouping key; map it to an i18n
+// key so the section header localizes while the bucketing stays language-neutral.
+const CATEGORY_LABEL_KEY: Record<string, string> = {
+  App: 'nav.category.app',
+  Arbeit: 'nav.category.work',
+  CRM: 'nav.category.crm',
+  Admin: 'nav.category.admin',
+};
 
 function groupByCategory(items: Resource[]): { label: string; items: Resource[] }[] {
   const buckets = new Map<string, Resource[]>();
