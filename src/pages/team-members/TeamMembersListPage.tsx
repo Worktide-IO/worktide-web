@@ -100,7 +100,7 @@ export function TeamMembersListPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl">Personen</h2>
+          <h2 className="text-2xl">Mitglieder</h2>
           <p className="text-sm text-muted-foreground">
             Alle Mitglieder dieses Workspace inkl. Rollen und Workload.
           </p>
