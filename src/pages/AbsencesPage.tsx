@@ -21,6 +21,7 @@ type WorkspaceAbsenceRow = Row<{ '@id': string; id?: string; name: string; start
 type AbsenceRow = Row<{ '@id': string; id?: string; user: string; type: string; startsOn: string; endsOn: string }>;
 type UserRow = Row<{ '@id': string; firstName?: string; lastName?: string; email?: string }>;
 type MemberRow = Row<{ '@id': string; user?: string | null }>;
+type MeetingTypeRow = Row<{ '@id': string; host?: string | null }>;
 
 const ABSENCE_TYPES: { value: string; label: string }[] = [
   { value: 'vacation', label: 'Urlaub' },
@@ -64,6 +65,13 @@ export function AbsencesPage() {
   });
   const { result: members } = useList<MemberRow>({ resource: 'workspace_members', pagination: { mode: 'off' } });
   const { result: users } = useList<UserRow>({ resource: 'users', pagination: { mode: 'off' } });
+  const { result: meetingTypes } = useList<MeetingTypeRow>({ resource: 'meeting_types', pagination: { mode: 'off' } });
+
+  // Staff who host a bookable Terminart — only THEIR absences remove booking slots.
+  const hostIris = useMemo(
+    () => new Set((meetingTypes?.data ?? []).map((m) => m.host).filter(Boolean) as string[]),
+    [meetingTypes],
+  );
 
   const usersByIri = useMemo(() => {
     const map: Record<string, string> = {};
@@ -76,8 +84,12 @@ export function AbsencesPage() {
 
   const memberOptions = useMemo(() => {
     const iris = new Set((members?.data ?? []).map((m) => m.user).filter(Boolean) as string[]);
-    return [...iris].map((iri) => ({ iri, label: usersByIri[iri] ?? iri.split('/').pop() ?? iri }));
-  }, [members, usersByIri]);
+    return [...iris].map((iri) => ({
+      iri,
+      label: usersByIri[iri] ?? iri.split('/').pop() ?? iri,
+      isHost: hostIris.has(iri),
+    }));
+  }, [members, usersByIri, hostIris]);
 
   // ---- workspace closure form ----
   const [cName, setCName] = useState('');
@@ -213,7 +225,12 @@ export function AbsencesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Persönliche Abwesenheiten</CardTitle>
+          <CardTitle>Mitarbeiter-Abwesenheiten</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Blendet Buchungs-Slots aus, wenn die Person Gastgeber einer Terminart ist. Mit
+            <span className="mx-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">Gastgeber</span>
+            markierte Mitglieder wirken sich auf Buchungen aus.
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-end gap-2">
@@ -227,6 +244,7 @@ export function AbsencesPage() {
                   {memberOptions.map((o) => (
                     <SelectItem key={o.iri} value={o.iri}>
                       {o.label}
+                      {o.isHost ? ' · Gastgeber' : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -269,7 +287,14 @@ export function AbsencesPage() {
             <div className="divide-y">
               {(absences?.data ?? []).map((r) => (
                 <div key={idOf(r)} className="flex items-center gap-2 py-2 text-sm">
-                  <div className="min-w-0 flex-1 truncate font-medium">{usersByIri[r.user] ?? '—'}</div>
+                  <div className="min-w-0 flex-1 truncate font-medium">
+                    {usersByIri[r.user] ?? '—'}
+                    {hostIris.has(r.user) ? (
+                      <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-normal text-primary">
+                        Gastgeber
+                      </span>
+                    ) : null}
+                  </div>
                   <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{typeLabel(r.type)}</span>
                   <span className="shrink-0 text-xs text-muted-foreground">{fmtRange(r.startsOn, r.endsOn)}</span>
                   <Button type="button" variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => removeAbsence(r)}>
