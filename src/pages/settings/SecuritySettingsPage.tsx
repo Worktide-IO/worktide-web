@@ -1,9 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Monitor,
+  Bell,
   Clock,
   Globe,
   LogOut,
+  Mail,
+  MessageSquare,
   MonitorSmartphone,
   Trash2,
 } from 'lucide-react';
@@ -13,6 +16,7 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -22,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { api } from '@/lib/api';
 
 import { SettingsLayout } from './SettingsLayout';
@@ -96,8 +101,181 @@ export function SecuritySettingsPage() {
   return (
     <SettingsLayout>
       <SessionsCard />
+      <NotificationsCard />
       <IdleTimeoutCard />
     </SettingsLayout>
+  );
+}
+
+type NotifPrefs = {
+  email: boolean;
+  chat: boolean;
+  frequency: string;
+  types: Record<string, boolean>;
+  quietHours: { start: string; end: string } | null;
+};
+type ChatStatus = { provider: string | null; enabled: boolean; configured: boolean };
+const CHAT_PROVIDERS = [
+  { value: 'slack', label: 'Slack' },
+  { value: 'mattermost', label: 'Mattermost' },
+  { value: 'teams', label: 'Microsoft Teams' },
+];
+
+/**
+ * Notification delivery channels: e-mail + chat (Slack/Mattermost/Teams). In-app
+ * (the bell) is always on. The chat webhook URL is write-only — we only learn
+ * whether one is configured; "Test senden" posts a live message.
+ */
+function NotificationsCard() {
+  const [prefs, setPrefs] = useState<NotifPrefs | null>(null);
+  const [chat, setChat] = useState<ChatStatus | null>(null);
+  const [provider, setProvider] = useState('slack');
+  const [url, setUrl] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.get('/me/preferences').then(({ data }) => setPrefs(data.notificationPreferences)).catch(() => undefined);
+    api
+      .get<ChatStatus>('/me/chat-webhook')
+      .then(({ data }) => {
+        setChat(data);
+        if (data.provider) setProvider(data.provider);
+      })
+      .catch(() => setChat({ provider: null, enabled: false, configured: false }));
+  }, []);
+
+  const savePrefs = async (next: Partial<NotifPrefs>) => {
+    if (!prefs) return;
+    const merged = { ...prefs, ...next };
+    setPrefs(merged);
+    try {
+      await api.put('/me/preferences', { notificationPreferences: merged });
+    } catch {
+      toast.error('Konnte nicht speichern.');
+    }
+  };
+
+  const saveWebhook = async () => {
+    if (!url.trim()) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const { data } = await api.put<ChatStatus>('/me/chat-webhook', { provider, url: url.trim(), enabled: true });
+      setChat(data);
+      setUrl('');
+      setMsg('Verbindung gespeichert.');
+    } catch {
+      setMsg('Ungültige oder unsichere URL.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const testWebhook = async () => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const { data } = await api.post<{ sent: boolean }>('/me/chat-webhook/test');
+      setMsg(data.sent ? 'Testnachricht gesendet ✓' : 'Senden fehlgeschlagen (Versand aktiviert?).');
+    } catch {
+      setMsg('Senden fehlgeschlagen.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeWebhook = async () => {
+    setBusy(true);
+    try {
+      await api.delete('/me/chat-webhook');
+      setChat({ provider: null, enabled: false, configured: false });
+      setMsg(null);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="size-5 text-muted-foreground" />
+          Benachrichtigungen
+        </CardTitle>
+        <CardDescription>
+          In-App (die Glocke) ist immer aktiv. Zusätzlich per E-Mail oder Chat.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {!prefs ? (
+          <Skeleton className="h-9 w-full" />
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <Mail className="size-4 text-muted-foreground" /> E-Mail
+              </div>
+              <Switch checked={prefs.email} onCheckedChange={(v) => savePrefs({ email: v })} />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <MessageSquare className="size-4 text-muted-foreground" /> Chat (Slack/Mattermost/Teams)
+              </div>
+              <Switch checked={prefs.chat} onCheckedChange={(v) => savePrefs({ chat: v })} />
+            </div>
+          </>
+        )}
+
+        {chat ? (
+          <div className="space-y-3 rounded-md border p-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <MessageSquare className="size-4 text-muted-foreground" /> Chat-Verbindung
+              {chat.configured ? (
+                <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+                  {CHAT_PROVIDERS.find((p) => p.value === chat.provider)?.label ?? chat.provider} · eingerichtet
+                </span>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="grid gap-1">
+                <Label className="text-xs">Dienst</Label>
+                <Select value={provider} onValueChange={setProvider}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CHAT_PROVIDERS.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid min-w-56 grow gap-1">
+                <Label className="text-xs">Incoming-Webhook-URL {chat.configured ? '(neu setzen)' : ''}</Label>
+                <Input type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://hooks.slack.com/services/…" />
+              </div>
+              <Button type="button" onClick={saveWebhook} disabled={busy || !url.trim()}>
+                Speichern
+              </Button>
+            </div>
+            {chat.configured ? (
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={testWebhook} disabled={busy}>
+                  Test senden
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={removeWebhook} disabled={busy}>
+                  Entfernen
+                </Button>
+              </div>
+            ) : null}
+            {msg ? <p className="text-xs text-muted-foreground">{msg}</p> : null}
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
 
