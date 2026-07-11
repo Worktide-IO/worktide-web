@@ -1,4 +1,5 @@
 import { useTable } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Boxes, Package, Plus, Search, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
@@ -37,6 +38,7 @@ import {
  * Products are versioned (managed on the detail page); services are versionless.
  */
 export function ProductsListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -143,12 +145,12 @@ export function ProductsListPage() {
                         </span>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {PRODUCT_TYPE_LABEL[(p.type ?? 'product') as ProductType]}
+                        {t(PRODUCT_TYPE_LABEL[(p.type ?? 'product') as ProductType])}
                       </TableCell>
                       <TableCell>
                         {badge ? (
                           <Badge variant={badge.variant} className="text-[10px]">
-                            {badge.label}
+                            {t(badge.label)}
                           </Badge>
                         ) : null}
                       </TableCell>

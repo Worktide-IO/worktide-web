@@ -49,35 +49,34 @@ export type CustomerProductJsonld = HydraItemBaseSchema & {
 };
 
 export const PRODUCT_TYPE_LABEL: Record<ProductType, string> = {
-  product: 'Produkt',
-  service: 'Service',
+  product: 'product.type.product'  service: 'Service',
 };
 
 export const PRODUCT_STATUS_BADGE: Record<
   ProductStatus,
   { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
 > = {
-  active: { label: 'Aktiv', variant: 'default' },
-  deprecated: { label: 'Abgekündigt', variant: 'secondary' },
-  eol: { label: 'EOL', variant: 'destructive' },
+  active: { label: 'product.status.active', variant: 'default' },
+  deprecated: { label: 'product.status.deprecated', variant: 'secondary' },
+  eol: { label: 'product.status.eol', variant: 'destructive' },
 };
 
 export const VERSION_STATUS_BADGE: Record<
   ProductVersionStatus,
   { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
 > = {
-  current: { label: 'Aktuell', variant: 'default' },
-  supported: { label: 'Unterstützt', variant: 'secondary' },
-  deprecated: { label: 'Abgekündigt', variant: 'outline' },
-  eol: { label: 'EOL', variant: 'destructive' },
+  current: { label: 'product.version_status.current', variant: 'default' },
+  supported: { label: 'product.version_status.supported', variant: 'secondary' },
+  deprecated: { label: 'product.version_status.deprecated', variant: 'outline' },
+  eol: { label: 'product.version_status.eol', variant: 'destructive' },
 };
 
 export const CUSTOMER_PRODUCT_STATUS_BADGE: Record<
   CustomerProductStatus,
   { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
 > = {
-  active: { label: 'Aktiv', variant: 'default' },
-  churned: { label: 'Beendet', variant: 'outline' },
+  active: { label: 'customer_product.status.active', variant: 'default' },
+  churned: { label: 'customer_product.status.churned', variant: 'outline' },
 };
 
 export type ReleaseInput = {

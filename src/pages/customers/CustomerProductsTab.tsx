@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Boxes, Loader2, Pencil, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -60,6 +61,7 @@ type EditState = {
  * versioned products) or upgrade an existing assignment to a newer version.
  */
 export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
+  const { t } = useTranslation();
   const { result: assignments, query: assignmentsQuery } = useList<Row<CustomerProductJsonld>>({
     resource: 'customer_products',
     filters: [{ field: 'customer', operator: 'eq', value: customerIri }],
@@ -211,7 +213,7 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
                     <TableCell className="font-medium">
                       {product?.name ?? '—'}
                       <span className="ml-2 text-xs text-muted-foreground">
-                        {product ? PRODUCT_TYPE_LABEL[(product.type ?? 'product') as ProductType] : ''}
+                        {product ? t(PRODUCT_TYPE_LABEL[(product.type ?? 'product') as ProductType]) : ''}
                       </span>
                     </TableCell>
                     <TableCell className="text-sm">
@@ -230,7 +232,7 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
                     </TableCell>
                     <TableCell>
                       <Badge variant={badge.variant} className="text-[10px]">
-                        {badge.label}
+                        {t(badge.label)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -279,7 +281,7 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
                   <SelectContent>
                     {catalog.map((p) => (
                       <SelectItem key={p['@id']} value={p['@id'] ?? ''}>
-                        {p.name} ({PRODUCT_TYPE_LABEL[(p.type ?? 'product') as ProductType]})
+                        {p.name} ({t(PRODUCT_TYPE_LABEL[(p.type ?? 'product') as ProductType])})
                       </SelectItem>
                     ))}
                   </SelectContent>

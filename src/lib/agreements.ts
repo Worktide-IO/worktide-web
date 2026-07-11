@@ -47,21 +47,21 @@ export const AGREEMENT_STATUS_BADGE: Record<
   AgreementStatus,
   { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
 > = {
-  none: { label: 'Nicht vorhanden', variant: 'outline' },
-  draft: { label: 'Entwurf', variant: 'outline' },
-  in_negotiation: { label: 'In Abstimmung', variant: 'secondary' },
-  signed: { label: 'Abgeschlossen', variant: 'default' },
-  expired: { label: 'Abgelaufen', variant: 'destructive' },
-  superseded: { label: 'Ersetzt', variant: 'outline' },
-  terminated: { label: 'Gekündigt', variant: 'destructive' },
+  none: { label: 'agreement.status.none', variant: 'outline' },
+  draft: { label: 'agreement.status.draft', variant: 'outline' },
+  in_negotiation: { label: 'agreement.status.in_negotiation', variant: 'secondary' },
+  signed: { label: 'agreement.status.signed', variant: 'default' },
+  expired: { label: 'agreement.status.expired', variant: 'destructive' },
+  superseded: { label: 'agreement.status.superseded', variant: 'outline' },
+  terminated: { label: 'agreement.status.terminated', variant: 'destructive' },
 };
 
 /** Statuses a human sets directly; the rest (none/expired/superseded) are derived. */
 export const SETTABLE_STATUSES: { value: AgreementStatus; label: string }[] = [
-  { value: 'draft', label: 'Entwurf' },
-  { value: 'in_negotiation', label: 'In Abstimmung' },
-  { value: 'signed', label: 'Abgeschlossen (unterzeichnet)' },
-  { value: 'terminated', label: 'Gekündigt' },
+  { value: 'draft', label: 'agreement.settable.draft' },
+  { value: 'in_negotiation', label: 'agreement.settable.in_negotiation' },
+  { value: 'signed', label: 'agreement.settable.signed' },
+  { value: 'terminated', label: 'agreement.settable.terminated' },
 ];
 
 export type AgreementSetInput = {
