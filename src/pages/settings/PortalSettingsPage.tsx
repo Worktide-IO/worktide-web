@@ -90,7 +90,7 @@ function PortalWelcomeTextCard() {
         onSuccess: () => toast.success(t('toast.welcome_text_saved')),
         onError: (err) => {
           const status = (err as { response?: { status?: number } })?.response?.status;
-          toast.error(status === 403 ? 'Keine Berechtigung.' : 'Konnte nicht speichern.');
+          toast.error(status === 403 ? t('toast.no_permission') : t('toast.could_not_save'));
         },
       },
     );
@@ -158,7 +158,7 @@ function PortalWaitingStatusesCard() {
             return n;
           });
           const code = (err as { response?: { status?: number } })?.response?.status;
-          toast.error(code === 403 ? 'Keine Berechtigung.' : 'Konnte nicht speichern.');
+          toast.error(code === 403 ? t('toast.no_permission') : t('toast.could_not_save'));
         },
       },
     );

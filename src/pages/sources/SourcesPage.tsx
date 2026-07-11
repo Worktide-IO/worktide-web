@@ -205,7 +205,7 @@ function ActiveSourceRow({
       toast.success(translate('toast.source_deleted'));
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Quelle nicht löschen.');
+      toast.error(detail ?? translate('toast.could_not_delete_source'));
     } finally {
       setDeleting(false);
     }

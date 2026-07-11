@@ -84,7 +84,7 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
       }, RESULT_FALLBACK_MS);
     } catch (err) {
       setLoading(false);
-      toast.error(aiErrorMessage(err, 'KI-Analyse konnte nicht gestartet werden.'));
+      toast.error(aiErrorMessage(err, translate('toast.ai_analysis_failed')));
     }
   };
 
@@ -97,7 +97,7 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
       setReco(null);
       onApplied?.();
     } catch (err) {
-      toast.error(aiErrorMessage(err, 'Konnte Vorschlag nicht übernehmen.'));
+      toast.error(aiErrorMessage(err, translate('toast.could_not_adopt_suggestion')));
     } finally {
       setBusy(false);
     }
@@ -111,7 +111,7 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
       toast.success(translate('toast.suggestion_dismissed'));
       setReco(null);
     } catch (err) {
-      toast.error(aiErrorMessage(err, 'Konnte Vorschlag nicht verwerfen.'));
+      toast.error(aiErrorMessage(err, translate('toast.could_not_dismiss_suggestion')));
     } finally {
       setBusy(false);
     }

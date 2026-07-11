@@ -62,7 +62,7 @@ export function ContactPortalFeatures({ contactId }: { contactId: string }) {
         onSuccess: () => toast.success(t('toast.visibility_saved')),
         onError: (err) => {
           const status = (err as { response?: { status?: number } })?.response?.status;
-          toast.error(status === 403 ? 'Keine Berechtigung.' : 'Konnte nicht speichern.');
+          toast.error(status === 403 ? t('toast.no_permission') : t('toast.could_not_save'));
         },
       },
     );

@@ -139,7 +139,7 @@ export function CustomerAgreementsTab({
         notes: edit.notes || null,
         fileId,
       });
-      toast.success(`${edit.type.name} aktualisiert.`);
+      toast.success(t('toast.updated_named', { name: edit.type.name }));
       setEdit(null);
       await agreementsQuery.refetch();
     } catch (e) {

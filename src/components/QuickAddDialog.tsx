@@ -182,7 +182,7 @@ export function QuickAddDialog() {
       },
       {
         onSuccess: ({ data }) => {
-          toast.success(`${data.identifier} angelegt`);
+          toast.success(t('toast.created_named', { name: data.identifier }));
           void qc.invalidateQueries({ queryKey: ['tasks'] });
           setOpen(false);
         },
@@ -209,7 +209,7 @@ export function QuickAddDialog() {
       },
       {
         onSuccess: ({ data }) => {
-          toast.success(`Projekt ${data.key ?? trimmedKey} angelegt`);
+          toast.success(t('toast.project_created_named', { name: data.key ?? trimmedKey }));
           void qc.invalidateQueries({ queryKey: ['projects'] });
           setOpen(false);
           if (data.id) navigate(`/projects/${data.id}`);

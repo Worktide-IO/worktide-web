@@ -1,4 +1,5 @@
 import { useInvalidate, useOne } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { KeyRound, Mail, ShieldCheck, ShieldOff } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -21,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
  * workspace's configured welcome text). portalInvitedAt tracks whether/when it went out.
  */
 export function ContactPortalAccess({ contactId }: { contactId: string }) {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const { result: contact } = useOne<Row<ContactJsonld> & { portalInvitedAt?: string | null }>({
     resource: 'contacts',
@@ -52,7 +54,7 @@ export function ContactPortalAccess({ contactId }: { contactId: string }) {
       invalidate({ resource: 'contacts', id: contactId, invalidates: ['detail'] });
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Aktion fehlgeschlagen.');
+      toast.error(detail ?? t('toast.action_failed'));
     } finally {
       setBusy(false);
     }

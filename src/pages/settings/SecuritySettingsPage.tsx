@@ -330,7 +330,7 @@ function SessionsCard() {
     setBusy('others');
     try {
       const { data } = await api.post<{ revoked: number }>('/me/sessions/revoke-others');
-      toast.success(`${data.revoked} Sitzung${data.revoked === 1 ? '' : 'en'} beendet.`);
+      toast.success(t('toast.sessions_ended', { count: data.revoked }));
       await load();
     } catch (err) {
       console.warn('Revoke-others failed', err);

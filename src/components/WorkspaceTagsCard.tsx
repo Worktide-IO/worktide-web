@@ -183,7 +183,7 @@ function TagRow({
     try {
       await api.delete(`/tags/${tag.id}`);
       void invalidate({ resource: 'tags', invalidates: ['list'] });
-      toast.success(`Tag "${tag.name}" gelöscht.`);
+      toast.success(translate('toast.tag_deleted_named', { name: tag.name }));
     } catch {
       toast.error(translate('toast.could_not_delete_tag'));
     } finally {
@@ -238,6 +238,7 @@ type DialogProps =
   | { mode: 'edit'; tag: Row<TagJsonld>; onClose: () => void };
 
 function TagDialog(props: DialogProps) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const isEdit = props.mode === 'edit';
   const initial = isEdit ? props.tag : null;
@@ -273,7 +274,7 @@ function TagDialog(props: DialogProps) {
           { name: trimmed, color, scope, translations },
           { headers: { 'Content-Type': 'application/merge-patch+json' } },
         );
-        toast.success(`Tag "${trimmed}" aktualisiert.`);
+        toast.success(translate('toast.tag_updated_named', { name: trimmed }));
       } else {
         const workspaceId =
           typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
@@ -287,13 +288,13 @@ function TagDialog(props: DialogProps) {
           translations,
           workspace: `/v1/workspaces/${workspaceId}`,
         });
-        toast.success(`Tag "${trimmed}" angelegt.`);
+        toast.success(translate('toast.tag_created_named', { name: trimmed }));
       }
       void invalidate({ resource: 'tags', invalidates: ['list'] });
       props.onClose();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Tag nicht speichern.');
+      toast.error(detail ?? translate('toast.could_not_save_tag'));
     } finally {
       setSaving(false);
     }

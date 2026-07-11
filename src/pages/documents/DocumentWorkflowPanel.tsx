@@ -150,7 +150,7 @@ function SubmitForReviewButton({
       setOpen(false);
       void invalidate({ resource: 'documents', invalidates: ['detail', 'list'], id: documentId });
     } catch (e: any) {
-      toast.error(e?.response?.data?.detail ?? 'Konnte nicht einreichen.');
+      toast.error(e?.response?.data?.detail ?? t('toast.could_not_submit'));
     } finally {
       setBusy(false);
     }
@@ -233,7 +233,7 @@ function ReviewActions({ documentId }: { documentId: string }) {
       void invalidate({ resource: 'documents', invalidates: ['detail', 'list'], id: documentId });
       void qc.invalidateQueries({ queryKey: ['document-backlinks', documentId] });
     } catch (e: any) {
-      toast.error(e?.response?.data?.detail ?? 'Freigabe fehlgeschlagen.');
+      toast.error(e?.response?.data?.detail ?? t('toast.approval_failed'));
     } finally {
       setBusy(false);
     }
@@ -252,7 +252,7 @@ function ReviewActions({ documentId }: { documentId: string }) {
       setNote('');
       void invalidate({ resource: 'documents', invalidates: ['detail', 'list'], id: documentId });
     } catch (e: any) {
-      toast.error(e?.response?.data?.detail ?? 'Anforderung fehlgeschlagen.');
+      toast.error(e?.response?.data?.detail ?? t('toast.request_failed'));
     } finally {
       setBusy(false);
     }

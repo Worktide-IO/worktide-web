@@ -147,7 +147,7 @@ export function ConversationDetailPage() {
         { headers: { 'Content-Type': 'application/merge-patch+json' } },
       );
       void invalidate({ resource: 'conversations', invalidates: ['list', 'detail'], id });
-      toast.success(`Status: ${STATUS_LABEL[next] ? t(STATUS_LABEL[next]) : next}`);
+      toast.success(t('toast.status_set', { status: STATUS_LABEL[next] ? t(STATUS_LABEL[next]) : next }));
     } catch {
       toast.error(t('toast.could_not_change_status'));
     }
@@ -365,7 +365,7 @@ function ReplyComposer({
       void invalidate({ resource: 'conversations', invalidates: ['detail'], id: conversationId });
     } catch (e) {
       const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Antwort nicht senden.');
+      toast.error(detail ?? t('toast.could_not_send_reply'));
     } finally {
       setSending(false);
     }

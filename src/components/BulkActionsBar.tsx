@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { CheckSquare, Flag, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -49,6 +50,7 @@ const PRIORITY_OPTIONS = [
  * the response — the toast shows "X bearbeitet, Y übersprungen".
  */
 export function BulkActionsBar({ selectedIris, onClear }: Props) {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const [busy, setBusy] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -84,7 +86,7 @@ export function BulkActionsBar({ selectedIris, onClear }: Props) {
       onClear();
     } catch (err) {
       console.warn('BulkActionsBar: batch failed', err);
-      toast.error(`${label} fehlgeschlagen.`);
+      toast.error(t('toast.action_named_failed', { label }));
     } finally {
       setBusy(false);
     }

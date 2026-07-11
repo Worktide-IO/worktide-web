@@ -268,7 +268,7 @@ export function SocialPostComposer(props: Mode) {
       );
 
       if (failures) {
-        toast.error(`Gespeichert, aber ${failures} Netzwerk(e) fehlerhaft.`);
+        toast.error(translate('toast.saved_network_failures', { count: failures }));
       } else {
         toast.success(translate('toast.saved'));
       }
@@ -331,7 +331,7 @@ export function SocialPostComposer(props: Mode) {
         }
         return next;
       });
-      toast.success(`${suggestions.length} KI-Vorschlag/Vorschläge übernommen — bitte prüfen & speichern.`);
+      toast.success(translate('toast.ai_suggestions_adopted', { count: suggestions.length }));
     } catch (e) {
       const msg =
         (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??

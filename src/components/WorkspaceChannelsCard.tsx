@@ -68,7 +68,7 @@ function OAuthConnectBlock({ channelId, adapterCode, hasToken }: { channelId: st
       window.location.href = data.authorizeUrl;
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte OAuth-Login nicht starten.');
+      toast.error(detail ?? t('toast.could_not_start_oauth'));
       setBusy(false);
     }
   };
@@ -217,10 +217,10 @@ function ChannelRow({
     try {
       await api.delete(`/channels/${channel.id}`);
       void invalidate({ resource: 'channels', invalidates: ['list'] });
-      toast.success(`Channel "${channel.name}" gelöscht.`);
+      toast.success(t('toast.channel_deleted', { name: channel.name }));
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Channel nicht löschen.');
+      toast.error(detail ?? t('toast.could_not_delete_channel'));
     } finally {
       setDeleting(false);
     }
@@ -372,18 +372,18 @@ function ChannelDialog(props: DialogProps) {
         await api.patch(`/channels/${props.channel.id}`, body, {
           headers: { 'Content-Type': 'application/merge-patch+json' },
         });
-        toast.success(`Channel "${name}" aktualisiert.`);
+        toast.success(t('toast.channel_updated', { name }));
       } else {
         const workspaceId = localStorage.getItem(WORKSPACE_STORAGE_KEY);
         if (!workspaceId) throw new Error('Kein aktiver Workspace.');
         await api.post('/channels', { ...body, workspace: `/v1/workspaces/${workspaceId}` });
-        toast.success(`Channel "${name}" angelegt.`);
+        toast.success(t('toast.channel_created', { name }));
       }
       void invalidate({ resource: 'channels', invalidates: ['list'] });
       props.onClose();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Channel nicht speichern.');
+      toast.error(detail ?? t('toast.could_not_save_channel'));
     } finally {
       setSaving(false);
     }

@@ -78,7 +78,7 @@ export function DocumentHistoryDrawer({ open, onOpenChange, documentId, onRestor
       onRestored();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte nicht wiederherstellen.');
+      toast.error(detail ?? t('toast.could_not_restore'));
     } finally {
       setRestoring(false);
     }

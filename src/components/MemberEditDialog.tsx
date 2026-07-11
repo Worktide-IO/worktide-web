@@ -134,7 +134,7 @@ export function MemberEditDialog({
       onOpenChange(false);
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Änderungen konnten nicht gespeichert werden.');
+      toast.error(detail ?? t('toast.changes_save_failed'));
     } finally {
       setBusy(false);
     }
@@ -157,7 +157,7 @@ export function MemberEditDialog({
       void invalidate({ resource: 'files', invalidates: ['list'] });
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Foto konnte nicht hochgeladen werden.');
+      toast.error(detail ?? t('toast.photo_upload_failed'));
     } finally {
       setUploading(false);
     }
@@ -189,7 +189,7 @@ export function MemberEditDialog({
       onOpenChange(false);
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Mitglied konnte nicht entfernt werden.');
+      toast.error(detail ?? t('toast.member_remove_failed'));
     } finally {
       setBusy(false);
     }

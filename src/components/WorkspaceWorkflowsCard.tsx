@@ -223,7 +223,7 @@ function TransitionRow({
       toast.success(translate('toast.rule_deleted'));
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Regel nicht löschen.');
+      toast.error(detail ?? translate('toast.could_not_delete_rule'));
     } finally {
       setDeleting(false);
     }
@@ -367,7 +367,7 @@ function TransitionDialog(props: DialogProps) {
       props.onClose();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Regel nicht speichern.');
+      toast.error(detail ?? translate('toast.could_not_save_rule'));
     } finally {
       setSaving(false);
     }

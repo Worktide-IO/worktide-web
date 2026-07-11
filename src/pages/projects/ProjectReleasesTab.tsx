@@ -178,10 +178,10 @@ function VersionRow({
     try {
       await api.delete(`/project_versions/${version.id}`);
       void invalidate({ resource: 'project_versions', invalidates: ['list'] });
-      toast.success(`Release "${version.name}" gelöscht.`);
+      toast.success(t('toast.release_deleted_named', { name: version.name }));
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Release nicht löschen.');
+      toast.error(detail ?? t('toast.could_not_delete_release'));
     } finally {
       setDeleting(false);
     }
@@ -287,7 +287,7 @@ function VersionDialog(props: DialogProps) {
         await api.patch(`/project_versions/${props.version.id}`, body, {
           headers: { 'Content-Type': 'application/merge-patch+json' },
         });
-        toast.success(`Release "${trimmed}" aktualisiert.`);
+        toast.success(t('toast.release_updated_named', { name: trimmed }));
       } else {
         const workspaceId =
           typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
@@ -297,13 +297,13 @@ function VersionDialog(props: DialogProps) {
           project: props.projectIri,
           workspace: `/v1/workspaces/${workspaceId}`,
         });
-        toast.success(`Release "${trimmed}" angelegt.`);
+        toast.success(t('toast.release_created_named', { name: trimmed }));
       }
       void invalidate({ resource: 'project_versions', invalidates: ['list'] });
       props.onClose();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Release nicht speichern.');
+      toast.error(detail ?? t('toast.could_not_save_release'));
     } finally {
       setSaving(false);
     }

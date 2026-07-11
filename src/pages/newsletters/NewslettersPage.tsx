@@ -113,7 +113,7 @@ export function NewslettersPage() {
         position: (childrenByParent[ROOT]?.length ?? 0),
         workspace: workspaceIri,
       });
-      toast.success(`„${t}" angelegt.`);
+      toast.success(translate('toast.created_named_dq', { name: t }));
       setRootTitle('');
       await query.refetch();
     } catch {

@@ -191,7 +191,7 @@ export function TeamPlannerPage() {
       void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: taskId });
     } catch (e) {
       const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Slot nicht speichern.');
+      toast.error(detail ?? translate('toast.could_not_save_slot'));
       arg.revert();
     }
   };
@@ -243,7 +243,7 @@ export function TeamPlannerPage() {
       toast.success(translate('toast.task_scheduled'));
     } catch (e) {
       const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Aufgabe nicht einplanen.');
+      toast.error(detail ?? translate('toast.could_not_schedule_task'));
       // Remove the tray-spawned event so the next render re-pulls the
       // task from the unscheduled list — keeping the tray correct.
       arg.event.remove();

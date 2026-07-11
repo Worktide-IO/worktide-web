@@ -211,7 +211,7 @@ export function SourceWizard({
       setStep('configure');
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konnte Quelle nicht anlegen.');
+      toast.error(detail ?? t('toast.could_not_create_source'));
     } finally {
       setSaving(false);
     }
@@ -299,7 +299,7 @@ export function SourceWizard({
       setStep('test');
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Konfiguration nicht gespeichert.');
+      toast.error(detail ?? t('toast.config_not_saved'));
     } finally {
       setSaving(false);
     }
@@ -327,7 +327,7 @@ export function SourceWizard({
       window.location.href = data.authorizeUrl;
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'OAuth-Login fehlgeschlagen.');
+      toast.error(detail ?? t('toast.oauth_failed'));
     }
   };
 

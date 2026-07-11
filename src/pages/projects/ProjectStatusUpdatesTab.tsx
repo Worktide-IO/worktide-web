@@ -115,7 +115,7 @@ export function ProjectStatusUpdatesTab({ projectIri }: { projectIri: string }) 
       void load();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Update konnte nicht gepostet werden.');
+      toast.error(detail ?? t('toast.update_post_failed'));
     } finally {
       setBusy(false);
     }
@@ -129,7 +129,7 @@ export function ProjectStatusUpdatesTab({ projectIri }: { projectIri: string }) 
       void load();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail ?? 'Löschen fehlgeschlagen.');
+      toast.error(detail ?? t('toast.delete_failed'));
     }
   };
 
