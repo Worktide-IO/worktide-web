@@ -18,7 +18,7 @@ export function AuthedAvatar({
 }: {
   memberId?: string | null;
   fallback: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'default' | 'sm' | 'lg';
   className?: string;
 }) {
   const { data: url } = useQuery({
