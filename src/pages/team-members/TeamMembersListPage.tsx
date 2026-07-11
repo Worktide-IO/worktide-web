@@ -6,9 +6,9 @@ import type { TaskJsonld } from '@/api/types/task/Jsonld';
 import type { TaskStatusJsonld } from '@/api/types/taskStatus/Jsonld';
 import type { UserJsonld } from '@/api/types/user/Jsonld';
 import type { WorkspaceMemberJsonld } from '@/api/types/workspaceMember/Jsonld';
+import { AuthedAvatar } from '@/components/AuthedAvatar';
 import { InviteMembersCard } from '@/components/InviteMembersCard';
 import { MemberEditDialog } from '@/components/MemberEditDialog';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -144,11 +144,12 @@ export function TeamMembersListPage() {
             return (
               <Card key={m['@id']} className={cn('overflow-hidden', inactive && 'opacity-60')}>
                 <CardContent className="flex items-center gap-3 p-4">
-                  <Avatar size="lg" className="shrink-0">
-                    <AvatarFallback>
-                      {u ? userInitials(u) : '?'}
-                    </AvatarFallback>
-                  </Avatar>
+                  <AuthedAvatar
+                    memberId={m.id}
+                    fallback={u ? userInitials(u) : '?'}
+                    size="lg"
+                    className="shrink-0"
+                  />
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="truncate text-sm font-medium">
                       {u ? userDisplayName(u) : 'Unbekannt'}

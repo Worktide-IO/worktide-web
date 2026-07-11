@@ -1,12 +1,15 @@
 import { useGetIdentity, useInvalidate } from '@refinedev/core';
-import { ArrowLeft, Loader2, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Camera, Loader2, Trash2 } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { UserJsonld } from '@/api/types/user/Jsonld';
 import type { WorkspaceMemberJsonld } from '@/api/types/workspaceMember/Jsonld';
+import { userInitials } from '@/hooks/useUserDirectory';
 import { api } from '@/lib/api';
 import type { Row } from '@/lib/refine';
+import { AuthedAvatar } from '@/components/AuthedAvatar';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -58,7 +61,10 @@ type Props = {
  */
 export function MemberEditDialog({ member, user, reassignCandidates, open, onOpenChange }: Props) {
   const invalidate = useInvalidate();
+  const queryClient = useQueryClient();
   const { data: identity } = useGetIdentity<{ id?: string }>();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   // The parent mounts this dialog fresh per open, so props-initialised state is enough.
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
@@ -119,6 +125,27 @@ export function MemberEditDialog({ member, user, reassignCandidates, open, onOpe
       toast.error(detail ?? 'Änderungen konnten nicht gespeichert werden.');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const uploadAvatar = async (file: File) => {
+    if (!memberId) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      // Let the browser set multipart/form-data + boundary (the api instance
+      // otherwise defaults Content-Type to application/ld+json).
+      await api.post(`/workspace_members/${memberId}/avatar`, form, {
+        headers: { 'Content-Type': undefined },
+      });
+      toast.success('Foto aktualisiert.');
+      void queryClient.invalidateQueries({ queryKey: ['member-avatar', memberId] });
+    } catch (err) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      toast.error(detail ?? 'Foto konnte nicht hochgeladen werden.');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -220,6 +247,35 @@ export function MemberEditDialog({ member, user, reassignCandidates, open, onOpe
             </DialogHeader>
 
             <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <AuthedAvatar
+                  memberId={memberId}
+                  fallback={user ? userInitials(user) : '?'}
+                  size="lg"
+                  className="shrink-0"
+                />
+                <input
+                  ref={fileInput}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void uploadAvatar(f);
+                    e.target.value = '';
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInput.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
+                  Foto ändern
+                </Button>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="mem-first">Vorname</Label>
