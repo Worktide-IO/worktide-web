@@ -1,4 +1,5 @@
 import { useInvalidate, useOne } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useCreateBlockNote, SuggestionMenuController } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import '@blocknote/shadcn/style.css';
@@ -75,6 +76,7 @@ function EditorBody({
   onDeleted?: () => void;
   onNavigate?: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const [title, setTitle] = useState(doc.name ?? '');
   const [savingTitle, setSavingTitle] = useState(false);
@@ -150,7 +152,7 @@ function EditorBody({
       );
       void invalidate({ resource: 'documents', invalidates: ['list'], id: documentId });
     } catch {
-      toast.error('Konnte Inhalt nicht speichern.');
+      toast.error(t('toast.could_not_save_content'));
     } finally {
       setSavingBody(false);
     }
@@ -200,7 +202,7 @@ function EditorBody({
       void invalidate({ resource: 'documents', invalidates: ['list'], id: documentId });
       onRenamed?.();
     } catch {
-      toast.error('Konnte Titel nicht speichern.');
+      toast.error(t('toast.could_not_save_title'));
     } finally {
       setSavingTitle(false);
     }
@@ -212,7 +214,7 @@ function EditorBody({
       await api.delete(`/documents/${documentId}`);
       onDeleted?.();
     } catch {
-      toast.error('Konnte Seite nicht löschen.');
+      toast.error(t('toast.could_not_delete_page'));
     }
   };
 

@@ -1,4 +1,5 @@
 import { useList, useOne, useUpdate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -79,6 +80,7 @@ export function WorkspaceSettingsPage() {
 }
 
 function WorkspaceForm() {
+  const { t } = useTranslation();
   const stored = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
   // If the user logged in before the workspace was persisted (or cleared
   // their storage), fall back to the first workspace the API returns —
@@ -158,7 +160,7 @@ function WorkspaceForm() {
           // without a personal preference — drop the i18n cache so the change
           // applies immediately instead of only after a reload.
           resetI18nProfileCache();
-          toast.success('Workspace gespeichert.');
+          toast.success(t('toast.workspace_saved'));
         },
         onError: (err) => {
           const status = (err as { response?: { status?: number } })?.response?.status;
@@ -248,6 +250,7 @@ function WorkspaceForm() {
  * We show it read-only with a hint.
  */
 function WorkspaceSecurityCard() {
+  const { t } = useTranslation();
   const stored = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
   const { result: workspaces } = useList<Row<WorkspaceJsonld>>({
     resource: 'workspaces',
@@ -283,7 +286,7 @@ function WorkspaceSecurityCard() {
   const handleSave = () => {
     const parsed = accessSeconds.trim() === '' ? null : Number(accessSeconds);
     if (parsed !== null && (!Number.isInteger(parsed) || parsed < 60 || parsed > 3600)) {
-      toast.error('Access-TTL muss zwischen 60 und 3600 Sekunden liegen.');
+      toast.error(t('toast.access_ttl_range'));
       return;
     }
     const prev = (workspace.settings as Record<string, unknown> | null | undefined) ?? {};

@@ -1,4 +1,5 @@
 import { useGetIdentity, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { CalendarClock, Copy, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -91,6 +92,7 @@ const BLANK: FormState = {
  * direct-api CRUD pattern of IndustriesPage/NewslettersPage.
  */
 export function MeetingTypesPage() {
+  const { t } = useTranslation();
   const { result, query } = useList<MeetingTypeRow>({
     resource: 'meeting_types',
     pagination: { mode: 'off' },
@@ -109,7 +111,7 @@ export function MeetingTypesPage() {
   const save = async () => {
     if (!form) return;
     if (!form.title.trim() || !/^[a-z0-9-]{1,60}$/.test(form.slug)) {
-      toast.error('Titel und ein Slug (a–z, 0–9, –) sind erforderlich.');
+      toast.error(t('toast.title_slug_required'));
       return;
     }
     setBusy(true);
@@ -140,7 +142,7 @@ export function MeetingTypesPage() {
           ...(identity?.id ? { host: `/v1/users/${identity.id}` } : {}),
         });
       }
-      toast.success('Gespeichert.');
+      toast.success(t('toast.saved'));
       setForm(null);
       await query.refetch();
     } catch (e) {
@@ -155,16 +157,16 @@ export function MeetingTypesPage() {
     if (!r.id || !window.confirm(`„${r.title}" löschen?`)) return;
     try {
       await api.delete(`/meeting_types/${r.id}`);
-      toast.success('Gelöscht.');
+      toast.success(t('toast.deleted'));
       await query.refetch();
     } catch {
-      toast.error('Löschen fehlgeschlagen.');
+      toast.error(t('toast.delete_failed'));
     }
   };
 
   const copyLink = (slug: string) => {
     void navigator.clipboard?.writeText(`${PORTAL_BASE.replace(/\/$/, '')}/book/${slug}`);
-    toast.success('Buchungslink kopiert.');
+    toast.success(t('toast.booking_link_copied'));
   };
 
   return (

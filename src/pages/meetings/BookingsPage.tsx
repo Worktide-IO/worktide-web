@@ -1,4 +1,5 @@
 import { useList, useUpdate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { CalendarDays, Video } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -33,6 +34,7 @@ const fmt = new Intl.DateTimeFormat('de-DE', {
 
 /** Read-only list of upcoming/past bookings with a staff cancel action. */
 export function BookingsPage() {
+  const { t } = useTranslation();
   const { result, query } = useList<BookingRow>({
     resource: 'bookings',
     pagination: { pageSize: 100 },
@@ -47,8 +49,8 @@ export function BookingsPage() {
     update(
       { resource: 'bookings', id, values: { status: 'cancelled' }, successNotification: false },
       {
-        onSuccess: () => { toast.success('Storniert.'); void query.refetch(); },
-        onError: () => toast.error('Konnte nicht stornieren.'),
+        onSuccess: () => { toast.success(t('toast.cancelled')); void query.refetch(); },
+        onError: () => toast.error(t('toast.could_not_cancel')),
       },
     );
   }

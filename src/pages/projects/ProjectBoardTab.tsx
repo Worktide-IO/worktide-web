@@ -502,7 +502,7 @@ export function ProjectBoardTab({ projectIri }: Props) {
           await api.post(`/tasks/${taskId}/set-assignees`, { userIds });
           void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: taskId });
         } catch {
-          toast.error('Zuweisung fehlgeschlagen.');
+          toast.error(translate('toast.assign_failed'));
         }
       })();
     }

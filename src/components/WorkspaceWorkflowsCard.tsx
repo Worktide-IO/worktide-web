@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, Loader2, Pencil, Plus, ShieldCheck, Trash2, Workflow } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -204,6 +205,7 @@ function TransitionRow({
   statusByIri: Record<string, Row<TaskStatusJsonld>>;
   onEdit: () => void;
 }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const [deleting, setDeleting] = useState(false);
 
@@ -218,7 +220,7 @@ function TransitionRow({
     try {
       await api.delete(`/workflow_transitions/${transition.id}`);
       void invalidate({ resource: 'workflow_transitions', invalidates: ['list'] });
-      toast.success('Regel gelöscht.');
+      toast.success(translate('toast.rule_deleted'));
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       toast.error(detail ?? 'Konnte Regel nicht löschen.');
@@ -293,6 +295,7 @@ type DialogProps =
     };
 
 function TransitionDialog(props: DialogProps) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const isEdit = props.mode === 'edit';
   const initial = isEdit ? props.transition : null;
@@ -327,11 +330,11 @@ function TransitionDialog(props: DialogProps) {
 
   const submit = async () => {
     if (!fromStatus || !toStatus) {
-      toast.error('Von- und Nach-Status auswählen.');
+      toast.error(translate('toast.select_from_to_status'));
       return;
     }
     if (fromStatus === toStatus) {
-      toast.error('Von- und Nach-Status dürfen nicht identisch sein.');
+      toast.error(translate('toast.from_to_status_identical'));
       return;
     }
     setSaving(true);
@@ -349,7 +352,7 @@ function TransitionDialog(props: DialogProps) {
         await api.patch(`/workflow_transitions/${props.transition.id}`, body, {
           headers: { 'Content-Type': 'application/merge-patch+json' },
         });
-        toast.success('Regel aktualisiert.');
+        toast.success(translate('toast.rule_updated'));
       } else {
         const workspaceId =
           typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
@@ -358,7 +361,7 @@ function TransitionDialog(props: DialogProps) {
           ...body,
           workspace: `/v1/workspaces/${workspaceId}`,
         });
-        toast.success('Regel angelegt.');
+        toast.success(translate('toast.rule_created'));
       }
       void invalidate({ resource: 'workflow_transitions', invalidates: ['list'] });
       props.onClose();

@@ -122,11 +122,11 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
   const save = async () => {
     if (!edit) return;
     if (!edit.productIri) {
-      toast.error('Produkt wählen.');
+      toast.error(t('toast.select_product'));
       return;
     }
     if (editIsVersioned && !edit.productVersionIri) {
-      toast.error('Version wählen.');
+      toast.error(t('toast.select_version'));
       return;
     }
     setSaving(true);
@@ -149,7 +149,7 @@ export function CustomerProductsTab({ customerIri }: { customerIri: string }) {
           ...body,
         });
       }
-      toast.success('Gespeichert.');
+      toast.success(t('toast.saved'));
       setEdit(null);
       await assignmentsQuery.refetch();
     } catch (e) {

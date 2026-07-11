@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { ChevronRight, Loader2, Mail, Pencil, Plus, Send, Trash2 } from 'lucide-react';
 import { type DragEvent, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -57,6 +58,7 @@ type DropZone = 'before' | 'after' | 'inside';
  * on the customer's "Newsletter" tab.
  */
 export function NewslettersPage() {
+  const { t: translate } = useTranslation();
   const { result, query } = useList<NewsletterRow>({
     resource: 'newsletters',
     pagination: { mode: 'off' },
@@ -115,7 +117,7 @@ export function NewslettersPage() {
       setRootTitle('');
       await query.refetch();
     } catch {
-      toast.error('Anlegen fehlgeschlagen.');
+      toast.error(translate('toast.create_failed'));
     } finally {
       setBusy(false);
     }
@@ -133,7 +135,7 @@ export function NewslettersPage() {
           { title: t, description: edit.description.trim() || null, parent: edit.parentIri },
           { headers: { 'Content-Type': 'application/merge-patch+json' } },
         );
-        toast.success('Gespeichert.');
+        toast.success(translate('toast.saved'));
       } else {
         const siblings = childrenByParent[edit.parentIri ?? ROOT]?.length ?? 0;
         await api.post('/newsletters', {
@@ -144,12 +146,12 @@ export function NewslettersPage() {
           // Root needs an explicit workspace; children inherit it server-side.
           ...(edit.parentIri ? {} : { workspace: workspaceIri }),
         });
-        toast.success('Angelegt.');
+        toast.success(translate('toast.created'));
       }
       setEdit(null);
       await query.refetch();
     } catch {
-      toast.error('Speichern fehlgeschlagen.');
+      toast.error(translate('toast.save_failed'));
     } finally {
       setBusy(false);
     }
@@ -163,10 +165,10 @@ export function NewslettersPage() {
     if (!window.confirm(msg)) return;
     try {
       await api.delete(`/newsletters/${idOf(r)}`);
-      toast.success('Gelöscht.');
+      toast.success(translate('toast.deleted'));
       await query.refetch();
     } catch {
-      toast.error('Löschen fehlgeschlagen.');
+      toast.error(translate('toast.delete_failed'));
     }
   };
 
@@ -179,7 +181,7 @@ export function NewslettersPage() {
     const forbidden = descendantIris(draggedIri);
     forbidden.add(draggedIri);
     if (forbidden.has(iriOf(target))) {
-      toast.error('Ein Thema kann nicht in sich selbst verschoben werden.');
+      toast.error(translate('toast.cannot_move_into_self'));
       return;
     }
 
@@ -213,7 +215,7 @@ export function NewslettersPage() {
       );
       await query.refetch();
     } catch {
-      toast.error('Verschieben fehlgeschlagen.');
+      toast.error(translate('toast.move_failed'));
     }
   };
 

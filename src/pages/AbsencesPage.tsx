@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { CalendarOff, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -53,6 +54,7 @@ const fmtRange = (a: string, b: string) =>
  * per-member personal absences (vacation / sick / …).
  */
 export function AbsencesPage() {
+  const { t: translate } = useTranslation();
   const workspaceIri = (() => {
     const id = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
     return id ? `/v1/workspaces/${id}` : undefined;
@@ -122,7 +124,7 @@ export function AbsencesPage() {
 
   const addClosure = async () => {
     if (!cName.trim() || !cStart || !cEnd) return;
-    if (cEnd < cStart) return toast.error('Ende liegt vor dem Start.');
+    if (cEnd < cStart) return toast.error(translate('toast.end_before_start'));
     setCBusy(true);
     try {
       await api.post('/workspace_absences', {
@@ -131,11 +133,11 @@ export function AbsencesPage() {
         endsOn: atNoon(cEnd),
         workspace: workspaceIri,
       });
-      toast.success('Betriebsschließung angelegt.');
+      toast.success(translate('toast.closure_created'));
       setCName('');
       await closuresQ.refetch();
     } catch {
-      toast.error('Anlegen fehlgeschlagen.');
+      toast.error(translate('toast.create_failed'));
     } finally {
       setCBusy(false);
     }
@@ -150,7 +152,7 @@ export function AbsencesPage() {
 
   const addAbsence = async () => {
     if (!aUser || !aStart || !aEnd) return;
-    if (aEnd < aStart) return toast.error('Ende liegt vor dem Start.');
+    if (aEnd < aStart) return toast.error(translate('toast.end_before_start'));
     setABusy(true);
     try {
       await api.post('/absences', {
@@ -160,10 +162,10 @@ export function AbsencesPage() {
         endsOn: atNoon(aEnd),
         workspace: workspaceIri,
       });
-      toast.success('Abwesenheit angelegt.');
+      toast.success(translate('toast.absence_created'));
       await absencesQ.refetch();
     } catch {
-      toast.error('Anlegen fehlgeschlagen.');
+      toast.error(translate('toast.create_failed'));
     } finally {
       setABusy(false);
     }
@@ -177,7 +179,7 @@ export function AbsencesPage() {
       await api.delete(`/workspace_absences/${idOf(r)}`);
       await closuresQ.refetch();
     } catch {
-      toast.error('Löschen fehlgeschlagen.');
+      toast.error(translate('toast.delete_failed'));
     }
   };
   const removeAbsence = async (r: AbsenceRow) => {
@@ -186,7 +188,7 @@ export function AbsencesPage() {
       await api.delete(`/absences/${idOf(r)}`);
       await absencesQ.refetch();
     } catch {
-      toast.error('Löschen fehlgeschlagen.');
+      toast.error(translate('toast.delete_failed'));
     }
   };
   const removeContactAbsence = async (r: ContactAbsenceRow) => {
@@ -195,7 +197,7 @@ export function AbsencesPage() {
       await api.delete(`/contact_absences/${idOf(r)}`);
       await contactAbsencesQ.refetch();
     } catch {
-      toast.error('Löschen fehlgeschlagen.');
+      toast.error(translate('toast.delete_failed'));
     }
   };
 

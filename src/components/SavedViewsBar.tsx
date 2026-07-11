@@ -1,4 +1,5 @@
 import { useCreate, useDelete, useGetIdentity, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { type CrudFilter } from '@refinedev/core';
 import { Bookmark, BookmarkPlus, Check, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -55,6 +56,7 @@ type Props = {
  * same shape either way.
  */
 export function SavedViewsBar({ currentFilters, onApply, onSaved }: Props) {
+  const { t } = useTranslation();
   const { data: identity } = useGetIdentity<Identity>();
   const userIri = identity?.id ? `/v1/users/${identity.id}` : null;
 
@@ -101,13 +103,13 @@ export function SavedViewsBar({ currentFilters, onApply, onSaved }: Props) {
       },
       {
         onSuccess: ({ data }) => {
-          toast.success('Filter gespeichert.');
+          toast.success(t('toast.filter_saved'));
           setDialogOpen(false);
           setName('');
           setShared(false);
           onSaved?.(data as Row<TaskViewJsonld>);
         },
-        onError: () => toast.error('Konnte nicht speichern.'),
+        onError: () => toast.error(t('toast.could_not_save')),
       },
     );
   };
@@ -118,7 +120,7 @@ export function SavedViewsBar({ currentFilters, onApply, onSaved }: Props) {
       { resource: 'task_views', id: view.id, successNotification: false },
       {
         onSuccess: () => toast.success(`"${view.name}" gelöscht.`),
-        onError: () => toast.error('Konnte nicht löschen.'),
+        onError: () => toast.error(t('toast.could_not_delete')),
       },
     );
   };

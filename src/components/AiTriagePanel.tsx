@@ -1,4 +1,5 @@
 import { Check, Loader2, RefreshCw, Sparkles, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -29,6 +30,7 @@ const RESULT_FALLBACK_MS = 12000; // safety re-fetch if the Mercure ping is miss
  * or reject. Nothing on the ticket changes until accept.
  */
 export function AiTriagePanel({ target, targetId, onApplied }: Props) {
+  const { t: translate } = useTranslation();
   const [reco, setReco] = useState<AiRecommendation | null>(null);
   const [loading, setLoading] = useState(false); // triage requested, awaiting result
   const [busy, setBusy] = useState(false); // accept/reject in flight
@@ -72,7 +74,7 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
     setLoading(true);
     try {
       await aiTriage.request(target, targetId);
-      toast.info('KI-Analyse gestartet …');
+      toast.info(translate('toast.ai_analysis_started'));
       // The Mercure ping normally delivers the result; this only catches a
       // missed push (e.g. hub outage) — the worker persists it regardless.
       window.setTimeout(() => {
@@ -91,7 +93,7 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
     setBusy(true);
     try {
       await aiTriage.accept(reco.id);
-      toast.success('Vorschlag übernommen.');
+      toast.success(translate('toast.suggestion_adopted'));
       setReco(null);
       onApplied?.();
     } catch (err) {
@@ -106,7 +108,7 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
     setBusy(true);
     try {
       await aiTriage.reject(reco.id);
-      toast.success('Vorschlag verworfen.');
+      toast.success(translate('toast.suggestion_dismissed'));
       setReco(null);
     } catch (err) {
       toast.error(aiErrorMessage(err, 'Konnte Vorschlag nicht verwerfen.'));

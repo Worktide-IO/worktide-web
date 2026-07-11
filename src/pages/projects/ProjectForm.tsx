@@ -1,4 +1,5 @@
 import { useForm } from '@refinedev/react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { useInvalidate, useList, useNavigation } from '@refinedev/core';
 import { ArrowLeft, FolderKanban, Loader2, Plus, Save, Trash2 } from 'lucide-react';
 import * as Icons from 'lucide-react';
@@ -67,6 +68,7 @@ import { api } from '@/lib/api';
 type Mode = { action: 'create' } | { action: 'edit'; id: string };
 
 export function ProjectForm(props: Mode) {
+  const { t: translate } = useTranslation();
   const navigate = useNavigate();
   const { list } = useNavigation();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -113,7 +115,7 @@ export function ProjectForm(props: Mode) {
     setDeleting(true);
     try {
       await api.delete(`/projects/${props.id}`);
-      toast.success('Projekt gelöscht.');
+      toast.success(translate('toast.project_deleted'));
       list('projects');
     } catch (err) {
       const status = (err as { response?: { status?: number } })?.response?.status;

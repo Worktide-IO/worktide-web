@@ -156,12 +156,12 @@ export function SetupWizardPage() {
       // authProvider.check() silently refreshes from the cookie.
       setAccessToken(data.token);
       if (data.workspaceId) writeAuth(WORKSPACE_STORAGE_KEY, data.workspaceId);
-      toast.success('Setup abgeschlossen — willkommen bei Worktide!');
+      toast.success(t('toast.setup_complete'));
       window.location.assign('/');
     } catch (err) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 409) {
-        toast.error('Diese Instanz wurde bereits eingerichtet.');
+        toast.error(t('toast.instance_already_setup'));
         navigate('/login', { replace: true });
         return;
       }

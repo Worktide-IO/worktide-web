@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import type { EventChangeArg, EventClickArg, EventDropArg, EventInput } from '@fullcalendar/core';
 import type { EventReceiveArg } from '@fullcalendar/interaction';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -46,6 +47,7 @@ type View = 'resourceTimeGridDay' | 'resourceTimeGridWeek';
  * view-switcher visually consistent with the rest of the SPA.
  */
 export function TeamPlannerPage() {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const calRef = useRef<FullCalendar | null>(null);
 
@@ -174,7 +176,7 @@ export function TeamPlannerPage() {
     // and surface a toast — V2 will wire reassign through TaskAssignee.
     if ('newResource' in arg && arg.newResource && arg.oldResource && arg.newResource.id !== arg.oldResource.id) {
       arg.revert();
-      toast.info('Cross-User-Drop folgt — V1 nur Slot-Verschieben in derselben Spalte.');
+      toast.info(translate('toast.cross_user_drop_todo'));
       return;
     }
     try {
@@ -238,7 +240,7 @@ export function TeamPlannerPage() {
         headers: { 'Content-Type': 'application/merge-patch+json' },
       });
       void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: taskId });
-      toast.success('Aufgabe geplant.');
+      toast.success(translate('toast.task_scheduled'));
     } catch (e) {
       const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       toast.error(detail ?? 'Konnte Aufgabe nicht einplanen.');

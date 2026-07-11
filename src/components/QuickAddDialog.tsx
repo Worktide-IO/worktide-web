@@ -1,4 +1,5 @@
 import { useCreate, useGetIdentity, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   CheckSquare,
@@ -57,6 +58,7 @@ type Mode = 'task' | 'project';
  *     auto-fill it on the backend.
  */
 export function QuickAddDialog() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>('task');
   const [title, setTitle] = useState('');
@@ -184,7 +186,7 @@ export function QuickAddDialog() {
           void qc.invalidateQueries({ queryKey: ['tasks'] });
           setOpen(false);
         },
-        onError: () => toast.error('Konnte Task nicht anlegen.'),
+        onError: () => toast.error(t('toast.could_not_create_task')),
       },
     );
   };
@@ -212,7 +214,7 @@ export function QuickAddDialog() {
           setOpen(false);
           if (data.id) navigate(`/projects/${data.id}`);
         },
-        onError: () => toast.error('Konnte Projekt nicht anlegen.'),
+        onError: () => toast.error(t('toast.could_not_create_project')),
       },
     );
   };

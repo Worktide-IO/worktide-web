@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import {
   ChevronDown,
   ChevronRight,
@@ -31,6 +32,7 @@ import { DocumentEditor } from './DocumentEditor';
  * so the page tree highlights it.
  */
 export function DocumentsPage() {
+  const { t } = useTranslation();
   const [activeId, setActiveId] = useState<string | null>(null);
   const invalidate = useInvalidate();
 
@@ -76,7 +78,7 @@ export function DocumentsPage() {
     name?: string;
   }) => {
     if (!workspaceIri) {
-      toast.error('Kein aktiver Workspace.');
+      toast.error(t('toast.no_active_workspace'));
       return;
     }
     try {
@@ -99,7 +101,7 @@ export function DocumentsPage() {
     const name = window.prompt('Name des neuen Spaces:');
     if (!name?.trim()) return;
     if (!workspaceIri) {
-      toast.error('Kein aktiver Workspace.');
+      toast.error(t('toast.no_active_workspace'));
       return;
     }
     try {
@@ -110,7 +112,7 @@ export function DocumentsPage() {
       void invalidate({ resource: 'document_spaces', invalidates: ['list'] });
       toast.success(`Space "${name.trim()}" angelegt.`);
     } catch {
-      toast.error('Konnte Space nicht anlegen.');
+      toast.error(t('toast.could_not_create_space'));
     }
   };
 
@@ -120,9 +122,9 @@ export function DocumentsPage() {
       await api.delete(`/documents/${id}`);
       if (activeId === id) setActiveId(null);
       await refresh();
-      toast.success('Gelöscht.');
+      toast.success(t('toast.deleted'));
     } catch {
-      toast.error('Konnte Seite nicht löschen.');
+      toast.error(t('toast.could_not_delete_page'));
     }
   };
 

@@ -59,7 +59,7 @@ function OAuthConnectBlock({ channelId, adapterCode, hasToken }: { channelId: st
   const providerLabel = ADAPTER_PROVIDER_LABEL[adapterCode] ? t(ADAPTER_PROVIDER_LABEL[adapterCode]) : 'Provider';
   const startConnect = async () => {
     if (!channelId) {
-      toast.error('Channel erst speichern, danach OAuth-Login starten.');
+      toast.error(t('toast.save_channel_before_oauth'));
       return;
     }
     setBusy(true);
@@ -288,6 +288,7 @@ type DialogProps =
   | { mode: 'edit'; channel: Row<ChannelJsonld>; onClose: () => void };
 
 function ChannelDialog(props: DialogProps) {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const isEdit = props.mode === 'edit';
   const initial = isEdit ? props.channel : null;
@@ -331,11 +332,11 @@ function ChannelDialog(props: DialogProps) {
 
   const submit = async () => {
     if (!name.trim()) {
-      toast.error('Name ist pflicht.');
+      toast.error(t('toast.name_required'));
       return;
     }
     if (!inboundEnabled && !outboundEnabled) {
-      toast.error('Mindestens eine Capability (inbound oder outbound) wählen.');
+      toast.error(t('toast.min_one_capability'));
       return;
     }
     setSaving(true);

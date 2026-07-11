@@ -1,4 +1,5 @@
 import { Check, Loader2, Sparkles, Ticket, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -29,6 +30,7 @@ const KIND = 'ticket_from_conversation';
  * ping, same as AiTriagePanel.
  */
 export function AiTicketSuggestionPanel({ conversationId, onApplied }: Props) {
+  const { t } = useTranslation();
   const [reco, setReco] = useState<AiRecommendation | null>(null);
   const [loading, setLoading] = useState(false); // suggestion requested, awaiting result
   const [busy, setBusy] = useState(false); // accept/reject in flight
@@ -78,7 +80,7 @@ export function AiTicketSuggestionPanel({ conversationId, onApplied }: Props) {
     setLoading(true);
     try {
       await aiTriage.suggestTicket(conversationId);
-      toast.info('Ticketvorschlag angefordert …');
+      toast.info(t('toast.ticket_suggestion_requested'));
       window.setTimeout(() => {
         void refetch().then((r) => {
           if (!r) setLoading(false);
@@ -93,13 +95,13 @@ export function AiTicketSuggestionPanel({ conversationId, onApplied }: Props) {
   const accept = async () => {
     if (!reco) return;
     if (!projectIri) {
-      toast.error('Bitte zuerst ein Projekt wählen.');
+      toast.error(t('toast.select_project_first'));
       return;
     }
     setBusy(true);
     try {
       await aiTriage.accept(reco.id, projectIri);
-      toast.success('Ticket erstellt.');
+      toast.success(t('toast.ticket_created'));
       setReco(null);
       onApplied?.();
     } catch (err) {
@@ -114,7 +116,7 @@ export function AiTicketSuggestionPanel({ conversationId, onApplied }: Props) {
     setBusy(true);
     try {
       await aiTriage.reject(reco.id);
-      toast.success('Vorschlag verworfen.');
+      toast.success(t('toast.suggestion_dismissed'));
       setReco(null);
     } catch (err) {
       toast.error(aiErrorMessage(err, 'Konnte Vorschlag nicht verwerfen.'));

@@ -1,4 +1,5 @@
 import { useGetIdentity, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ type ConnRow = Row<{
  * write-only (never shown back).
  */
 export function CalendarSyncPage() {
+  const { t } = useTranslation();
   const { data: identity } = useGetIdentity<{ id?: string }>();
   const ownerIri = identity?.id ? `/v1/users/${identity.id}` : undefined;
 
@@ -50,7 +52,7 @@ export function CalendarSyncPage() {
   const save = async () => {
     const u = url.trim();
     if (!/^https?:\/\//.test(u)) {
-      toast.error('Bitte eine gültige ICS-URL (https://…) angeben.');
+      toast.error(t('toast.valid_ics_url'));
       return;
     }
     setBusy(true);
@@ -62,11 +64,11 @@ export function CalendarSyncPage() {
       } else {
         await api.post('/staff_calendar_connections', { owner: ownerIri, workspace: workspaceIri, icsUrl: u });
       }
-      toast.success('Kalender verbunden. Sync erfolgt in Kürze.');
+      toast.success(t('toast.calendar_connected'));
       setUrl('');
       await query.refetch();
     } catch {
-      toast.error('Speichern fehlgeschlagen.');
+      toast.error(t('toast.save_failed'));
     } finally {
       setBusy(false);
     }
@@ -76,10 +78,10 @@ export function CalendarSyncPage() {
     if (!conn?.id || !window.confirm('Kalenderverbindung entfernen?')) return;
     try {
       await api.delete(`/staff_calendar_connections/${conn.id}`);
-      toast.success('Verbindung entfernt.');
+      toast.success(t('toast.connection_removed'));
       await query.refetch();
     } catch {
-      toast.error('Entfernen fehlgeschlagen.');
+      toast.error(t('toast.remove_failed'));
     }
   };
 

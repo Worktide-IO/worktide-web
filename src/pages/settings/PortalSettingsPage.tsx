@@ -1,4 +1,5 @@
 import { useList, useOne, useUpdate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -43,6 +44,7 @@ export function PortalSettingsPage() {
  * Stored under settings.portal.welcomeText and saved via PATCH /v1/workspaces/{id}.
  */
 function PortalWelcomeTextCard() {
+  const { t } = useTranslation();
   const stored = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
   const { result: workspaces } = useList<Row<WorkspaceJsonld>>({
     resource: 'workspaces',
@@ -85,7 +87,7 @@ function PortalWelcomeTextCard() {
         successNotification: false,
       },
       {
-        onSuccess: () => toast.success('Begrüßungstext gespeichert.'),
+        onSuccess: () => toast.success(t('toast.welcome_text_saved')),
         onError: (err) => {
           const status = (err as { response?: { status?: number } })?.response?.status;
           toast.error(status === 403 ? 'Keine Berechtigung.' : 'Konnte nicht speichern.');
@@ -129,6 +131,7 @@ type TaskStatusRow = Row<TaskStatusJsonld> & { waitingForCustomer?: boolean; com
  * Toggles TaskStatus.isWaitingForCustomer via PATCH /v1/task_statuses/{id}.
  */
 function PortalWaitingStatusesCard() {
+  const { t } = useTranslation();
   const { result, query } = useList<TaskStatusRow>({
     resource: 'task_statuses',
     pagination: { mode: 'off' },
@@ -147,7 +150,7 @@ function PortalWaitingStatusesCard() {
     update(
       { resource: 'task_statuses', id: sid, values: { waitingForCustomer: v }, successNotification: false },
       {
-        onSuccess: () => toast.success('Status aktualisiert.'),
+        onSuccess: () => toast.success(t('toast.status_updated')),
         onError: (err) => {
           setPending((p) => {
             const n = { ...p };
@@ -218,6 +221,7 @@ function readSla(workspace: { settings?: Record<string, unknown> | null } | unde
 }
 
 function PortalSlaCard() {
+  const { t } = useTranslation();
   const stored = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
   const { result: workspaces } = useList<Row<WorkspaceJsonld>>({
     resource: 'workspaces',
@@ -279,7 +283,7 @@ function PortalSlaCard() {
     update(
       { resource: 'workspaces', id, values: { settings: { ...prev, portal: { ...prevPortal, sla } } }, successNotification: false },
       {
-        onSuccess: () => toast.success('SLA-Richtlinie gespeichert.'),
+        onSuccess: () => toast.success(t('toast.sla_policy_saved')),
         onError: (err) => {
           const status = (err as { response?: { status?: number } })?.response?.status;
           toast.error(

@@ -1,4 +1,5 @@
 import { useLogout } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -17,6 +18,7 @@ import { toast } from 'sonner';
  * move stream doesn't reset the timeout a thousand times per second.
  */
 export function useIdleLogout(minutes: number | null | undefined): void {
+  const { t } = useTranslation();
   const { mutate: logout } = useLogout();
   const timerRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -28,7 +30,7 @@ export function useIdleLogout(minutes: number | null | undefined): void {
 
     const fire = () => {
       timerRef.current = null;
-      toast.warning('Aufgrund von Inaktivität automatisch abgemeldet.');
+      toast.warning(t('toast.auto_logout_inactivity'));
       logout();
     };
 

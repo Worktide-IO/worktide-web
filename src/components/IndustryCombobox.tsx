@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Building, Check, Plus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -34,6 +35,7 @@ type Props = {
  * Mirrors {@link ./TagPicker} but single-valued.
  */
 export function IndustryCombobox({ value, onChange, placeholder = 'Branche wählen…', className }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [creating, setCreating] = useState(false);
@@ -71,7 +73,7 @@ export function IndustryCombobox({ value, onChange, placeholder = 'Branche wähl
     const workspaceId =
       typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
     if (!workspaceId) {
-      toast.error('Workspace nicht gefunden.');
+      toast.error(t('toast.workspace_not_found'));
       return;
     }
     setCreating(true);
@@ -84,7 +86,7 @@ export function IndustryCombobox({ value, onChange, placeholder = 'Branche wähl
       if (data['@id']) pick(data['@id']);
       toast.success(`Branche „${name}" angelegt`);
     } catch {
-      toast.error('Konnte Branche nicht anlegen.');
+      toast.error(t('toast.could_not_create_industry'));
     } finally {
       setCreating(false);
     }

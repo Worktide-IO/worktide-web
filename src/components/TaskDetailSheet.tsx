@@ -1,4 +1,5 @@
 import { useGetIdentity, useInvalidate, useList, useOne } from '@refinedev/core';
+import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowDown,
@@ -134,6 +135,7 @@ export function TaskDetailSheet({ taskId, onOpenChange }: Props) {
  * unit) and stored as minutes.
  */
 function ScheduleSection({ task }: { task: Row<TaskJsonld> }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
 
   const save = async (body: Record<string, unknown>) => {
@@ -144,7 +146,7 @@ function ScheduleSection({ task }: { task: Row<TaskJsonld> }) {
       });
       void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: task.id });
     } catch {
-      toast.error('Konnte nicht speichern.');
+      toast.error(translate('toast.could_not_save'));
     }
   };
 
@@ -220,7 +222,7 @@ async function patchTaskField(
     });
     void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id });
   } catch {
-    toast.error('Konnte nicht speichern.');
+    toast.error(i18n.t('toast.could_not_save'));
   }
 }
 
@@ -248,6 +250,7 @@ function TitleEditor({ task }: { task: Row<TaskJsonld> }) {
 
 /** Assignee editor: avatars open a checklist of workspace users. */
 function AssigneeEditor({ task }: { task: Row<TaskJsonld> }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const { users } = useUserDirectory();
   const current = task.assignees ?? [];
@@ -263,7 +266,7 @@ function AssigneeEditor({ task }: { task: Row<TaskJsonld> }) {
         await api.post(`/tasks/${task.id}/set-assignees`, { userIds });
         void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: task.id });
       } catch {
-        toast.error('Konnte nicht speichern.');
+        toast.error(translate('toast.could_not_save'));
       }
     })();
   };
@@ -369,6 +372,7 @@ function TaskScoreBadge({ task }: { task: Row<TaskJsonld> }) {
 
 /** Workflow-gated status dropdown for the header. */
 function StatusEditor({ task }: { task: Row<TaskJsonld> }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const { result: statuses } = useList<Row<TaskStatusJsonld>>({
     resource: 'task_statuses',
@@ -383,7 +387,7 @@ function StatusEditor({ task }: { task: Row<TaskJsonld> }) {
     if (!task.id || iri === task.status) return;
     const allowed = allowedToStatuses(task.tracker ?? null, task.status ?? null);
     if (allowed && !allowed.has(iri)) {
-      toast.error('Statuswechsel nicht im Workflow erlaubt.');
+      toast.error(translate('toast.status_change_not_allowed'));
       return;
     }
     void patchTaskField(task.id, { status: iri }, invalidate);
@@ -413,6 +417,7 @@ function StatusEditor({ task }: { task: Row<TaskJsonld> }) {
 }
 
 function TaskDetailBody({ task }: { task: Row<TaskJsonld> }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const { byIri: trackerByIri } = useTrackers();
   const tracker = task.tracker ? trackerByIri[task.tracker] : null;
@@ -451,8 +456,8 @@ function TaskDetailBody({ task }: { task: Row<TaskJsonld> }) {
                 const link = `${window.location.origin}/projects/${task.project!.split('/').pop()}?task=${task.id}`;
                 void navigator.clipboard
                   .writeText(link)
-                  .then(() => toast.success('Ticket-Link kopiert'))
-                  .catch(() => toast.error('Konnte Link nicht kopieren.'));
+                  .then(() => toast.success(translate('toast.ticket_link_copied')))
+                  .catch(() => toast.error(translate('toast.could_not_copy_link')));
               }}
               className="ml-auto h-6 gap-1 px-2 text-xs"
             >
@@ -485,6 +490,7 @@ function TaskDetailBody({ task }: { task: Row<TaskJsonld> }) {
 // ----- Tags --------------------------------------------------------------
 
 function TagsSection({ task }: { task: Row<TaskJsonld> }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const [saving, setSaving] = useState(false);
 
@@ -499,7 +505,7 @@ function TagsSection({ task }: { task: Row<TaskJsonld> }) {
       );
       void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: task.id });
     } catch {
-      toast.error('Konnte Tags nicht speichern.');
+      toast.error(translate('toast.could_not_save_tags'));
     } finally {
       setSaving(false);
     }
@@ -521,6 +527,7 @@ function TagsSection({ task }: { task: Row<TaskJsonld> }) {
 // ----- Version (Release-Target) -----------------------------------------
 
 function VersionSection({ task }: { task: Row<TaskJsonld> }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const { forProject } = useProjectVersions(task.project ?? null);
   const current = task.fixedVersion ?? '';
@@ -537,9 +544,9 @@ function VersionSection({ task }: { task: Row<TaskJsonld> }) {
         { headers: { 'Content-Type': 'application/merge-patch+json' } },
       );
       void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: task.id });
-      toast.success('Release aktualisiert.');
+      toast.success(translate('toast.release_updated'));
     } catch {
-      toast.error('Konnte Release nicht ändern.');
+      toast.error(translate('toast.could_not_change_release'));
     }
   };
 
@@ -579,6 +586,7 @@ function VersionSection({ task }: { task: Row<TaskJsonld> }) {
 // ----- Subtasks ----------------------------------------------------------
 
 function SubtasksSection({ parent }: { parent: Row<TaskJsonld> }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const { data: identity } = useGetIdentity<Identity>();
   const [draft, setDraft] = useState('');
@@ -637,7 +645,7 @@ function SubtasksSection({ parent }: { parent: Row<TaskJsonld> }) {
       setDraft('');
       void invalidate({ resource: 'tasks', invalidates: ['list'] });
     } catch {
-      toast.error('Konnte Subtask nicht anlegen.');
+      toast.error(translate('toast.could_not_create_subtask'));
     } finally {
       setCreating(false);
     }
@@ -710,6 +718,7 @@ function SubtasksSection({ parent }: { parent: Row<TaskJsonld> }) {
 // ----- Dependencies ------------------------------------------------------
 
 function DependenciesSection({ task }: { task: Row<TaskJsonld> }) {
+  const { t: translate } = useTranslation();
   const taskIri = task['@id'] ?? '';
   const invalidate = useInvalidate();
   const [showAdd, setShowAdd] = useState(false);
@@ -738,7 +747,7 @@ function DependenciesSection({ task }: { task: Row<TaskJsonld> }) {
       await api.delete(`/task_dependencies/${id}`);
       void invalidate({ resource: 'task_dependencies', invalidates: ['list'] });
     } catch {
-      toast.error('Konnte Dependency nicht entfernen.');
+      toast.error(translate('toast.could_not_remove_dependency'));
     }
   };
 

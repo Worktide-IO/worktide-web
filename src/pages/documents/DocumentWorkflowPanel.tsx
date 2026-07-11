@@ -127,6 +127,7 @@ function SubmitForReviewButton({
   documentId: string;
   initialReviewers: string[];
 }) {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const { users } = useUserDirectory();
   const [open, setOpen] = useState(false);
@@ -137,7 +138,7 @@ function SubmitForReviewButton({
 
   async function submit() {
     if (selected.length === 0) {
-      toast.error('Mindestens einen Reviewer auswählen.');
+      toast.error(t('toast.min_one_reviewer'));
       return;
     }
     setBusy(true);
@@ -145,7 +146,7 @@ function SubmitForReviewButton({
       await api.post(`/documents/${documentId}/submit`, {
         reviewers: selected,
       });
-      toast.success('Eingereicht.');
+      toast.success(t('toast.submitted'));
       setOpen(false);
       void invalidate({ resource: 'documents', invalidates: ['detail', 'list'], id: documentId });
     } catch (e: any) {
@@ -217,6 +218,7 @@ function SubmitForReviewButton({
 }
 
 function ReviewActions({ documentId }: { documentId: string }) {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const qc = useQueryClient();
   const [rejecting, setRejecting] = useState(false);
@@ -227,7 +229,7 @@ function ReviewActions({ documentId }: { documentId: string }) {
     setBusy(true);
     try {
       await api.post(`/documents/${documentId}/approve`, {});
-      toast.success('Freigegeben.');
+      toast.success(t('toast.approved'));
       void invalidate({ resource: 'documents', invalidates: ['detail', 'list'], id: documentId });
       void qc.invalidateQueries({ queryKey: ['document-backlinks', documentId] });
     } catch (e: any) {
@@ -239,13 +241,13 @@ function ReviewActions({ documentId }: { documentId: string }) {
 
   async function requestChanges() {
     if (note.trim() === '') {
-      toast.error('Bitte beschreiben, was geändert werden soll.');
+      toast.error(t('toast.describe_change'));
       return;
     }
     setBusy(true);
     try {
       await api.post(`/documents/${documentId}/request-changes`, { note });
-      toast.success('Änderungen angefordert.');
+      toast.success(t('toast.changes_requested'));
       setRejecting(false);
       setNote('');
       void invalidate({ resource: 'documents', invalidates: ['detail', 'list'], id: documentId });

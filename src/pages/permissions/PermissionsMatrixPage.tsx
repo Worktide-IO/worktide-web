@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Check,
@@ -136,6 +137,7 @@ const CAP_GROUPS: { label: string; caps: { key: Capability; label: string; hint?
  * Owner-Overrides.
  */
 export function PermissionsMatrixPage() {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const qc = useQueryClient();
   const workspaceId =
@@ -217,9 +219,9 @@ export function PermissionsMatrixPage() {
     try {
       await api.delete(`/role_permission_overrides/${existing.id}`);
       refresh();
-      toast.success('Auf Default zurückgesetzt.');
+      toast.success(t('toast.reset_to_default'));
     } catch {
-      toast.error('Konnte Default nicht wiederherstellen.');
+      toast.error(t('toast.could_not_restore_default'));
     } finally {
       setPendingCell(null);
     }

@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { History, Loader2, RotateCcw, User as UserIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -43,6 +44,7 @@ type Props = {
  * helper.
  */
 export function DocumentHistoryDrawer({ open, onOpenChange, documentId, onRestored }: Props) {
+  const { t } = useTranslation();
   const documentIri = `/v1/documents/${documentId}`;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
@@ -72,7 +74,7 @@ export function DocumentHistoryDrawer({ open, onOpenChange, documentId, onRestor
       await api.post(`/documents/${documentId}/restore`, {
         revision: `/v1/document_revisions/${selected.id}`,
       });
-      toast.success('Version wiederhergestellt.');
+      toast.success(t('toast.version_restored'));
       onRestored();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;

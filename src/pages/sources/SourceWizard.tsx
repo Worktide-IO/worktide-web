@@ -1,4 +1,5 @@
 import { useInvalidate, useOne } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, CheckCircle2, Copy, Link2, Loader2, RotateCw, Save, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -58,6 +59,7 @@ export function SourceWizard({
   existingChannelId: string | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const def = findSourceType(adapterCode);
   const isEdit = Boolean(existingChannelId);
@@ -159,7 +161,7 @@ export function SourceWizard({
   // --- Step 1 → 2 (Identify → Configure) ---
   const submitIdentify = async () => {
     if (!name.trim()) {
-      toast.error('Name ist pflicht.');
+      toast.error(t('toast.name_required'));
       return;
     }
     // Editing: the channel already exists — don't create a second one. Just move
@@ -218,7 +220,7 @@ export function SourceWizard({
   // --- Step 2 → 3 (Configure → Test) ---
   const submitConfigure = async () => {
     if (!channelId) {
-      toast.error('Channel-ID fehlt.');
+      toast.error(t('toast.channel_id_missing'));
       return;
     }
     setSaving(true);
@@ -540,6 +542,7 @@ function ImapConfigure({
 }
 
 function WebhookConfigure({ token }: { token: string }) {
+  const { t } = useTranslation();
   const apiHost = window.location.origin.replace('worktide-web', 'api.worktide');
   const url = `${apiHost}/v1/inbound/webhooks/${token}`;
   return (
@@ -557,7 +560,7 @@ function WebhookConfigure({ token }: { token: string }) {
           variant="outline"
           onClick={() => {
             navigator.clipboard.writeText(url);
-            toast.success('URL kopiert.');
+            toast.success(t('toast.url_copied'));
           }}
         >
           <Copy className="size-3" />
@@ -653,6 +656,7 @@ function generateToken(): string {
 }
 
 function WebhookUrlBlock({ token, providerHint }: { token: string; providerHint: string }) {
+  const { t } = useTranslation();
   const apiHost = window.location.origin.replace('worktide-web', 'api.worktide');
   const url = `${apiHost}/v1/inbound/entity-webhooks/${token}`;
   return (
@@ -672,7 +676,7 @@ function WebhookUrlBlock({ token, providerHint }: { token: string; providerHint:
           variant="outline"
           onClick={() => {
             navigator.clipboard.writeText(url);
-            toast.success('Webhook-URL kopiert.');
+            toast.success(t('toast.webhook_url_copied'));
           }}
         >
           <Copy className="size-3" />

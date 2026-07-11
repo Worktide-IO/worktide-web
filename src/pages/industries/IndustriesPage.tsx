@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Archive, ArchiveRestore, Building, Loader2, Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -36,6 +37,7 @@ import {
  * the picker.
  */
 export function IndustriesPage() {
+  const { t } = useTranslation();
   const { result, query } = useList<Row<IndustryJsonld>>({
     resource: 'industries',
     pagination: { mode: 'off' },
@@ -85,7 +87,7 @@ export function IndustriesPage() {
       toast.success(ok);
       await query.refetch();
     } catch {
-      toast.error('Aktion fehlgeschlagen.');
+      toast.error(t('toast.action_failed'));
     }
   };
 

@@ -149,7 +149,7 @@ export function ConversationDetailPage() {
       void invalidate({ resource: 'conversations', invalidates: ['list', 'detail'], id });
       toast.success(`Status: ${STATUS_LABEL[next] ? t(STATUS_LABEL[next]) : next}`);
     } catch {
-      toast.error('Konnte Status nicht ändern.');
+      toast.error(t('toast.could_not_change_status'));
     }
   };
 
@@ -328,6 +328,7 @@ function ReplyComposer({
   defaultRecipient: string;
   defaultSubject: string;
 }) {
+  const { t } = useTranslation();
   const invalidate = useInvalidate();
   const [recipient, setRecipient] = useState(defaultRecipient);
   const [subject, setSubject] = useState(defaultSubject);
@@ -336,11 +337,11 @@ function ReplyComposer({
 
   const send = async () => {
     if (!channelIri) {
-      toast.error('Konversation ohne Channel — keine Antwort möglich.');
+      toast.error(t('toast.conversation_no_channel'));
       return;
     }
     if (!recipient.trim() || !body.trim()) {
-      toast.error('Empfänger und Text sind pflicht.');
+      toast.error(t('toast.recipient_text_required'));
       return;
     }
     setSending(true);
@@ -358,7 +359,7 @@ function ReplyComposer({
         attachments: [],
         additionalRecipients: [],
       });
-      toast.success('Antwort in Warteschlange.');
+      toast.success(t('toast.reply_queued'));
       setBody('');
       void invalidate({ resource: 'outbound_messages', invalidates: ['list'] });
       void invalidate({ resource: 'conversations', invalidates: ['detail'], id: conversationId });

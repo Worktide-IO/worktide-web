@@ -62,7 +62,7 @@ export function ResearchMissionCreatePage() {
   const onCreate = async () => {
     const workspace = readAuth(WORKSPACE_STORAGE_KEY);
     if (!workspace) {
-      toast.error('Kein aktiver Workspace gewählt.');
+      toast.error(t('toast.no_active_workspace_selected'));
       return;
     }
     if (prompt.trim() === '') return;
@@ -103,7 +103,7 @@ export function ResearchMissionCreatePage() {
     setBusy(true);
     try {
       await researchMission.run(missionId);
-      toast.success('Suche gestartet – Leads erscheinen gleich in der Mission.');
+      toast.success(t('toast.search_started_mission'));
       navigate(`/research/missions/${missionId}`);
     } catch (err) {
       toast.error(aiErrorMessage(err, 'Start nicht möglich (externe Suche/Egress prüfen).'));

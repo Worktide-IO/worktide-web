@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import {
   Ban,
   Check,
@@ -171,6 +172,7 @@ export function AccessTokensPage() {
 }
 
 function TokenRow({ token }: { token: Row<Pat> }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const [revoking, setRevoking] = useState(false);
   const isRevoked = Boolean(token.revoked || token.revokedAt);
@@ -186,7 +188,7 @@ function TokenRow({ token }: { token: Row<Pat> }) {
       toast.success(`Token "${token.name}" widerrufen.`);
       void invalidate({ resource: 'personal_access_tokens', invalidates: ['list'] });
     } catch {
-      toast.error('Konnte Token nicht widerrufen.');
+      toast.error(translate('toast.could_not_revoke_token'));
     } finally {
       setRevoking(false);
     }
@@ -241,6 +243,7 @@ function CreateDialog({
   onOpenChange: (open: boolean) => void;
   onCreated: (token: IssuedPat) => void;
 }) {
+  const { t: translate } = useTranslation();
   const [name, setName] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
   const [saving, setSaving] = useState(false);
@@ -258,7 +261,7 @@ function CreateDialog({
     const workspaceId =
       typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
     if (!workspaceId) {
-      toast.error('Kein aktiver Workspace.');
+      toast.error(translate('toast.no_active_workspace'));
       return;
     }
     setSaving(true);
@@ -340,6 +343,7 @@ function IssuedDialog({
   token: IssuedPat | null;
   onClose: () => void;
 }) {
+  const { t: translate } = useTranslation();
   const [show, setShow] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -357,10 +361,10 @@ function IssuedDialog({
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
-      toast.success('Token in die Zwischenablage kopiert.');
+      toast.success(translate('toast.token_copied'));
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Kopieren fehlgeschlagen — bitte manuell auswählen.');
+      toast.error(translate('toast.copy_failed_manual'));
     }
   };
 
