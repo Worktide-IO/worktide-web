@@ -1,4 +1,5 @@
 import { useGetIdentity, useInvalidate, useList, useOne } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowDown,
   ArrowRight,
@@ -60,15 +61,15 @@ type Props = {
 };
 
 const TYPE_LABEL: Record<TaskDependencyJsonldTypeEnum, string> = {
-  finish_to_start: 'Finish → Start',
-  start_to_start: 'Start → Start',
-  finish_to_finish: 'Finish → Finish',
-  start_to_finish: 'Start → Finish',
-  blocks: 'Blockiert',
-  precedes: 'Geht voraus',
-  duplicates: 'Dupliziert',
-  relates: 'Bezieht sich auf',
-  follows: 'Folgt auf',
+  finish_to_start: 'dep_type.finish_to_start',
+  start_to_start: 'dep_type.start_to_start',
+  finish_to_finish: 'dep_type.finish_to_finish',
+  start_to_finish: 'dep_type.start_to_finish',
+  blocks: 'dep_type.blocks',
+  precedes: 'dep_type.precedes',
+  duplicates: 'dep_type.duplicates',
+  relates: 'dep_type.relates',
+  follows: 'dep_type.follows',
 };
 const TYPE_SHORT: Record<TaskDependencyJsonldTypeEnum, string> = {
   finish_to_start: 'FS',
@@ -331,14 +332,15 @@ function DescriptionEditor({ task }: { task: Row<TaskJsonld> }) {
 }
 
 const PRIORITY_LABEL: Record<string, string> = {
-  low: 'Niedrig',
-  normal: 'Normal',
-  high: 'Hoch',
-  urgent: 'Dringend',
+  low: 'priority.low',
+  normal: 'priority.normal',
+  high: 'priority.high',
+  urgent: 'priority.urgent',
 };
 
 /** Priority dropdown for the header (no workflow gate — free to change). */
 function PriorityEditor({ task }: { task: Row<TaskJsonld> }) {
+  const { t: translate } = useTranslation();
   const invalidate = useInvalidate();
   const change = (p: string) => {
     if (!task.id || p === task.priority) return;
@@ -352,7 +354,7 @@ function PriorityEditor({ task }: { task: Row<TaskJsonld> }) {
       <SelectContent>
         {(['urgent', 'high', 'normal', 'low'] as const).map((p) => (
           <SelectItem key={p} value={p}>
-            {PRIORITY_LABEL[p]}
+            {translate(PRIORITY_LABEL[p])}
           </SelectItem>
         ))}
       </SelectContent>
@@ -819,6 +821,7 @@ function DependencyRow({
   otherTaskIri: string | null;
   onDelete: () => void;
 }) {
+  const { t: translate } = useTranslation();
   const { result: other } = useOne<Row<TaskJsonld>>({
     resource: 'tasks',
     id: otherTaskIri?.split('/').pop() ?? '',
@@ -832,7 +835,7 @@ function DependencyRow({
     <li className="flex items-center gap-2 px-3 py-1.5">
       <span
         className="font-mono text-[10px] rounded bg-muted px-1.5 py-0.5"
-        title={TYPE_LABEL[type]}
+        title={translate(TYPE_LABEL[type])}
       >
         {TYPE_SHORT[type]}
       </span>

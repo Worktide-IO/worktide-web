@@ -1,4 +1,5 @@
 import { useList, useTable } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -44,11 +45,11 @@ import {
  * CustomerEditPage; create is at /customers/create.
  */
 const STATUS_LABEL: Record<string, string> = {
-  prospect: 'Prospect',
-  active: 'Aktiv',
-  inactive: 'Inaktiv',
-  churned: 'Churned',
-  archived: 'Archiviert',
+  prospect: 'customer_status.prospect',
+  active: 'customer_status.active',
+  inactive: 'customer_status.inactive',
+  churned: 'customer_status.churned',
+  archived: 'customer_status.archived',
 };
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -63,6 +64,7 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | '
 type CustomerRow = Row<CustomerJsonld> & { isCustomer?: boolean; isVendor?: boolean };
 
 export function CustomersListPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -232,7 +234,7 @@ export function CustomersListPage() {
                       <TableCell>
                         {c.status ? (
                           <Badge variant={STATUS_VARIANT[c.status] ?? 'outline'}>
-                            {STATUS_LABEL[c.status] ?? c.status}
+                            {STATUS_LABEL[c.status] ? t(STATUS_LABEL[c.status]) : c.status}
                           </Badge>
                         ) : null}
                       </TableCell>

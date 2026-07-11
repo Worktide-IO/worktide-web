@@ -10,6 +10,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useCreate, useList, useUpdate } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Flag, Plus, Zap } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -59,9 +60,9 @@ import { cn } from '@/lib/utils';
 const BACKLOG = '__backlog__';
 
 const STATE_LABEL: Record<string, string> = {
-  planned: 'Geplant',
-  active: 'Aktiv',
-  completed: 'Abgeschlossen',
+  planned: 'sprint_state.planned',
+  active: 'sprint_state.active',
+  completed: 'sprint_state.completed',
 };
 const STATE_VARIANT: Record<string, 'outline' | 'secondary' | 'default'> = {
   planned: 'outline',
@@ -299,6 +300,7 @@ function Column({
   velocity?: VelocityRow;
   onBurndown?: () => void;
 }) {
+  const { t: translate } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({ id });
   const pct = velocity && velocity.committedMinutes > 0
     ? Math.round((velocity.completedMinutes / velocity.committedMinutes) * 100)
@@ -325,7 +327,7 @@ function Column({
         </div>
         {sprint?.state ? (
           <Badge variant={STATE_VARIANT[sprint.state] ?? 'outline'} className="text-[10px]">
-            {STATE_LABEL[sprint.state] ?? sprint.state}
+            {STATE_LABEL[sprint.state] ? translate(STATE_LABEL[sprint.state]) : sprint.state}
           </Badge>
         ) : null}
       </div>

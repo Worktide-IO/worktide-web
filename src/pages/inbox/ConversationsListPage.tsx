@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Inbox as InboxIcon, Loader2, Mailbox } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
@@ -20,10 +21,10 @@ import type { Row } from '@/lib/refine';
 import { useKeysetList } from '@/lib/useKeysetList';
 
 const STATUS_LABEL: Record<string, string> = {
-  open: 'Offen',
-  pending: 'Wartet',
-  closed: 'Erledigt',
-  spam: 'Spam',
+  open: 'conversation_status.open',
+  pending: 'conversation_status.pending',
+  closed: 'conversation_status.closed',
+  spam: 'conversation_status.spam',
 };
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -44,6 +45,7 @@ const OVERSCAN = 8;
  * small dependency-free virtualizer.
  */
 export function ConversationsListPage() {
+  const { t } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<string>('open');
   const [channelFilter, setChannelFilter] = useState<string>('all');
   const navigate = useNavigate();
@@ -177,7 +179,7 @@ export function ConversationsListPage() {
                     >
                       <span>
                         <Badge variant={STATUS_VARIANT[status] ?? 'outline'} className="text-xs">
-                          {STATUS_LABEL[status] ?? status}
+                          {STATUS_LABEL[status] ? t(STATUS_LABEL[status]) : status}
                         </Badge>
                       </span>
                       <span className="truncate text-xs text-muted-foreground">
