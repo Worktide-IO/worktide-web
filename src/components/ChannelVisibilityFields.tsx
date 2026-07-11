@@ -1,4 +1,5 @@
 import { useGetIdentity } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Lock, Users } from 'lucide-react';
 import { useEffect } from 'react';
 
@@ -34,6 +35,7 @@ export function ChannelVisibilityFields({
   value: ChannelVisibility;
   onChange: (v: ChannelVisibility) => void;
 }) {
+  const { t } = useTranslation();
   const { isAdmin, isLoading } = useWorkspaceRole();
   const { data: identity } = useGetIdentity<{ id?: string }>();
   const { users } = useUserDirectory();
@@ -53,8 +55,7 @@ export function ChannelVisibilityFields({
       <div className="flex items-start gap-2 rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
         <Lock className="mt-0.5 size-3.5 shrink-0" />
         <span>
-          Persönliches Postfach — nur für Dich (und Workspace-Admins) sichtbar.
-          Geteilte Team-Kanäle können nur Admins anlegen.
+          {t('channel_visibility.member_hint')}
         </span>
       </div>
     );
@@ -63,12 +64,12 @@ export function ChannelVisibilityFields({
   return (
     <fieldset className="space-y-2 rounded-md border p-3">
       <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Sichtbarkeit
+        {t('channel_visibility.legend')}
       </legend>
       <label className="flex items-center justify-between gap-3">
         <span className="flex items-center gap-2 text-sm">
           <Users className="size-4 text-muted-foreground" />
-          {value.isShared ? 'Team-Kanal (ganzes Workspace)' : 'Persönliches Postfach'}
+          {value.isShared ? t('channel_visibility.team_channel') : t('channel_visibility.personal_mailbox')}
         </span>
         <Switch
           checked={value.isShared}
@@ -79,19 +80,19 @@ export function ChannelVisibilityFields({
       </label>
       <p className="text-xs text-muted-foreground">
         {value.isShared
-          ? 'Alle internen Mitglieder sehen und nutzen diesen Kanal.'
-          : 'Nur der zugewiesene Besitzer (und Admins) sehen diesen Kanal.'}
+          ? t('channel_visibility.shared_desc')
+          : t('channel_visibility.personal_desc')}
       </p>
 
       {!value.isShared ? (
         <div className="space-y-1.5 pt-1">
-          <Label htmlFor="channel-owner">Besitzer</Label>
+          <Label htmlFor="channel-owner">{t('channel_visibility.owner')}</Label>
           <Select
             value={value.ownerUser ?? selfIri ?? undefined}
             onValueChange={(iri) => onChange({ isShared: false, ownerUser: iri })}
           >
             <SelectTrigger id="channel-owner">
-              <SelectValue placeholder="Benutzer wählen" />
+              <SelectValue placeholder={t('channel_visibility.pick_user')} />
             </SelectTrigger>
             <SelectContent>
               {users.map((u) => (

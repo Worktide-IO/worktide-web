@@ -1,5 +1,6 @@
 import { useList } from '@refinedev/core';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import {
   Bar,
@@ -51,6 +52,7 @@ function todayIso() {
  * Nutzt die resolved-Serie des created-vs-resolved-Reports.
  */
 export function ThroughputTab() {
+  const { t } = useTranslation();
   const [from, setFrom] = useState(() => isoDaysAgo(180));
   const [to, setTo] = useState(() => todayIso());
   const [projectId, setProjectId] = useState<string>(ALL_PROJECTS);
@@ -84,20 +86,20 @@ export function ThroughputTab() {
   return (
     <ReportShell
       title="Throughput"
-      description="Abgeschlossene Aufgaben pro Woche (nach Abschlussdatum) mit gleitendem 4-Wochen-Durchschnitt. Die Rate zeigt die Liefergeschwindigkeit — nicht wie viel offen ist."
+      description={t('throughput.description')}
       from={from}
       to={to}
       onFromChange={setFrom}
       onToChange={setTo}
       extras={
         <div className="space-y-1.5">
-          <Label className="text-xs">Projekt</Label>
+          <Label className="text-xs">{t('throughput.project')}</Label>
           <Select value={projectId} onValueChange={setProjectId}>
             <SelectTrigger className="w-56">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_PROJECTS}>Alle Projekte</SelectItem>
+              <SelectItem value={ALL_PROJECTS}>{t('throughput.all_projects')}</SelectItem>
               {(projects?.data ?? []).map((p) => (
                 <SelectItem key={p['@id']} value={p.id ?? ''}>
                   {p.name}
@@ -110,28 +112,28 @@ export function ThroughputTab() {
     >
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Erledigt pro Woche</CardTitle>
+          <CardTitle className="text-base">{t('throughput.card_title')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoading ? (
             <Skeleton className="h-80 w-full" />
           ) : series.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              Keine abgeschlossenen Aufgaben im Zeitraum.
+              {t('throughput.empty')}
             </p>
           ) : (
             <>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 <div className="rounded-md border px-3 py-2">
-                  <div className="text-xs text-muted-foreground">Gesamt erledigt</div>
+                  <div className="text-xs text-muted-foreground">{t('throughput.total_resolved')}</div>
                   <div className="font-mono text-lg">{totalResolved}</div>
                 </div>
                 <div className="rounded-md border px-3 py-2">
-                  <div className="text-xs text-muted-foreground">Ø pro Woche</div>
+                  <div className="text-xs text-muted-foreground">{t('throughput.avg_per_week')}</div>
                   <div className="font-mono text-lg">{avgPerWeek}</div>
                 </div>
                 <div className="rounded-md border px-3 py-2">
-                  <div className="text-xs text-muted-foreground">Wochen</div>
+                  <div className="text-xs text-muted-foreground">{t('throughput.weeks')}</div>
                   <div className="font-mono text-lg">{series.length}</div>
                 </div>
               </div>
@@ -143,11 +145,11 @@ export function ThroughputTab() {
                     <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="resolved" name="Erledigt" fill="#10b981" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="resolved" name={t('throughput.legend_resolved')} fill="#10b981" radius={[3, 3, 0, 0]} />
                     <Line
                       type="monotone"
                       dataKey="avg"
-                      name={`Ø ${ROLL} Wochen`}
+                      name={t('throughput.legend_avg', { weeks: ROLL })}
                       stroke="#6366f1"
                       strokeWidth={2}
                       dot={false}

@@ -1,6 +1,7 @@
 import { useOne } from '@refinedev/core';
 import { ArrowLeft, Pencil, Share2, Wifi, WifiOff } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ProjectStarButton } from '@/components/ProjectStarButton';
 import { ProjectShareDialog } from '@/components/ProjectShareDialog';
 import { TagChips } from '@/components/TagChips';
@@ -33,6 +34,7 @@ import { ProjectStatusUpdatesTab } from './ProjectStatusUpdatesTab';
  * project and are the heart of its UX, not header decoration).
  */
 export function ProjectDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [shareOpen, setShareOpen] = useState(false);
@@ -52,7 +54,7 @@ export function ProjectDetailPage() {
   const customerByIri = useCustomerLookup([project?.customer]);
 
   if (!id) {
-    return <p className="text-sm text-destructive">Keine Projekt-ID in der URL.</p>;
+    return <p className="text-sm text-destructive">{t('project_detail.no_id')}</p>;
   }
   if (projectQuery.isLoading || !project) {
     return (
@@ -79,7 +81,7 @@ export function ProjectDetailPage() {
               className="h-7 -ml-2 gap-1"
               onClick={() => navigate('/projects')}
             >
-              <ArrowLeft className="size-3" /> Projekte
+              <ArrowLeft className="size-3" /> {t('project_detail.back_projects')}
             </Button>
             <span>/</span>
             <span className="font-mono">{p.key}</span>
@@ -87,7 +89,7 @@ export function ProjectDetailPage() {
               <>
                 <span>·</span>
                 <span className="font-mono">
-                  Nr. {(p as { number?: string | null }).number}
+                  {t('project_detail.number', { number: (p as { number?: string | null }).number })}
                 </span>
               </>
             ) : null}
@@ -111,14 +113,14 @@ export function ProjectDetailPage() {
             <WatchButton target="project" targetId={p.id} className="ml-2" />
             <ProjectStarButton projectId={p.id} variant="full" className="ml-auto" />
             <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
-              <Share2 className="size-4" /> Teilen
+              <Share2 className="size-4" /> {t('project_detail.share')}
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => p.id && navigate(`/projects/${p.id}/edit`)}
             >
-              <Pencil className="size-4" /> Bearbeiten
+              <Pencil className="size-4" /> {t('action.edit')}
             </Button>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -129,16 +131,16 @@ export function ProjectDetailPage() {
             ) : null}
             {customer ? (
               <span>
-                Kunde: <span className="text-foreground">{customer.name}</span>
+                {t('project_detail.customer_label')} <span className="text-foreground">{customer.name}</span>
               </span>
             ) : (
-              <span>— Internes Projekt —</span>
+              <span>{t('project_detail.internal')}</span>
             )}
             {p.isArchived ? (
-              <Badge variant="outline" className="text-xs">archiviert</Badge>
+              <Badge variant="outline" className="text-xs">{t('project_detail.archived')}</Badge>
             ) : null}
             {p.isPrivate ? (
-              <Badge variant="outline" className="text-xs">privat</Badge>
+              <Badge variant="outline" className="text-xs">{t('project_detail.private')}</Badge>
             ) : null}
             {p.tags && p.tags.length > 0 ? <TagChips iris={p.tags} /> : null}
           </div>
@@ -147,7 +149,7 @@ export function ProjectDetailPage() {
 
       <Tabs defaultValue="board">
         <TabsList>
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
+          <TabsTrigger value="overview">{t('project_detail.tab_overview')}</TabsTrigger>
           <TabsTrigger value="board">Board</TabsTrigger>
           <TabsTrigger value="status-updates">Status-Updates</TabsTrigger>
           <TabsTrigger value="releases">Releases</TabsTrigger>
@@ -169,7 +171,7 @@ export function ProjectDetailPage() {
       {p.id ? (
         <ProjectShareDialog
           projectId={p.id}
-          projectName={p.name ?? 'Projekt'}
+          projectName={p.name ?? t('project_detail.fallback_name')}
           open={shareOpen}
           onOpenChange={setShareOpen}
         />

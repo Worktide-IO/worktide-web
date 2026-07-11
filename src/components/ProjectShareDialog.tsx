@@ -151,11 +151,10 @@ export function ProjectShareDialog({ projectId, projectName, open, onOpenChange 
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Share2 className="size-4" /> Projekt teilen
+            <Share2 className="size-4" /> {t('project_share.title')}
           </DialogTitle>
           <DialogDescription>
-            Laden Sie einen externen Workspace per E-Mail ein, an „{projectName}“ mitzuarbeiten.
-            Die Einladung wird von einer Person im anderen Workspace angenommen.
+            {t('project_share.description', { projectName })}
           </DialogDescription>
         </DialogHeader>
 
@@ -184,7 +183,7 @@ export function ProjectShareDialog({ projectId, projectName, open, onOpenChange 
           </select>
           <Button type="submit" disabled={busy || !email.trim()}>
             <Send className="size-4" />
-            Einladen
+            {t('project_share.invite')}
           </Button>
         </form>
 
@@ -205,7 +204,7 @@ export function ProjectShareDialog({ projectId, projectName, open, onOpenChange 
                     variant="ghost"
                     size="sm"
                     onClick={() => revoke(inv)}
-                    title="Zurückziehen"
+                    title={t('project_share.revoke_title')}
                   >
                     <X className="size-4" />
                   </Button>
@@ -214,7 +213,7 @@ export function ProjectShareDialog({ projectId, projectName, open, onOpenChange 
             ))}
           </ul>
         ) : !loading ? (
-          <p className="text-sm text-muted-foreground">Noch keine offenen Einladungen.</p>
+          <p className="text-sm text-muted-foreground">{t('project_share.empty')}</p>
         ) : null}
       </DialogContent>
     </Dialog>

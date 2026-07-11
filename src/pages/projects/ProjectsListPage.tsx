@@ -1,5 +1,6 @@
 import { useList, useTable } from '@refinedev/core';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { CalendarDays, CheckSquare, Plus, Search, Timer } from 'lucide-react';
 import { ProjectStarButton } from '@/components/ProjectStarButton';
 import { TagChips } from '@/components/TagChips';
@@ -49,6 +50,7 @@ import {
  * owns the full filter+pagination experience.
  */
 export function ProjectsListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -146,24 +148,24 @@ export function ProjectsListPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl">Projekte</h2>
+            <h2 className="text-2xl">{t('projects_list.heading')}</h2>
             <LiveBadge connected={liveConnected} />
           </div>
-          <p className="text-sm text-muted-foreground">{total} Projekte im Workspace</p>
+          <p className="text-sm text-muted-foreground">{t('projects_list.count', { count: total })}</p>
         </div>
         <Button onClick={() => navigate('/projects/create')}>
-          <Plus className="size-4" /> Neues Projekt
+          <Plus className="size-4" /> {t('projects_list.new_project')}
         </Button>
       </div>
 
       <Card>
         <CardHeader className="gap-4">
-          <CardTitle>Übersicht</CardTitle>
+          <CardTitle>{t('projects_list.overview')}</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[240px] max-w-md">
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
-                placeholder="Im Namen suchen…"
+                placeholder={t('projects_list.search_placeholder')}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -180,10 +182,10 @@ export function ProjectsListPage() {
               }}
             >
               <SelectTrigger className="w-56">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder={t('projects_list.status_placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
+                <SelectItem value="all">{t('projects_list.all_statuses')}</SelectItem>
                 {(statuses?.data ?? []).map((s) => (
                   <SelectItem key={s['@id']} value={s['@id'] ?? ''}>
                     {s.name}
@@ -199,7 +201,7 @@ export function ProjectsListPage() {
               }}
               scope="project"
               disableCreate
-              placeholder="Nach Tags filtern…"
+              placeholder={t('projects_list.tag_filter_placeholder')}
             />
           </div>
         </CardHeader>
@@ -213,22 +215,22 @@ export function ProjectsListPage() {
           ) : rows.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-12">
               {search || statusFilter !== 'all'
-                ? 'Keine Treffer mit diesen Filtern.'
-                : 'Noch keine Projekte angelegt.'}
+                ? t('projects_list.empty_filtered')
+                : t('projects_list.empty')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-10" aria-label="Favorit" />
+                  <TableHead className="w-10" aria-label={t('projects_list.col_favorite')} />
                   <TableHead className="w-24">Key</TableHead>
-                  <TableHead className="w-28">Nummer</TableHead>
+                  <TableHead className="w-28">{t('projects_list.col_number')}</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead className="w-36">Status</TableHead>
-                  <TableHead className="w-48">Kunde</TableHead>
-                  <TableHead className="w-24 text-right">Fällig</TableHead>
+                  <TableHead className="w-48">{t('projects_list.col_customer')}</TableHead>
+                  <TableHead className="w-24 text-right">{t('projects_list.col_due')}</TableHead>
                   <TableHead className="w-20 text-right">Tasks</TableHead>
-                  <TableHead className="w-24 text-right">Aufwand</TableHead>
+                  <TableHead className="w-24 text-right">{t('projects_list.col_effort')}</TableHead>
                   <TableHead className="w-32">Team</TableHead>
                 </TableRow>
               </TableHeader>
@@ -268,7 +270,7 @@ export function ProjectsListPage() {
                         ) : null}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {customer ? customer.name : '— Intern —'}
+                        {customer ? customer.name : t('projects_list.internal')}
                       </TableCell>
                       <TableCell className="text-right text-xs text-muted-foreground">
                         {p.dueOn ? (

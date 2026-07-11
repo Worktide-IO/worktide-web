@@ -83,7 +83,7 @@ export function DocumentsPage() {
     }
     try {
       const { data } = await api.post<{ '@id'?: string; id?: string }>('/documents', {
-        name: params.name?.trim() || 'Neue Seite',
+        name: params.name?.trim() || t('documents.new_page_default'),
         bodyFormat: 'richtext',
         space: params.spaceIri ?? null,
         parent: params.parentIri ?? null,
@@ -98,7 +98,7 @@ export function DocumentsPage() {
   };
 
   const createSpace = async () => {
-    const name = window.prompt('Name des neuen Spaces:');
+    const name = window.prompt(t('documents.prompt_space_name'));
     if (!name?.trim()) return;
     if (!workspaceIri) {
       toast.error(t('toast.no_active_workspace'));
@@ -117,7 +117,7 @@ export function DocumentsPage() {
   };
 
   const deleteDoc = async (id: string) => {
-    if (!window.confirm('Seite wirklich löschen? Inkl. aller Unterseiten.')) return;
+    if (!window.confirm(t('documents.confirm_delete'))) return;
     try {
       await api.delete(`/documents/${id}`);
       if (activeId === id) setActiveId(null);
@@ -134,7 +134,7 @@ export function DocumentsPage() {
         <div className="flex items-center justify-between border-b px-3 py-2">
           <h3 className="flex items-center gap-1.5 text-sm font-medium">
             <FolderTree className="size-4 text-muted-foreground" />
-            Dokumente
+            {t('documents.sidebar_title')}
           </h3>
           <Button variant="ghost" size="icon" className="size-7" onClick={createSpace}>
             <Plus className="size-3.5" />
@@ -149,7 +149,7 @@ export function DocumentsPage() {
             </div>
           ) : (spaces?.data ?? []).length === 0 ? (
             <p className="px-2 py-4 text-center text-xs text-muted-foreground">
-              Noch kein Space. Klick auf + um den ersten anzulegen.
+              {t('documents.empty_spaces')}
             </p>
           ) : (
             (spaces?.data ?? []).map((s) => (
@@ -189,7 +189,7 @@ export function DocumentsPage() {
           <div className="flex flex-1 items-center justify-center text-center text-sm text-muted-foreground">
             <div className="space-y-2">
               <FileText className="mx-auto size-10 opacity-30" />
-              <p>Wähle links eine Seite oder lege eine neue an.</p>
+              <p>{t('documents.empty_editor')}</p>
             </div>
           </div>
         )}
@@ -215,6 +215,7 @@ function SpaceNode({
   onAdd: (parentIri?: string) => void;
   onDelete: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(true);
   return (
     <div className="px-1 py-1">
@@ -233,7 +234,7 @@ function SpaceNode({
             e.stopPropagation();
             onAdd();
           }}
-          aria-label="Neue Seite im Space"
+          aria-label={t('documents.aria_new_page_in_space')}
         >
           <Plus className="size-3" />
         </Button>
@@ -241,7 +242,7 @@ function SpaceNode({
       {open ? (
         <div className="ml-3 border-l pl-1">
           {rootDocs.length === 0 ? (
-            <p className="px-2 py-1 text-[11px] text-muted-foreground">— leer —</p>
+            <p className="px-2 py-1 text-[11px] text-muted-foreground">{t('documents.empty_space')}</p>
           ) : (
             rootDocs.map((d) => (
               <DocNode
@@ -279,6 +280,7 @@ function DocNode({
   onAdd: (parentIri?: string) => void;
   onDelete: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const kids = doc['@id'] ? childrenByParent[doc['@id']] ?? [] : [];
   const isActive = doc.id != null && doc.id === activeId;
@@ -301,7 +303,7 @@ function DocNode({
               setOpen((v) => !v);
             }}
             className="text-muted-foreground"
-            aria-label={open ? 'Einklappen' : 'Ausklappen'}
+            aria-label={open ? t('documents.aria_collapse') : t('documents.aria_expand')}
           >
             {open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
           </button>
@@ -318,7 +320,7 @@ function DocNode({
             e.stopPropagation();
             if (doc['@id']) onAdd(doc['@id']);
           }}
-          aria-label="Subseite anlegen"
+          aria-label={t('documents.aria_add_subpage')}
         >
           <Plus className="size-3" />
         </Button>
@@ -330,7 +332,7 @@ function DocNode({
             e.stopPropagation();
             if (doc.id) onDelete(doc.id);
           }}
-          aria-label="Löschen"
+          aria-label={t('action.delete')}
         >
           <Trash2 className="size-3" />
         </Button>

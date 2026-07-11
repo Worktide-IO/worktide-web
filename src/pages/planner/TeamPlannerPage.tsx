@@ -83,7 +83,7 @@ export function TeamPlannerPage() {
     () =>
       (users?.data ?? []).map((u) => ({
         id: u['@id'] ?? '',
-        title: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || 'Unbekannt',
+        title: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || translate('team_planner.unknown_user'),
         extendedProps: { user: u },
       })),
     [users],
@@ -260,11 +260,10 @@ export function TeamPlannerPage() {
       <div>
         <h2 className="text-2xl flex items-center gap-2">
           <CalendarRange className="size-6 text-muted-foreground" />
-          Planer
+          {translate('team_planner.title')}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Team-Kalender — eine Spalte pro Mitarbeiter, Drag &amp; Drop ändert
-          den Zeit-Slot.
+          {translate('team_planner.subtitle')}
         </p>
       </div>
 
@@ -281,12 +280,12 @@ export function TeamPlannerPage() {
         <Card>
           <CardContent className="space-y-2 p-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" variant="outline" onClick={goToday}>Heute</Button>
+              <Button size="sm" variant="outline" onClick={goToday}>{translate('team_planner.today')}</Button>
               <div className="flex">
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={goPrev} aria-label="Zurück">
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={goPrev} aria-label={translate('team_planner.prev')}>
                   <ChevronLeft className="size-4" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={goNext} aria-label="Weiter">
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={goNext} aria-label={translate('team_planner.next')}>
                   <ChevronRight className="size-4" />
                 </Button>
               </div>
@@ -301,14 +300,14 @@ export function TeamPlannerPage() {
                   variant={view === 'resourceTimeGridDay' ? 'default' : 'outline'}
                   onClick={() => setCalView('resourceTimeGridDay')}
                 >
-                  Tag
+                  {translate('team_planner.view_day')}
                 </Button>
                 <Button
                   size="sm"
                   variant={view === 'resourceTimeGridWeek' ? 'default' : 'outline'}
                   onClick={() => setCalView('resourceTimeGridWeek')}
                 >
-                  Woche
+                  {translate('team_planner.view_week')}
                 </Button>
               </div>
             </div>

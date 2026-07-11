@@ -71,8 +71,8 @@ export function IndustriesPage() {
     } catch (e) {
       const msg =
         (e as { response?: { status?: number } })?.response?.status === 422
-          ? 'Diese Branche gibt es bereits.'
-          : 'Anlegen fehlgeschlagen.';
+          ? t('industries.err_duplicate')
+          : t('industries.err_create');
       toast.error(msg);
     } finally {
       setBusy(false);
@@ -96,7 +96,7 @@ export function IndustriesPage() {
     const n = rename.name.trim();
     if (!n) return;
     setBusy(true);
-    await patch(rename.id, { name: n, translations: rename.translations }, 'Gespeichert.');
+    await patch(rename.id, { name: n, translations: rename.translations }, t('industries.toast_saved'));
     setRename(null);
     setBusy(false);
   };
@@ -105,21 +105,21 @@ export function IndustriesPage() {
     <div className="space-y-4">
       <div>
         <h2 className="flex items-center gap-2 text-2xl">
-          <Building className="size-6 text-muted-foreground" /> Branchen
+          <Building className="size-6 text-muted-foreground" /> {t('industries.heading')}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Verwaltete Branchenliste — Kunden wählen daraus (mit Vorschlägen beim Tippen).
+          {t('industries.subtitle')}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Neue Branche</CardTitle>
+          <CardTitle>{t('industries.new_heading')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-2">
             <Input
-              placeholder="z. B. Maschinenbau"
+              placeholder={t('industries.name_placeholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => {
@@ -129,7 +129,7 @@ export function IndustriesPage() {
             />
             <Button type="button" onClick={add} disabled={busy || !name.trim()}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-              Hinzufügen
+              {t('action.add')}
             </Button>
           </div>
         </CardContent>
@@ -137,7 +137,7 @@ export function IndustriesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{rows.length} Branchen</CardTitle>
+          <CardTitle>{t('industries.count', { count: rows.length })}</CardTitle>
         </CardHeader>
         <CardContent>
           {query.isLoading ? (
@@ -146,13 +146,13 @@ export function IndustriesPage() {
               <Skeleton className="h-10 w-full" />
             </div>
           ) : rows.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Noch keine Branchen.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">{t('industries.empty')}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="w-28">Status</TableHead>
+                  <TableHead>{t('industries.col_name')}</TableHead>
+                  <TableHead className="w-28">{t('industries.col_status')}</TableHead>
                   <TableHead className="w-56 text-right" />
                 </TableRow>
               </TableHeader>
@@ -163,11 +163,11 @@ export function IndustriesPage() {
                     <TableCell>
                       {i.isArchived ? (
                         <Badge variant="outline" className="text-[10px]">
-                          Archiviert
+                          {t('industries.status_archived')}
                         </Badge>
                       ) : (
                         <Badge variant="secondary" className="text-[10px]">
-                          Aktiv
+                          {t('industries.status_active')}
                         </Badge>
                       )}
                     </TableCell>
@@ -188,7 +188,7 @@ export function IndustriesPage() {
                             })
                           }
                         >
-                          <Pencil className="size-3" /> Bearbeiten
+                          <Pencil className="size-3" /> {t('action.edit')}
                         </Button>
                         <Button
                           type="button"
@@ -200,17 +200,17 @@ export function IndustriesPage() {
                             patch(
                               i.id,
                               { isArchived: !i.isArchived },
-                              i.isArchived ? 'Reaktiviert.' : 'Archiviert.',
+                              i.isArchived ? t('industries.toast_reactivated') : t('industries.toast_archived'),
                             )
                           }
                         >
                           {i.isArchived ? (
                             <>
-                              <ArchiveRestore className="size-3" /> Reaktivieren
+                              <ArchiveRestore className="size-3" /> {t('industries.reactivate')}
                             </>
                           ) : (
                             <>
-                              <Archive className="size-3" /> Archivieren
+                              <Archive className="size-3" /> {t('industries.archive')}
                             </>
                           )}
                         </Button>
@@ -227,7 +227,7 @@ export function IndustriesPage() {
       <Dialog open={rename !== null} onOpenChange={(o) => !o && setRename(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Branche bearbeiten</DialogTitle>
+            <DialogTitle>{t('industries.edit_title')}</DialogTitle>
           </DialogHeader>
           {rename ? (
             <div className="space-y-3">
@@ -239,7 +239,7 @@ export function IndustriesPage() {
                 }}
               />
               <TranslationsFields
-                fields={[{ key: 'name', label: 'Name' }]}
+                fields={[{ key: 'name', label: t('industries.col_name') }]}
                 locales={languages}
                 value={rename.translations}
                 onChange={(translations) => setRename({ ...rename, translations })}
@@ -248,10 +248,10 @@ export function IndustriesPage() {
           ) : null}
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => setRename(null)} disabled={busy}>
-              Abbrechen
+              {t('action.cancel')}
             </Button>
             <Button type="button" onClick={saveRename} disabled={busy}>
-              Speichern
+              {t('action.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

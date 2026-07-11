@@ -55,6 +55,7 @@ const ENV_BADGE: Record<string, { label: string; variant: 'default' | 'secondary
 };
 
 export function CustomerContactsTab({ customerIri }: { customerIri: string }) {
+  const { t } = useTranslation();
   const { result, query } = useList<Row<ContactJsonld>>({
     resource: 'contacts',
     pagination: { mode: 'off' },
@@ -66,25 +67,25 @@ export function CustomerContactsTab({ customerIri }: { customerIri: string }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
-        <CardTitle>Kontakte ({rows.length})</CardTitle>
+        <CardTitle>{t('customer_tabs.contacts_title', { n: rows.length })}</CardTitle>
         <Button asChild size="sm" variant="outline">
-          <Link to="/contacts/create">Neu</Link>
+          <Link to="/contacts/create">{t('customer_tabs.new')}</Link>
         </Button>
       </CardHeader>
       <CardContent>
         {query.isLoading ? (
           <SkeletonRows />
         ) : rows.length === 0 ? (
-          <EmptyState>Noch keine Ansprechpartner hinterlegt.</EmptyState>
+          <EmptyState>{t('customer_tabs.contacts_empty')}</EmptyState>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12"></TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Position</TableHead>
+                <TableHead>{t('customer_tabs.col_name')}</TableHead>
+                <TableHead>{t('customer_tabs.col_position')}</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Telefon</TableHead>
+                <TableHead>{t('customer_tabs.col_phone')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -157,23 +158,23 @@ export function CustomerSystemsTab({ customerIri }: { customerIri: string }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
-        <CardTitle>Systeme ({rows.length})</CardTitle>
+        <CardTitle>{t('customer_tabs.systems_title', { n: rows.length })}</CardTitle>
         <Button asChild size="sm" variant="outline">
-          <Link to="/customer-systems/create">Neu</Link>
+          <Link to="/customer-systems/create">{t('customer_tabs.new')}</Link>
         </Button>
       </CardHeader>
       <CardContent>
         {query.isLoading ? (
           <SkeletonRows />
         ) : rows.length === 0 ? (
-          <EmptyState>Noch keine Systeme angelegt.</EmptyState>
+          <EmptyState>{t('customer_tabs.systems_empty')}</EmptyState>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10"></TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead className="w-28">Typ</TableHead>
+                <TableHead>{t('customer_tabs.col_name')}</TableHead>
+                <TableHead className="w-28">{t('customer_tabs.col_type')}</TableHead>
                 <TableHead className="w-24">Env</TableHead>
                 <TableHead>URL</TableHead>
                 <TableHead className="w-24">Version</TableHead>
@@ -263,32 +264,32 @@ export function CustomerSubscriptionsTab({ customerIri }: { customerIri: string 
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
         <div>
-          <CardTitle>Abos ({rows.length})</CardTitle>
+          <CardTitle>{t('customer_tabs.subscriptions_title', { n: rows.length })}</CardTitle>
           {mrrCents > 0 ? (
             <p className="text-xs text-muted-foreground mt-1">
-              MRR ca. {formatMoney(mrrCents, 'eur')}
+              {t('customer_tabs.mrr', { amount: formatMoney(mrrCents, 'eur') })}
             </p>
           ) : null}
         </div>
         <Button asChild size="sm" variant="outline">
-          <Link to="/subscriptions/create">Neu</Link>
+          <Link to="/subscriptions/create">{t('customer_tabs.new')}</Link>
         </Button>
       </CardHeader>
       <CardContent>
         {query.isLoading ? (
           <SkeletonRows />
         ) : rows.length === 0 ? (
-          <EmptyState>Noch keine Subscriptions hinterlegt.</EmptyState>
+          <EmptyState>{t('customer_tabs.subscriptions_empty')}</EmptyState>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
+                <TableHead>{t('customer_tabs.col_name')}</TableHead>
                 <TableHead className="w-40">System</TableHead>
                 <TableHead className="w-32">Status</TableHead>
-                <TableHead className="w-20">Zyklus</TableHead>
-                <TableHead className="w-28 text-right">Preis</TableHead>
-                <TableHead className="w-32">Nächste</TableHead>
+                <TableHead className="w-20">{t('customer_tabs.col_cycle')}</TableHead>
+                <TableHead className="w-28 text-right">{t('customer_tabs.col_price')}</TableHead>
+                <TableHead className="w-32">{t('customer_tabs.col_next')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -303,7 +304,7 @@ export function CustomerSubscriptionsTab({ customerIri }: { customerIri: string 
                       </Link>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {system?.name ?? <span className="italic">— Kundenweit —</span>}
+                      {system?.name ?? <span className="italic">{t('customer_tabs.customer_wide')}</span>}
                     </TableCell>
                     <TableCell>
                       {statusBadge ? (

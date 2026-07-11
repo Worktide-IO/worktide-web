@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Area,
   AreaChart,
@@ -54,6 +55,7 @@ function fmtEur(cents: number): string {
  * per Definition monatlich, Tagesauflösung wäre Quatsch.
  */
 export function MrrTab() {
+  const { t } = useTranslation();
   const [from, setFrom] = useState(() => monthsAgo(11));
   const [to, setTo] = useState(() => thisMonth());
 
@@ -81,11 +83,11 @@ export function MrrTab() {
         </CardHeader>
         <CardContent className="flex flex-wrap items-end gap-3">
           <div className="space-y-1.5">
-            <Label htmlFor="mrr-from" className="text-xs">Von</Label>
+            <Label htmlFor="mrr-from" className="text-xs">{t('mrr.from')}</Label>
             <Input id="mrr-from" type="month" value={from} onChange={(e) => setFrom(e.target.value)} className="w-40" />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="mrr-to" className="text-xs">Bis</Label>
+            <Label htmlFor="mrr-to" className="text-xs">{t('mrr.to')}</Label>
             <Input id="mrr-to" type="month" value={to} onChange={(e) => setTo(e.target.value)} className="w-40" />
           </div>
         </CardContent>
@@ -95,15 +97,18 @@ export function MrrTab() {
         <CardHeader>
           <CardTitle className="text-base">
             {lastPoint
-              ? `Aktuell ${fmtEur(lastPoint.totalCentsEur)} aus ${lastPoint.activeCount} Abos`
-              : 'MRR-Verlauf'}
+              ? t('mrr.current', {
+                  amount: fmtEur(lastPoint.totalCentsEur),
+                  count: lastPoint.activeCount,
+                })
+              : t('mrr.history_title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <Skeleton className="h-72 w-full" />
           ) : series.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Keine Daten.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">{t('mrr.no_data')}</p>
           ) : (
             <div className="h-72 w-full">
               <ResponsiveContainer>
@@ -125,7 +130,7 @@ export function MrrTab() {
           )}
           {otherCurrencies.length > 0 ? (
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-              Weitere Währungen im letzten Monat:
+              {t('mrr.other_currencies')}
               {otherCurrencies.map((c) => (
                 <span key={c.currency} className="rounded border bg-muted/30 px-1.5 py-0.5">
                   {c.currency.toUpperCase()}: {c.amount.toFixed(2)}

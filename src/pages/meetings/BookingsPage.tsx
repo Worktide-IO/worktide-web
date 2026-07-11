@@ -45,7 +45,7 @@ export function BookingsPage() {
   const rows = result?.data ?? [];
 
   function cancel(id: string) {
-    if (!window.confirm('Diese Buchung stornieren?')) return;
+    if (!window.confirm(t('bookings_page.confirm_cancel'))) return;
     update(
       { resource: 'bookings', id, values: { status: 'cancelled' }, successNotification: false },
       {
@@ -59,27 +59,27 @@ export function BookingsPage() {
     <div className="space-y-4">
       <div>
         <h2 className="flex items-center gap-2 text-2xl">
-          <CalendarDays className="size-6 text-muted-foreground" /> Buchungen
+          <CalendarDays className="size-6 text-muted-foreground" /> {t('bookings_page.heading')}
         </h2>
-        <p className="text-sm text-muted-foreground">Über die Terminarten gebuchte Termine.</p>
+        <p className="text-sm text-muted-foreground">{t('bookings_page.subtitle')}</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{rows.length} Buchungen</CardTitle>
+          <CardTitle>{t('bookings_page.count', { count: rows.length })}</CardTitle>
         </CardHeader>
         <CardContent>
           {query.isLoading ? (
             <div className="space-y-2"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
           ) : rows.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Noch keine Buchungen.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">{t('bookings_page.empty')}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Termin</TableHead>
-                  <TableHead>Gast</TableHead>
-                  <TableHead className="w-24">Status</TableHead>
+                  <TableHead>{t('bookings_page.col_appointment')}</TableHead>
+                  <TableHead>{t('bookings_page.col_guest')}</TableHead>
+                  <TableHead className="w-24">{t('bookings_page.col_status')}</TableHead>
                   <TableHead className="w-28 text-right" />
                 </TableRow>
               </TableHeader>
@@ -95,13 +95,13 @@ export function BookingsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={b.status === 'cancelled' ? 'outline' : 'secondary'} className="text-[10px]">
-                        {b.status === 'cancelled' ? 'Storniert' : 'Bestätigt'}
+                        {b.status === 'cancelled' ? t('bookings_page.status_cancelled') : t('bookings_page.status_confirmed')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       {b.status !== 'cancelled' && b.id ? (
                         <Button type="button" variant="ghost" size="sm" className="h-7 text-destructive" disabled={mutation.isPending} onClick={() => cancel(b.id!)}>
-                          Stornieren
+                          {t('bookings_page.cancel')}
                         </Button>
                       ) : null}
                     </TableCell>

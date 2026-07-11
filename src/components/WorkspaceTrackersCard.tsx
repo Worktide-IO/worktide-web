@@ -68,6 +68,7 @@ const SWATCHES = [
  * of silently failing.
  */
 export function WorkspaceTrackersCard() {
+  const { t: translate } = useTranslation();
   const [editing, setEditing] = useState<Row<TrackerJsonld> | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -83,19 +84,17 @@ export function WorkspaceTrackersCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Layers className="size-5 text-muted-foreground" />
-          Tracker (Bug / Feature / Story / Support …)
+          {translate('workspace_trackers.title')}
         </CardTitle>
         <CardDescription>
-          Klassifikation für Aufgaben — wird als farbiges Icon im Kanban,
-          in Listen und im Sheet angezeigt. Ein Tracker pro Workspace ist
-          der Standard für neue Aufgaben.
+          {translate('workspace_trackers.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex justify-end">
           <Button size="sm" onClick={() => setCreating(true)}>
             <Plus className="size-4" />
-            Neuer Tracker
+            {translate('workspace_trackers.new')}
           </Button>
         </div>
 
@@ -106,14 +105,14 @@ export function WorkspaceTrackersCard() {
           </div>
         ) : trackers.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            Noch keine Tracker. Lege den ersten an.
+            {translate('workspace_trackers.empty')}
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12" aria-label="Icon" />
-                <TableHead>Name</TableHead>
+                <TableHead className="w-12" aria-label={translate('workspace_trackers.icon_col')} />
+                <TableHead>{translate('workspace_trackers.col_name')}</TableHead>
                 <TableHead className="w-20 text-center">Default</TableHead>
                 <TableHead className="w-20 text-right" />
               </TableRow>
@@ -153,7 +152,7 @@ function TrackerRow({
   const remove = async () => {
     if (!tracker.id) return;
     if (!window.confirm(
-      `Tracker "${tracker.name}" wirklich löschen? Aufgaben, die ihn aktuell verwenden, müssen vorher umgehängt werden.`,
+      translate('workspace_trackers.confirm_delete', { name: tracker.name }),
     )) {
       return;
     }
@@ -312,21 +311,22 @@ function TrackerDialog(props: DialogProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? `Tracker "${initial?.name}" bearbeiten` : 'Neuen Tracker anlegen'}
+            {isEdit
+              ? translate('tracker_dialog.title_edit', { name: initial?.name })
+              : translate('tracker_dialog.title_create')}
           </DialogTitle>
           <DialogDescription>
-            Name, Icon und Farbe — Tracker werden als farbiges Mini-Chip
-            an jeder Aufgabe sichtbar.
+            {translate('tracker_dialog.description')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="tracker-name">Name</Label>
+            <Label htmlFor="tracker-name">{translate('tracker_dialog.field_name')}</Label>
             <Input
               id="tracker-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="z. B. Bug, Feature, Story"
+              placeholder={translate('tracker_dialog.name_placeholder')}
               autoFocus
             />
           </div>
@@ -345,7 +345,7 @@ function TrackerDialog(props: DialogProps) {
                   )}
                   style={icon === p ? { color, backgroundColor: `${color}26` } : undefined}
                   onClick={() => setIcon(p)}
-                  aria-label={`Icon ${p}`}
+                  aria-label={translate('tracker_dialog.icon_aria', { name: p })}
                   title={p}
                 >
                   <DynamicIcon name={p as Parameters<typeof DynamicIcon>[0]['name']} className="size-4" />
@@ -354,7 +354,7 @@ function TrackerDialog(props: DialogProps) {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Farbe</Label>
+            <Label>{translate('tracker_dialog.color_label')}</Label>
             <div className="flex flex-wrap items-center gap-1.5">
               {SWATCHES.map((c) => (
                 <button
@@ -366,7 +366,7 @@ function TrackerDialog(props: DialogProps) {
                   )}
                   style={{ backgroundColor: c }}
                   onClick={() => setColor(c)}
-                  aria-label={`Farbe ${c}`}
+                  aria-label={translate('tracker_dialog.color_aria', { name: c })}
                 />
               ))}
               <Input
@@ -386,7 +386,7 @@ function TrackerDialog(props: DialogProps) {
                 }}
               >
                 <DynamicIcon name={icon as Parameters<typeof DynamicIcon>[0]['name']} className="size-3" />
-                {name.trim() || 'Vorschau'}
+                {name.trim() || translate('tracker_dialog.preview')}
               </span>
             </div>
           </div>
@@ -397,10 +397,10 @@ function TrackerDialog(props: DialogProps) {
               onChange={(e) => setIsDefault(e.target.checked)}
               className="size-4"
             />
-            Als Standard für neue Aufgaben verwenden
+            {translate('tracker_dialog.set_default')}
           </label>
           <TranslationsFields
-            fields={[{ key: 'name', label: 'Name' }]}
+            fields={[{ key: 'name', label: translate('tracker_dialog.field_name') }]}
             locales={languages}
             value={translations}
             onChange={setTranslations}
@@ -408,11 +408,11 @@ function TrackerDialog(props: DialogProps) {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={props.onClose} disabled={saving}>
-            Abbrechen
+            {translate('action.cancel')}
           </Button>
           <Button onClick={submit} disabled={saving || !name.trim()}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : isEdit ? <Pencil className="size-4" /> : <Plus className="size-4" />}
-            {isEdit ? 'Speichern' : 'Anlegen'}
+            {isEdit ? translate('action.save') : translate('tracker_dialog.create')}
           </Button>
         </DialogFooter>
       </DialogContent>

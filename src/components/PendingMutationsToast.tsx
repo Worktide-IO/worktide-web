@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertCircle, CloudOff, Loader2, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ import {
  *    must acknowledge that work was lost.
  */
 export function PendingMutationsToast(): React.JSX.Element | null {
+  const { t } = useTranslation();
   const [queue, setQueue] = useState<QueuedMutation[]>(() => readPendingQueue());
 
   useEffect(() => subscribePendingQueue(setQueue), []);
@@ -45,8 +47,8 @@ export function PendingMutationsToast(): React.JSX.Element | null {
         )}
         <div className="flex-1 text-sm font-medium">
           {dead.length > 0
-            ? `${dead.length} Speicherung${dead.length === 1 ? '' : 'en'} fehlgeschlagen`
-            : `${alive.length} Änderung${alive.length === 1 ? '' : 'en'} ausstehend`}
+            ? t('pending_mutations.failed', { count: dead.length })
+            : t('pending_mutations.pending', { count: alive.length })}
         </div>
         {dead.length === 0 && <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />}
       </div>
@@ -66,8 +68,8 @@ export function PendingMutationsToast(): React.JSX.Element | null {
                 type="button"
                 onClick={() => discardMutation(m.id)}
                 className="rounded p-0.5 hover:bg-muted"
-                title="Verwerfen"
-                aria-label="Verwerfen"
+                title={t('pending_mutations.discard')}
+                aria-label={t('pending_mutations.discard')}
               >
                 <X className="size-3" />
               </button>
@@ -75,18 +77,18 @@ export function PendingMutationsToast(): React.JSX.Element | null {
           </li>
         ))}
         {queue.length > 8 && (
-          <li className="py-1 text-xs italic text-muted-foreground">… und {queue.length - 8} weitere</li>
+          <li className="py-1 text-xs italic text-muted-foreground">{t('pending_mutations.more', { count: queue.length - 8 })}</li>
         )}
       </ul>
 
       <div className="flex items-center justify-end gap-2 border-t border-border px-3 py-2">
         {dead.length > 0 && (
           <Button variant="ghost" size="sm" onClick={() => clearDeadMutations()}>
-            Verwerfen
+            {t('pending_mutations.discard')}
           </Button>
         )}
         <Button size="sm" onClick={() => void drainPendingQueue()}>
-          Erneut versuchen
+          {t('pending_mutations.retry')}
         </Button>
       </div>
     </div>

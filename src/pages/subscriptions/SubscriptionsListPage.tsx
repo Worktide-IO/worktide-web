@@ -116,7 +116,7 @@ export function SubscriptionsListPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl">Abos</h2>
+            <h2 className="text-2xl">{t('subscriptions_list.heading')}</h2>
             {liveConnected ? (
               <Badge variant="secondary" className="gap-1 text-xs">
                 <Wifi className="size-3" /> Live
@@ -128,24 +128,24 @@ export function SubscriptionsListPage() {
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            {total} Abos · MRR ca. {formatMoney(mrrCents, 'eur')}
+            {t('subscriptions_list.summary', { count: total, mrr: formatMoney(mrrCents, 'eur') })}
           </p>
         </div>
         <Button asChild>
           <Link to="/subscriptions/create">
-            <Plus className="size-4" /> Neues Abo
+            <Plus className="size-4" /> {t('subscriptions_list.new')}
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader className="gap-4">
-          <CardTitle>Übersicht</CardTitle>
+          <CardTitle>{t('subscriptions_list.overview')}</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[240px] max-w-md">
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
-                placeholder="Name suchen…"
+                placeholder={t('subscriptions_list.search_placeholder')}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -156,7 +156,7 @@ export function SubscriptionsListPage() {
             </div>
             <CustomerCombobox
               className="w-56"
-              placeholder="Alle Kunden"
+              placeholder={t('subscriptions_list.all_customers')}
               value={customerFilter === 'all' ? null : customerFilter}
               onChange={(v) => {
                 const next = v ?? 'all';
@@ -172,10 +172,10 @@ export function SubscriptionsListPage() {
               }}
             >
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder={t('subscriptions_list.status_placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
+                <SelectItem value="all">{t('subscriptions_list.all_status')}</SelectItem>
                 {Object.entries(STATUS_BADGE).map(([value, b]) => (
                   <SelectItem key={value} value={value}>
                     {t(b.label)}
@@ -194,19 +194,19 @@ export function SubscriptionsListPage() {
             </div>
           ) : rows.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-12">
-              Noch keine Abos angelegt.
+              {t('subscriptions_list.empty')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="w-44">Kunde</TableHead>
-                  <TableHead className="w-40">System</TableHead>
-                  <TableHead className="w-32">Status</TableHead>
-                  <TableHead className="w-28">Zyklus</TableHead>
-                  <TableHead className="w-28 text-right">Preis</TableHead>
-                  <TableHead className="w-32">Nächste Abrechnung</TableHead>
+                  <TableHead>{t('subscriptions_list.col_name')}</TableHead>
+                  <TableHead className="w-44">{t('subscriptions_list.col_customer')}</TableHead>
+                  <TableHead className="w-40">{t('subscriptions_list.col_system')}</TableHead>
+                  <TableHead className="w-32">{t('subscriptions_list.col_status')}</TableHead>
+                  <TableHead className="w-28">{t('subscriptions_list.col_cycle')}</TableHead>
+                  <TableHead className="w-28 text-right">{t('subscriptions_list.col_price')}</TableHead>
+                  <TableHead className="w-32">{t('subscriptions_list.col_next_billing')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -225,7 +225,7 @@ export function SubscriptionsListPage() {
                         {customer?.name ?? '—'}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {system?.name ?? <span className="italic">— Kundenweit —</span>}
+                        {system?.name ?? <span className="italic">{t('subscriptions_list.customer_wide')}</span>}
                       </TableCell>
                       <TableCell>
                         {statusBadge ? (

@@ -1,6 +1,7 @@
 import { useList } from '@refinedev/core';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   CartesianGrid,
   ReferenceLine,
@@ -75,6 +76,7 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
  * Punkte über der p85-Linie sind die Ausreißer, die den Fluss bremsen.
  */
 export function CycleTimeTab() {
+  const { t: translate } = useTranslation();
   const [from, setFrom] = useState(() => isoDaysAgo(90));
   const [to, setTo] = useState(() => todayIso());
   const [projectId, setProjectId] = useState<string>(ALL_PROJECTS);
@@ -101,20 +103,20 @@ export function CycleTimeTab() {
   return (
     <ReportShell
       title="Cycle-Time"
-      description="Zeit von Arbeitsbeginn (erster Statuswechsel) bis Abschluss, je erledigter Aufgabe. Perzentile zeigen die Streuung — plane mit p85, nicht mit dem Mittelwert."
+      description={translate('cycle_time.description')}
       from={from}
       to={to}
       onFromChange={setFrom}
       onToChange={setTo}
       extras={
         <div className="space-y-1.5">
-          <Label className="text-xs">Projekt</Label>
+          <Label className="text-xs">{translate('cycle_time.project')}</Label>
           <Select value={projectId} onValueChange={setProjectId}>
             <SelectTrigger className="w-56">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_PROJECTS}>Alle Projekte</SelectItem>
+              <SelectItem value={ALL_PROJECTS}>{translate('cycle_time.all_projects')}</SelectItem>
               {(projects?.data ?? []).map((p) => (
                 <SelectItem key={p['@id']} value={p.id ?? ''}>
                   {p.name}
@@ -127,22 +129,22 @@ export function CycleTimeTab() {
     >
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Cycle-Time-Verteilung</CardTitle>
+          <CardTitle className="text-base">{translate('cycle_time.distribution')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoading ? (
             <Skeleton className="h-80 w-full" />
           ) : (data?.count ?? 0) === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              Keine geschlossenen Aufgaben im Zeitraum.
+              {translate('cycle_time.empty')}
             </p>
           ) : (
             <>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                <Stat label="Aufgaben" value={String(data?.count ?? 0)} />
+                <Stat label={translate('cycle_time.stat_tasks')} value={String(data?.count ?? 0)} />
                 <Stat label="Ø" value={fmtHours(data?.averageHours)} />
-                <Stat label="p50 (Median)" value={fmtHours(pct?.p50)} hint="50% schneller" />
-                <Stat label="p85" value={fmtHours(pct?.p85)} hint="Planungswert" />
+                <Stat label="p50 (Median)" value={fmtHours(pct?.p50)} hint={translate('cycle_time.hint_p50')} />
+                <Stat label="p85" value={fmtHours(pct?.p85)} hint={translate('cycle_time.hint_p85')} />
                 <Stat label="p95" value={fmtHours(pct?.p95)} hint="Worst case" />
               </div>
               <div className="h-80 w-full">
@@ -161,7 +163,7 @@ export function CycleTimeTab() {
                       type="number"
                       dataKey="days"
                       tick={{ fontSize: 11 }}
-                      label={{ value: 'Tage', angle: -90, position: 'insideLeft', fontSize: 11 }}
+                      label={{ value: translate('cycle_time.axis_days'), angle: -90, position: 'insideLeft', fontSize: 11 }}
                     />
                     <ZAxis range={[36, 36]} />
                     {pct ? (

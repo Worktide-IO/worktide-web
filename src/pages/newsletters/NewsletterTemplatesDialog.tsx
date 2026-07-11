@@ -69,7 +69,7 @@ export function NewsletterTemplatesDialog({ open, onOpenChange }: { open: boolea
   };
 
   const remove = async (t: Template) => {
-    if (!window.confirm(`Vorlage „${t.name}" löschen?`)) return;
+    if (!window.confirm(translate('newsletter_templates.confirm_delete', { name: t.name }))) return;
     try {
       await api.delete(`/newsletter_templates/${idOf(t)}`);
       if (editing?.id === idOf(t)) setEditing(null);
@@ -83,21 +83,21 @@ export function NewsletterTemplatesDialog({ open, onOpenChange }: { open: boolea
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Newsletter-Vorlagen</DialogTitle>
+          <DialogTitle>{translate('newsletter_templates.title')}</DialogTitle>
         </DialogHeader>
 
         {editing ? (
           <div className="space-y-3 rounded-md border p-3">
             <div className="space-y-1">
-              <Label>Name der Vorlage</Label>
+              <Label>{translate('newsletter_templates.name_label')}</Label>
               <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
             </div>
             <div className="space-y-1">
-              <Label>Betreff</Label>
+              <Label>{translate('newsletter_templates.subject_label')}</Label>
               <Input value={editing.subject} onChange={(e) => setEditing({ ...editing, subject: e.target.value })} />
             </div>
             <div className="space-y-1">
-              <Label>Inhalt (Markdown)</Label>
+              <Label>{translate('newsletter_templates.content_label')}</Label>
               <Textarea
                 rows={8}
                 value={editing.body}
@@ -111,19 +111,19 @@ export function NewsletterTemplatesDialog({ open, onOpenChange }: { open: boolea
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={() => setEditing(null)} disabled={busy}>
-                Abbrechen
+                {translate('action.cancel')}
               </Button>
               <Button type="button" onClick={saveEdit} disabled={busy || !editing.name.trim() || !editing.subject.trim()}>
                 {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-                Speichern
+                {translate('action.save')}
               </Button>
             </div>
           </div>
         ) : loading ? (
-          <p className="text-sm text-muted-foreground">Lädt…</p>
+          <p className="text-sm text-muted-foreground">{translate('app.loading')}</p>
         ) : templates.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            Noch keine Vorlagen. Speichern Sie beim Verfassen eines Newsletters „Als Vorlage".
+            {translate('newsletter_templates.empty')}
           </p>
         ) : (
           <div className="divide-y">
@@ -134,7 +134,7 @@ export function NewsletterTemplatesDialog({ open, onOpenChange }: { open: boolea
                   <div className="truncate text-xs text-muted-foreground">{t.subject}</div>
                 </div>
                 <Button type="button" variant="ghost" size="sm" className="h-7" onClick={() => startEdit(t)}>
-                  <Pencil className="size-3" /> Bearbeiten
+                  <Pencil className="size-3" /> {translate('action.edit')}
                 </Button>
                 <Button type="button" variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => remove(t)}>
                   <Trash2 className="size-3" />

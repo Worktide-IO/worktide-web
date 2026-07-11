@@ -160,8 +160,8 @@ export function NewslettersPage() {
   const remove = async (r: NewsletterRow) => {
     const hasChildren = (childrenByParent[iriOf(r)]?.length ?? 0) > 0;
     const msg = hasChildren
-      ? `„${r.title}" und alle Unterthemen löschen?`
-      : `„${r.title}" löschen?`;
+      ? translate('newsletters.confirm_delete_with_children', { title: r.title })
+      : translate('newsletters.confirm_delete', { title: r.title });
     if (!window.confirm(msg)) return;
     try {
       await api.delete(`/newsletters/${idOf(r)}`);
@@ -253,23 +253,22 @@ export function NewslettersPage() {
             <Mail className="size-6 text-muted-foreground" /> Newsletter
           </h2>
           <p className="text-sm text-muted-foreground">
-            Themenbaum, den Kunden im Portal abonnieren. Pro Kunde einzeln freischaltbar (Reiter
-            „Newsletter" beim Kunden).
+            {translate('newsletters.subtitle')}
           </p>
         </div>
         <Button type="button" variant="outline" onClick={() => setTemplatesOpen(true)}>
-          Vorlagen
+          {translate('newsletters.templates')}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Neues Thema (oberste Ebene)</CardTitle>
+          <CardTitle>{translate('newsletters.new_root_topic')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-2">
             <Input
-              placeholder="z. B. Produkt-News"
+              placeholder={translate('newsletters.root_placeholder')}
               value={rootTitle}
               onChange={(e) => setRootTitle(e.target.value)}
               onKeyDown={(e) => {
@@ -279,7 +278,7 @@ export function NewslettersPage() {
             />
             <Button type="button" onClick={addRoot} disabled={busy || !rootTitle.trim()}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-              Hinzufügen
+              {translate('action.add')}
             </Button>
           </div>
         </CardContent>
@@ -287,7 +286,7 @@ export function NewslettersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{rows.length} Themen</CardTitle>
+          <CardTitle>{translate('newsletters.topics_count', { count: rows.length })}</CardTitle>
         </CardHeader>
         <CardContent>
           {query.isLoading ? (
@@ -296,7 +295,7 @@ export function NewslettersPage() {
               <Skeleton className="h-9 w-full" />
             </div>
           ) : rootNodes.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Noch keine Themen.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">{translate('newsletters.empty')}</p>
           ) : (
             <div className="divide-y">
               {rootNodes.map((n) => (
@@ -351,12 +350,12 @@ export function NewslettersPage() {
       <Dialog open={edit !== null} onOpenChange={(o) => !o && setEdit(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{edit?.id ? 'Thema bearbeiten' : 'Neues Thema'}</DialogTitle>
+            <DialogTitle>{edit?.id ? translate('newsletters.edit_topic') : translate('newsletters.new_topic')}</DialogTitle>
           </DialogHeader>
           {edit ? (
             <div className="space-y-3">
               <div className="space-y-1">
-                <Label>Titel</Label>
+                <Label>{translate('newsletters.title_label')}</Label>
                 <Input
                   autoFocus
                   value={edit.title}
@@ -364,7 +363,7 @@ export function NewslettersPage() {
                 />
               </div>
               <div className="space-y-1">
-                <Label>Beschreibung (optional)</Label>
+                <Label>{translate('newsletters.description_optional')}</Label>
                 <Textarea
                   rows={2}
                   value={edit.description}
@@ -372,7 +371,7 @@ export function NewslettersPage() {
                 />
               </div>
               <div className="space-y-1">
-                <Label>Übergeordnet</Label>
+                <Label>{translate('newsletters.parent')}</Label>
                 <Select
                   value={edit.parentIri ?? ROOT}
                   onValueChange={(v) => setEdit({ ...edit, parentIri: v === ROOT ? null : v })}
@@ -381,7 +380,7 @@ export function NewslettersPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ROOT}>— (oberste Ebene)</SelectItem>
+                    <SelectItem value={ROOT}>{translate('newsletters.root_level')}</SelectItem>
                     {parentOptions.map((o) => (
                       <SelectItem key={o.iri} value={o.iri}>
                         {o.label}
@@ -394,10 +393,10 @@ export function NewslettersPage() {
           ) : null}
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => setEdit(null)} disabled={busy}>
-              Abbrechen
+              {translate('action.cancel')}
             </Button>
             <Button type="button" onClick={save} disabled={busy || !edit?.title.trim()}>
-              Speichern
+              {translate('action.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -437,6 +436,7 @@ function NewsletterNode({
   onDropNode: (target: NewsletterRow, zone: DropZone) => void;
   onDragEndNode: () => void;
 }) {
+  const { t: translate } = useTranslation();
   const iri = iriOf(node);
   const children = childrenByParent[iri] ?? [];
   const hint = dropHint?.iri === iri ? dropHint.zone : null;
@@ -484,10 +484,10 @@ function NewsletterNode({
         </div>
         <div className="flex shrink-0 gap-1 opacity-0 transition group-hover:opacity-100">
           <Button type="button" variant="ghost" size="sm" className="h-7" onClick={() => onSend(node)}>
-            <Send className="size-3" /> Versenden
+            <Send className="size-3" /> {translate('newsletters.send')}
           </Button>
           <Button type="button" variant="ghost" size="sm" className="h-7" onClick={() => onAddChild(iri)}>
-            <Plus className="size-3" /> Unterthema
+            <Plus className="size-3" /> {translate('newsletters.subtopic')}
           </Button>
           <Button type="button" variant="outline" size="sm" className="h-7" onClick={() => onEdit(node)}>
             <Pencil className="size-3" />

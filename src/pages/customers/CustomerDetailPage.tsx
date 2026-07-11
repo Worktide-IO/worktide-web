@@ -71,7 +71,7 @@ export function CustomerDetailPage() {
   useLiveResource('customers');
 
   if (!id) {
-    return <p className="text-sm text-destructive">Keine Customer-ID in der URL.</p>;
+    return <p className="text-sm text-destructive">{t('customer_detail.no_id')}</p>;
   }
   if (query.isLoading || !customer) {
     return (
@@ -98,7 +98,7 @@ export function CustomerDetailPage() {
               className="h-7 -ml-2 gap-1"
               onClick={() => navigate('/customers')}
             >
-              <ArrowLeft className="size-3" /> Kunden
+              <ArrowLeft className="size-3" /> {t('customer_detail.back_customers')}
             </Button>
           </div>
           <div className="flex items-center gap-3">
@@ -109,7 +109,7 @@ export function CustomerDetailPage() {
             </Badge>
             {c.isCompany === false ? (
               <Badge variant="outline" className="text-xs">
-                Privatkunde
+                {t('customer_detail.private_customer')}
               </Badge>
             ) : null}
           </div>
@@ -117,7 +117,7 @@ export function CustomerDetailPage() {
             {c.customerNumber ? (
               <span
                 className="inline-flex items-center gap-1 font-mono"
-                title="Kundennummer (aus lexoffice)"
+                title={t('customer_detail.customer_number_title')}
               >
                 <Hash className="size-3" />
                 {c.customerNumber}
@@ -165,12 +165,12 @@ export function CustomerDetailPage() {
         }}
       >
         <TabsList>
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="contacts">Kontakte</TabsTrigger>
-          <TabsTrigger value="systems">Systeme</TabsTrigger>
-          <TabsTrigger value="subscriptions">Abos</TabsTrigger>
-          <TabsTrigger value="agreements">Verträge</TabsTrigger>
-          <TabsTrigger value="products">Produkte</TabsTrigger>
+          <TabsTrigger value="overview">{t('customer_detail.tab_overview')}</TabsTrigger>
+          <TabsTrigger value="contacts">{t('customer_detail.tab_contacts')}</TabsTrigger>
+          <TabsTrigger value="systems">{t('customer_detail.tab_systems')}</TabsTrigger>
+          <TabsTrigger value="subscriptions">{t('customer_detail.tab_subscriptions')}</TabsTrigger>
+          <TabsTrigger value="agreements">{t('customer_detail.tab_agreements')}</TabsTrigger>
+          <TabsTrigger value="products">{t('customer_detail.tab_products')}</TabsTrigger>
           <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="pt-4">

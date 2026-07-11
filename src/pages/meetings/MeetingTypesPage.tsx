@@ -154,7 +154,7 @@ export function MeetingTypesPage() {
   };
 
   const remove = async (r: MeetingTypeRow) => {
-    if (!r.id || !window.confirm(`„${r.title}" löschen?`)) return;
+    if (!r.id || !window.confirm(t('meeting_types.confirm_delete', { title: r.title }))) return;
     try {
       await api.delete(`/meeting_types/${r.id}`);
       toast.success(t('toast.deleted'));
@@ -174,33 +174,33 @@ export function MeetingTypesPage() {
       <div className="flex items-start justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-2xl">
-            <CalendarClock className="size-6 text-muted-foreground" /> Terminarten
+            <CalendarClock className="size-6 text-muted-foreground" /> {t('meeting_types.heading')}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Buchbare Termine (Calendly-Stil). Kunden buchen unter <code>/book/&lt;slug&gt;</code>.
+            {t('meeting_types.subtitle')} <code>/book/&lt;slug&gt;</code>.
           </p>
         </div>
         <Button type="button" onClick={() => setForm({ ...BLANK })}>
-          <Plus className="size-4" /> Neue Terminart
+          <Plus className="size-4" /> {t('meeting_types.new')}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{rows.length} Terminarten</CardTitle>
+          <CardTitle>{t('meeting_types.count', { count: rows.length })}</CardTitle>
         </CardHeader>
         <CardContent>
           {query.isLoading ? (
             <div className="space-y-2"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
           ) : rows.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Noch keine Terminarten.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">{t('meeting_types.empty')}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Titel</TableHead>
-                  <TableHead className="w-20">Dauer</TableHead>
-                  <TableHead className="w-24">Status</TableHead>
+                  <TableHead>{t('meeting_types.title')}</TableHead>
+                  <TableHead className="w-20">{t('meeting_types.col_duration')}</TableHead>
+                  <TableHead className="w-24">{t('meeting_types.col_status')}</TableHead>
                   <TableHead className="w-56 text-right" />
                 </TableRow>
               </TableHeader>
@@ -211,10 +211,10 @@ export function MeetingTypesPage() {
                       <div className="font-medium">{r.title}</div>
                       <div className="text-xs text-muted-foreground">/book/{r.slug}</div>
                     </TableCell>
-                    <TableCell>{r.durationMinutes} Min.</TableCell>
+                    <TableCell>{t('meeting_types.minutes', { n: r.durationMinutes })}</TableCell>
                     <TableCell>
                       <Badge variant={r.enabled ? 'secondary' : 'outline'} className="text-[10px]">
-                        {r.enabled ? 'Aktiv' : 'Aus'}
+                        {r.enabled ? t('meeting_types.active') : t('meeting_types.inactive')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -262,13 +262,13 @@ export function MeetingTypesPage() {
       <Dialog open={form !== null} onOpenChange={(o) => !o && setForm(null)}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{form?.id ? 'Terminart bearbeiten' : 'Neue Terminart'}</DialogTitle>
+            <DialogTitle>{form?.id ? t('meeting_types.edit') : t('meeting_types.new')}</DialogTitle>
           </DialogHeader>
           {form ? (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 space-y-1">
-                  <Label>Titel</Label>
+                  <Label>{t('meeting_types.title')}</Label>
                   <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                 </div>
                 <div className="space-y-1">
@@ -276,49 +276,49 @@ export function MeetingTypesPage() {
                   <Input value={form.slug} placeholder="projekt-update" onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase() })} />
                 </div>
                 <div className="space-y-1">
-                  <Label>Dauer (Min.)</Label>
+                  <Label>{t('meeting_types.duration_min')}</Label>
                   <Input type="number" min={1} value={form.durationMinutes} onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })} />
                 </div>
               </div>
               <div className="space-y-1">
-                <Label>Beschreibung</Label>
+                <Label>{t('meeting_types.description')}</Label>
                 <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label>Ort</Label>
+                  <Label>{t('meeting_types.location')}</Label>
                   <Select value={form.locationType} onValueChange={(v) => setForm({ ...form, locationType: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="video">Videocall</SelectItem>
-                      <SelectItem value="phone">Telefon</SelectItem>
-                      <SelectItem value="in_person">Vor Ort</SelectItem>
+                      <SelectItem value="video">{t('meeting_types.loc_video')}</SelectItem>
+                      <SelectItem value="phone">{t('meeting_types.loc_phone')}</SelectItem>
+                      <SelectItem value="in_person">{t('meeting_types.loc_in_person')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <Label>Ort-Detail</Label>
-                  <Input value={form.locationDetail} placeholder="Google Meet / Nummer / Adresse" onChange={(e) => setForm({ ...form, locationDetail: e.target.value })} />
+                  <Label>{t('meeting_types.location_detail')}</Label>
+                  <Input value={form.locationDetail} placeholder={t('meeting_types.location_detail_ph')} onChange={(e) => setForm({ ...form, locationDetail: e.target.value })} />
                 </div>
                 <div className="space-y-1">
-                  <Label>Vorlauf (Min.)</Label>
+                  <Label>{t('meeting_types.min_notice')}</Label>
                   <Input type="number" min={0} value={form.minNoticeMinutes} onChange={(e) => setForm({ ...form, minNoticeMinutes: Number(e.target.value) })} />
                 </div>
                 <div className="space-y-1">
-                  <Label>Max. Vorausbuchung (Tage)</Label>
+                  <Label>{t('meeting_types.max_advance')}</Label>
                   <Input type="number" min={1} value={form.maxAdvanceDays} onChange={(e) => setForm({ ...form, maxAdvanceDays: Number(e.target.value) })} />
                 </div>
               </div>
 
               <div className="space-y-2 rounded-md border p-3">
                 <div className="flex items-center justify-between">
-                  <Label>Verfügbarkeit ({form.timezone})</Label>
+                  <Label>{t('meeting_types.availability', { tz: form.timezone })}</Label>
                   <Button type="button" variant="outline" size="sm" className="h-7" onClick={() => setForm({ ...form, availability: [...form.availability, { weekday: 1, start: '09:00', end: '17:00' }] })}>
-                    <Plus className="size-3" /> Zeitfenster
+                    <Plus className="size-3" /> {t('meeting_types.time_slot')}
                   </Button>
                 </div>
                 {form.availability.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Keine Zeitfenster — es werden keine Termine angeboten.</p>
+                  <p className="text-xs text-muted-foreground">{t('meeting_types.no_slots')}</p>
                 ) : (
                   form.availability.map((w, i) => (
                     <div key={i} className="flex items-center gap-2">
@@ -342,14 +342,14 @@ export function MeetingTypesPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <Label htmlFor="mt-enabled">Aktiv (buchbar)</Label>
+                <Label htmlFor="mt-enabled">{t('meeting_types.active_bookable')}</Label>
                 <Switch id="mt-enabled" checked={form.enabled} onCheckedChange={(v) => setForm({ ...form, enabled: v })} />
               </div>
             </div>
           ) : null}
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setForm(null)} disabled={busy}>Abbrechen</Button>
-            <Button type="button" onClick={save} disabled={busy}>{busy ? <Loader2 className="size-4 animate-spin" /> : null} Speichern</Button>
+            <Button type="button" variant="ghost" onClick={() => setForm(null)} disabled={busy}>{t('action.cancel')}</Button>
+            <Button type="button" onClick={save} disabled={busy}>{busy ? <Loader2 className="size-4 animate-spin" /> : null} {t('action.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

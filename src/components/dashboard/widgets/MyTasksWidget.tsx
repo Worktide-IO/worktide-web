@@ -1,5 +1,6 @@
 import { CalendarDays, ListTodo } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -49,6 +50,7 @@ const MY_TASKS_KEY = ['dashboard', 'my-tasks'] as const;
 type TabKey = 'today' | 'week' | 'overdue';
 
 export function MyTasksWidget() {
+  const { t: translate } = useTranslation();
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabKey>('today');
   const queryClient = useQueryClient();
@@ -104,7 +106,7 @@ export function MyTasksWidget() {
       <Card className="h-full">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <ListTodo className="size-4 text-muted-foreground" /> Meine Aufgaben
+            <ListTodo className="size-4 text-muted-foreground" /> {translate('my_tasks.heading')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -118,7 +120,7 @@ export function MyTasksWidget() {
   const renderList = (list: MyTask[]) =>
     list.length === 0 ? (
       <p className="text-center text-xs text-muted-foreground py-8">
-        Nichts hier — gönn dir 'nen Kaffee.
+        {translate('my_tasks.empty')}
       </p>
     ) : (
       <ul className="divide-y">
@@ -149,7 +151,7 @@ export function MyTasksWidget() {
                     {project ? (
                       <span className="truncate">{project.name}</span>
                     ) : (
-                      <span className="italic">Privat</span>
+                      <span className="italic">{translate('my_tasks.private')}</span>
                     )}
                     {t.dueOn ? (
                       <span
@@ -170,10 +172,10 @@ export function MyTasksWidget() {
                     className="ml-1 shrink-0 text-[10px]"
                   >
                     {t.priority === 'urgent'
-                      ? 'Dringend'
+                      ? translate('my_tasks.priority_urgent')
                       : t.priority === 'high'
-                        ? 'Hoch'
-                        : 'Niedrig'}
+                        ? translate('my_tasks.priority_high')
+                        : translate('my_tasks.priority_low')}
                   </Badge>
                 ) : null}
               </button>
@@ -187,14 +189,14 @@ export function MyTasksWidget() {
     <Card className="h-full overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
-          <ListTodo className="size-4 text-muted-foreground" /> Meine Aufgaben
+          <ListTodo className="size-4 text-muted-foreground" /> {translate('my_tasks.heading')}
         </CardTitle>
       </CardHeader>
       <CardContent className="h-[calc(100%-3rem)] overflow-y-auto px-2 pb-2">
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)} className="widget-no-drag">
           <TabsList className="w-full">
             <TabsTrigger value="today" className="flex-1 gap-1">
-              Heute
+              {translate('my_tasks.tab_today')}
               {buckets.today.length > 0 ? (
                 <span className="rounded-full bg-background/70 px-1 text-[10px]">
                   {buckets.today.length}
@@ -202,7 +204,7 @@ export function MyTasksWidget() {
               ) : null}
             </TabsTrigger>
             <TabsTrigger value="week" className="flex-1 gap-1">
-              Woche
+              {translate('my_tasks.tab_week')}
               {buckets.week.length > 0 ? (
                 <span className="rounded-full bg-background/70 px-1 text-[10px]">
                   {buckets.week.length}
@@ -210,7 +212,7 @@ export function MyTasksWidget() {
               ) : null}
             </TabsTrigger>
             <TabsTrigger value="overdue" className="flex-1 gap-1">
-              Überfällig
+              {translate('my_tasks.tab_overdue')}
               {buckets.overdue.length > 0 ? (
                 <span className="rounded-full bg-destructive/20 px-1 text-[10px] text-destructive">
                   {buckets.overdue.length}

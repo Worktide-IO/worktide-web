@@ -145,7 +145,7 @@ export function CustomerAgreementsTab({
     } catch (e) {
       const msg =
         (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-        'Speichern fehlgeschlagen.';
+        t('customer_agreements.save_failed');
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -158,7 +158,7 @@ export function CustomerAgreementsTab({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <FileSignature className="size-4 text-muted-foreground" /> Verträge
+          <FileSignature className="size-4 text-muted-foreground" /> {t('customer_agreements.heading')}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -170,17 +170,16 @@ export function CustomerAgreementsTab({
           </div>
         ) : visibleTypes.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Keine Vertragsarten konfiguriert. Lege welche unter „Vertragsarten" an
-            (oder seede SLA/AV/NDA im Backend).
+            {t('customer_agreements.empty')}
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Vertragsart</TableHead>
-                <TableHead className="w-44">Status</TableHead>
-                <TableHead className="w-32">Unterzeichnet</TableHead>
-                <TableHead className="w-32">Gültig bis</TableHead>
+                <TableHead>{t('customer_agreements.col_type')}</TableHead>
+                <TableHead className="w-44">{t('customer_agreements.status')}</TableHead>
+                <TableHead className="w-32">{t('customer_agreements.col_signed')}</TableHead>
+                <TableHead className="w-32">{t('customer_agreements.valid_until')}</TableHead>
                 <TableHead className="w-28 text-right" />
               </TableRow>
             </TableHeader>
@@ -202,7 +201,7 @@ export function CustomerAgreementsTab({
                         {type.name}
                         {type.isMandatory ? (
                           <Badge variant="outline" className="text-[10px] uppercase">
-                            Pflicht
+                            {t('customer_agreements.mandatory')}
                           </Badge>
                         ) : null}
                       </div>
@@ -227,7 +226,7 @@ export function CustomerAgreementsTab({
                         onClick={() => openEdit(type)}
                       >
                         <Pencil className="size-3" />
-                        {status === 'none' ? 'Erfassen' : 'Bearbeiten'}
+                        {status === 'none' ? t('customer_agreements.record') : t('action.edit')}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -243,15 +242,14 @@ export function CustomerAgreementsTab({
           <DialogHeader>
             <DialogTitle>{edit?.type.name}</DialogTitle>
             <DialogDescription>
-              Vertragsstatus erfassen. Jede Änderung legt eine neue Version an; die
-              Historie bleibt erhalten.
+              {t('customer_agreements.dialog_desc')}
             </DialogDescription>
           </DialogHeader>
 
           {edit ? (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Status</Label>
+                <Label>{t('customer_agreements.status')}</Label>
                 <Select
                   value={edit.status}
                   onValueChange={(v) => setEdit({ ...edit, status: v as AgreementStatus })}
@@ -271,7 +269,7 @@ export function CustomerAgreementsTab({
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="agr-signed">Unterzeichnet am</Label>
+                  <Label htmlFor="agr-signed">{t('customer_agreements.signed_on')}</Label>
                   <Input
                     id="agr-signed"
                     type="date"
@@ -280,7 +278,7 @@ export function CustomerAgreementsTab({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="agr-valid">Gültig bis</Label>
+                  <Label htmlFor="agr-valid">{t('customer_agreements.valid_until')}</Label>
                   <Input
                     id="agr-valid"
                     type="date"
@@ -291,17 +289,17 @@ export function CustomerAgreementsTab({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="agr-ref">Referenz / Aktenzeichen</Label>
+                <Label htmlFor="agr-ref">{t('customer_agreements.reference')}</Label>
                 <Input
                   id="agr-ref"
                   value={edit.reference}
                   onChange={(e) => setEdit({ ...edit, reference: e.target.value })}
-                  placeholder="z. B. Vertragsnummer"
+                  placeholder={t('customer_agreements.reference_ph')}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="agr-notes">Notiz</Label>
+                <Label htmlFor="agr-notes">{t('customer_agreements.notes')}</Label>
                 <Textarea
                   id="agr-notes"
                   rows={2}
@@ -311,7 +309,7 @@ export function CustomerAgreementsTab({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="agr-file">Unterzeichnetes Dokument (PDF)</Label>
+                <Label htmlFor="agr-file">{t('customer_agreements.document')}</Label>
                 <Input
                   id="agr-file"
                   type="file"
@@ -322,8 +320,8 @@ export function CustomerAgreementsTab({
                 />
                 <p className="text-xs text-muted-foreground">
                   {edit.attachment
-                    ? `Wird im Dokumentenspeicher des Kunden abgelegt: ${edit.attachment.name}`
-                    : 'Optional — wird im Dokumentenspeicher des Kunden abgelegt und an diese Version gehängt.'}
+                    ? t('customer_agreements.file_selected', { name: edit.attachment.name })
+                    : t('customer_agreements.file_hint')}
                 </p>
               </div>
             </div>
@@ -331,11 +329,11 @@ export function CustomerAgreementsTab({
 
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => setEdit(null)} disabled={saving}>
-              Abbrechen
+              {t('action.cancel')}
             </Button>
             <Button type="button" onClick={save} disabled={saving}>
               {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-              Speichern
+              {t('action.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

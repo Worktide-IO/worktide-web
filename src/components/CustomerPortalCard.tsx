@@ -52,18 +52,17 @@ export function CustomerPortalCard({ customerId }: { customerId: string }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <KeyRound className="size-4" /> Kundenportal
+          <KeyRound className="size-4" /> {t('customer_portal_card.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between gap-4 rounded-md border p-3">
           <div className="space-y-0.5">
             <Label htmlFor="customer-portal-enabled" className="text-sm font-medium">
-              Portal für diesen Kunden freischalten
+              {t('customer_portal_card.enable_label')}
             </Label>
             <p className="text-sm text-muted-foreground">
-              Erst wenn dies aktiv ist, können freigeschaltete Kontakte dieses Kunden sich im
-              Kundenportal anmelden. Deaktivieren sperrt den Login sofort — auch laufende Sitzungen.
+              {t('customer_portal_card.enable_hint')}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -73,7 +72,7 @@ export function CustomerPortalCard({ customerId }: { customerId: string }) {
                 enabled ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground'
               }
             >
-              {enabled ? 'freigeschaltet' : 'gesperrt'}
+              {enabled ? t('customer_portal_card.status_enabled') : t('customer_portal_card.status_disabled')}
             </Badge>
             <Switch
               id="customer-portal-enabled"

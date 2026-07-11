@@ -1,5 +1,6 @@
 import { AlertCircle } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 
 import { api, setAccessToken, writeAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
@@ -25,6 +26,7 @@ type AcceptResponse = {
  * returned JWT + workspace and drop the user straight into the app.
  */
 export function AcceptInvitationPage() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const token = params.get('token') ?? '';
@@ -38,7 +40,7 @@ export function AcceptInvitationPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) {
-      setError('Ungültiger oder fehlender Einladungslink.');
+      setError(t('accept_invitation.error_invalid_link'));
       return;
     }
     setError(null);
@@ -63,11 +65,11 @@ export function AcceptInvitationPage() {
       const msg = (err as { response?: { data?: { detail?: string; message?: string } } })?.response
         ?.data;
       if (status === 429) {
-        setError('Zu viele Versuche. Bitte später erneut versuchen.');
+        setError(t('accept_invitation.error_rate_limited'));
       } else if (status === 404) {
-        setError('Diese Einladung ist ungültig oder abgelaufen.');
+        setError(t('accept_invitation.error_invalid_or_expired'));
       } else {
-        setError(msg?.detail ?? msg?.message ?? 'Einladung konnte nicht angenommen werden.');
+        setError(msg?.detail ?? msg?.message ?? t('accept_invitation.error_generic'));
       }
     } finally {
       setBusy(false);
@@ -80,17 +82,16 @@ export function AcceptInvitationPage() {
         <Card className="w-full">
           <CardHeader className="text-center items-center">
             <BrandLogo className="h-9 w-auto" />
-            <CardDescription>Sie wurden zu einem Workspace eingeladen.</CardDescription>
+            <CardDescription>{t('accept_invitation.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={onSubmit} noValidate className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Falls Sie noch kein Konto haben, vergeben Sie unten ein Passwort. Bestehende
-                Konten können die Felder leer lassen.
+                {t('accept_invitation.hint')}
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="firstName">Vorname</Label>
+                  <Label htmlFor="firstName">{t('accept_invitation.first_name')}</Label>
                   <Input
                     id="firstName"
                     value={firstName}
@@ -99,7 +100,7 @@ export function AcceptInvitationPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="lastName">Nachname</Label>
+                  <Label htmlFor="lastName">{t('accept_invitation.last_name')}</Label>
                   <Input
                     id="lastName"
                     value={lastName}
@@ -109,7 +110,7 @@ export function AcceptInvitationPage() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="password">Passwort (nur für neue Konten)</Label>
+                <Label htmlFor="password">{t('accept_invitation.password')}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -127,7 +128,7 @@ export function AcceptInvitationPage() {
               ) : null}
 
               <Button type="submit" className="w-full" disabled={busy || !token}>
-                {busy ? 'Einladung annehmen …' : 'Einladung annehmen'}
+                {busy ? t('accept_invitation.submitting') : t('accept_invitation.submit')}
               </Button>
             </form>
           </CardContent>

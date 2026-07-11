@@ -128,22 +128,22 @@ export function CustomerSlaCard({ customerId }: { customerId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Kunden-SLA</CardTitle>
+        <CardTitle className="text-base">{t('customer_sla.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Eigene SLA-Zeiten (Std.) für diesen Kunden — übersteuert den Workspace-Standard.{' '}
-          <span className="text-foreground">Leer</span> = erbt (Platzhalter zeigt den geerbten Wert).
+          {t('customer_sla.desc_before')}{' '}
+          <span className="text-foreground">{t('customer_sla.desc_empty')}</span> {t('customer_sla.desc_after')}
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           {PRIORITIES.map((p) => (
             <div key={p.key} className="space-y-2 rounded-md border p-3">
-              <div className="text-sm font-medium">{p.label}</div>
+              <div className="text-sm font-medium">{t(`customer_sla.priority_${p.key}`)}</div>
               <div className="flex items-center gap-4">
                 {(['response', 'resolution'] as Leg[]).map((leg) => (
                   <div key={leg} className="flex-1 space-y-1">
                     <Label htmlFor={`cust-sla-${p.key}-${leg}`} className="text-xs text-muted-foreground">
-                      {leg === 'response' ? 'Reaktion' : 'Lösung'}
+                      {leg === 'response' ? t('customer_sla.leg_response') : t('customer_sla.leg_resolution')}
                     </Label>
                     <div className="flex items-center gap-1.5">
                       <Input
@@ -153,10 +153,10 @@ export function CustomerSlaCard({ customerId }: { customerId: string }) {
                         step={1}
                         value={get(p.key, leg)}
                         onChange={(e) => set(p.key, leg, e.target.value)}
-                        placeholder={`erbt: ${inherited(p.key, leg, p[leg])}`}
+                        placeholder={t('customer_sla.inherits_placeholder', { value: inherited(p.key, leg, p[leg]) })}
                         className="min-w-0 flex-1"
                       />
-                      <span className="text-xs text-muted-foreground">Std.</span>
+                      <span className="text-xs text-muted-foreground">{t('customer_sla.unit_hours')}</span>
                     </div>
                   </div>
                 ))}
@@ -164,10 +164,10 @@ export function CustomerSlaCard({ customerId }: { customerId: string }) {
             </div>
           ))}
         </div>
-        {invalid ? <p className="text-sm text-destructive">Bitte nur ganze Zahlen ≥ 0 eingeben.</p> : null}
+        {invalid ? <p className="text-sm text-destructive">{t('customer_sla.invalid')}</p> : null}
         <div>
           <Button type="button" onClick={handleSave} disabled={saving || !dirty || invalid}>
-            {saving ? 'Speichere…' : 'Speichern'}
+            {saving ? t('customer_sla.saving') : t('action.save')}
           </Button>
         </div>
       </CardContent>

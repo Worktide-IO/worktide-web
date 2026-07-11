@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Pencil, Plus, RotateCcw, Save } from 'lucide-react';
 import { useState } from 'react';
 
@@ -29,6 +30,7 @@ import type { DashboardLayout, DashboardWidget } from '@/lib/dashboard';
  * commit already landed milliseconds ago).
  */
 export function DashboardPage() {
+  const { t } = useTranslation();
   const { layout, setLayout, resetToDefault, isLoading } = useDashboardLayout();
   const [editing, setEditing] = useState(false);
 
@@ -58,7 +60,7 @@ export function DashboardPage() {
   };
 
   const handleReset = () => {
-    if (confirm('Dashboard auf Standard-Layout zurücksetzen?')) {
+    if (confirm(t('dashboard.reset_confirm'))) {
       resetToDefault();
     }
   };
@@ -89,7 +91,7 @@ export function DashboardPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button type="button" variant="outline" size="sm" disabled={addable.length === 0}>
-                    <Plus className="size-4" /> Widget hinzufügen
+                    <Plus className="size-4" /> {t('dashboard.add_widget')}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
@@ -104,15 +106,15 @@ export function DashboardPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
               <Button type="button" variant="ghost" size="sm" onClick={handleReset}>
-                <RotateCcw className="size-4" /> Zurücksetzen
+                <RotateCcw className="size-4" /> {t('dashboard.reset')}
               </Button>
               <Button type="button" size="sm" onClick={() => setEditing(false)}>
-                <Save className="size-4" /> Fertig
+                <Save className="size-4" /> {t('dashboard.done')}
               </Button>
             </>
           ) : (
             <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
-              <Pencil className="size-4" /> Bearbeiten
+              <Pencil className="size-4" /> {t('action.edit')}
             </Button>
           )}
         </div>

@@ -130,7 +130,7 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
         className="h-7 gap-1.5 text-xs"
       >
         {loading ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
-        {loading ? 'Analysiere …' : 'KI-Triage'}
+        {loading ? translate('ai_triage.analyzing') : translate('ai_triage.trigger')}
       </Button>
     );
   }
@@ -141,7 +141,7 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
     <Card className="border-indigo-200 bg-indigo-50/40 dark:border-indigo-900 dark:bg-indigo-950/20">
       <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
         <Sparkles className="size-4 text-indigo-500" />
-        <span className="text-sm font-medium">KI-Triage-Vorschlag</span>
+        <span className="text-sm font-medium">{translate('ai_triage.suggestion_title')}</span>
         {reco.model ? (
           <Badge variant="outline" className="ml-auto text-[10px] font-normal">
             {reco.model}
@@ -154,20 +154,20 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
         <div className="flex flex-wrap items-center gap-2">
           {target === 'task' ? (
             <>
-              {s.tracker ? <Badge variant="secondary" className="text-[11px]">Tracker: {s.tracker}</Badge> : null}
-              {s.priority ? <Badge variant="secondary" className="text-[11px]">Priorität: {s.priority}</Badge> : null}
+              {s.tracker ? <Badge variant="secondary" className="text-[11px]">{translate('ai_triage.tracker', { value: s.tracker })}</Badge> : null}
+              {s.priority ? <Badge variant="secondary" className="text-[11px]">{translate('ai_triage.priority', { value: s.priority })}</Badge> : null}
               {(s.tags ?? []).map((t) => (
                 <Badge key={t} variant="outline" className="text-[11px]">#{t}</Badge>
               ))}
             </>
           ) : (
-            s.status ? <Badge variant="secondary" className="text-[11px]">Status: {s.status}</Badge> : null
+            s.status ? <Badge variant="secondary" className="text-[11px]">{translate('ai_triage.status', { value: s.status })}</Badge> : null
           )}
         </div>
 
         {target === 'task' && (s.suggestedNewTags?.length ?? 0) > 0 ? (
           <p className="text-xs text-muted-foreground">
-            Neue Tags vorgeschlagen (nicht automatisch angelegt): {s.suggestedNewTags!.join(', ')}
+            {translate('ai_triage.suggested_new_tags', { tags: s.suggestedNewTags!.join(', ') })}
           </p>
         ) : null}
 
@@ -178,7 +178,7 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
         <div className="flex items-center gap-2 pt-1">
           <Button size="sm" onClick={() => void accept()} disabled={busy} className="h-7 gap-1.5 text-xs">
             {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
-            Übernehmen
+            {translate('ai_triage.accept')}
           </Button>
           <Button
             size="sm"
@@ -188,7 +188,7 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
             className="h-7 gap-1.5 text-xs"
           >
             <X className="size-3.5" />
-            Verwerfen
+            {translate('ai_triage.reject')}
           </Button>
           <Button
             size="sm"
@@ -196,7 +196,7 @@ export function AiTriagePanel({ target, targetId, onApplied }: Props) {
             onClick={() => void requestTriage()}
             disabled={busy || loading}
             className="ml-auto h-7 gap-1.5 text-xs text-muted-foreground"
-            title="Neu analysieren"
+            title={translate('ai_triage.reanalyze')}
           >
             {loading ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
           </Button>

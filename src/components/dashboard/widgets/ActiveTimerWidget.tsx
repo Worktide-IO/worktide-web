@@ -1,6 +1,7 @@
 import { useGetIdentity, useList } from '@refinedev/core';
 import { Clock, Pause, Play } from 'lucide-react';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import type { TimeEntryJsonld } from '@/api/types/timeEntry/Jsonld';
@@ -32,6 +33,7 @@ type Identity = { id?: string };
  * single-purpose.
  */
 export function ActiveTimerWidget() {
+  const { t } = useTranslation();
   const { timer, start, stop, isLoading } = useActiveTimer();
   useTick();
   const { data: identity } = useGetIdentity<Identity>();
@@ -74,7 +76,7 @@ export function ActiveTimerWidget() {
       <Card className="h-full">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Clock className="size-4 text-muted-foreground" /> Zeiterfassung
+            <Clock className="size-4 text-muted-foreground" /> {t('time_widget.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -93,14 +95,14 @@ export function ActiveTimerWidget() {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <Clock className="size-4 text-muted-foreground" />
-          Zeiterfassung
+          {t('time_widget.title')}
           {timer ? (
             <Badge variant="secondary" className="ml-auto gap-1 text-[10px]">
               <span
                 className="size-1.5 animate-pulse rounded-full bg-green-500"
                 aria-hidden
               />
-              läuft
+              {t('time_widget.running')}
             </Badge>
           ) : null}
         </CardTitle>
@@ -112,7 +114,7 @@ export function ActiveTimerWidget() {
               {formatElapsed(elapsedSeconds)}
             </div>
             <p className="line-clamp-2 max-w-full text-xs text-muted-foreground">
-              {projectName ?? timer.description ?? 'Freie Zeit'}
+              {projectName ?? timer.description ?? t('time_widget.free_time')}
             </p>
             <Button
               type="button"
@@ -121,7 +123,7 @@ export function ActiveTimerWidget() {
               onClick={() => void stop()}
               className="widget-no-drag"
             >
-              <Pause className="size-3.5" /> Stoppen
+              <Pause className="size-3.5" /> {t('time_widget.stop')}
             </Button>
           </>
         ) : (
@@ -135,15 +137,15 @@ export function ActiveTimerWidget() {
               onClick={() => void start({})}
               className="widget-no-drag"
             >
-              <Play className="size-3.5 fill-current" /> Timer starten
+              <Play className="size-3.5 fill-current" /> {t('time_widget.start')}
             </Button>
             <p className="text-[10px] text-muted-foreground">
-              Für Projekt-/Task-Wahl: Floating-Button unten rechts
+              {t('time_widget.hint')}
             </p>
           </>
         )}
         <p className="mt-1 text-xs text-muted-foreground">
-          Heute: <span className="font-mono tabular-nums">{formatMinutes(todayMinutes)}</span>
+          {t('time_widget.today')}{' '}<span className="font-mono tabular-nums">{formatMinutes(todayMinutes)}</span>
         </p>
       </CardContent>
     </Card>

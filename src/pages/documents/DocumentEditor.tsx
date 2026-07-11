@@ -209,7 +209,7 @@ function EditorBody({
   };
 
   const remove = async () => {
-    if (!window.confirm('Seite wirklich löschen?')) return;
+    if (!window.confirm(t('document_editor.confirm_delete'))) return;
     try {
       await api.delete(`/documents/${documentId}`);
       onDeleted?.();
@@ -243,22 +243,22 @@ function EditorBody({
           {savingTitle || savingBody ? (
             <span className="inline-flex items-center gap-1">
               <Loader2 className="size-3 animate-spin" />
-              Speichere…
+              {t('document_editor.saving')}
             </span>
           ) : (
-            <span>gespeichert</span>
+            <span>{t('document_editor.saved')}</span>
           )}
           <Button
             variant="ghost"
             size="icon"
             className="size-8"
             onClick={() => setHistoryOpen(true)}
-            aria-label="Versionsverlauf"
-            title="Versionsverlauf"
+            aria-label={t('document_editor.history')}
+            title={t('document_editor.history')}
           >
             <History className="size-4 text-muted-foreground" />
           </Button>
-          <Button variant="ghost" size="icon" className="size-8" onClick={remove} aria-label="Löschen">
+          <Button variant="ghost" size="icon" className="size-8" onClick={remove} aria-label={t('action.delete')}>
             <Trash2 className="size-4 text-muted-foreground" />
           </Button>
         </div>

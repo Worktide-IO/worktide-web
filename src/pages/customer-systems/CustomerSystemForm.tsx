@@ -1,5 +1,6 @@
 import { useNavigation } from '@refinedev/core';
 import { useForm } from '@refinedev/react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink, Save, Trash2 } from 'lucide-react';
 import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
@@ -56,6 +57,7 @@ type Mode = { action: 'create' } | { action: 'edit'; id: string };
  */
 export function CustomerSystemForm(props: Mode) {
   const navigate = useNavigate();
+  const { t: translate } = useTranslation();
   const { show } = useNavigation();
   void show;
 
@@ -97,7 +99,9 @@ export function CustomerSystemForm(props: Mode) {
           </Button>
           <div>
             <h2 className="text-2xl">
-              {props.action === 'create' ? 'Neues System' : current?.name ?? 'System bearbeiten'}
+              {props.action === 'create'
+                ? translate('customer_system_form.heading_new')
+                : current?.name ?? translate('customer_system_form.heading_edit')}
             </h2>
             {props.action === 'edit' && current?.url ? (
               <a
@@ -120,12 +124,12 @@ export function CustomerSystemForm(props: Mode) {
         <div className="flex items-center gap-2">
           {props.action === 'edit' ? (
             <Button type="button" variant="outline" size="sm" disabled>
-              <Trash2 className="size-4" /> Löschen
+              <Trash2 className="size-4" /> {translate('action.delete')}
             </Button>
           ) : null}
           <Button type="submit" disabled={isSubmitting || formLoading}>
             <Save className="size-4" />
-            {isSubmitting ? 'Speichern …' : 'Speichern'}
+            {isSubmitting ? translate('action.saving') : translate('action.save')}
           </Button>
         </div>
       </div>
@@ -142,24 +146,24 @@ export function CustomerSystemForm(props: Mode) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Stammdaten</CardTitle>
+              <CardTitle>{translate('customer_system_form.card_master_data')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Field
                 id="name"
-                label="Name"
+                label={translate('customer_system_form.field_name')}
                 required
-                {...register('name', { required: 'Pflichtfeld' })}
+                {...register('name', { required: translate('validation.required') })}
               />
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="type">
-                    Typ <span className="text-destructive">*</span>
+                    {translate('customer_system_form.field_type')} <span className="text-destructive">*</span>
                   </Label>
                   <Controller
                     name="type"
                     control={control}
-                    rules={{ required: 'Pflichtfeld' }}
+                    rules={{ required: translate('validation.required') }}
                     render={({ field }) => (
                       <Select value={field.value ?? 'other'} onValueChange={field.onChange}>
                         <SelectTrigger id="type">
@@ -168,7 +172,9 @@ export function CustomerSystemForm(props: Mode) {
                         <SelectContent>
                           {SYSTEM_TYPES.map((t) => (
                             <SelectItem key={t.value} value={t.value}>
-                              {t.label}
+                              {t.value === 'other'
+                                ? translate('customer_system_form.type_other')
+                                : t.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -178,8 +184,8 @@ export function CustomerSystemForm(props: Mode) {
                 </div>
                 <Field
                   id="systemVersion"
-                  label="Version"
-                  placeholder="z. B. 13.4 oder 6.6"
+                  label={translate('customer_system_form.field_version')}
+                  placeholder={translate('customer_system_form.ph_version')}
                   {...register('systemVersion')}
                 />
               </div>
@@ -197,19 +203,19 @@ export function CustomerSystemForm(props: Mode) {
                   id="adminLoginUrl"
                   label="Admin-Login URL"
                   type="url"
-                  placeholder="z. B. /typo3"
+                  placeholder={translate('customer_system_form.ph_admin_login')}
                   {...register('adminLoginUrl')}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <Field
                   id="hostingProvider"
-                  label="Hosting-Provider"
-                  placeholder="z. B. Hetzner, mittwald, AWS"
+                  label={translate('customer_system_form.field_hosting')}
+                  placeholder={translate('customer_system_form.ph_hosting')}
                   {...register('hostingProvider')}
                 />
                 <div className="space-y-1.5">
-                  <Label htmlFor="environment">Umgebung</Label>
+                  <Label htmlFor="environment">{translate('customer_system_form.field_environment')}</Label>
                   <Controller
                     name="environment"
                     control={control}
@@ -231,7 +237,7 @@ export function CustomerSystemForm(props: Mode) {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="notes">Notizen</Label>
+                <Label htmlFor="notes">{translate('customer_system_form.field_notes')}</Label>
                 <Textarea id="notes" rows={3} {...register('notes')} />
               </div>
             </CardContent>
@@ -239,17 +245,17 @@ export function CustomerSystemForm(props: Mode) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Zuordnung</CardTitle>
+              <CardTitle>{translate('customer_system_form.card_assignment')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="customer">
-                  Kunde <span className="text-destructive">*</span>
+                  {translate('customer_system_form.field_customer')} <span className="text-destructive">*</span>
                 </Label>
                 <Controller
                   name="customer"
                   control={control}
-                  rules={{ required: 'Pflichtfeld' }}
+                  rules={{ required: translate('validation.required') }}
                   render={({ field, fieldState }) => (
                     <>
                       <CustomerCombobox value={field.value} onChange={field.onChange} />
@@ -263,9 +269,9 @@ export function CustomerSystemForm(props: Mode) {
 
               <div className="flex items-center justify-between rounded-md border border-input p-3">
                 <div className="space-y-0.5">
-                  <Label htmlFor="isActive">Aktiv</Label>
+                  <Label htmlFor="isActive">{translate('customer_system_form.field_active')}</Label>
                   <p className="text-xs text-muted-foreground">
-                    Inaktive Systeme bleiben in der Historie, lösen aber keine Wartungs-Alerts aus.
+                    {translate('customer_system_form.active_hint')}
                   </p>
                 </div>
                 <Controller
@@ -290,8 +296,7 @@ export function CustomerSystemForm(props: Mode) {
                   {...register('credentialsNotes')}
                 />
                 <p className="text-xs text-amber-600 dark:text-amber-500">
-                  ⚠ Klartext. Echte Passwörter erst mit Verschlüsselung (KMS-Story
-                  später) hier ablegen.
+                  {translate('customer_system_form.credentials_warning')}
                 </p>
               </div>
             </CardContent>

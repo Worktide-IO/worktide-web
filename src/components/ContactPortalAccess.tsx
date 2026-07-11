@@ -64,7 +64,7 @@ export function ContactPortalAccess({ contactId }: { contactId: string }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <KeyRound className="size-4" /> Kundenportal-Zugang
+          <KeyRound className="size-4" /> {t('contact_portal_access.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -72,25 +72,24 @@ export function ContactPortalAccess({ contactId }: { contactId: string }) {
           <>
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <Badge variant="outline" className="gap-1 text-green-700 dark:text-green-400">
-                <ShieldCheck className="size-3" /> freigeschaltet
+                <ShieldCheck className="size-3" /> {t('contact_portal.badge_active')}
               </Badge>
               <span className="text-muted-foreground">{email}</span>
             </div>
 
             {invitedAt ? (
               <p className="text-sm text-muted-foreground">
-                Einladung gesendet am {new Date(invitedAt).toLocaleDateString('de-DE')}.
+                {t('contact_portal.invited_on', { date: new Date(invitedAt).toLocaleDateString('de-DE') })}
               </p>
             ) : (
               <p className="text-sm text-amber-700 dark:text-amber-400">
-                Zugang freigeschaltet — es wurde noch keine Einladung versendet.
+                {t('contact_portal.not_invited_yet')}
               </p>
             )}
 
             {!customerEnabled ? (
               <p className="text-sm text-amber-700 dark:text-amber-400">
-                Das Kundenportal ist für diesen Kunden nicht freigeschaltet — Einladung erst
-                möglich, wenn das Portal am Kunden aktiviert ist.
+                {t('contact_portal.customer_not_enabled')}
               </p>
             ) : null}
 
@@ -101,49 +100,47 @@ export function ContactPortalAccess({ contactId }: { contactId: string }) {
                 onClick={() =>
                   call(
                     'send-portal-invitation',
-                    invitedAt ? 'Einladung erneut gesendet.' : 'Einladung versendet.',
+                    invitedAt ? t('contact_portal.toast_resent') : t('contact_portal.toast_sent'),
                   )
                 }
               >
                 <Mail className="size-4" />{' '}
-                {invitedAt ? 'Einladung erneut senden' : 'Einladung senden'}
+                {invitedAt ? t('contact_portal.resend') : t('contact_portal.send')}
               </Button>
               <Button
                 size="sm"
                 variant="destructive"
                 disabled={busy}
-                onClick={() => call('revoke-portal-access', 'Portal-Zugang entzogen.')}
+                onClick={() => call('revoke-portal-access', t('contact_portal.toast_revoked'))}
               >
-                <ShieldOff className="size-4" /> Zugang entziehen
+                <ShieldOff className="size-4" /> {t('contact_portal.revoke')}
               </Button>
             </div>
           </>
         ) : (
           <>
             <Badge variant="outline" className="text-muted-foreground">
-              kein Zugang
+              {t('contact_portal.badge_no_access')}
             </Badge>
             {email ? (
               <div>
                 <Button
                   size="sm"
                   disabled={busy}
-                  onClick={() => call('grant-portal-access', 'Portal-Zugang freigeschaltet.')}
+                  onClick={() => call('grant-portal-access', t('contact_portal.toast_granted'))}
                 >
-                  Portal-Zugang freischalten
+                  {t('contact_portal.grant')}
                 </Button>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Für die Freischaltung wird eine E-Mail-Adresse am Kontakt benötigt.
+                {t('contact_portal.email_required')}
               </p>
             )}
           </>
         )}
         <p className="text-xs text-muted-foreground">
-          Nach dem Freischalten senden Sie die Einladung — der Kontakt erhält einen Link zum
-          Passwort-Setzen und meldet sich dann im Kundenportal an (strikt reduzierte Sicht — kein
-          Workspace-Zugang).
+          {t('contact_portal.footer_hint')}
         </p>
       </CardContent>
     </Card>

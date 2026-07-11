@@ -95,7 +95,7 @@ export function ConversationsListPage() {
           Inbox
         </h2>
         <p className="text-sm text-muted-foreground">
-          Alle eingehenden Konversationen aus Mail-, Slack- und sonstigen Channels.
+          {t('inbox.subtitle')}
         </p>
       </div>
 
@@ -103,7 +103,7 @@ export function ConversationsListPage() {
         <CardHeader className="flex flex-row flex-wrap items-center gap-3 space-y-0">
           <CardTitle className="text-base">
             {items.length}
-            {hasMore ? '+' : ''} Konversation{items.length === 1 ? '' : 'en'}
+            {hasMore ? '+' : ''} {t('inbox.conversations_label', { count: items.length })}
           </CardTitle>
           <div className="ml-auto flex flex-wrap gap-2">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -111,11 +111,11 @@ export function ConversationsListPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
-                <SelectItem value="open">Offen</SelectItem>
-                <SelectItem value="pending">Wartet</SelectItem>
-                <SelectItem value="closed">Erledigt</SelectItem>
-                <SelectItem value="spam">Spam</SelectItem>
+                <SelectItem value="all">{t('inbox.all_status')}</SelectItem>
+                <SelectItem value="open">{t('conversation_status.open')}</SelectItem>
+                <SelectItem value="pending">{t('conversation_status.pending')}</SelectItem>
+                <SelectItem value="closed">{t('conversation_status.closed')}</SelectItem>
+                <SelectItem value="spam">{t('conversation_status.spam')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={channelFilter} onValueChange={setChannelFilter}>
@@ -123,7 +123,7 @@ export function ConversationsListPage() {
                 <SelectValue placeholder="Channel" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Channels</SelectItem>
+                <SelectItem value="all">{t('inbox.all_channels')}</SelectItem>
                 {(channels?.data ?? []).map((c) => (
                   <SelectItem key={c['@id']} value={c['@id'] ?? ''}>
                     {c.name}
@@ -135,16 +135,16 @@ export function ConversationsListPage() {
         </CardHeader>
         <CardContent>
           <div className={`${ROW} border-b pb-2 text-xs font-medium text-muted-foreground`}>
-            <span>Status</span>
-            <span>Channel</span>
-            <span>Absender</span>
-            <span>Betreff</span>
-            <span>Letzte Aktivität</span>
+            <span>{t('inbox.col_status')}</span>
+            <span>{t('inbox.col_channel')}</span>
+            <span>{t('inbox.col_sender')}</span>
+            <span>{t('inbox.col_subject')}</span>
+            <span>{t('inbox.col_last_activity')}</span>
           </div>
 
           {items.length === 0 && !isLoading ? (
             <p className="py-12 text-center text-sm text-muted-foreground">
-              Keine Konversationen — sobald ein Channel Events bringt, erscheinen sie hier.
+              {t('inbox.empty')}
             </p>
           ) : (
             <div
@@ -203,7 +203,7 @@ export function ConversationsListPage() {
               </div>
               {isLoading ? (
                 <div className="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground">
-                  <Loader2 className="size-3.5 animate-spin" /> Lädt …
+                  <Loader2 className="size-3.5 animate-spin" /> {t('app.loading')}
                 </div>
               ) : null}
             </div>

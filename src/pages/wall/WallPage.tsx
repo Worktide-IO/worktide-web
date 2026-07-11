@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/lib/api';
@@ -27,6 +28,7 @@ const KEY = ['dashboard', 'wall'] as const;
  * live on projects / tasks / project_members / project_statuses.
  */
 export function WallPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const queryClient = useQueryClient();
 
@@ -69,11 +71,11 @@ export function WallPage() {
             <LiveBadge connected={liveConnected} />
           </div>
           <p className="text-sm text-muted-foreground">
-            {totalShown} laufende Projekte über {lanes.length} Lanes
+            {t('wall.summary', { count: totalShown, lanes: lanes.length })}
           </p>
         </div>
         <Input
-          placeholder="Projekt oder Kunde…"
+          placeholder={t('wall.search_placeholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-64"
@@ -92,7 +94,7 @@ export function WallPage() {
         </div>
       ) : lanes.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground py-12">
-          Keine aktiven Projekt-Status definiert.
+          {t('wall.no_active_statuses')}
         </p>
       ) : (
         <div className="flex gap-4 overflow-x-auto pb-2">
@@ -114,7 +116,7 @@ export function WallPage() {
                 <div className="space-y-2">
                   {laneProjects.length === 0 ? (
                     <p className="text-center text-xs text-muted-foreground/70 py-6">
-                      Keine Projekte
+                      {t('wall.no_projects')}
                     </p>
                   ) : (
                     laneProjects.map((p) => <ProjectWallCard key={p['@id']} project={p} />)

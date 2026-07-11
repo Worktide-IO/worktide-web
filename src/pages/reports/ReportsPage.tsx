@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   BarChart3,
   Briefcase,
@@ -106,17 +107,18 @@ const PIE_COLORS = [
  * provides the tab chrome.
  */
 export function ReportsPage() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-2xl">Auswertungen</h2>
+        <h2 className="text-2xl">{t('reports.heading')}</h2>
         <p className="text-sm text-muted-foreground">
-          Zeiterfassung, Burndown, Created-vs-Resolved, Cycle-Time und MRR.
+          {t('reports.subtitle')}
         </p>
       </div>
       <Tabs defaultValue="time">
         <TabsList>
-          <TabsTrigger value="time">Zeit</TabsTrigger>
+          <TabsTrigger value="time">{t('reports.tab_time')}</TabsTrigger>
           <TabsTrigger value="burndown">Burndown</TabsTrigger>
           <TabsTrigger value="cfd">Cumulative Flow</TabsTrigger>
           <TabsTrigger value="cvr">Created vs. Resolved</TabsTrigger>
@@ -151,6 +153,7 @@ export function ReportsPage() {
 }
 
 function TimeReportTab() {
+  const { t } = useTranslation();
   const [from, setFrom] = useState(() => isoDaysAgo(30));
   const [to, setTo] = useState(() => todayIso());
 
@@ -226,7 +229,7 @@ function TimeReportTab() {
       <div className="flex flex-wrap items-end justify-end gap-4">
         <div className="flex items-end gap-3">
           <div className="space-y-1">
-            <Label htmlFor="from" className="text-xs">Von</Label>
+            <Label htmlFor="from" className="text-xs">{t('reports.from')}</Label>
             <Input
               id="from"
               type="date"
@@ -237,7 +240,7 @@ function TimeReportTab() {
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="to" className="text-xs">Bis</Label>
+            <Label htmlFor="to" className="text-xs">{t('reports.to')}</Label>
             <Input
               id="to"
               type="date"
@@ -249,14 +252,14 @@ function TimeReportTab() {
             />
           </div>
           <Badge variant="outline" className="h-8 px-3">
-            {daysInRange} {daysInRange === 1 ? 'Tag' : 'Tage'}
+            {t('reports.days_count', { count: daysInRange })}
           </Badge>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         <KpiCard
-          label="Gesamt"
+          label={t('reports.kpi_total')}
           value={fmtHours(kpis.total)}
           icon={Clock}
           loading={isLoading}
@@ -269,20 +272,20 @@ function TimeReportTab() {
           loading={isLoading}
         />
         <KpiCard
-          label="Abgerechnet"
+          label={t('reports.kpi_billed')}
           value={fmtHours(kpis.billed)}
           hint={kpis.billable > 0 ? `${Math.round((kpis.billed / kpis.billable) * 100)} %` : undefined}
           icon={Receipt}
           loading={isLoading}
         />
         <KpiCard
-          label="Ø Tag"
+          label={t('reports.kpi_avg_day')}
           value={fmtHours(kpis.avgPerDay)}
           icon={BarChart3}
           loading={isLoading}
         />
         <KpiCard
-          label="Aktive User"
+          label={t('reports.kpi_active_users')}
           value={String(kpis.activeUsers)}
           icon={Users}
           loading={isLoading}
@@ -292,15 +295,15 @@ function TimeReportTab() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Users className="size-4 text-muted-foreground" /> Stunden pro User
+            <Users className="size-4 text-muted-foreground" /> {t('reports.hours_per_user')}
           </CardTitle>
-          <CardDescription>Top 12, billable vs. nicht-billable</CardDescription>
+          <CardDescription>{t('reports.hours_per_user_desc')}</CardDescription>
         </CardHeader>
         <CardContent>
           {userReport.isLoading ? (
             <Skeleton className="h-72 w-full" />
           ) : userBars.length === 0 ? (
-            <EmptyState icon={Users} text="Keine Zeiteinträge im Zeitraum." />
+            <EmptyState icon={Users} text={t('reports.empty_time_entries')} />
           ) : (
             <ResponsiveContainer width="100%" height={Math.max(260, userBars.length * 28)}>
               <BarChart data={userBars} layout="vertical" margin={{ left: 24, right: 32 }}>
@@ -309,7 +312,7 @@ function TimeReportTab() {
                 <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v) => `${Number(v) || 0} h`} />
                 <Bar dataKey="billable" stackId="a" name="Billable" fill="#10b981" />
-                <Bar dataKey="nonBillable" stackId="a" name="Nicht billable" fill="#94a3b8" />
+                <Bar dataKey="nonBillable" stackId="a" name={t('reports.non_billable')} fill="#94a3b8" />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -320,15 +323,15 @@ function TimeReportTab() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Briefcase className="size-4 text-muted-foreground" /> Stunden pro Projekt
+              <Briefcase className="size-4 text-muted-foreground" /> {t('reports.hours_per_project')}
             </CardTitle>
-            <CardDescription>Top 8 Projekte nach Aufwand</CardDescription>
+            <CardDescription>{t('reports.hours_per_project_desc')}</CardDescription>
           </CardHeader>
           <CardContent>
             {projectReport.isLoading ? (
               <Skeleton className="h-72 w-full" />
             ) : projectPie.length === 0 ? (
-              <EmptyState icon={Briefcase} text="Keine Projekt-Daten." />
+              <EmptyState icon={Briefcase} text={t('reports.empty_project_data')} />
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
@@ -360,7 +363,7 @@ function TimeReportTab() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Tag className="size-4 text-muted-foreground" /> Stunden pro Tätigkeit
+              <Tag className="size-4 text-muted-foreground" /> {t('reports.hours_per_activity')}
             </CardTitle>
             <CardDescription>Type-of-Work-Buckets</CardDescription>
           </CardHeader>
@@ -368,7 +371,7 @@ function TimeReportTab() {
             {towReport.isLoading ? (
               <Skeleton className="h-72 w-full" />
             ) : towBars.length === 0 ? (
-              <EmptyState icon={Tag} text="Keine Tätigkeits-Daten." />
+              <EmptyState icon={Tag} text={t('reports.empty_activity_data')} />
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={towBars} margin={{ left: 8, right: 16 }}>
@@ -376,7 +379,7 @@ function TimeReportTab() {
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" height={50} />
                   <YAxis unit=" h" tick={{ fontSize: 11 }} />
                   <Tooltip formatter={(v) => `${Number(v) || 0} h`} />
-                  <Bar dataKey="hours" fill="#6366f1" name="Stunden" />
+                  <Bar dataKey="hours" fill="#6366f1" name={t('reports.hours')} />
                 </BarChart>
               </ResponsiveContainer>
             )}

@@ -201,30 +201,31 @@ export function MemberEditDialog({
         {removeMode ? (
           <>
             <DialogHeader>
-              <DialogTitle>Mitglied entfernen</DialogTitle>
+              <DialogTitle>{t('member_edit.remove_title')}</DialogTitle>
               <DialogDescription>
-                {user?.firstName || user?.lastName
-                  ? `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()
-                  : (user?.email ?? 'Dieses Mitglied')}{' '}
-                aus dem Workspace entfernen.
+                {t('member_edit.remove_desc', {
+                  name:
+                    user?.firstName || user?.lastName
+                      ? `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()
+                      : (user?.email ?? t('member_edit.this_member')),
+                })}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               {assignedCount === null ? (
                 <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
-                  <Loader2 className="size-4 animate-spin" /> Zugewiesene Aufgaben werden geprüft …
+                  <Loader2 className="size-4 animate-spin" /> {t('member_edit.checking_assignments')}
                 </div>
               ) : assignedCount === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Diesem Mitglied sind keine Aufgaben zugewiesen.
+                  {t('member_edit.no_assignments')}
                 </p>
               ) : (
                 <div className="space-y-2">
                   <p className="text-sm">
                     <span className="font-medium">{assignedCount}</span>{' '}
-                    {assignedCount === 1 ? 'zugewiesene Aufgabe' : 'zugewiesene Aufgaben'}. Übertragen
-                    an:
+                    {t('member_edit.assigned_tasks', { count: assignedCount })}. {t('member_edit.transfer_to')}
                   </p>
                   <Select value={reassignTo} onValueChange={setReassignTo}>
                     <SelectTrigger>
@@ -236,7 +237,7 @@ export function MemberEditDialog({
                           {c.label}
                         </SelectItem>
                       ))}
-                      <SelectItem value={UNASSIGN}>— Nicht zuweisen —</SelectItem>
+                      <SelectItem value={UNASSIGN}>{t('member_edit.unassign')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -245,19 +246,19 @@ export function MemberEditDialog({
 
             <DialogFooter className="gap-2 sm:justify-between">
               <Button variant="ghost" onClick={() => setRemoveMode(false)} disabled={busy}>
-                <ArrowLeft className="size-4" /> Zurück
+                <ArrowLeft className="size-4" /> {t('member_edit.back')}
               </Button>
               <Button variant="destructive" onClick={remove} disabled={busy || assignedCount === null}>
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                Entfernen
+                {t('member_edit.remove')}
               </Button>
             </DialogFooter>
           </>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Mitglied bearbeiten</DialogTitle>
-              <DialogDescription>Name, E-Mail, Rolle und Zugang dieses Mitglieds verwalten.</DialogDescription>
+              <DialogTitle>{t('member_edit.edit_title')}</DialogTitle>
+              <DialogDescription>{t('member_edit.edit_desc')}</DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
@@ -288,26 +289,26 @@ export function MemberEditDialog({
                   disabled={uploading}
                 >
                   {uploading ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
-                  Foto ändern
+                  {t('member_edit.change_photo')}
                 </Button>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="mem-first">Vorname</Label>
+                  <Label htmlFor="mem-first">{t('member_edit.first_name')}</Label>
                   <Input id="mem-first" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="mem-last">Nachname</Label>
+                  <Label htmlFor="mem-last">{t('member_edit.last_name')}</Label>
                   <Input id="mem-last" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="mem-email">E-Mail</Label>
+                <Label htmlFor="mem-email">{t('member_edit.email')}</Label>
                 <Input id="mem-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                <p className="text-xs text-muted-foreground">E-Mail ist der Login — muss eindeutig sein.</p>
+                <p className="text-xs text-muted-foreground">{t('member_edit.email_hint')}</p>
               </div>
               <div className="space-y-1.5">
-                <Label>Rolle</Label>
+                <Label>{t('member_edit.role')}</Label>
                 <Select value={role} onValueChange={setRole}>
                   <SelectTrigger>
                     <SelectValue />
@@ -315,7 +316,7 @@ export function MemberEditDialog({
                   <SelectContent>
                     {ROLES.map((r) => (
                       <SelectItem key={r.value} value={r.value}>
-                        {r.label}
+                        {r.value === 'guest' ? t('member_edit.role_guest') : r.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -323,18 +324,18 @@ export function MemberEditDialog({
               </div>
               <div className="flex items-center justify-between rounded-md border p-3">
                 <div className="space-y-0.5">
-                  <Label htmlFor="mem-active">Aktiv</Label>
+                  <Label htmlFor="mem-active">{t('member_edit.active')}</Label>
                   <p className="text-xs text-muted-foreground">
                     {isActive
-                      ? 'Hat Zugriff auf diesen Workspace.'
-                      : 'Gesperrt — kein Zugriff auf diesen Workspace.'}
+                      ? t('member_edit.active_yes')
+                      : t('member_edit.active_no')}
                   </p>
                 </div>
                 <Switch id="mem-active" checked={isActive} onCheckedChange={setIsActive} disabled={isSelf} />
               </div>
               {isSelf ? (
                 <p className="text-xs text-muted-foreground">
-                  Du kannst deine eigene Mitgliedschaft nicht sperren oder entfernen.
+                  {t('member_edit.self_lock')}
                 </p>
               ) : null}
             </div>
@@ -350,16 +351,16 @@ export function MemberEditDialog({
                   onClick={openRemove}
                   disabled={busy}
                 >
-                  <Trash2 className="size-4" /> Entfernen
+                  <Trash2 className="size-4" /> {t('member_edit.remove')}
                 </Button>
               )}
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-                  Abbrechen
+                  {t('action.cancel')}
                 </Button>
                 <Button onClick={save} disabled={busy}>
                   {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-                  Speichern
+                  {t('action.save')}
                 </Button>
               </div>
             </DialogFooter>

@@ -67,7 +67,7 @@ export function TagPicker({
   onChange,
   scope,
   disableCreate = false,
-  placeholder = 'Tags wählen…',
+  placeholder,
   className,
 }: Props) {
   const { t: translate } = useTranslation();
@@ -135,7 +135,7 @@ export function TagPicker({
         >
           <TagIcon className="size-3.5 shrink-0 text-muted-foreground" />
           {selected.length === 0 ? (
-            <span className="text-muted-foreground">{placeholder}</span>
+            <span className="text-muted-foreground">{placeholder ?? translate('tag_picker.placeholder')}</span>
           ) : (
             selected.map((t) => (
               <span
@@ -160,18 +160,18 @@ export function TagPicker({
       <PopoverContent className="w-72 p-0" align="start">
         <Command>
           <CommandInput
-            placeholder="Suchen oder anlegen…"
+            placeholder={translate('tag_picker.search_placeholder')}
             value={query}
             onValueChange={setQuery}
           />
           <CommandList>
             <CommandEmpty>
               {disableCreate
-                ? 'Keine Tags gefunden.'
-                : 'Tippen, um einen neuen Tag anzulegen.'}
+                ? translate('tag_picker.none_found')
+                : translate('tag_picker.type_to_create')}
             </CommandEmpty>
             {tags.length > 0 ? (
-              <CommandGroup heading="Vorhandene">
+              <CommandGroup heading={translate('tag_picker.heading_existing')}>
                 {tags.map((t) => {
                   const iri = t['@id'] ?? '';
                   const active = value.includes(iri);
@@ -194,7 +194,7 @@ export function TagPicker({
               </CommandGroup>
             ) : null}
             {showCreate ? (
-              <CommandGroup heading="Neu">
+              <CommandGroup heading={translate('tag_picker.heading_new')}>
                 <CommandItem
                   value={`__create__${query}`}
                   onSelect={handleCreate}
@@ -202,12 +202,12 @@ export function TagPicker({
                   disabled={creating}
                 >
                   <Plus className="size-3.5 text-muted-foreground" />
-                  <span className="flex-1 truncate">"{query.trim()}" anlegen</span>
+                  <span className="flex-1 truncate">{translate('tag_picker.create_row', { query: query.trim() })}</span>
                 </CommandItem>
               </CommandGroup>
             ) : null}
             {selected.length > 0 ? (
-              <CommandGroup heading="Auswahl">
+              <CommandGroup heading={translate('tag_picker.heading_selection')}>
                 {selected.map((t) => (
                   <CommandItem
                     key={`sel-${t['@id']}`}
@@ -216,7 +216,7 @@ export function TagPicker({
                     className="gap-2"
                   >
                     <X className="size-3.5 text-muted-foreground" />
-                    <span className="flex-1 truncate">{t.name} entfernen</span>
+                    <span className="flex-1 truncate">{translate('tag_picker.remove', { name: t.name })}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
