@@ -202,6 +202,21 @@ export function TeamMembersListPage() {
         <MemberEditDialog
           member={editing.m}
           user={editing.u}
+          reassignCandidates={(members?.data ?? [])
+            .filter(
+              (mm) =>
+                mm.id !== editing.m.id &&
+                (mm as { isActive?: boolean }).isActive !== false &&
+                typeof mm.user === 'string',
+            )
+            .map((mm) => {
+              const uu = mm.user ? byIri[mm.user] : null;
+              return {
+                userId: (mm.user as string).split('/').pop() ?? '',
+                label: uu ? userDisplayName(uu) : (mm.user as string),
+              };
+            })
+            .filter((c) => c.userId)}
           open
           onOpenChange={(o) => !o && setEditing(null)}
         />
