@@ -31,10 +31,20 @@ export function SourcesPage() {
   const [wizardCode, setWizardCode] = useState<string | null>(null);
   const [wizardChannelId, setWizardChannelId] = useState<string | null>(null);
 
+  const invalidate = useInvalidate();
+
+  // Sync state (lastSyncedAt / lastSyncError) is updated by the backend
+  // scheduler in the background, so an open overview would otherwise show stale
+  // status forever. Refetch when the tab regains focus and on a slow interval so
+  // a source that just started (or stopped) working updates on its own.
   const { result, query } = useList<Row<ChannelJsonld>>({
     resource: 'channels',
     pagination: { mode: 'off' },
     sorters: [{ field: 'name', order: 'asc' }],
+    queryOptions: {
+      refetchOnWindowFocus: true,
+      refetchInterval: 30_000,
+    },
   });
   const channels = result?.data ?? [];
 
@@ -159,6 +169,8 @@ export function SourcesPage() {
           onClose={() => {
             setWizardCode(null);
             setWizardChannelId(null);
+            // Reflect any just-saved edit (rename, re-auth, cleared error).
+            void invalidate({ resource: 'channels', invalidates: ['list'] });
           }}
         />
       ) : null}
