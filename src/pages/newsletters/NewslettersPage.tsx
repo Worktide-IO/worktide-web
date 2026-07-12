@@ -1,6 +1,7 @@
 import { useList } from '@refinedev/core';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, Loader2, Mail, Pencil, Plus, Send, Trash2 } from 'lucide-react';
+import { DynamicIcon } from 'lucide-react/dynamic';
 import { type DragEvent, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -9,6 +10,7 @@ import type { Row } from '@/lib/refine';
 import { LocalizedFields, type TranslationsMap } from '@/components/LocalizedFields';
 import { useSupportedLanguages, useLocalize } from '@/lib/languages';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
@@ -39,6 +41,14 @@ type NewsletterRow = Row<{
   parent?: string | null; // parent IRI or null for roots
   position?: number;
   estimatedFrequency?: string | null;
+  slug?: string | null;
+  icon?: string;
+  color?: string;
+  // Read names: API-Platform strips the "is" prefix from boolean getters
+  // (isArchived() → `archived`), while WRITES use `isArchived`/`isSubscribable`
+  // (the setter-derived names). This asymmetry matches the rest of the app.
+  archived?: boolean;
+  subscribable?: boolean;
   translations?: TranslationsMap | null;
 }>;
 
@@ -48,6 +58,11 @@ type EditState = {
   description: string;
   parentIri: string | null;
   estimatedFrequency: string; // '' = not stated
+  slug: string;
+  icon: string;
+  color: string;
+  isArchived: boolean;
+  isSubscribable: boolean;
   translations: TranslationsMap;
 };
 
@@ -139,16 +154,21 @@ export function NewslettersPage() {
     if (!t) return;
     setBusy(true);
     try {
+      const shared = {
+        description: edit.description.trim() || null,
+        parent: edit.parentIri,
+        estimatedFrequency: edit.estimatedFrequency || null,
+        slug: edit.slug.trim() || null,
+        icon: edit.icon.trim() || 'mail',
+        color: edit.color.trim() || '#94a3b8',
+        isArchived: edit.isArchived,
+        isSubscribable: edit.isSubscribable,
+        translations: edit.translations,
+      };
       if (edit.id) {
         await api.patch(
           `/newsletters/${edit.id}`,
-          {
-            title: t,
-            description: edit.description.trim() || null,
-            parent: edit.parentIri,
-            estimatedFrequency: edit.estimatedFrequency || null,
-            translations: edit.translations,
-          },
+          { title: t, ...shared },
           { headers: { 'Content-Type': 'application/merge-patch+json' } },
         );
         toast.success(translate('toast.saved'));
@@ -156,10 +176,7 @@ export function NewslettersPage() {
         const siblings = childrenByParent[edit.parentIri ?? ROOT]?.length ?? 0;
         await api.post('/newsletters', {
           title: t,
-          description: edit.description.trim() || null,
-          parent: edit.parentIri,
-          estimatedFrequency: edit.estimatedFrequency || null,
-          translations: edit.translations,
+          ...shared,
           position: siblings,
           // Root needs an explicit workspace; children inherit it server-side.
           ...(edit.parentIri ? {} : { workspace: workspaceIri }),
@@ -324,7 +341,18 @@ export function NewslettersPage() {
                   iriOf={iriOf}
                   childrenByParent={childrenByParent}
                   onAddChild={(parentIri) =>
-                    setEdit({ title: '', description: '', parentIri, estimatedFrequency: '', translations: {} })
+                    setEdit({
+                      title: '',
+                      description: '',
+                      parentIri,
+                      estimatedFrequency: '',
+                      slug: '',
+                      icon: 'mail',
+                      color: '#94a3b8',
+                      isArchived: false,
+                      isSubscribable: true,
+                      translations: {},
+                    })
                   }
                   onEdit={(r) =>
                     setEdit({
@@ -333,6 +361,11 @@ export function NewslettersPage() {
                       description: r.description ?? '',
                       parentIri: r.parent ?? null,
                       estimatedFrequency: r.estimatedFrequency ?? '',
+                      slug: r.slug ?? '',
+                      icon: r.icon ?? 'mail',
+                      color: r.color ?? '#94a3b8',
+                      isArchived: r.archived ?? false,
+                      isSubscribable: r.subscribable ?? true,
                       translations: r.translations ?? {},
                     })
                   }
@@ -427,6 +460,64 @@ export function NewslettersPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>{translate('newsletters.icon_label')}</Label>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="flex size-9 shrink-0 items-center justify-center rounded"
+                      style={{ color: edit.color, backgroundColor: `${edit.color}1f` }}
+                    >
+                      <DynamicIcon
+                        name={(edit.icon || 'mail') as Parameters<typeof DynamicIcon>[0]['name']}
+                        className="size-4"
+                      />
+                    </span>
+                    <Input
+                      value={edit.icon}
+                      placeholder="mail"
+                      onChange={(e) => setEdit({ ...edit, icon: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label>{translate('newsletters.color_label')}</Label>
+                  <Input
+                    type="color"
+                    value={edit.color}
+                    onChange={(e) => setEdit({ ...edit, color: e.target.value })}
+                    className="h-9 w-full p-1"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label>{translate('newsletters.slug_label')}</Label>
+                <Input
+                  value={edit.slug}
+                  placeholder={translate('newsletters.slug_placeholder')}
+                  onChange={(e) => setEdit({ ...edit, slug: e.target.value })}
+                />
+              </div>
+              <label className="flex items-center justify-between gap-2 py-1">
+                <span className="text-sm">
+                  {translate('newsletters.subscribable_label')}
+                  <span className="block text-xs text-muted-foreground">{translate('newsletters.subscribable_hint')}</span>
+                </span>
+                <Switch
+                  checked={edit.isSubscribable}
+                  onCheckedChange={(v) => setEdit({ ...edit, isSubscribable: v })}
+                />
+              </label>
+              <label className="flex items-center justify-between gap-2 py-1">
+                <span className="text-sm">
+                  {translate('newsletters.archived_label')}
+                  <span className="block text-xs text-muted-foreground">{translate('newsletters.archived_hint')}</span>
+                </span>
+                <Switch
+                  checked={edit.isArchived}
+                  onCheckedChange={(v) => setEdit({ ...edit, isArchived: v })}
+                />
+              </label>
             </div>
           ) : null}
           <DialogFooter>
@@ -504,6 +595,7 @@ function NewsletterNode({
         className={[
           'group flex items-center gap-2 py-2',
           draggingIri === iri ? 'opacity-40' : '',
+          node.archived ? 'opacity-50' : '',
           hint === 'inside' ? 'rounded bg-primary/10 ring-1 ring-primary/40' : '',
           hint === 'before' ? 'border-t-2 border-primary' : '',
           hint === 'after' ? 'border-b-2 border-primary' : '',
@@ -515,12 +607,31 @@ function NewsletterNode({
         ) : (
           <span className="inline-block size-4 shrink-0" />
         )}
+        <span
+          className="flex size-6 shrink-0 items-center justify-center rounded"
+          style={{ color: node.color ?? '#94a3b8', backgroundColor: `${node.color ?? '#94a3b8'}1f` }}
+        >
+          <DynamicIcon
+            name={(node.icon || 'mail') as Parameters<typeof DynamicIcon>[0]['name']}
+            className="size-3.5"
+          />
+        </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="truncate text-sm font-medium">{localize(node, 'title')}</span>
             {node.estimatedFrequency ? (
               <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                 {translate(`newsletters.frequency.${node.estimatedFrequency}`)}
+              </span>
+            ) : null}
+            {node.subscribable === false ? (
+              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                {translate('newsletters.badge_structure')}
+              </span>
+            ) : null}
+            {node.archived ? (
+              <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                {translate('newsletters.badge_archived')}
               </span>
             ) : null}
           </div>
