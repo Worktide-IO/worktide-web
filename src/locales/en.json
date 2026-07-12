@@ -1593,6 +1593,8 @@
   "newsletters.sender_name_hint": "Display name in recipients' inboxes. The sending address itself stays unchanged.",
   "newsletters.reply_to_label": "Reply-To",
   "newsletters.reply_to_hint": "Recipient replies go to this address. Empty = default.",
+  "newsletters.subscribers_badge": "{{count}} subscribers",
+  "newsletters.subscribers_tooltip": "{{active}} active · {{pending}} pending · {{revoked}} unsubscribed",
   "newsletters.send": "Send",
   "newsletters.subtopic": "Subtopic",
   "meeting_types.confirm_delete": "Delete \"{{title}}\"?",

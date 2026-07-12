@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, Loader2, Mail, Pencil, Plus, Send, Trash2 } from 'lucide-react';
 import { DynamicIcon } from 'lucide-react/dynamic';
@@ -74,6 +75,15 @@ const ROOT = '__root__';
 /** Matches the backend NewsletterFrequency enum; '' in the UI = null server-side. */
 const FREQUENCIES = ['weekly', 'biweekly', 'monthly', 'quarterly', 'yearly', 'irregular'] as const;
 const FREQ_NONE = '__none__';
+
+type SubscriberCounts = Record<string, { active: number; pending: number; revoked: number }>;
+
+/** Subscriber tallies per newsletter IRI (one grouped aggregate call, react-query-deduped). */
+async function fetchSubscriberCounts(): Promise<SubscriberCounts> {
+  const { data } = await api.get<{ counts: SubscriberCounts }>('/reports/newsletter-subscriber-counts');
+  // Empty result serialises as [] server-side; normalise to an object for lookups.
+  return Array.isArray(data.counts) ? {} : data.counts;
+}
 
 type DropZone = 'before' | 'after' | 'inside';
 
@@ -590,7 +600,13 @@ function NewsletterNode({
 }) {
   const { t: translate } = useTranslation();
   const localize = useLocalize();
+  const { data: subCounts } = useQuery({
+    queryKey: ['newsletter-subscriber-counts'],
+    queryFn: fetchSubscriberCounts,
+    staleTime: 60_000,
+  });
   const iri = iriOf(node);
+  const counts = subCounts?.[iri];
   const children = childrenByParent[iri] ?? [];
   const hint = dropHint?.iri === iri ? dropHint.zone : null;
   const zoneFrom = (e: DragEvent<HTMLDivElement>): DropZone => {
@@ -660,6 +676,18 @@ function NewsletterNode({
             {node.archived ? (
               <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
                 {translate('newsletters.badge_archived')}
+              </span>
+            ) : null}
+            {counts && (counts.active > 0 || counts.pending > 0) ? (
+              <span
+                className="shrink-0 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700"
+                title={translate('newsletters.subscribers_tooltip', {
+                  active: counts.active,
+                  pending: counts.pending,
+                  revoked: counts.revoked,
+                })}
+              >
+                {translate('newsletters.subscribers_badge', { count: counts.active })}
               </span>
             ) : null}
           </div>
