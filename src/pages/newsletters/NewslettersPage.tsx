@@ -49,6 +49,7 @@ type NewsletterRow = Row<{
   // (the setter-derived names). This asymmetry matches the rest of the app.
   archived?: boolean;
   subscribable?: boolean;
+  mandatory?: boolean;
   translations?: TranslationsMap | null;
 }>;
 
@@ -63,6 +64,7 @@ type EditState = {
   color: string;
   isArchived: boolean;
   isSubscribable: boolean;
+  isMandatory: boolean;
   translations: TranslationsMap;
 };
 
@@ -163,6 +165,7 @@ export function NewslettersPage() {
         color: edit.color.trim() || '#94a3b8',
         isArchived: edit.isArchived,
         isSubscribable: edit.isSubscribable,
+        isMandatory: edit.isMandatory,
         translations: edit.translations,
       };
       if (edit.id) {
@@ -351,6 +354,7 @@ export function NewslettersPage() {
                       color: '#94a3b8',
                       isArchived: false,
                       isSubscribable: true,
+                      isMandatory: false,
                       translations: {},
                     })
                   }
@@ -366,6 +370,7 @@ export function NewslettersPage() {
                       color: r.color ?? '#94a3b8',
                       isArchived: r.archived ?? false,
                       isSubscribable: r.subscribable ?? true,
+                      isMandatory: r.mandatory ?? false,
                       translations: r.translations ?? {},
                     })
                   }
@@ -510,6 +515,16 @@ export function NewslettersPage() {
               </label>
               <label className="flex items-center justify-between gap-2 py-1">
                 <span className="text-sm">
+                  {translate('newsletters.mandatory_label')}
+                  <span className="block text-xs text-muted-foreground">{translate('newsletters.mandatory_hint')}</span>
+                </span>
+                <Switch
+                  checked={edit.isMandatory}
+                  onCheckedChange={(v) => setEdit({ ...edit, isMandatory: v })}
+                />
+              </label>
+              <label className="flex items-center justify-between gap-2 py-1">
+                <span className="text-sm">
                   {translate('newsletters.archived_label')}
                   <span className="block text-xs text-muted-foreground">{translate('newsletters.archived_hint')}</span>
                 </span>
@@ -624,7 +639,12 @@ function NewsletterNode({
                 {translate(`newsletters.frequency.${node.estimatedFrequency}`)}
               </span>
             ) : null}
-            {node.subscribable === false ? (
+            {node.mandatory ? (
+              <span className="shrink-0 rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-700">
+                {translate('newsletters.badge_mandatory')}
+              </span>
+            ) : null}
+            {node.subscribable === false && !node.mandatory ? (
               <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                 {translate('newsletters.badge_structure')}
               </span>
