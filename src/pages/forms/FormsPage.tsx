@@ -56,6 +56,7 @@ type FormBlock = {
   labelI18n?: Record<string, string>;
   required?: boolean;
   options?: string[];
+  optionsI18n?: Record<string, string[]>; // per-locale option labels (index-aligned)
   placeholder?: string | null;
   mapsTo?: string | null;
   [k: string]: unknown;
@@ -288,6 +289,18 @@ export function FormsPage() {
         if (raw.trim() === '') delete li[locale];
         else li[locale] = raw;
         return { ...b, labelI18n: li };
+      });
+      return { ...f, blocks };
+    });
+  const setBlockOptionsI18n = (i: number, locale: string, list: string[]) =>
+    setForm((f) => {
+      if (!f) return f;
+      const blocks = f.blocks.map((b, j) => {
+        if (j !== i) return b;
+        const oi: Record<string, string[]> = { ...(b.optionsI18n ?? {}) };
+        if (list.length === 0) delete oi[locale];
+        else oi[locale] = list;
+        return { ...b, optionsI18n: oi };
       });
       return { ...f, blocks };
     });
@@ -566,11 +579,13 @@ export function FormsPage() {
                       <Textarea
                         rows={2}
                         className="text-sm"
-                        value={(b.options ?? []).join('\n')}
-                        placeholder={t('forms.options_hint')}
-                        onChange={(e) =>
-                          updateBlock(i, { options: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean) })
-                        }
+                        value={(fieldLang === LABEL_BASE ? (b.options ?? []) : (b.optionsI18n?.[fieldLang] ?? [])).join('\n')}
+                        placeholder={fieldLang === LABEL_BASE ? t('forms.options_hint') : (b.options ?? []).join(', ')}
+                        onChange={(e) => {
+                          const list = e.target.value.split('\n').map((s) => s.trim()).filter(Boolean);
+                          if (fieldLang === LABEL_BASE) updateBlock(i, { options: list });
+                          else setBlockOptionsI18n(i, fieldLang, list);
+                        }}
                       />
                     ) : null}
                     <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
