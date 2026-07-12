@@ -193,14 +193,14 @@ export function AiAgentsOverviewPage() {
       await aiTriage.accept(rec.id);
       const msg =
         rec.kind === 'marketing_social_draft'
-          ? 'Entwurf übernommen – Social-Post-Draft erstellt.'
+          ? t('ai_toast.draft_social')
           : rec.kind === 'customer_upgrade_outreach'
-            ? 'Übernommen – E-Mail-Entwurf erstellt (Versand erst nach Freigabe).'
+            ? t('ai_toast.draft_email')
             : rec.kind === 'research_suggestion'
-              ? 'Übernommen – Recherche-Mission angelegt.'
+              ? t('ai_toast.research_mission')
               : rec.kind === 'agent_action'
-                ? 'Übernommen – Entwurf erstellt (Versand/Publish erst nach Freigabe).'
-                : 'Empfehlung übernommen.';
+                ? t('ai_toast.draft_generic')
+                : t('ai_toast.recommendation_adopted');
       toast.success(msg);
       await query.refetch();
       if (rec.kind === 'marketing_social_draft') {

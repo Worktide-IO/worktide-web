@@ -70,7 +70,7 @@ function toIso(local: string): string | null {
 }
 
 /**
- * The Composer — "einmal verfassen → in mehrere Netzwerke veröffentlichen".
+ * The Composer — translate('social_composer.tagline').
  *
  * Create mode lets you write the shared text, pick target networks (each with
  * an optional per-network variant), set a schedule, and save a draft. Publishing

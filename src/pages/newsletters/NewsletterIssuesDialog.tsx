@@ -41,7 +41,7 @@ const MERGE_PATCH = { headers: { 'Content-Type': 'application/merge-patch+json' 
 /**
  * Composes, drafts + sends newsletter issues for one node. Drafts can be saved,
  * edited, deleted and sent later; sent issues are read-only history (and can be
- * duplicated into a fresh draft). "Unterthemen einschließen" fans the send out
+ * duplicated into a fresh draft). translate('newsletter_issues.include_subtopics') fans the send out
  * to descendant topics (deduped server-side). Sending is confirmed (bulk mail);
  * a disabled egress module surfaces as a clear error.
  */

@@ -34,7 +34,7 @@ type Props = {
  * offers "+ „<query>" anlegen" which POSTs a new Industry and selects it.
  * Mirrors {@link ./TagPicker} but single-valued.
  */
-export function IndustryCombobox({ value, onChange, placeholder = 'Branche wählen…', className }: Props) {
+export function IndustryCombobox({ value, onChange, placeholder, className }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -106,7 +106,7 @@ export function IndustryCombobox({ value, onChange, placeholder = 'Branche wähl
           {selected ? (
             <span className="flex-1 truncate text-left">{selected.name}</span>
           ) : (
-            <span className="flex-1 truncate text-left text-muted-foreground">{placeholder}</span>
+            <span className="flex-1 truncate text-left text-muted-foreground">{placeholder ?? t('combobox.select_industry')}</span>
           )}
           {value ? (
             <span
@@ -126,7 +126,7 @@ export function IndustryCombobox({ value, onChange, placeholder = 'Branche wähl
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] min-w-64 p-0" align="start">
         <Command>
-          <CommandInput placeholder="Suchen oder anlegen…" value={query} onValueChange={setQuery} />
+          <CommandInput placeholder={t('combobox.search_or_create')} value={query} onValueChange={setQuery} />
           <CommandList>
             <CommandEmpty>Tippen, um eine neue Branche anzulegen.</CommandEmpty>
             {industries.length > 0 ? (

@@ -286,7 +286,7 @@ function PortalSlaCard() {
         onError: (err) => {
           const status = (err as { response?: { status?: number } })?.response?.status;
           toast.error(
-            status === 403 ? 'Keine Berechtigung — nur Admins können die SLA-Richtlinie ändern.' : 'Konnte nicht speichern.',
+            status === 403 ? t('perm.sla') : 'Konnte nicht speichern.',
           );
         },
       },

@@ -167,7 +167,7 @@ function WorkspaceForm() {
           const status = (err as { response?: { status?: number } })?.response?.status;
           toast.error(
             status === 403
-              ? 'Keine Berechtigung — nur Admins können Workspace-Einstellungen ändern.'
+              ? t('perm.workspace')
               : 'Konnte nicht speichern.',
           );
         },
@@ -314,7 +314,7 @@ function WorkspaceSecurityCard() {
           const status = (err as { response?: { status?: number } })?.response?.status;
           toast.error(
             status === 403
-              ? 'Keine Berechtigung — nur Admins können Sicherheits-Einstellungen ändern.'
+              ? t('perm.security')
               : 'Konnte nicht speichern.',
           );
         },
@@ -428,7 +428,7 @@ function WorkspaceProjectNumberCard() {
           const status = (err as { response?: { status?: number } })?.response?.status;
           toast.error(
             status === 403
-              ? 'Keine Berechtigung — nur Admins können dieses Pattern ändern.'
+              ? t('perm.pattern')
               : 'Konnte nicht speichern.',
           );
         },

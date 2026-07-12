@@ -340,6 +340,7 @@ export function TimeEntriesListPage() {
  * offline is queued and replayed on reconnect instead of silently lost.
  */
 function BilledCell({ entry, isOwn }: { entry: Row<TimeEntryJsonld>; isOwn: boolean }) {
+  const { t: translate } = useTranslation();
   const { t } = useTranslation();
   const invalidate = useInvalidate();
   const { mutate, isPending } = useResilientMutation();
@@ -377,8 +378,8 @@ function BilledCell({ entry, isOwn }: { entry: Row<TimeEntryJsonld>; isOwn: bool
       const status = (err as { response?: { status?: number } })?.response?.status;
       toast.error(
         status === 403
-          ? 'Keine Berechtigung — Abrechnungsstatus ist in diesem Workspace gesperrt.'
-          : 'Konnte den Abrechnungsstatus nicht ändern.',
+          ? translate('perm.billing_locked')
+          : translate('toast.could_not_change_billing_status'),
       );
     }
   };

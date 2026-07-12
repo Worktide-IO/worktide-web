@@ -46,7 +46,7 @@ function todayIso() {
 }
 
 /**
- * "Wie viel schließen wir pro Woche ab?" — Throughput als Balken je Woche
+ * t('reports.throughput_q') — Throughput als Balken je Woche
  * (erledigte Aufgaben nach closedOn) plus ein gleitender 4-Wochen-Schnitt als
  * Linie, der den Trend glättet. Reine Rate — Ausschläge nach unten = Engpass.
  * Nutzt die resolved-Serie des created-vs-resolved-Reports.
