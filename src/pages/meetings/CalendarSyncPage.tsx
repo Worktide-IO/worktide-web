@@ -76,7 +76,7 @@ export function CalendarSyncPage() {
   };
 
   const disconnect = async () => {
-    if (!conn?.id || !window.confirm('Kalenderverbindung entfernen?')) return;
+    if (!conn?.id || !window.confirm(t('calendar_sync.confirm_remove'))) return;
     try {
       await api.delete(`/staff_calendar_connections/${conn.id}`);
       toast.success(t('toast.connection_removed'));
@@ -90,56 +90,54 @@ export function CalendarSyncPage() {
     <div className="max-w-2xl space-y-4">
       <div>
         <h2 className="flex items-center gap-2 text-2xl">
-          <RefreshCw className="size-6 text-muted-foreground" /> Kalender-Sync
+          <RefreshCw className="size-6 text-muted-foreground" /> {t('calendar_sync.heading')}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Verbinde deinen Kalender per ICS-Feed — dann werden Buchungs-Slots nur angeboten, wenn du
-          wirklich frei bist. Der Feed wird alle ~10 Minuten abgeglichen.
+          {t('calendar_sync.subtitle')}
         </p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            {conn?.configured ? 'Verbundener Kalender' : 'Kalender verbinden'}
+            {conn?.configured ? t('calendar_sync.connected_title') : t('calendar_sync.connect_title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {conn?.configured ? (
             <div className="flex items-center gap-2 text-sm">
-              <Badge variant="secondary" className="gap-1"><CheckCircle2 className="size-3.5" /> Verbunden</Badge>
+              <Badge variant="secondary" className="gap-1"><CheckCircle2 className="size-3.5" /> {t('calendar_sync.connected_badge')}</Badge>
               <span className="text-muted-foreground">
                 {conn.lastSyncedAt
-                  ? `Zuletzt synchronisiert: ${new Date(conn.lastSyncedAt).toLocaleString(intlLocale())}`
-                  : 'Noch nicht synchronisiert'}
+                  ? t('calendar_sync.last_synced', { date: new Date(conn.lastSyncedAt).toLocaleString(intlLocale()) })
+                  : t('calendar_sync.not_synced')}
               </span>
             </div>
           ) : null}
           {conn?.lastError ? (
-            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">Letzter Fehler: {conn.lastError}</p>
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{t('calendar_sync.last_error', { error: conn.lastError })}</p>
           ) : null}
 
           <div className="space-y-1">
-            <Label>{conn?.configured ? 'ICS-URL ersetzen' : 'ICS-Feed-URL'}</Label>
+            <Label>{conn?.configured ? t('calendar_sync.replace_url') : t('calendar_sync.feed_url')}</Label>
             <Input
               value={url}
               placeholder="https://calendar.google.com/…/basic.ics"
               onChange={(e) => setUrl(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Die geheime iCal-/ICS-Export-URL aus Google Kalender, Outlook oder Apple Kalender. Wird
-              aus Sicherheitsgründen nicht erneut angezeigt.
+              {t('calendar_sync.url_hint')}
             </p>
           </div>
 
           <div className="flex gap-2">
             <Button type="button" onClick={save} disabled={busy}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              {conn?.configured ? 'Aktualisieren' : 'Verbinden'}
+              {conn?.configured ? t('calendar_sync.update') : t('calendar_sync.connect')}
             </Button>
             {conn?.configured ? (
               <Button type="button" variant="ghost" className="text-destructive" onClick={disconnect}>
-                Entfernen
+                {t('calendar_sync.remove')}
               </Button>
             ) : null}
           </div>

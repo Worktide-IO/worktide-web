@@ -1,10 +1,13 @@
 import { useList } from '@refinedev/core';
 import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, CheckCircle2, FileSignature, Loader2, Pencil } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, FileSignature, Languages, Loader2, Pencil } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { api } from '@/lib/api';
+import { LocalizedFields, type TranslationsMap } from '@/components/LocalizedFields';
+import { useSupportedLanguages, useLocalize } from '@/lib/languages';
 import type { Row } from '@/lib/refine';
 import {
   AGREEMENT_STATUS_BADGE,
@@ -106,6 +109,58 @@ export function CustomerAgreementsTab({
   const [edit, setEdit] = useState<EditState | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Agreement types are WORKSPACE-GLOBAL config (shared across all customers);
+  // this tab only *applies* a type to this customer. The "manage types" dialog
+  // edits the type itself (name/description + translations) — a change here
+  // affects every customer's rows.
+  const { languages } = useSupportedLanguages();
+  const localize = useLocalize();
+  const [typesOpen, setTypesOpen] = useState(false);
+  const [typeEdit, setTypeEdit] = useState<{
+    id: string;
+    name: string;
+    description: string;
+    translations: TranslationsMap;
+  } | null>(null);
+  const [savingType, setSavingType] = useState(false);
+
+  const saveType = async () => {
+    if (!typeEdit) return;
+    if (!typeEdit.name.trim()) {
+      toast.error(t('customer_agreements.type_name_required'));
+      return;
+    }
+    setSavingType(true);
+    try {
+      await api.patch(
+        `/agreement_types/${typeEdit.id}`,
+        {
+          name: typeEdit.name.trim(),
+          description: typeEdit.description.trim() || null,
+          translations: typeEdit.translations,
+        },
+        { headers: { 'Content-Type': 'application/merge-patch+json' } },
+      );
+      toast.success(t('toast.saved'));
+      setTypeEdit(null);
+      await typesQuery.refetch();
+    } catch {
+      toast.error(t('toast.save_failed'));
+    } finally {
+      setSavingType(false);
+    }
+  };
+
+  const openTypeEdit = (type: Row<AgreementTypeJsonld>) => {
+    if (!type.id) return;
+    setTypeEdit({
+      id: type.id,
+      name: type.name,
+      description: (type as unknown as { description?: string | null }).description ?? '',
+      translations: (type as unknown as { translations?: TranslationsMap }).translations ?? {},
+    });
+  };
+
   const openEdit = (type: Row<AgreementTypeJsonld>) => {
     const head = bySlug[type.slug];
     setEdit({
@@ -158,9 +213,14 @@ export function CustomerAgreementsTab({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileSignature className="size-4 text-muted-foreground" /> {t('customer_agreements.heading')}
-        </CardTitle>
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="flex items-center gap-2">
+            <FileSignature className="size-4 text-muted-foreground" /> {t('customer_agreements.heading')}
+          </CardTitle>
+          <Button type="button" variant="outline" size="sm" className="h-7" onClick={() => setTypesOpen(true)}>
+            <Languages className="size-3" /> {t('customer_agreements.manage_types')}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -199,7 +259,7 @@ export function CustomerAgreementsTab({
                         ) : missingMandatory ? (
                           <AlertTriangle className="size-4 text-amber-500" />
                         ) : null}
-                        {type.name}
+                        {localize(type, 'name')}
                         {type.isMandatory ? (
                           <Badge variant="outline" className="text-[10px] uppercase">
                             {t('customer_agreements.mandatory')}
@@ -241,7 +301,7 @@ export function CustomerAgreementsTab({
       <Dialog open={edit !== null} onOpenChange={(o) => !o && setEdit(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{edit?.type.name}</DialogTitle>
+            <DialogTitle>{edit ? localize(edit.type, 'name') : ''}</DialogTitle>
             <DialogDescription>
               {t('customer_agreements.dialog_desc')}
             </DialogDescription>
@@ -334,6 +394,81 @@ export function CustomerAgreementsTab({
             </Button>
             <Button type="button" onClick={save} disabled={saving}>
               {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+              {t('action.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Workspace-wide: manage the agreement TYPE catalog (name/description +
+          translations). A change here affects every customer's rows. */}
+      <Dialog open={typesOpen} onOpenChange={(o) => !o && setTypesOpen(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('customer_agreements.manage_types')}</DialogTitle>
+            <DialogDescription>{t('customer_agreements.manage_types_desc')}</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[50vh] space-y-1 overflow-y-auto">
+            {(types?.data ?? []).map((type) => (
+              <div
+                key={type['@id']}
+                className="flex items-center justify-between gap-2 rounded-md border px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium">{localize(type, 'name')}</div>
+                  <div className="truncate text-xs text-muted-foreground">{type.slug}</div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 shrink-0"
+                  onClick={() => openTypeEdit(type)}
+                >
+                  <Pencil className="size-3" /> {t('action.edit')}
+                </Button>
+              </div>
+            ))}
+            {(types?.data ?? []).length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                {t('customer_agreements.empty')}
+              </p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setTypesOpen(false)}>
+              {t('action.close')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Single-type editor (workspace-wide). */}
+      <Dialog open={typeEdit !== null} onOpenChange={(o) => !o && setTypeEdit(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('customer_agreements.edit_type')}</DialogTitle>
+            <DialogDescription>{t('customer_agreements.manage_types_desc')}</DialogDescription>
+          </DialogHeader>
+          {typeEdit ? (
+            <LocalizedFields
+              fields={[
+                { key: 'name', label: t('customer_agreements.type_name'), autoFocus: true },
+                { key: 'description', label: t('customer_agreements.type_description'), multiline: true },
+              ]}
+              locales={languages}
+              base={{ name: typeEdit.name, description: typeEdit.description }}
+              onBaseChange={(k, v) => setTypeEdit({ ...typeEdit, [k]: v } as typeof typeEdit)}
+              translations={typeEdit.translations}
+              onTranslationsChange={(translations) => setTypeEdit({ ...typeEdit, translations })}
+            />
+          ) : null}
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setTypeEdit(null)} disabled={savingType}>
+              {t('action.cancel')}
+            </Button>
+            <Button type="button" onClick={saveType} disabled={savingType}>
+              {savingType ? <Loader2 className="size-4 animate-spin" /> : null}
               {t('action.save')}
             </Button>
           </DialogFooter>
