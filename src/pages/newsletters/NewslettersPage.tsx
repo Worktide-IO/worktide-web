@@ -38,6 +38,7 @@ type NewsletterRow = Row<{
   description?: string | null;
   parent?: string | null; // parent IRI or null for roots
   position?: number;
+  estimatedFrequency?: string | null;
   translations?: TranslationsMap | null;
 }>;
 
@@ -46,10 +47,15 @@ type EditState = {
   title: string;
   description: string;
   parentIri: string | null;
+  estimatedFrequency: string; // '' = not stated
   translations: TranslationsMap;
 };
 
 const ROOT = '__root__';
+
+/** Matches the backend NewsletterFrequency enum; '' in the UI = null server-side. */
+const FREQUENCIES = ['weekly', 'biweekly', 'monthly', 'quarterly', 'yearly', 'irregular'] as const;
+const FREQ_NONE = '__none__';
 
 type DropZone = 'before' | 'after' | 'inside';
 
@@ -136,7 +142,13 @@ export function NewslettersPage() {
       if (edit.id) {
         await api.patch(
           `/newsletters/${edit.id}`,
-          { title: t, description: edit.description.trim() || null, parent: edit.parentIri, translations: edit.translations },
+          {
+            title: t,
+            description: edit.description.trim() || null,
+            parent: edit.parentIri,
+            estimatedFrequency: edit.estimatedFrequency || null,
+            translations: edit.translations,
+          },
           { headers: { 'Content-Type': 'application/merge-patch+json' } },
         );
         toast.success(translate('toast.saved'));
@@ -146,6 +158,7 @@ export function NewslettersPage() {
           title: t,
           description: edit.description.trim() || null,
           parent: edit.parentIri,
+          estimatedFrequency: edit.estimatedFrequency || null,
           translations: edit.translations,
           position: siblings,
           // Root needs an explicit workspace; children inherit it server-side.
@@ -310,13 +323,16 @@ export function NewslettersPage() {
                   depth={0}
                   iriOf={iriOf}
                   childrenByParent={childrenByParent}
-                  onAddChild={(parentIri) => setEdit({ title: '', description: '', parentIri, translations: {} })}
+                  onAddChild={(parentIri) =>
+                    setEdit({ title: '', description: '', parentIri, estimatedFrequency: '', translations: {} })
+                  }
                   onEdit={(r) =>
                     setEdit({
                       id: idOf(r),
                       title: r.title,
                       description: r.description ?? '',
                       parentIri: r.parent ?? null,
+                      estimatedFrequency: r.estimatedFrequency ?? '',
                       translations: r.translations ?? {},
                     })
                   }
@@ -385,6 +401,27 @@ export function NewslettersPage() {
                     {parentOptions.map((o) => (
                       <SelectItem key={o.iri} value={o.iri}>
                         {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>{translate('newsletters.frequency_label')}</Label>
+                <Select
+                  value={edit.estimatedFrequency === '' ? FREQ_NONE : edit.estimatedFrequency}
+                  onValueChange={(v) =>
+                    setEdit({ ...edit, estimatedFrequency: v === FREQ_NONE ? '' : v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={FREQ_NONE}>{translate('newsletters.frequency_none')}</SelectItem>
+                    {FREQUENCIES.map((f) => (
+                      <SelectItem key={f} value={f}>
+                        {translate(`newsletters.frequency.${f}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -479,7 +516,14 @@ function NewsletterNode({
           <span className="inline-block size-4 shrink-0" />
         )}
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium">{localize(node, 'title')}</div>
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-medium">{localize(node, 'title')}</span>
+            {node.estimatedFrequency ? (
+              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                {translate(`newsletters.frequency.${node.estimatedFrequency}`)}
+              </span>
+            ) : null}
+          </div>
           {node.description ? (
             <div className="truncate text-xs text-muted-foreground">{localize(node, 'description')}</div>
           ) : null}
