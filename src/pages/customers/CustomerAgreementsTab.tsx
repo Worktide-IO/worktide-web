@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, CheckCircle2, FileSignature, Loader2, Pencil } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -49,7 +50,7 @@ import { Textarea } from '@/components/ui/textarea';
 function fmtDate(value: string | null | undefined): string {
   if (!value) return '—';
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('de-DE');
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString(intlLocale());
 }
 
 type EditState = {

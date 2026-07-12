@@ -1,4 +1,5 @@
 import { useList, useUpdate } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { CalendarDays, Video } from 'lucide-react';
 import { toast } from 'sonner';
@@ -28,9 +29,9 @@ type BookingRow = Row<{
   notes?: string | null;
 }>;
 
-const fmt = new Intl.DateTimeFormat('de-DE', {
+const fmt = { format: (v: Date | number) => new Intl.DateTimeFormat(intlLocale(), {
   weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
-});
+}).format(v) };
 
 /** Read-only list of upcoming/past bookings with a staff cancel action. */
 export function BookingsPage() {

@@ -1,4 +1,5 @@
 import { Copy, Loader2, Pencil, Send, Trash2, X } from 'lucide-react';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -221,7 +222,7 @@ export function NewsletterIssuesDialog({
     }
   };
 
-  const dateFmt = new Intl.DateTimeFormat('de-DE', {
+  const dateFmt = new Intl.DateTimeFormat(intlLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

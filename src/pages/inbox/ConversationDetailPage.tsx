@@ -1,4 +1,5 @@
 import { useInvalidate, useOne } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Mail, Paperclip, Send } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -247,7 +248,7 @@ function MessageBubble({ bubble }: { bubble: Bubble }) {
           {isInbound ? e?.senderRaw ?? t('conversation.unknown_sender') : `→ ${m?.recipientRaw ?? '(unknown)'}`}
         </span>
         <span className="text-xs text-muted-foreground ml-auto">
-          {bubble.at.toLocaleString('de-DE')}
+          {bubble.at.toLocaleString(intlLocale())}
         </span>
         {!isInbound && m?.status ? (
           <Badge variant="outline" className="text-[10px]">

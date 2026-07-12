@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { CalendarOff } from 'lucide-react';
 
@@ -7,7 +8,7 @@ import type { Row } from '@/lib/refine';
 
 type ContactAbsenceRow = Row<{ '@id': string; startsOn: string; endsOn: string; note?: string | null }>;
 
-const dateFmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const dateFmt = { format: (v: Date | number) => new Intl.DateTimeFormat(intlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' }).format(v) };
 const fmtRange = (a: string, b: string) =>
   a.slice(0, 10) === b.slice(0, 10)
     ? dateFmt.format(new Date(a))

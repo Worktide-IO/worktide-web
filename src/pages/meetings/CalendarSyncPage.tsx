@@ -1,4 +1,5 @@
 import { useGetIdentity, useList } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
 import { useState } from 'react';
@@ -109,7 +110,7 @@ export function CalendarSyncPage() {
               <Badge variant="secondary" className="gap-1"><CheckCircle2 className="size-3.5" /> Verbunden</Badge>
               <span className="text-muted-foreground">
                 {conn.lastSyncedAt
-                  ? `Zuletzt synchronisiert: ${new Date(conn.lastSyncedAt).toLocaleString('de-DE')}`
+                  ? `Zuletzt synchronisiert: ${new Date(conn.lastSyncedAt).toLocaleString(intlLocale())}`
                   : 'Noch nicht synchronisiert'}
               </span>
             </div>

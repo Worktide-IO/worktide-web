@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import type { EventChangeArg, EventClickArg, EventDropArg, EventInput } from '@fullcalendar/core';
 import type { EventReceiveArg } from '@fullcalendar/interaction';
@@ -140,13 +141,13 @@ export function TeamPlannerPage() {
     if (!api) return;
     const v = api.view;
     if (view === 'resourceTimeGridDay') {
-      setPeriodLabel(v.currentStart.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }));
+      setPeriodLabel(v.currentStart.toLocaleDateString(intlLocale(), { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }));
     } else {
       const start = v.currentStart;
       const end = new Date(v.currentEnd.getTime() - 1);
       const week = weekOfYear(start);
-      const startStr = start.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
-      const endStr = end.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
+      const startStr = start.toLocaleDateString(intlLocale(), { day: '2-digit', month: 'short' });
+      const endStr = end.toLocaleDateString(intlLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
       setPeriodLabel(`KW ${week} · ${startStr} – ${endStr}`);
     }
   };
