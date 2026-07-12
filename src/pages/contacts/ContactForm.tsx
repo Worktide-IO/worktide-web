@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router';
 
 import type { ContactJsonld } from '@/api/types/contact/Jsonld';
 import { CustomerCombobox } from '@/components/CustomerCombobox';
+import { TagPicker } from '@/components/TagPicker';
+import { TagSuggestButton } from '@/components/TagSuggestButton';
 import type { Row } from '@/lib/refine';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,6 +54,7 @@ export function ContactForm(props: Mode) {
     refineCore: { onFinish, formLoading, query },
     register,
     control,
+    watch,
     handleSubmit,
     formState: { isSubmitting },
   } = useForm<Row<ContactJsonld>>({
@@ -238,6 +241,39 @@ export function ContactForm(props: Mode) {
                       onCheckedChange={field.onChange}
                     />
                   )}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>{t('contact_form.field_tags')}</Label>
+                <Controller
+                  name="tags"
+                  control={control}
+                  render={({ field }) => {
+                    const val = (field.value as string[] | undefined) ?? [];
+                    return (
+                      <div className="space-y-2">
+                        <TagPicker value={val} onChange={field.onChange} scope="contact" />
+                        <TagSuggestButton
+                          scope="contact"
+                          value={val}
+                          onChange={field.onChange}
+                          getText={() =>
+                            [
+                              watch('firstName'),
+                              watch('lastName'),
+                              watch('position'),
+                              watch('title'),
+                              watch('email'),
+                              watch('notes'),
+                            ]
+                              .filter(Boolean)
+                              .join(' • ')
+                          }
+                        />
+                      </div>
+                    );
+                  }}
                 />
               </div>
             </CardContent>

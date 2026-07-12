@@ -149,6 +149,32 @@ export const aiAgent = {
     api.post('/agent/plan-distribution', { content, workspace }).then((r) => r.data),
 };
 
+/** One existing tag the agent picked (resolved to its IRI so it can be attached directly). */
+export type SuggestedTag = { id: string; iri: string; name: string; color: string };
+
+export type TagSuggestionResult = {
+  tags: SuggestedTag[];
+  suggestedNewTags: string[];
+  reasoning?: string | null;
+  model?: string | null;
+};
+
+/** Either an existing record (server builds the context) or an unsaved draft. */
+export type TagSuggestionInput =
+  | { resource: string }
+  | { target: string; text: string; workspace: string };
+
+/**
+ * On-demand tag suggestions for any taggable record. Like the triage endpoints
+ * this is a plain Symfony controller (not in the generated client) — it runs the
+ * LLM synchronously and returns the proposal inline. Nothing is applied server
+ * side; the caller attaches chosen tags via the normal `tags` IRI field.
+ */
+export const aiTags = {
+  suggest: (input: TagSuggestionInput): Promise<TagSuggestionResult> =>
+    api.post('/ai/suggest-tags', input).then((r) => r.data as TagSuggestionResult),
+};
+
 /** Best-effort extraction of a human-readable error from an axios failure. */
 export function aiErrorMessage(err: unknown, fallback: string): string {
   const data = (err as { response?: { data?: Record<string, unknown> } })?.response?.data;

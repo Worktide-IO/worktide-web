@@ -14,7 +14,9 @@ import type { Row } from '@/lib/refine';
  * scope-filter is client-side because Tag entries with `scope: 'any'`
  * are valid everywhere and the API search filter is "exact".
  */
-export function useTags(scope?: 'project' | 'task' | 'customer') {
+export function useTags(
+  scope?: 'project' | 'task' | 'customer' | 'contact' | 'lead' | 'product' | 'document' | 'conversation',
+) {
   const { result, query } = useList<Row<TagJsonld>>({
     resource: 'tags',
     pagination: { mode: 'off' },
