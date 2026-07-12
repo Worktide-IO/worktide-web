@@ -13,11 +13,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 
-type NewsletterSettings = { doubleOptIn?: boolean };
+type NewsletterSettings = { doubleOptIn?: boolean; senderName?: string; replyTo?: string };
 type Settings = Record<string, unknown> & { newsletter?: NewsletterSettings };
 
 /**
@@ -38,10 +40,16 @@ export function NewsletterSettingsDialog({ open, onOpenChange }: { open: boolean
 
   const settings: Settings = workspace?.settings ?? {};
   const [doubleOptIn, setDoubleOptIn] = useState(false);
+  const [senderName, setSenderName] = useState('');
+  const [replyTo, setReplyTo] = useState('');
 
   // Seed from saved settings once the workspace loads / dialog opens.
   useEffect(() => {
-    if (open) setDoubleOptIn(settings.newsletter?.doubleOptIn === true);
+    if (open) {
+      setDoubleOptIn(settings.newsletter?.doubleOptIn === true);
+      setSenderName(settings.newsletter?.senderName ?? '');
+      setReplyTo(settings.newsletter?.replyTo ?? '');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, workspace]);
 
@@ -52,7 +60,15 @@ export function NewsletterSettingsDialog({ open, onOpenChange }: { open: boolean
         resource: 'workspaces',
         id: wsId,
         values: {
-          settings: { ...settings, newsletter: { ...(settings.newsletter ?? {}), doubleOptIn } },
+          settings: {
+            ...settings,
+            newsletter: {
+              ...(settings.newsletter ?? {}),
+              doubleOptIn,
+              senderName: senderName.trim() || undefined,
+              replyTo: replyTo.trim() || undefined,
+            },
+          },
         },
         successNotification: false,
       },
@@ -81,6 +97,27 @@ export function NewsletterSettingsDialog({ open, onOpenChange }: { open: boolean
             </span>
             <Switch checked={doubleOptIn} onCheckedChange={setDoubleOptIn} />
           </label>
+          <div className="space-y-1">
+            <Label htmlFor="nl-sender">{t('newsletters.sender_name_label')}</Label>
+            <Input
+              id="nl-sender"
+              value={senderName}
+              placeholder={t('newsletters.sender_name_placeholder')}
+              onChange={(e) => setSenderName(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">{t('newsletters.sender_name_hint')}</p>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="nl-replyto">{t('newsletters.reply_to_label')}</Label>
+            <Input
+              id="nl-replyto"
+              type="email"
+              value={replyTo}
+              placeholder="team@example.com"
+              onChange={(e) => setReplyTo(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">{t('newsletters.reply_to_hint')}</p>
+          </div>
         </div>
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={mutation.isPending}>
