@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Inbox as InboxIcon, Loader2, Mailbox } from 'lucide-react';
@@ -195,7 +196,7 @@ export function ConversationsListPage() {
                       <span className="truncate text-sm">{c.senderRaw ?? '—'}</span>
                       <span className="truncate font-medium">{c.subject || '(no subject)'}</span>
                       <span className="text-xs text-muted-foreground">
-                        {c.lastEventAt ? new Date(c.lastEventAt).toLocaleString('de-DE') : '—'}
+                        {c.lastEventAt ? new Date(c.lastEventAt).toLocaleString(intlLocale()) : '—'}
                       </span>
                     </div>
                   );

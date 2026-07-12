@@ -1,4 +1,5 @@
 import { useGetIdentity } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, ListChecks, Send, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -236,7 +237,7 @@ export function ProjectStatusUpdatesTab({ projectIri }: { projectIri: string }) 
                       {u.title ? <span className="font-medium">{u.title}</span> : null}
                       <span className="ml-auto text-xs text-muted-foreground">
                         {author ? userDisplayName(author) : t('status_updates.unknown_author')}
-                        {u.createdAt ? ` · ${new Date(u.createdAt).toLocaleDateString('de-DE')}` : ''}
+                        {u.createdAt ? ` · ${new Date(u.createdAt).toLocaleDateString(intlLocale())}` : ''}
                       </span>
                       {mine ? (
                         <Button

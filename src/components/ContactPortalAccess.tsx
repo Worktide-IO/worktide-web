@@ -1,4 +1,5 @@
 import { useInvalidate, useOne } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { KeyRound, Mail, ShieldCheck, ShieldOff } from 'lucide-react';
 import { useState } from 'react';
@@ -79,7 +80,7 @@ export function ContactPortalAccess({ contactId }: { contactId: string }) {
 
             {invitedAt ? (
               <p className="text-sm text-muted-foreground">
-                {t('contact_portal.invited_on', { date: new Date(invitedAt).toLocaleDateString('de-DE') })}
+                {t('contact_portal.invited_on', { date: new Date(invitedAt).toLocaleDateString(intlLocale()) })}
               </p>
             ) : (
               <p className="text-sm text-amber-700 dark:text-amber-400">

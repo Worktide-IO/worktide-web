@@ -1,4 +1,5 @@
 import { Draggable } from '@fullcalendar/interaction';
+import { intlLocale } from '@/lib/intl';
 import { Calendar, Flag, GripVertical } from 'lucide-react';
 import { useEffect, useMemo, useRef } from 'react';
 
@@ -129,7 +130,7 @@ export function BacklogTray({
                     <span className="font-mono">{t.identifier}</span>
                     {minutes ? <span>· {minutes} min</span> : null}
                     {t.dueOn ? (
-                      <span>· {new Date(t.dueOn).toLocaleDateString('de-DE')}</span>
+                      <span>· {new Date(t.dueOn).toLocaleDateString(intlLocale())}</span>
                     ) : null}
                   </div>
                 </div>

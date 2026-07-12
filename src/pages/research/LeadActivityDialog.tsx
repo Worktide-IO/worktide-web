@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowRight,
@@ -146,7 +147,7 @@ function formatDate(iso?: string): string {
   const d = new Date(iso);
   return Number.isNaN(d.getTime())
     ? ''
-    : d.toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
+    : d.toLocaleString(intlLocale(), { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 /** Human one-liner from the activity's payload/outcome. */

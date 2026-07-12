@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { intlLocale } from '@/lib/intl';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -42,7 +43,7 @@ function thisMonth(): string {
 }
 
 function fmtEur(cents: number): string {
-  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+  return new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(cents / 100);
 }
 
 /**

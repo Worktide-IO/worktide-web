@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { Activity, CheckCircle2, Loader2, Plug, Power, Trash2, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -234,7 +235,7 @@ function ActiveSourceRow({
         ) : lastSynced ? (
           <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
             <Activity className="size-3 shrink-0" />
-            {translate('sources.last_sync', { time: new Date(lastSynced).toLocaleString('de-DE') })}
+            {translate('sources.last_sync', { time: new Date(lastSynced).toLocaleString(intlLocale()) })}
           </div>
         ) : (
           <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">

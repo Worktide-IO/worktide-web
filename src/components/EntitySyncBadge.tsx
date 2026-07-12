@@ -1,4 +1,5 @@
 import { ExternalLink, Globe, Ticket, Webhook } from 'lucide-react';
+import { intlLocale } from '@/lib/intl';
 import { cn } from '@/lib/utils';
 
 /**
@@ -53,7 +54,7 @@ export function EntitySyncBadge({
   const Icon = brand.icon ?? null;
   const title = [
     `${brand.label} · ${externalId}`,
-    lastSyncedAt ? `Letzter Sync: ${new Date(lastSyncedAt).toLocaleString('de-DE')}` : 'Noch nicht synchronisiert',
+    lastSyncedAt ? `Letzter Sync: ${new Date(lastSyncedAt).toLocaleString(intlLocale())}` : 'Noch nicht synchronisiert',
     lastError ? `Fehler: ${lastError}` : null,
   ]
     .filter(Boolean)

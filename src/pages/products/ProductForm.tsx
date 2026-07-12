@@ -1,4 +1,5 @@
 import { useList, useInvalidate } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { useForm } from '@refinedev/react-hook-form';
 import { ArrowLeft, Check, Loader2, Plus, Save, Sparkles, Tag, X } from 'lucide-react';
@@ -425,7 +426,7 @@ function ProductVersionsCard({
                     </Badge>
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {v.releaseDate ? new Date(v.releaseDate).toLocaleDateString('de-DE') : '—'}
+                    {v.releaseDate ? new Date(v.releaseDate).toLocaleDateString(intlLocale()) : '—'}
                   </span>
                 </li>
               );

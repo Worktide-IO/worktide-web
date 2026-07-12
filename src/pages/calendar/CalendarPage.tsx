@@ -4,6 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import deLocale from '@fullcalendar/core/locales/de';
 import { CalendarDays, Wifi, WifiOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,7 +40,7 @@ type AbsenceContactRow = Row<{ '@id': string; firstName?: string; lastName?: str
  * the user lives anyway for any deeper context. The board view will scroll
  * to the right column automatically once we wire the deep-link later.
  *
- * Locale + first-day-of-week are hard-coded to de-DE / Monday for now
+ * Locale follows the app language (i18n); first-day-of-week is Monday
  * (matches the seed workspace). A future iteration takes those from
  * `Workspace.locale` / `Workspace.timezone`.
  */
@@ -224,7 +225,7 @@ export function CalendarPage() {
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
               initialView="dayGridMonth"
-              locale="de"
+              locale={i18n.language === 'de' ? deLocale : 'en'}
               firstDay={1}
               height="auto"
               headerToolbar={{

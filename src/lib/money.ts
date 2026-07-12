@@ -4,10 +4,12 @@
  *
  * Worktide persists prices as integer cents (or the equivalent minor
  * unit for non-EUR currencies) + a lowercase ISO 4217 code. The UI
- * formats with `Intl.NumberFormat` using the active locale; callers
- * pass the locale explicitly because hooks shouldn't be in helper code.
+ * formats with `Intl.NumberFormat` using the app's active locale (resolved
+ * from i18n.language at call time); callers may still pass a locale override.
  */
-export function formatMoney(cents: number, currency: string, locale = 'de-DE'): string {
+import { intlLocale } from '@/lib/intl';
+
+export function formatMoney(cents: number, currency: string, locale = intlLocale()): string {
   const value = (cents ?? 0) / 100;
   try {
     return new Intl.NumberFormat(locale, {

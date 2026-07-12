@@ -1,4 +1,5 @@
 import { useList } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { CalendarOff, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -39,7 +40,7 @@ const typeLabel = (t: string) => ABSENCE_TYPES.find((x) => x.value === t)?.label
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
-const dateFmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const dateFmt = { format: (v: Date | number) => new Intl.DateTimeFormat(intlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' }).format(v) };
 // Store at noon so a timezone shift never moves the wall-clock date the slot
 // engine reads (it blocks by calendar day).
 const atNoon = (isoDate: string) => `${isoDate}T12:00:00`;

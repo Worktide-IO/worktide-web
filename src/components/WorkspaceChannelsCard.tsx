@@ -1,4 +1,5 @@
 import { useInvalidate, useList } from '@refinedev/core';
+import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Link2, Loader2, Mailbox, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -261,7 +262,7 @@ function ChannelRow({
         {(channel as unknown as { lastSyncedAt?: string | null }).lastSyncedAt ? (
           <span className="inline-flex items-center gap-1">
             <CheckCircle2 className="size-3" />
-            {new Date((channel as unknown as { lastSyncedAt: string }).lastSyncedAt).toLocaleString('de-DE')}
+            {new Date((channel as unknown as { lastSyncedAt: string }).lastSyncedAt).toLocaleString(intlLocale())}
           </span>
         ) : (
           t('ws_channels.never')

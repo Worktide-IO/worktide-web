@@ -1,4 +1,5 @@
 import { Activity } from 'lucide-react';
+import { intlLocale } from '@/lib/intl';
 import { useNavigate } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -102,7 +103,7 @@ export function RecentStatusUpdatesWidget() {
                       <div className="truncate text-xs text-muted-foreground">
                         {project?.name ?? '—'}
                         {u.author ? ` · ${u.author.name}` : ''}
-                        {u.createdAt ? ` · ${new Date(u.createdAt).toLocaleDateString('de-DE')}` : ''}
+                        {u.createdAt ? ` · ${new Date(u.createdAt).toLocaleDateString(intlLocale())}` : ''}
                       </div>
                     </div>
                   </button>

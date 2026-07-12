@@ -2115,5 +2115,13 @@
   "contact_absences.title": "Absences",
   "contact_absences.empty": "No absences recorded.",
   "contact_edit.missing_id": "No contact ID in the URL.",
-  "customer_system_edit.missing_id": "No system ID in the URL."
+  "customer_system_edit.missing_id": "No system ID in the URL.",
+  "time.just_now": "just now",
+  "time.min": "{{count}} min ago",
+  "time.hour": "{{count}} h ago",
+  "time.yesterday": "yesterday",
+  "time.day": "{{count}} days ago",
+  "time.week": "{{count}} w ago",
+  "time.month": "{{count}} mo ago",
+  "time.year": "{{count}} y ago"
 }
