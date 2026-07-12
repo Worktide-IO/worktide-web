@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
 import { LocalizedFields, type TranslationsMap } from '@/components/LocalizedFields';
-import { useSupportedLanguages, useLocalize } from '@/lib/languages';
+import { useSupportedLanguages, useLocalize, usePrimaryLocale, languageLabel } from '@/lib/languages';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,6 +52,7 @@ type FormBlock = {
   key: string;
   type: string;
   label: string;
+  labelI18n?: Record<string, string>;
   required?: boolean;
   options?: string[];
   placeholder?: string | null;
@@ -81,6 +82,7 @@ type FormState = {
 
 const NO_PROJECT = '__none__';
 const NO_MAP = '__nomap__';
+const LABEL_BASE = '__base__'; // field-label language selector: edit the base label
 
 /** Field types the portal renderer + backend accept (mirror of INPUT_TYPES). */
 const FIELD_TYPE_KEYS = [
@@ -157,6 +159,10 @@ export function FormsPage() {
 
   const [form, setForm] = useState<FormState | null>(null);
   const [busy, setBusy] = useState(false);
+  // Field-label translation: which language the field-label inputs edit.
+  const primaryLocale = usePrimaryLocale();
+  const otherLocales = languages.filter((l) => l && l !== primaryLocale);
+  const [fieldLang, setFieldLang] = useState<string>(LABEL_BASE);
 
   const rows = result?.data ?? [];
   const customerName = (iri: string) =>
@@ -256,6 +262,18 @@ export function FormsPage() {
     );
   const removeBlock = (i: number) =>
     setForm((f) => (f ? { ...f, blocks: f.blocks.filter((_, j) => j !== i) } : f));
+  const setBlockLabelI18n = (i: number, locale: string, raw: string) =>
+    setForm((f) => {
+      if (!f) return f;
+      const blocks = f.blocks.map((b, j) => {
+        if (j !== i) return b;
+        const li: Record<string, string> = { ...(b.labelI18n ?? {}) };
+        if (raw.trim() === '') delete li[locale];
+        else li[locale] = raw;
+        return { ...b, labelI18n: li };
+      });
+      return { ...f, blocks };
+    });
   const moveBlock = (i: number, dir: -1 | 1) =>
     setForm((f) => {
       if (!f) return f;
@@ -449,11 +467,28 @@ export function FormsPage() {
               </div>
 
               <div className="space-y-2 rounded-md border p-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <Label className="text-xs font-medium text-muted-foreground">{t('forms.fields')}</Label>
-                  <Button type="button" variant="outline" size="sm" className="h-7" onClick={addBlock}>
-                    <Plus className="size-3" /> {t('forms.add_field')}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {otherLocales.length > 0 ? (
+                      <Select value={fieldLang} onValueChange={setFieldLang}>
+                        <SelectTrigger className="h-7 w-40 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={LABEL_BASE}>
+                            {primaryLocale
+                              ? `${languageLabel(primaryLocale)} (${t('localized_fields.standard')})`
+                              : t('localized_fields.standard')}
+                          </SelectItem>
+                          {otherLocales.map((l) => (
+                            <SelectItem key={l} value={l}>{languageLabel(l)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : null}
+                    <Button type="button" variant="outline" size="sm" className="h-7" onClick={addBlock}>
+                      <Plus className="size-3" /> {t('forms.add_field')}
+                    </Button>
+                  </div>
                 </div>
                 {form.blocks.length === 0 ? (
                   <p className="text-xs text-muted-foreground">{t('forms.no_fields')}</p>
@@ -463,9 +498,13 @@ export function FormsPage() {
                     <div className="flex items-center gap-1.5">
                       <Input
                         className="h-8"
-                        value={b.label}
-                        placeholder={t('forms.field_label')}
-                        onChange={(e) => updateBlock(i, { label: e.target.value })}
+                        value={fieldLang === LABEL_BASE ? b.label : (b.labelI18n?.[fieldLang] ?? '')}
+                        placeholder={fieldLang === LABEL_BASE ? t('forms.field_label') : (b.label || t('forms.field_label'))}
+                        onChange={(e) =>
+                          fieldLang === LABEL_BASE
+                            ? updateBlock(i, { label: e.target.value })
+                            : setBlockLabelI18n(i, fieldLang, e.target.value)
+                        }
                       />
                       <Button type="button" variant="ghost" size="icon" className="size-8 shrink-0" onClick={() => moveBlock(i, -1)} disabled={i === 0}>
                         <ChevronUp className="size-3.5" />
