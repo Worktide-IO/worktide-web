@@ -1,6 +1,6 @@
 import { useList } from '@refinedev/core';
 import { useTranslation } from 'react-i18next';
-import { ClipboardList, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, ClipboardList, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
   TableBody,
@@ -40,7 +41,23 @@ type FormRow = Row<{
   submissionLimit?: number | null;
   submissionCount?: number;
   translations?: TranslationsMap | null;
+  schemaVersion?: number;
+  fields?: FormBlock[];
+  schema?: { pages?: { id?: string; title?: string | null; blocks?: FormBlock[] }[]; logic?: unknown[]; calc?: unknown[] } | null;
 }>;
+
+/** One editable form field. Unknown keys (section, min/max, rows, …) are preserved on round-trip. */
+type FormBlock = {
+  id?: string;
+  key: string;
+  type: string;
+  label: string;
+  required?: boolean;
+  options?: string[];
+  placeholder?: string | null;
+  mapsTo?: string | null;
+  [k: string]: unknown;
+};
 
 type CustomerRow = Row<{ '@id': string; id?: string; name: string }>;
 type ProjectRow = Row<{ '@id': string; id?: string; name: string }>;
@@ -56,9 +73,23 @@ type FormState = {
   recipientIris: string[];
   submissionLimit: string; // '' = unlimited
   translations: TranslationsMap;
+  blocks: FormBlock[];
+  isV2: boolean; // form stored as v2 schema (vs. legacy flat fields)
+  logic: unknown[]; // preserved untouched (no UI yet)
+  calc: unknown[]; // preserved untouched (no UI yet)
 };
 
 const NO_PROJECT = '__none__';
+const NO_MAP = '__nomap__';
+
+/** Field types the portal renderer + backend accept (mirror of INPUT_TYPES). */
+const FIELD_TYPE_KEYS = [
+  'text', 'long_text', 'email', 'url', 'number', 'date', 'boolean',
+  'select', 'multi_select', 'rating', 'scale', 'matrix', 'file',
+] as const;
+const OPTION_TYPES = new Set(['select', 'multi_select']);
+/** Native task fields a submitted value can route to. */
+const MAPS_TO_KEYS = ['title', 'description', 'priority'] as const;
 
 const BLANK: FormState = {
   slug: '',
@@ -70,10 +101,31 @@ const BLANK: FormState = {
   recipientIris: [],
   submissionLimit: '',
   translations: {},
+  blocks: [],
+  isV2: false,
+  logic: [],
+  calc: [],
 };
 
 const slugify = (s: string) =>
   s.toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').trim().replace(/[\s_-]+/g, '-').slice(0, 60);
+
+const genId = () =>
+  typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `b-${Math.round(performance.now() * 1e6)}`;
+
+/** Flatten a form's fields into an editable block list, preserving its storage format. */
+function readBlocks(r: FormRow): Pick<FormState, 'blocks' | 'isV2' | 'logic' | 'calc'> {
+  const schema = r.schema;
+  if (r.schemaVersion === 2 && schema && Array.isArray(schema.pages)) {
+    return {
+      blocks: schema.pages.flatMap((p) => (Array.isArray(p?.blocks) ? p.blocks : [])),
+      isV2: true,
+      logic: Array.isArray(schema.logic) ? schema.logic : [],
+      calc: Array.isArray(schema.calc) ? schema.calc : [],
+    };
+  }
+  return { blocks: Array.isArray(r.fields) ? r.fields : [], isV2: false, logic: [], calc: [] };
+}
 
 /**
  * Global questionnaire management (roadmap §8 forms / Piece B1). Forms are a
@@ -123,6 +175,18 @@ export function FormsPage() {
     }
     setBusy(true);
     const limit = form.submissionLimit.trim() === '' ? null : Math.max(0, Number(form.submissionLimit));
+    // Normalize the edited blocks: ensure id + key, drop options for non-option
+    // types, preserve any advanced keys (section, min/max, rows, prefillFrom).
+    const blocks = form.blocks.map((b, i) => ({
+      ...b,
+      id: b.id || genId(),
+      key: b.key?.trim() || slugify(b.label) || `field_${i + 1}`,
+      type: b.type || 'text',
+      label: b.label ?? '',
+      required: !!b.required,
+      options: OPTION_TYPES.has(b.type) ? (b.options ?? []) : [],
+      mapsTo: b.mapsTo || null,
+    }));
     const payload: Record<string, unknown> = {
       slug,
       title: form.title.trim(),
@@ -134,13 +198,21 @@ export function FormsPage() {
       submissionLimit: limit,
       translations: form.translations,
     };
+    if (form.isV2) {
+      // Preserve the form's advanced schema (logic/calc) untouched; collapse to a
+      // single page (multi-page editing is a follow-up).
+      payload.schema = { version: 2, pages: [{ id: 'p1', title: null, blocks }], logic: form.logic, calc: form.calc };
+      payload.schemaVersion = 2;
+    } else {
+      payload.fields = blocks;
+    }
     try {
       if (form.id) {
         await api.patch(`/public_forms/${form.id}`, payload, {
           headers: { 'Content-Type': 'application/merge-patch+json' },
         });
       } else {
-        await api.post('/public_forms', { ...payload, workspace: workspaceIri, fields: [] });
+        await api.post('/public_forms', { ...payload, workspace: workspaceIri });
       }
       toast.success(t('toast.saved'));
       setForm(null);
@@ -175,6 +247,24 @@ export function FormsPage() {
           }
         : f,
     );
+
+  const updateBlock = (i: number, patch: Partial<FormBlock>) =>
+    setForm((f) => (f ? { ...f, blocks: f.blocks.map((b, j) => (j === i ? { ...b, ...patch } : b)) } : f));
+  const addBlock = () =>
+    setForm((f) =>
+      f ? { ...f, blocks: [...f.blocks, { id: genId(), key: '', type: 'text', label: '', required: false }] } : f,
+    );
+  const removeBlock = (i: number) =>
+    setForm((f) => (f ? { ...f, blocks: f.blocks.filter((_, j) => j !== i) } : f));
+  const moveBlock = (i: number, dir: -1 | 1) =>
+    setForm((f) => {
+      if (!f) return f;
+      const j = i + dir;
+      if (j < 0 || j >= f.blocks.length) return f;
+      const b = [...f.blocks];
+      [b[i], b[j]] = [b[j], b[i]];
+      return { ...f, blocks: b };
+    });
 
   return (
     <div className="space-y-4">
@@ -254,6 +344,7 @@ export function FormsPage() {
                                 recipientIris: r.recipients ?? [],
                                 submissionLimit: r.submissionLimit != null ? String(r.submissionLimit) : '',
                                 translations: r.translations ?? {},
+                                ...readBlocks(r),
                               })
                             }
                           >
@@ -274,7 +365,7 @@ export function FormsPage() {
       </Card>
 
       <Dialog open={form !== null} onOpenChange={(o) => !o && setForm(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{form?.id ? t('forms.edit') : t('forms.new')}</DialogTitle>
           </DialogHeader>
@@ -355,6 +446,74 @@ export function FormsPage() {
                     {form.recipientIris.map(customerName).join(', ')}
                   </p>
                 )}
+              </div>
+
+              <div className="space-y-2 rounded-md border p-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium text-muted-foreground">{t('forms.fields')}</Label>
+                  <Button type="button" variant="outline" size="sm" className="h-7" onClick={addBlock}>
+                    <Plus className="size-3" /> {t('forms.add_field')}
+                  </Button>
+                </div>
+                {form.blocks.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">{t('forms.no_fields')}</p>
+                ) : null}
+                {form.blocks.map((b, i) => (
+                  <div key={(b.id as string) ?? i} className="space-y-2 rounded-md border bg-muted/30 p-2">
+                    <div className="flex items-center gap-1.5">
+                      <Input
+                        className="h-8"
+                        value={b.label}
+                        placeholder={t('forms.field_label')}
+                        onChange={(e) => updateBlock(i, { label: e.target.value })}
+                      />
+                      <Button type="button" variant="ghost" size="icon" className="size-8 shrink-0" onClick={() => moveBlock(i, -1)} disabled={i === 0}>
+                        <ChevronUp className="size-3.5" />
+                      </Button>
+                      <Button type="button" variant="ghost" size="icon" className="size-8 shrink-0" onClick={() => moveBlock(i, 1)} disabled={i === form.blocks.length - 1}>
+                        <ChevronDown className="size-3.5" />
+                      </Button>
+                      <Button type="button" variant="ghost" size="icon" className="size-8 shrink-0 text-destructive" onClick={() => removeBlock(i)}>
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Select value={b.type} onValueChange={(v) => updateBlock(i, { type: v })}>
+                        <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {FIELD_TYPE_KEYS.map((k) => (
+                            <SelectItem key={k} value={k}>{t(`forms.ftype.${k}`)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select value={(b.mapsTo as string) ?? NO_MAP} onValueChange={(v) => updateBlock(i, { mapsTo: v === NO_MAP ? null : v })}>
+                        <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NO_MAP}>{t('forms.maps_to_none')}</SelectItem>
+                          {MAPS_TO_KEYS.map((k) => (
+                            <SelectItem key={k} value={k}>{t(`forms.map.${k}`)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {OPTION_TYPES.has(b.type) ? (
+                      <Textarea
+                        rows={2}
+                        className="text-sm"
+                        value={(b.options ?? []).join('\n')}
+                        placeholder={t('forms.options_hint')}
+                        onChange={(e) =>
+                          updateBlock(i, { options: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean) })
+                        }
+                      />
+                    ) : null}
+                    <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                      <Checkbox checked={!!b.required} onCheckedChange={() => updateBlock(i, { required: !b.required })} />
+                      {t('forms.required')}
+                    </label>
+                  </div>
+                ))}
+                <p className="text-[11px] text-muted-foreground">{t('forms.fields_hint')}</p>
               </div>
 
               <div className="flex items-center justify-between">
