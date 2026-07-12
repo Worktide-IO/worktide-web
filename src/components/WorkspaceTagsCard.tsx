@@ -33,7 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { TranslationsFields, type TranslationsMap } from '@/components/TranslationsFields';
+import { LocalizedFields, type TranslationsMap } from '@/components/LocalizedFields';
 import { useSupportedLanguages, useLocalize } from '@/lib/languages';
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
@@ -317,16 +317,21 @@ function TagDialog(props: DialogProps) {
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="tag-name">{translate('ws_tags.name')}</Label>
-            <Input
-              id="tag-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={translate('ws_tags.name_placeholder')}
-              autoFocus
-            />
-          </div>
+          <LocalizedFields
+            fields={[
+              {
+                key: 'name',
+                label: translate('ws_tags.name'),
+                placeholder: translate('ws_tags.name_placeholder'),
+                autoFocus: true,
+              },
+            ]}
+            locales={languages}
+            base={{ name }}
+            onBaseChange={(_, v) => setName(v)}
+            translations={translations}
+            onTranslationsChange={setTranslations}
+          />
           <div className="space-y-1.5">
             <Label htmlFor="tag-scope">Scope</Label>
             <Select value={scope} onValueChange={(v) => setScope(v as TagJsonldScopeEnum)}>
@@ -381,12 +386,6 @@ function TagDialog(props: DialogProps) {
               </span>
             </div>
           </div>
-          <TranslationsFields
-            fields={[{ key: 'name', label: translate('ws_tags.name') }]}
-            locales={languages}
-            value={translations}
-            onChange={setTranslations}
-          />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={props.onClose} disabled={saving}>

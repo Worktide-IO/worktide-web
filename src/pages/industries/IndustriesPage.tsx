@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TranslationsFields, type TranslationsMap } from '@/components/TranslationsFields';
+import { LocalizedFields, type TranslationsMap } from '@/components/LocalizedFields';
 import { useSupportedLanguages, useLocalize } from '@/lib/languages';
 import {
   Table,
@@ -231,18 +231,16 @@ export function IndustriesPage() {
           </DialogHeader>
           {rename ? (
             <div className="space-y-3">
-              <Input
-                value={rename.name}
-                onChange={(e) => setRename({ ...rename, name: e.target.value })}
-                onKeyDown={(e) => {
+              <LocalizedFields
+                fields={[{ key: 'name', label: t('industries.col_name'), autoFocus: true }]}
+                locales={languages}
+                base={{ name: rename.name }}
+                onBaseChange={(_, v) => setRename({ ...rename, name: v })}
+                translations={rename.translations}
+                onTranslationsChange={(translations) => setRename({ ...rename, translations })}
+                onBaseKeyDown={(_, e) => {
                   if (e.key === 'Enter') void saveRename();
                 }}
-              />
-              <TranslationsFields
-                fields={[{ key: 'name', label: t('industries.col_name') }]}
-                locales={languages}
-                value={rename.translations}
-                onChange={(translations) => setRename({ ...rename, translations })}
               />
             </div>
           ) : null}

@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
-import { TranslationsFields, type TranslationsMap } from '@/components/TranslationsFields';
+import { LocalizedFields, type TranslationsMap } from '@/components/LocalizedFields';
 import { useSupportedLanguages, useLocalize } from '@/lib/languages';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
   TableBody,
@@ -275,11 +274,18 @@ export function MeetingTypesPage() {
           </DialogHeader>
           {form ? (
             <div className="space-y-3">
+              <LocalizedFields
+                fields={[
+                  { key: 'title', label: t('meeting_types.title') },
+                  { key: 'description', label: t('meeting_types.description'), multiline: true },
+                ]}
+                locales={languages}
+                base={{ title: form.title, description: form.description }}
+                onBaseChange={(k, v) => setForm({ ...form, [k]: v } as FormState)}
+                translations={form.translations}
+                onTranslationsChange={(translations) => setForm({ ...form, translations })}
+              />
               <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2 space-y-1">
-                  <Label>{t('meeting_types.title')}</Label>
-                  <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-                </div>
                 <div className="space-y-1">
                   <Label>Slug</Label>
                   <Input value={form.slug} placeholder="projekt-update" onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase() })} />
@@ -289,19 +295,6 @@ export function MeetingTypesPage() {
                   <Input type="number" min={1} value={form.durationMinutes} onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })} />
                 </div>
               </div>
-              <div className="space-y-1">
-                <Label>{t('meeting_types.description')}</Label>
-                <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-              </div>
-              <TranslationsFields
-                fields={[
-                  { key: 'title', label: t('meeting_types.title') },
-                  { key: 'description', label: t('meeting_types.description') },
-                ]}
-                locales={languages}
-                value={form.translations}
-                onChange={(translations) => setForm({ ...form, translations })}
-              />
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label>{t('meeting_types.location')}</Label>

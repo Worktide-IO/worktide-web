@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
-import { TranslationsFields, type TranslationsMap } from '@/components/TranslationsFields';
+import { LocalizedFields, type TranslationsMap } from '@/components/LocalizedFields';
 import { useSupportedLanguages, useLocalize } from '@/lib/languages';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +27,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Textarea } from '@/components/ui/textarea';
 import { NewsletterIssuesDialog } from './NewsletterIssuesDialog';
 import { NewsletterTemplatesDialog } from './NewsletterTemplatesDialog';
 
@@ -361,30 +360,16 @@ export function NewslettersPage() {
           </DialogHeader>
           {edit ? (
             <div className="space-y-3">
-              <div className="space-y-1">
-                <Label>{translate('newsletters.title_label')}</Label>
-                <Input
-                  autoFocus
-                  value={edit.title}
-                  onChange={(e) => setEdit({ ...edit, title: e.target.value })}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>{translate('newsletters.description_optional')}</Label>
-                <Textarea
-                  rows={2}
-                  value={edit.description}
-                  onChange={(e) => setEdit({ ...edit, description: e.target.value })}
-                />
-              </div>
-              <TranslationsFields
+              <LocalizedFields
                 fields={[
-                  { key: 'title', label: translate('newsletters.title_label') },
-                  { key: 'description', label: translate('newsletters.description_optional') },
+                  { key: 'title', label: translate('newsletters.title_label'), autoFocus: true },
+                  { key: 'description', label: translate('newsletters.description_optional'), multiline: true },
                 ]}
                 locales={languages}
-                value={edit.translations}
-                onChange={(translations) => setEdit({ ...edit, translations })}
+                base={{ title: edit.title, description: edit.description }}
+                onBaseChange={(k, v) => setEdit({ ...edit, [k]: v } as EditState)}
+                translations={edit.translations}
+                onTranslationsChange={(translations) => setEdit({ ...edit, translations })}
               />
               <div className="space-y-1">
                 <Label>{translate('newsletters.parent')}</Label>

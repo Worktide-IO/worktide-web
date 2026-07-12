@@ -19,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TranslationsFields, type TranslationsMap } from '@/components/TranslationsFields';
+import { LocalizedFields, type TranslationsMap } from '@/components/LocalizedFields';
 import { useSupportedLanguages, useLocalize } from '@/lib/languages';
 import {
   Table,
@@ -320,16 +320,21 @@ function TrackerDialog(props: DialogProps) {
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="tracker-name">{translate('tracker_dialog.field_name')}</Label>
-            <Input
-              id="tracker-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={translate('tracker_dialog.name_placeholder')}
-              autoFocus
-            />
-          </div>
+          <LocalizedFields
+            fields={[
+              {
+                key: 'name',
+                label: translate('tracker_dialog.field_name'),
+                placeholder: translate('tracker_dialog.name_placeholder'),
+                autoFocus: true,
+              },
+            ]}
+            locales={languages}
+            base={{ name }}
+            onBaseChange={(_, v) => setName(v)}
+            translations={translations}
+            onTranslationsChange={setTranslations}
+          />
           <div className="space-y-1.5">
             <Label>Icon</Label>
             <div className="flex flex-wrap items-center gap-1.5">
@@ -399,12 +404,6 @@ function TrackerDialog(props: DialogProps) {
             />
             {translate('tracker_dialog.set_default')}
           </label>
-          <TranslationsFields
-            fields={[{ key: 'name', label: translate('tracker_dialog.field_name') }]}
-            locales={languages}
-            value={translations}
-            onChange={setTranslations}
-          />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={props.onClose} disabled={saving}>
