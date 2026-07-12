@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Responsive, WidthProvider, type Layout } from 'react-grid-layout/legacy';
 
 import type { DashboardLayout } from '@/lib/dashboard';
@@ -34,6 +35,7 @@ type Props = {
  * was saved) render nothing instead of crashing the grid.
  */
 export function DashboardGrid({ layout, editing, onLayoutChange, onRemoveWidget }: Props) {
+  const { t } = useTranslation();
   const visibleWidgets = layout.widgets.filter((w) => WIDGET_REGISTRY[w.key]);
 
   return (
@@ -69,7 +71,7 @@ export function DashboardGrid({ layout, editing, onLayoutChange, onRemoveWidget 
                   e.stopPropagation();
                   onRemoveWidget(w.instanceId);
                 }}
-                aria-label={`${def.label} entfernen`}
+                aria-label={t('dashboard.remove_widget', { label: t(def.label) })}
               >
                 <X className="size-3" />
               </Button>

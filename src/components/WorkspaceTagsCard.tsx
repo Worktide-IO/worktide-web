@@ -60,7 +60,7 @@ const SWATCHES = [
  * is dangerous (cascades the ManyToMany rows but the entity itself has
  * no soft-delete trait) so we route it through a confirm.
  *
- * Scope filter on the list defaults to "Überall"; clicking a different
+ * Scope filter on the list defaults to translate('ws_tags.everywhere'); clicking a different
  * scope filters client-side using the same fallthrough rule as
  * TagPicker (scope: 'any' shows everywhere).
  */

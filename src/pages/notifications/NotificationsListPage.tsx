@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useGetIdentity } from '@refinedev/core';
 import { useNavigate } from 'react-router';
 import {
@@ -37,6 +38,7 @@ const PAGE_SIZE = 25;
 
 /** Full Benachrichtigungen page — the whole inbox, paged with "Mehr laden". */
 export function NotificationsListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: identity } = useGetIdentity<Identity>();
   const [items, setItems] = useState<Notification[]>([]);
@@ -152,7 +154,7 @@ export function NotificationsListPage() {
       {hasMore ? (
         <div className="mt-4 flex justify-center">
           <Button variant="outline" size="sm" onClick={loadMore} disabled={loading}>
-            {loading ? 'Lädt…' : 'Mehr laden'}
+            {loading ? t('app.loading') : t('common.load_more')}
           </Button>
         </div>
       ) : null}

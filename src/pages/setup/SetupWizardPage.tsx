@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { useForm } from 'react-hook-form';
@@ -45,13 +46,13 @@ const CHECK_LABELS: Record<keyof HealthResponse, string> = {
 const formSchema = z
   .object({
     firstName: z.string().max(100).optional(),
-    email: z.string().email('Bitte gültige Email-Adresse eingeben'),
-    password: z.string().min(8, 'Mindestens 8 Zeichen'),
+    email: z.string().email(i18n.t('valid.email')),
+    password: z.string().min(8, i18n.t('valid.min_8')),
     password2: z.string(),
-    workspaceName: z.string().min(1, 'Workspace-Name erforderlich').max(120),
+    workspaceName: z.string().min(1, i18n.t('valid.workspace_name_required')).max(120),
   })
   .refine((d) => d.password === d.password2, {
-    message: 'Passwörter stimmen nicht überein',
+    message: i18n.t('valid.passwords_mismatch'),
     path: ['password2'],
   });
 type FormValues = z.infer<typeof formSchema>;

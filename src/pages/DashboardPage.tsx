@@ -99,7 +99,7 @@ export function DashboardPage() {
                     const Icon = d.icon;
                     return (
                       <DropdownMenuItem key={d.key} onClick={() => handleAdd(d.key)}>
-                        <Icon className="size-4" /> {d.label}
+                        <Icon className="size-4" /> {t(d.label)}
                       </DropdownMenuItem>
                     );
                   })}

@@ -173,7 +173,7 @@ function BudgetCard({ project }: { project: Row<ProjectJsonld> }) {
           ]
         : [
             { name: 'Budget', value: budget, color: '#ef4444' },
-            { name: 'Über-Budget', value: tracked - budget, color: '#fca5a5' },
+            { name: t('project_overview.over_budget'), value: tracked - budget, color: '#fca5a5' },
           ]
       : null;
 

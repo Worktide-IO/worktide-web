@@ -1,4 +1,5 @@
 import { useLogin } from '@refinedev/core';
+import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -17,8 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 const loginSchema = z.object({
-  email: z.string().email('Bitte gültige Email-Adresse eingeben'),
-  password: z.string().min(1, 'Passwort erforderlich'),
+  email: z.string().email(i18n.t('valid.email')),
+  password: z.string().min(1, i18n.t('valid.password_required')),
   remember: z.boolean(),
 });
 type LoginValues = z.infer<typeof loginSchema>;

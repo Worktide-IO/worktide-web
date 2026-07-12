@@ -1,4 +1,5 @@
 import { useList, useOne } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Check, FolderKanban } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -32,7 +33,8 @@ const PAGE_SIZE = 25;
  * mirroring CustomerCombobox. Used where a project must be chosen — e.g. before
  * accepting a ticket suggestion that has no suggested project.
  */
-export function ProjectCombobox({ value, onChange, placeholder = 'Projekt wählen…', className }: Props) {
+export function ProjectCombobox({ value, onChange, placeholder, className }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -79,13 +81,13 @@ export function ProjectCombobox({ value, onChange, placeholder = 'Projekt wähle
           {value ? (
             <span className="flex-1 truncate text-left">{selectedName ?? '…'}</span>
           ) : (
-            <span className="flex-1 truncate text-left text-muted-foreground">{placeholder}</span>
+            <span className="flex-1 truncate text-left text-muted-foreground">{placeholder ?? t('combobox.select_project')}</span>
           )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] min-w-72 p-0" align="start">
         <Command shouldFilter={false}>
-          <CommandInput placeholder="Projekt suchen…" value={query} onValueChange={setQuery} />
+          <CommandInput placeholder={t('combobox.search_project')} value={query} onValueChange={setQuery} />
           <CommandList>
             <CommandEmpty>Kein Projekt gefunden.</CommandEmpty>
             {options.length > 0 ? (

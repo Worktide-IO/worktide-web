@@ -57,8 +57,8 @@ const STATE_BADGE: Record<WorkflowState, { label: string; classes: string }> = {
  * Workflow controls for a Document. Renders the current state as a
  * coloured pill plus context-appropriate actions:
  *
- *   draft     → "Zur Prüfung einreichen" with reviewer picker
- *   review    → "Freigeben" + "Änderungen anfordern" (only for
+ *   draft     → t('doc_wf.submit_review') with reviewer picker
+ *   review    → "Freigeben" + t('doc_wf.request_changes') (only for
  *                listed reviewers; backend enforces — we just hide
  *                the buttons for non-reviewers to keep the UI quiet)
  *   published → just the badge (a save sends it back to draft)

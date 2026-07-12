@@ -1,4 +1,5 @@
 import { useList, useOne } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { Building2, Check, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -34,7 +35,8 @@ const PAGE_SIZE = 25;
  * selected customer is fetched by IRI so its name shows even when it isn't in
  * the current result page.
  */
-export function CustomerCombobox({ value, onChange, placeholder = 'Kunde wählen…', className }: Props) {
+export function CustomerCombobox({ value, onChange, placeholder, className }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -83,7 +85,7 @@ export function CustomerCombobox({ value, onChange, placeholder = 'Kunde wählen
           {value ? (
             <span className="flex-1 truncate text-left">{selectedName ?? '…'}</span>
           ) : (
-            <span className="flex-1 truncate text-left text-muted-foreground">{placeholder}</span>
+            <span className="flex-1 truncate text-left text-muted-foreground">{placeholder ?? t('combobox.select_customer')}</span>
           )}
           {value ? (
             <span
@@ -103,7 +105,7 @@ export function CustomerCombobox({ value, onChange, placeholder = 'Kunde wählen
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] min-w-72 p-0" align="start">
         <Command shouldFilter={false}>
-          <CommandInput placeholder="Kunde suchen…" value={query} onValueChange={setQuery} />
+          <CommandInput placeholder={t('combobox.search_customer')} value={query} onValueChange={setQuery} />
           <CommandList>
             <CommandEmpty>Kein Kunde gefunden.</CommandEmpty>
             <CommandGroup heading="— Intern (kein Kunde)">
