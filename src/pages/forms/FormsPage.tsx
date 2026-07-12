@@ -90,7 +90,8 @@ type FormState = {
   isV2: boolean; // form stored as v2 schema (vs. legacy flat fields)
   logicRules: LogicRule[]; // editable show/hide branching rules
   logicOther: unknown[]; // other logic rules (e.g. jump) — preserved untouched
-  calc: unknown[]; // computed-field rules — preserved untouched (no UI yet)
+  calcRules: CalcRuleEdit[]; // editable computed-field rules (single op over leaves)
+  calcOther: unknown[]; // nested/other calc rules — preserved untouched
 };
 
 /** A branching atom: a field's value tested against `op` (+ `value`). */
@@ -98,12 +99,18 @@ type LogicAtom = { field: string; op: string; value?: string };
 /** if all/any of the atoms hold, show/hide the target field. */
 type LogicRule = { if: { all?: LogicAtom[]; any?: LogicAtom[] }; then: { action: string; target: string } };
 
+/** One operand of a computed field: a field's value or a literal. */
+type CalcOperand = { kind: 'field' | 'const'; field?: string; const?: string };
+/** key = op applied across the operands (n-ary), e.g. total = qty * price. */
+type CalcRuleEdit = { key: string; op: string; operands: CalcOperand[] };
+
 const NO_PROJECT = '__none__';
 const NO_MAP = '__nomap__';
 const LABEL_BASE = '__base__'; // field-label language selector: edit the base label
 const LOGIC_OPS = ['eq', 'neq', 'contains', 'gt', 'gte', 'lt', 'lte', 'empty', 'not_empty'] as const;
 const NO_VALUE_OPS = new Set(['empty', 'not_empty']);
 const LOGIC_ACTIONS = ['show', 'hide'] as const;
+const CALC_OPS = ['+', '-', '*', '/'] as const;
 
 /** Field types the portal renderer + backend accept (mirror of INPUT_TYPES). */
 const FIELD_TYPE_KEYS = [
@@ -128,7 +135,8 @@ const BLANK: FormState = {
   isV2: false,
   logicRules: [],
   logicOther: [],
-  calc: [],
+  calcRules: [],
+  calcOther: [],
 };
 
 const slugify = (s: string) =>
@@ -156,8 +164,34 @@ function splitLogic(logic: unknown[]): { logicRules: LogicRule[]; logicOther: un
   return { logicRules, logicOther };
 }
 
+/** Split calc rules into the flat-editable ones (single op over leaves) + the rest (preserved). */
+function parseCalc(calc: unknown[]): { calcRules: CalcRuleEdit[]; calcOther: unknown[] } {
+  const calcRules: CalcRuleEdit[] = [];
+  const calcOther: unknown[] = [];
+  for (const raw of calc) {
+    const r = raw as { key?: unknown; ast?: { op?: unknown; args?: unknown } };
+    const ast = r?.ast;
+    const args = ast && Array.isArray(ast.args) ? ast.args : null;
+    const leafy =
+      args &&
+      args.every((a) => a && typeof a === 'object' && (typeof (a as CalcOperand).field === 'string' || typeof (a as { const?: unknown }).const === 'number'));
+    if (typeof r?.key === 'string' && ast && typeof ast.op === 'string' && leafy) {
+      calcRules.push({
+        key: r.key,
+        op: ast.op,
+        operands: (args as Array<{ field?: string; const?: number }>).map((a) =>
+          a.field !== undefined ? { kind: 'field', field: String(a.field) } : { kind: 'const', const: String(a.const) },
+        ),
+      });
+    } else {
+      calcOther.push(raw);
+    }
+  }
+  return { calcRules, calcOther };
+}
+
 /** Flatten a form's fields into an editable block list, preserving its storage format. */
-function readBlocks(r: FormRow): Pick<FormState, 'blocks' | 'isV2' | 'logicRules' | 'logicOther' | 'calc'> {
+function readBlocks(r: FormRow): Pick<FormState, 'blocks' | 'isV2' | 'logicRules' | 'logicOther' | 'calcRules' | 'calcOther'> {
   const schema = r.schema;
   if (r.schemaVersion === 2 && schema && Array.isArray(schema.pages)) {
     // Stamp each block with its page title as `section` so page grouping
@@ -173,12 +207,12 @@ function readBlocks(r: FormRow): Pick<FormState, 'blocks' | 'isV2' | 'logicRules
       blocks,
       isV2: true,
       ...splitLogic(Array.isArray(schema.logic) ? schema.logic : []),
-      calc: Array.isArray(schema.calc) ? schema.calc : [],
+      ...parseCalc(Array.isArray(schema.calc) ? schema.calc : []),
     };
   }
   // v1 fields may lack ids; assign stable ones so logic targeting works.
   const blocks = (Array.isArray(r.fields) ? r.fields : []).map((b) => ({ ...b, id: (b.id as string) || genId() }));
-  return { blocks, isV2: false, logicRules: [], logicOther: [], calc: [] };
+  return { blocks, isV2: false, logicRules: [], logicOther: [], calcRules: [], calcOther: [] };
 }
 
 /**
@@ -289,9 +323,21 @@ export function FormsPage() {
     // grouping the backend applies to v1 fields). Otherwise keep the flat v1
     // fields (with per-block `section`).
     const logic = [...form.logicRules, ...form.logicOther];
-    const needsV2 = form.isV2 || logic.length > 0 || form.calc.length > 0;
+    const calc = [
+      ...form.calcRules
+        .filter((c) => c.key.trim() !== '' && c.operands.length > 0)
+        .map((c) => ({
+          key: c.key.trim(),
+          ast: {
+            op: c.op,
+            args: c.operands.map((o) => (o.kind === 'const' ? { const: Number(o.const) || 0 } : { field: o.field ?? '' })),
+          },
+        })),
+      ...form.calcOther,
+    ];
+    const needsV2 = form.isV2 || logic.length > 0 || calc.length > 0;
     if (needsV2) {
-      payload.schema = { version: 2, pages: buildPages(blocks), logic, calc: form.calc };
+      payload.schema = { version: 2, pages: buildPages(blocks), logic, calc };
       payload.schemaVersion = 2;
       payload.fields = [];
     } else {
@@ -413,6 +459,18 @@ export function FormsPage() {
     setRuleAtoms(ri, rule, [...atomsOf(rule), { field: '', op: 'eq', value: '' }]);
   const removeAtom = (ri: number, rule: LogicRule, ai: number) =>
     setRuleAtoms(ri, rule, atomsOf(rule).filter((_, j) => j !== ai));
+
+  // --- computed fields (calc) ---
+  const patchCalc = (ci: number, next: CalcRuleEdit) =>
+    setForm((f) => (f ? { ...f, calcRules: f.calcRules.map((c, j) => (j === ci ? next : c)) } : f));
+  const addCalc = () =>
+    setForm((f) => (f ? { ...f, calcRules: [...f.calcRules, { key: '', op: '+', operands: [{ kind: 'field', field: '' }] }] } : f));
+  const removeCalc = (ci: number) => setForm((f) => (f ? { ...f, calcRules: f.calcRules.filter((_, j) => j !== ci) } : f));
+  const addOperand = (ci: number, c: CalcRuleEdit) => patchCalc(ci, { ...c, operands: [...c.operands, { kind: 'field', field: '' }] });
+  const updateOperand = (ci: number, c: CalcRuleEdit, oi: number, patch: Partial<CalcOperand>) =>
+    patchCalc(ci, { ...c, operands: c.operands.map((o, j) => (j === oi ? { ...o, ...patch } : o)) });
+  const removeOperand = (ci: number, c: CalcRuleEdit, oi: number) =>
+    patchCalc(ci, { ...c, operands: c.operands.filter((_, j) => j !== oi) });
   const moveBlock = (i: number, dir: -1 | 1) =>
     setForm((f) => {
       if (!f) return f;
@@ -813,6 +871,72 @@ export function FormsPage() {
                 {form.logicOther.length > 0 ? (
                   <p className="text-[11px] text-muted-foreground">{t('forms.logic_other_preserved', { count: form.logicOther.length })}</p>
                 ) : null}
+              </div>
+
+              <div className="space-y-2 rounded-md border p-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium text-muted-foreground">{t('forms.calc')}</Label>
+                  <Button type="button" variant="outline" size="sm" className="h-7" onClick={addCalc}>
+                    <Plus className="size-3" /> {t('forms.add_calc')}
+                  </Button>
+                </div>
+                {form.calcRules.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">{t('forms.no_calc')}</p>
+                ) : null}
+                {form.calcRules.map((c, ci) => (
+                  <div key={ci} className="space-y-2 rounded-md border bg-muted/30 p-2">
+                    <div className="flex items-center gap-1.5">
+                      <Input
+                        className="h-8 w-44"
+                        value={c.key}
+                        placeholder={t('forms.calc_key_ph')}
+                        onChange={(e) => patchCalc(ci, { ...c, key: e.target.value })}
+                      />
+                      <span className="text-sm text-muted-foreground">=</span>
+                      <Select value={c.op} onValueChange={(v) => patchCalc(ci, { ...c, op: v })}>
+                        <SelectTrigger className="h-8 w-16"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {CALC_OPS.map((op) => <SelectItem key={op} value={op}>{op}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-[11px] text-muted-foreground">{t('forms.calc_over')}</span>
+                      <Button type="button" variant="ghost" size="icon" className="ml-auto size-7 text-destructive" onClick={() => removeCalc(ci)}>
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                    {c.operands.map((o, oi) => (
+                      <div key={oi} className="flex items-center gap-1.5 pl-4">
+                        <Select value={o.kind} onValueChange={(v) => updateOperand(ci, c, oi, { kind: v as CalcOperand['kind'] })}>
+                          <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="field">{t('forms.calc_operand_field')}</SelectItem>
+                            <SelectItem value="const">{t('forms.calc_operand_const')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {o.kind === 'field' ? (
+                          <Select value={o.field ?? ''} onValueChange={(v) => updateOperand(ci, c, oi, { field: v })}>
+                            <SelectTrigger className="h-8 flex-1"><SelectValue placeholder={t('forms.logic_field')} /></SelectTrigger>
+                            <SelectContent>
+                              {fieldOptions.map((op) => <SelectItem key={op.key} value={op.key}>{op.label ? `${op.label} · ${op.key}` : op.key}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input className="h-8 flex-1" type="number" value={o.const ?? ''} placeholder={t('forms.calc_const_ph')} onChange={(e) => updateOperand(ci, c, oi, { const: e.target.value })} />
+                        )}
+                        <Button type="button" variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => removeOperand(ci, c, oi)}>
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button type="button" variant="ghost" size="sm" className="ml-4 h-6 text-xs" onClick={() => addOperand(ci, c)}>
+                      <Plus className="size-3" /> {t('forms.add_operand')}
+                    </Button>
+                  </div>
+                ))}
+                {form.calcOther.length > 0 ? (
+                  <p className="text-[11px] text-muted-foreground">{t('forms.calc_other_preserved', { count: form.calcOther.length })}</p>
+                ) : null}
+                <p className="text-[11px] text-muted-foreground">{t('forms.calc_hint')}</p>
               </div>
 
               <div className="flex items-center justify-between">
