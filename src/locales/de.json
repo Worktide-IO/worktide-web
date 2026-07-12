@@ -1593,6 +1593,8 @@
   "newsletters.sender_name_hint": "Anzeigename im Postfach der Empfänger. Die Absenderadresse bleibt technisch unverändert.",
   "newsletters.reply_to_label": "Antwort-an (Reply-To)",
   "newsletters.reply_to_hint": "Antworten der Empfänger gehen an diese Adresse. Leer = Standard.",
+  "newsletters.subscribers_badge": "{{count}} Abonnenten",
+  "newsletters.subscribers_tooltip": "{{active}} aktiv · {{pending}} ausstehend · {{revoked}} abbestellt",
   "newsletters.send": "Versenden",
   "newsletters.subtopic": "Unterthema",
   "meeting_types.confirm_delete": "„{{title}}\" löschen?",
