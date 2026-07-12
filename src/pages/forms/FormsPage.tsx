@@ -57,6 +57,9 @@ type FormBlock = {
   required?: boolean;
   options?: string[];
   optionsI18n?: Record<string, string[]>; // per-locale option labels (index-aligned)
+  rows?: string[]; // matrix row labels
+  rowsI18n?: Record<string, string[]>; // per-locale matrix row labels (index-aligned)
+  section?: string | null; // groups fields into pages/sections
   placeholder?: string | null;
   mapsTo?: string | null;
   [k: string]: unknown;
@@ -304,6 +307,18 @@ export function FormsPage() {
       });
       return { ...f, blocks };
     });
+  const setBlockRowsI18n = (i: number, locale: string, list: string[]) =>
+    setForm((f) => {
+      if (!f) return f;
+      const blocks = f.blocks.map((b, j) => {
+        if (j !== i) return b;
+        const ri: Record<string, string[]> = { ...(b.rowsI18n ?? {}) };
+        if (list.length === 0) delete ri[locale];
+        else ri[locale] = list;
+        return { ...b, rowsI18n: ri };
+      });
+      return { ...f, blocks };
+    });
   const moveBlock = (i: number, dir: -1 | 1) =>
     setForm((f) => {
       if (!f) return f;
@@ -423,7 +438,7 @@ export function FormsPage() {
       </Card>
 
       <Dialog open={form !== null} onOpenChange={(o) => !o && setForm(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>{form?.id ? t('forms.edit') : t('forms.new')}</DialogTitle>
           </DialogHeader>
@@ -575,23 +590,55 @@ export function FormsPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    {OPTION_TYPES.has(b.type) ? (
-                      <Textarea
-                        rows={2}
-                        className="text-sm"
-                        value={(fieldLang === LABEL_BASE ? (b.options ?? []) : (b.optionsI18n?.[fieldLang] ?? [])).join('\n')}
-                        placeholder={fieldLang === LABEL_BASE ? t('forms.options_hint') : (b.options ?? []).join(', ')}
-                        onChange={(e) => {
-                          const list = e.target.value.split('\n').map((s) => s.trim()).filter(Boolean);
-                          if (fieldLang === LABEL_BASE) updateBlock(i, { options: list });
-                          else setBlockOptionsI18n(i, fieldLang, list);
-                        }}
-                      />
+                    {OPTION_TYPES.has(b.type) || b.type === 'matrix' ? (
+                      <div className="space-y-1">
+                        <Label className="text-[11px] text-muted-foreground">{t('forms.options_label')}</Label>
+                        <Textarea
+                          rows={2}
+                          className="text-sm"
+                          value={(fieldLang === LABEL_BASE ? (b.options ?? []) : (b.optionsI18n?.[fieldLang] ?? [])).join('\n')}
+                          placeholder={fieldLang === LABEL_BASE ? t('forms.options_hint') : (b.options ?? []).join(', ')}
+                          onChange={(e) => {
+                            const list = e.target.value.split('\n').map((s) => s.trim()).filter(Boolean);
+                            if (fieldLang === LABEL_BASE) updateBlock(i, { options: list });
+                            else setBlockOptionsI18n(i, fieldLang, list);
+                          }}
+                        />
+                      </div>
                     ) : null}
-                    <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
-                      <Checkbox checked={!!b.required} onCheckedChange={() => updateBlock(i, { required: !b.required })} />
-                      {t('forms.required')}
-                    </label>
+                    {b.type === 'matrix' ? (
+                      <div className="space-y-1">
+                        <Label className="text-[11px] text-muted-foreground">{t('forms.rows_label')}</Label>
+                        <Textarea
+                          rows={2}
+                          className="text-sm"
+                          value={(fieldLang === LABEL_BASE ? (b.rows ?? []) : (b.rowsI18n?.[fieldLang] ?? [])).join('\n')}
+                          placeholder={fieldLang === LABEL_BASE ? t('forms.rows_hint') : (b.rows ?? []).join(', ')}
+                          onChange={(e) => {
+                            const list = e.target.value.split('\n').map((s) => s.trim()).filter(Boolean);
+                            if (fieldLang === LABEL_BASE) updateBlock(i, { rows: list });
+                            else setBlockRowsI18n(i, fieldLang, list);
+                          }}
+                        />
+                      </div>
+                    ) : null}
+                    <div className="flex items-center gap-3">
+                      <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                        <Checkbox checked={!!b.required} onCheckedChange={() => updateBlock(i, { required: !b.required })} />
+                        {t('forms.required')}
+                      </label>
+                      {fieldLang === LABEL_BASE ? (
+                        <div className="flex flex-1 items-center gap-2">
+                          <Label className="text-[11px] text-muted-foreground">{t('forms.section')}</Label>
+                          <Input
+                            className="h-7 text-sm"
+                            value={(b.section as string) ?? ''}
+                            placeholder={t('forms.section_placeholder')}
+                            onChange={(e) => updateBlock(i, { section: e.target.value })}
+                          />
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 ))}
                 <p className="text-[11px] text-muted-foreground">{t('forms.fields_hint')}</p>
