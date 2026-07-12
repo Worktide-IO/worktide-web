@@ -1,10 +1,11 @@
 import { useList } from '@refinedev/core';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronUp, ClipboardList, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, ClipboardList, Inbox, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { formatDateTime } from '@/lib/intl';
 import type { Row } from '@/lib/refine';
 import { LocalizedFields, type TranslationsMap } from '@/components/LocalizedFields';
 import { useSupportedLanguages, useLocalize, usePrimaryLocale, languageLabel } from '@/lib/languages';
@@ -62,6 +63,13 @@ type FormBlock = {
 
 type CustomerRow = Row<{ '@id': string; id?: string; name: string }>;
 type ProjectRow = Row<{ '@id': string; id?: string; name: string }>;
+type SubmissionRow = Row<{
+  '@id': string;
+  id?: string;
+  payload: Record<string, unknown>;
+  createdTask?: string | null;
+  createdAt?: string;
+}>;
 
 type FormState = {
   id?: string;
@@ -159,6 +167,15 @@ export function FormsPage() {
 
   const [form, setForm] = useState<FormState | null>(null);
   const [busy, setBusy] = useState(false);
+  // Submissions inbox: the form whose submissions are shown (null = closed).
+  const [submissionsFor, setSubmissionsFor] = useState<FormRow | null>(null);
+  const { result: subs, query: subsQuery } = useList<SubmissionRow>({
+    resource: 'public_form_submissions',
+    filters: submissionsFor ? [{ field: 'form', operator: 'eq', value: submissionsFor['@id'] }] : [],
+    sorters: [{ field: 'createdAt', order: 'desc' }],
+    pagination: { mode: 'off' },
+    queryOptions: { enabled: !!submissionsFor },
+  });
   // Field-label translation: which language the field-label inputs edit.
   const primaryLocale = usePrimaryLocale();
   const otherLocales = languages.filter((l) => l && l !== primaryLocale);
@@ -345,6 +362,16 @@ export function FormsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7"
+                            title={t('forms.view_submissions')}
+                            onClick={() => setSubmissionsFor(r)}
+                          >
+                            <Inbox className="size-3" />
+                          </Button>
                           <Button
                             type="button"
                             variant="outline"
@@ -564,6 +591,45 @@ export function FormsPage() {
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => setForm(null)} disabled={busy}>{t('action.cancel')}</Button>
             <Button type="button" onClick={save} disabled={busy}>{busy ? <Loader2 className="size-4 animate-spin" /> : null} {t('action.save')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Submissions inbox — read the stored PublicFormSubmission rows (incl.
+          project-less forms that never created a task). */}
+      <Dialog open={submissionsFor !== null} onOpenChange={(o) => !o && setSubmissionsFor(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t('forms.submissions_title', { title: submissionsFor?.title ?? '' })}</DialogTitle>
+          </DialogHeader>
+          {subsQuery.isLoading ? (
+            <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
+          ) : (subs?.data ?? []).length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">{t('forms.no_submissions')}</p>
+          ) : (
+            <div className="space-y-3">
+              {(subs?.data ?? []).map((s) => (
+                <div key={s['@id']} className="rounded-md border p-3">
+                  <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{s.createdAt ? formatDateTime(s.createdAt) : ''}</span>
+                    {s.createdTask ? (
+                      <Badge variant="secondary" className="text-[10px]">{t('forms.became_task')}</Badge>
+                    ) : null}
+                  </div>
+                  <dl className="space-y-1">
+                    {Object.entries(s.payload ?? {}).map(([k, v]) => (
+                      <div key={k} className="grid grid-cols-[8rem_1fr] gap-2 text-sm">
+                        <dt className="truncate text-muted-foreground">{k}</dt>
+                        <dd className="break-words">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setSubmissionsFor(null)}>{t('action.close')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
