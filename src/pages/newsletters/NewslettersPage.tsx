@@ -31,6 +31,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { NewsletterIssuesDialog } from './NewsletterIssuesDialog';
 import { NewsletterTemplatesDialog } from './NewsletterTemplatesDialog';
+import { NewsletterSettingsDialog } from './NewsletterSettingsDialog';
 
 /** Minimal shape of a Newsletter node (we call the API directly, like IndustriesPage). */
 type NewsletterRow = Row<{
@@ -97,6 +98,7 @@ export function NewslettersPage() {
   const [edit, setEdit] = useState<EditState | null>(null);
   const [sendFor, setSendFor] = useState<{ iri: string; title: string } | null>(null);
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [draggingIri, setDraggingIri] = useState<string | null>(null);
   const [dropHint, setDropHint] = useState<{ iri: string; zone: DropZone } | null>(null);
 
@@ -294,9 +296,14 @@ export function NewslettersPage() {
             {translate('newsletters.subtitle')}
           </p>
         </div>
-        <Button type="button" variant="outline" onClick={() => setTemplatesOpen(true)}>
-          {translate('newsletters.templates')}
-        </Button>
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" onClick={() => setSettingsOpen(true)}>
+            {translate('newsletters.settings')}
+          </Button>
+          <Button type="button" variant="outline" onClick={() => setTemplatesOpen(true)}>
+            {translate('newsletters.templates')}
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -406,6 +413,7 @@ export function NewslettersPage() {
       ) : null}
 
       <NewsletterTemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} />
+      <NewsletterSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
 
       <Dialog open={edit !== null} onOpenChange={(o) => !o && setEdit(null)}>
         <DialogContent>
