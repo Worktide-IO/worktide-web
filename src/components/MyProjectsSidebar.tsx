@@ -1,4 +1,5 @@
 import { useGetIdentity, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { FolderKanban, Star } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link, useLocation } from 'react-router';
@@ -35,6 +36,7 @@ type Identity = { id?: string };
  * comes from the `members.user=` filter the Project entity exposes.
  */
 export function MyProjectsSidebar() {
+  const { t } = useTranslation();
   const { data: identity } = useGetIdentity<Identity>();
   const userIri = identity?.id ? `/v1/users/${identity.id}` : null;
   const { favorites } = useFavoriteProjects();
@@ -121,7 +123,7 @@ export function MyProjectsSidebar() {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Meine Projekte</SidebarGroupLabel>
+      <SidebarGroupLabel>{t('widget.my_projects.label')}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
           {favoritesOrdered.length > 0 ? (

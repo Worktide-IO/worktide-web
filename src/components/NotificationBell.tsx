@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useGetIdentity } from '@refinedev/core';
 import { useNavigate } from 'react-router';
 import {
@@ -43,6 +44,7 @@ const DROPDOWN_LIMIT = 8;
  * backend publishes each new notification to.
  */
 export function NotificationBell() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: identity } = useGetIdentity<Identity>();
   const [items, setItems] = useState<Notification[]>([]);
@@ -94,7 +96,7 @@ export function NotificationBell() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label="Benachrichtigungen"
+          aria-label={t('notifications.title')}
           className="relative inline-flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <Bell className="size-5" />
@@ -107,7 +109,7 @@ export function NotificationBell() {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-96 overflow-hidden p-0">
         <div className="flex items-center justify-between border-b px-4 py-2.5">
-          <span className="text-sm font-semibold">Benachrichtigungen</span>
+          <span className="text-sm font-semibold">{t('notifications.title')}</span>
           <Button
             type="button"
             variant="ghost"

@@ -2164,5 +2164,16 @@
   "valid.min_8": "At least 8 characters",
   "valid.workspace_name_required": "Workspace name required",
   "valid.passwords_mismatch": "Passwords do not match",
-  "common.load_more": "Load more"
+  "common.load_more": "Load more",
+  "combobox.no_customer": "No customer found.",
+  "combobox.internal_option": "— Internal (no customer)",
+  "notifications.title": "Notifications",
+  "reset.set_new_password": "Set a new password",
+  "wall.no_tasks": "no tasks",
+  "planner.new_task": "New task",
+  "notifications.empty": "No notifications.",
+  "ai_ticket.field_project": "Project",
+  "combobox.no_project": "No project found.",
+  "combobox.remove_customer": "Remove customer",
+  "lead.history": "History"
 }

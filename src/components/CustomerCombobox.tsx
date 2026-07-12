@@ -91,7 +91,7 @@ export function CustomerCombobox({ value, onChange, placeholder, className }: Pr
             <span
               role="button"
               tabIndex={-1}
-              aria-label="Kunde entfernen"
+              aria-label={t('combobox.remove_customer')}
               className="ml-auto rounded p-0.5 hover:bg-muted"
               onClick={(e) => {
                 e.stopPropagation();
@@ -107,10 +107,10 @@ export function CustomerCombobox({ value, onChange, placeholder, className }: Pr
         <Command shouldFilter={false}>
           <CommandInput placeholder={t('combobox.search_customer')} value={query} onValueChange={setQuery} />
           <CommandList>
-            <CommandEmpty>Kein Kunde gefunden.</CommandEmpty>
+            <CommandEmpty>{t('combobox.no_customer')}</CommandEmpty>
             <CommandGroup heading="— Intern (kein Kunde)">
               <CommandItem value="__none__" onSelect={() => pick(null)} className="gap-2">
-                <span className="flex-1 truncate text-muted-foreground">— Intern (kein Kunde)</span>
+                <span className="flex-1 truncate text-muted-foreground">{t('combobox.internal_option')}</span>
                 {!value ? <Check className="size-3.5" /> : null}
               </CommandItem>
             </CommandGroup>

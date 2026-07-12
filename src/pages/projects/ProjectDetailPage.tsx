@@ -151,7 +151,7 @@ export function ProjectDetailPage() {
         <TabsList>
           <TabsTrigger value="overview">{t('project_detail.tab_overview')}</TabsTrigger>
           <TabsTrigger value="board">Board</TabsTrigger>
-          <TabsTrigger value="status-updates">Status-Updates</TabsTrigger>
+          <TabsTrigger value="status-updates">{t('widget.recent_status_updates.label')}</TabsTrigger>
           <TabsTrigger value="releases">Releases</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="pt-4">

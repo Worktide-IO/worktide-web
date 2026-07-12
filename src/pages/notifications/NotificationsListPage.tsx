@@ -104,7 +104,7 @@ export function NotificationsListPage() {
     <div className="mx-auto w-full max-w-3xl px-4 py-6">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Benachrichtigungen</h1>
+          <h1 className="text-xl font-semibold">{t('notifications.title')}</h1>
           <p className="text-sm text-muted-foreground">
             {unread > 0 ? `${unread} ungelesen` : 'Alles gelesen'}
           </p>
@@ -118,7 +118,7 @@ export function NotificationsListPage() {
       {items.length === 0 && !loading ? (
         <div className="rounded-lg border border-dashed py-16 text-center text-sm text-muted-foreground">
           <Bell className="mx-auto mb-2 size-6 opacity-40" />
-          Keine Benachrichtigungen.
+          {t('notifications.empty')}
         </div>
       ) : (
         <ul className="divide-y rounded-lg border">

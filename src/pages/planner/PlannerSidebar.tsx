@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronRight, Lock, Plus, Search, User as UserIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -43,6 +44,7 @@ export function PlannerSidebar({
   activeProjectIris: string[] | null;
   setActiveProjectIris: (iris: string[] | null) => void;
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [showAllProjects, setShowAllProjects] = useState(true);
@@ -78,7 +80,7 @@ export function PlannerSidebar({
     <div className="space-y-3">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Neue Aufgabe</CardTitle>
+          <CardTitle className="text-sm">{t('planner.new_task')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-1.5 p-3 pt-0">
           {/* Three-way quick-add — scope as URL query so the existing
@@ -89,7 +91,7 @@ export function PlannerSidebar({
             className="w-full justify-start"
             onClick={() => navigate('/tasks?new=any')}
           >
-            <Plus className="size-4" /> Neue Aufgabe
+            <Plus className="size-4" /> {t('planner.new_task')}
           </Button>
           <Button
             size="sm"
@@ -188,7 +190,7 @@ export function PlannerSidebar({
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Projekt suchen…"
+                placeholder={t('combobox.search_project')}
                 className="h-7 pl-7 text-xs"
               />
             </div>

@@ -1,4 +1,5 @@
 import { Activity } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { intlLocale } from '@/lib/intl';
 import { useNavigate } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -41,6 +42,7 @@ const KEY = ['dashboard', 'recent-status-updates'] as const;
  * project_status_updates + projects collections and slicing client-side.
  */
 export function RecentStatusUpdatesWidget() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -62,7 +64,7 @@ export function RecentStatusUpdatesWidget() {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <Activity className="size-4 text-muted-foreground" />
-          Status-Updates
+          {t('widget.recent_status_updates.label')}
           <span className="ml-auto text-xs font-normal text-muted-foreground">{rows.length}</span>
         </CardTitle>
       </CardHeader>
