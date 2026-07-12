@@ -113,6 +113,7 @@ type NotifPrefs = {
   email: boolean;
   chat: boolean;
   frequency: string;
+  delayMinutes: number;
   types: Record<string, boolean>;
   quietHours: { start: string; end: string } | null;
 };
@@ -227,6 +228,26 @@ function NotificationsCard() {
               </div>
               <Switch checked={prefs.chat} onCheckedChange={(v) => savePrefs({ chat: v })} />
             </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="size-4 text-muted-foreground" /> {t('security.notif_delay')}
+              </div>
+              <Select
+                value={String(prefs.delayMinutes ?? 30)}
+                onValueChange={(v) => savePrefs({ delayMinutes: Number(v) })}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">{t('security.notif_delay_instant')}</SelectItem>
+                  <SelectItem value="15">15 Min.</SelectItem>
+                  <SelectItem value="30">30 Min.</SelectItem>
+                  <SelectItem value="60">60 Min.</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">{t('security.notif_delay_hint')}</p>
           </>
         )}
 
