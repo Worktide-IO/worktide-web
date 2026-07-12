@@ -14,7 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CustomerPortalCard } from '@/components/CustomerPortalCard';
 import { CustomerSlaCard } from '@/components/CustomerSlaCard';
 import { CustomerAgreementsTab } from './CustomerAgreementsTab';
+import { CustomerFilesTab } from './CustomerFilesTab';
 import { CustomerProductsTab } from './CustomerProductsTab';
+import { CustomerProjectsTab } from './CustomerProjectsTab';
 import { CustomerNewslettersTab } from './CustomerNewslettersTab';
 import { CustomerAbsencesCard } from './CustomerAbsencesCard';
 import { CustomerForm } from './CustomerForm';
@@ -166,15 +168,20 @@ export function CustomerDetailPage() {
       >
         <TabsList>
           <TabsTrigger value="overview">{t('customer_detail.tab_overview')}</TabsTrigger>
+          <TabsTrigger value="projects">{t('customer_detail.tab_projects')}</TabsTrigger>
           <TabsTrigger value="contacts">{t('customer_detail.tab_contacts')}</TabsTrigger>
           <TabsTrigger value="systems">{t('customer_detail.tab_systems')}</TabsTrigger>
           <TabsTrigger value="subscriptions">{t('customer_detail.tab_subscriptions')}</TabsTrigger>
           <TabsTrigger value="agreements">{t('customer_detail.tab_agreements')}</TabsTrigger>
           <TabsTrigger value="products">{t('customer_detail.tab_products')}</TabsTrigger>
+          <TabsTrigger value="files">{t('customer_detail.tab_files')}</TabsTrigger>
           <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="pt-4">
           <CustomerForm action="edit" id={id} embedded />
+        </TabsContent>
+        <TabsContent value="projects" className="pt-4">
+          <CustomerProjectsTab customerId={id} customerIri={iri} />
         </TabsContent>
         <TabsContent value="contacts" className="space-y-4 pt-4">
           <CustomerPortalCard customerId={id} />
@@ -193,6 +200,9 @@ export function CustomerDetailPage() {
         </TabsContent>
         <TabsContent value="products" className="pt-4">
           {id ? <CustomerProductsTab customerIri={iri} /> : null}
+        </TabsContent>
+        <TabsContent value="files" className="pt-4">
+          {id ? <CustomerFilesTab customerId={id} /> : null}
         </TabsContent>
         <TabsContent value="newsletter" className="pt-4">
           {id ? <CustomerNewslettersTab customerId={id} /> : null}

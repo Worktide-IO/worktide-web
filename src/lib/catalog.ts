@@ -25,6 +25,8 @@ export type ProductJsonld = HydraItemBaseSchema & {
   category?: string | null;
   /** IRI of the newest version. */
   latestVersion?: string | null;
+  /** IRIs of attached tags (scope 'product' or 'any'). */
+  tags?: string[];
 };
 
 export type ProductVersionJsonld = HydraItemBaseSchema & {

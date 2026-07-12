@@ -32,7 +32,12 @@ export default defineConfig({
   },
   output: {
     path: './src/api',
-    clean: true,
+    // NOTE: intentionally false. With clean:true, kubb empties src/api BEFORE
+    // running the plugins — so a failed run (e.g. the kubb×Node-24 bug that
+    // currently aborts all three plugins) destroys the committed snapshot
+    // instead of no-op'ing. Keeping it false makes a failed run harmless; kubb
+    // still overwrites each file it successfully generates.
+    clean: false,
   },
   hooks: {
     done: ['echo "✓ kubb codegen done — types + zod schemas written to src/api/"'],

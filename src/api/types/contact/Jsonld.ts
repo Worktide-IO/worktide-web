@@ -125,4 +125,11 @@ export type ContactJsonld = (HydraItemBaseSchema & {
      * @type string,null
     */
     readonly externalRef?: string | null;
+    /**
+     * Hand-added: backend exposes tags on Contact now, but the generated client
+     * predates that (gen:api broken — kubb×Node24). Regenerating under Node LTS
+     * will produce this identically.
+     * @type array | undefined
+    */
+    readonly tags?: string[];
 });

@@ -31,7 +31,7 @@ type Props = {
   /** Called with the new IRI list whenever the user toggles a tag. */
   onChange: (next: string[]) => void;
   /** Workspace-scope narrowing for the dropdown + create. */
-  scope?: 'project' | 'task' | 'customer';
+  scope?: 'project' | 'task' | 'customer' | 'contact' | 'lead' | 'product' | 'document' | 'conversation';
   /** Optional tag-create disabled mode (for filter-only popovers). */
   disableCreate?: boolean;
   /** Custom trigger label when empty (default: "Tags wählen…"). */

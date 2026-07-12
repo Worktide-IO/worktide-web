@@ -41,6 +41,8 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { TranslationsFields, type TranslationsMap } from '@/components/TranslationsFields';
+import { TagPicker } from '@/components/TagPicker';
+import { TagSuggestButton } from '@/components/TagSuggestButton';
 import { useSupportedLanguages } from '@/lib/languages';
 
 type Mode = { action: 'create' } | { action: 'edit'; id: string };
@@ -174,6 +176,32 @@ export function ProductForm(props: Mode) {
             <div className="space-y-1.5">
               <Label htmlFor="description">{t('product_form.description')}</Label>
               <Textarea id="description" rows={3} {...register('description')} />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>{t('product_form.field_tags')}</Label>
+              <Controller
+                name="tags"
+                control={control}
+                render={({ field }) => {
+                  const val = (field.value as string[] | undefined) ?? [];
+                  return (
+                    <div className="space-y-2">
+                      <TagPicker value={val} onChange={field.onChange} scope="product" />
+                      <TagSuggestButton
+                        scope="product"
+                        value={val}
+                        onChange={field.onChange}
+                        getText={() =>
+                          [watch('name'), watch('category'), watch('description')]
+                            .filter(Boolean)
+                            .join(' • ')
+                        }
+                      />
+                    </div>
+                  );
+                }}
+              />
             </div>
 
             <Controller
