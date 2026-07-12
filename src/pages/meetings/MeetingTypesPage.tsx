@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
+import { TranslationsFields, type TranslationsMap } from '@/components/TranslationsFields';
+import { useSupportedLanguages, useLocalize } from '@/lib/languages';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +44,7 @@ type MeetingTypeRow = Row<{
   minNoticeMinutes: number;
   maxAdvanceDays: number;
   availability: Window[];
+  translations?: TranslationsMap | null;
 }>;
 
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -62,6 +65,7 @@ type FormState = {
   minNoticeMinutes: number;
   maxAdvanceDays: number;
   availability: Window[];
+  translations: TranslationsMap;
 };
 
 const BLANK: FormState = {
@@ -77,6 +81,7 @@ const BLANK: FormState = {
   bufferAfterMinutes: 0,
   minNoticeMinutes: 240,
   maxAdvanceDays: 30,
+  translations: {},
   availability: [
     { weekday: 1, start: '09:00', end: '17:00' },
     { weekday: 2, start: '09:00', end: '17:00' },
@@ -99,6 +104,8 @@ export function MeetingTypesPage() {
     sorters: [{ field: 'title', order: 'asc' }],
   });
   const { data: identity } = useGetIdentity<{ id?: string }>();
+  const { languages } = useSupportedLanguages();
+  const localize = useLocalize();
   const [form, setForm] = useState<FormState | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -129,6 +136,7 @@ export function MeetingTypesPage() {
       minNoticeMinutes: form.minNoticeMinutes,
       maxAdvanceDays: form.maxAdvanceDays,
       availability: form.availability,
+      translations: form.translations,
     };
     try {
       if (form.id) {
@@ -208,7 +216,7 @@ export function MeetingTypesPage() {
                 {rows.map((r) => (
                   <TableRow key={r['@id']}>
                     <TableCell>
-                      <div className="font-medium">{r.title}</div>
+                      <div className="font-medium">{localize(r, 'title')}</div>
                       <div className="text-xs text-muted-foreground">/book/{r.slug}</div>
                     </TableCell>
                     <TableCell>{t('meeting_types.minutes', { n: r.durationMinutes })}</TableCell>
@@ -242,6 +250,7 @@ export function MeetingTypesPage() {
                             minNoticeMinutes: r.minNoticeMinutes,
                             maxAdvanceDays: r.maxAdvanceDays,
                             availability: r.availability ?? [],
+                            translations: r.translations ?? {},
                           })}
                         >
                           <Pencil className="size-3" />
@@ -284,6 +293,15 @@ export function MeetingTypesPage() {
                 <Label>{t('meeting_types.description')}</Label>
                 <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
+              <TranslationsFields
+                fields={[
+                  { key: 'title', label: t('meeting_types.title') },
+                  { key: 'description', label: t('meeting_types.description') },
+                ]}
+                locales={languages}
+                value={form.translations}
+                onChange={(translations) => setForm({ ...form, translations })}
+              />
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label>{t('meeting_types.location')}</Label>
