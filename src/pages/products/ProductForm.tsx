@@ -3,7 +3,7 @@ import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { useForm } from '@refinedev/react-hook-form';
 import { ArrowLeft, Check, Loader2, Plus, Save, Sparkles, Tag, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -40,7 +40,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { TranslationsFields, type TranslationsMap } from '@/components/TranslationsFields';
+import { LocalizedFields, type TranslationsMap } from '@/components/LocalizedFields';
 import { TagPicker } from '@/components/TagPicker';
 import { TagSuggestButton } from '@/components/TagSuggestButton';
 import { useSupportedLanguages } from '@/lib/languages';
@@ -82,6 +82,16 @@ export function ProductForm(props: Mode) {
   const type = (watch('type') as ProductType | undefined) ?? 'product';
   const productIri = current?.['@id'];
 
+  // name/description are edited through <LocalizedFields> (a controlled group,
+  // not registered inputs), so register them here for required-validation and
+  // inclusion in the submit payload.
+  useEffect(() => {
+    register('name', { required: true });
+    register('description');
+  }, [register]);
+  const nameVal = (watch('name') as string | undefined) ?? '';
+  const descVal = (watch('description') as string | undefined) ?? '';
+
   const workspaceIri = (() => {
     const id = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
     return id ? `/v1/workspaces/${id}` : undefined;
@@ -112,21 +122,31 @@ export function ProductForm(props: Mode) {
 
         <Card>
           <CardContent className="space-y-4 pt-6">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  {...register('name', { required: true })}
-                  onBlur={(e) => {
-                    if (!watch('slug')) setValue('slug', slugify(e.target.value));
+            <Controller
+              control={control}
+              name="translations"
+              render={({ field }) => (
+                <LocalizedFields
+                  fields={[
+                    { key: 'name', label: 'Name' },
+                    { key: 'description', label: t('product_form.description'), multiline: true },
+                  ]}
+                  locales={languages}
+                  base={{ name: nameVal, description: descVal }}
+                  onBaseChange={(k, v) =>
+                    setValue(k as 'name' | 'description', v, { shouldDirty: true, shouldValidate: true })
+                  }
+                  onBaseBlur={(k, v) => {
+                    if (k === 'name' && !watch('slug')) setValue('slug', slugify(v));
                   }}
+                  translations={(field.value as TranslationsMap | undefined) ?? {}}
+                  onTranslationsChange={field.onChange}
                 />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="slug">{t('product_form.key_slug')}</Label>
-                <Input id="slug" placeholder={t('product_form.slug_placeholder')} {...register('slug')} />
-              </div>
+              )}
+            />
+            <div className="space-y-1.5">
+              <Label htmlFor="slug">{t('product_form.key_slug')}</Label>
+              <Input id="slug" placeholder={t('product_form.slug_placeholder')} {...register('slug')} />
             </div>
 
             <div className="grid grid-cols-3 gap-3">
@@ -174,11 +194,6 @@ export function ProductForm(props: Mode) {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="description">{t('product_form.description')}</Label>
-              <Textarea id="description" rows={3} {...register('description')} />
-            </div>
-
-            <div className="space-y-1.5">
               <Label>{t('product_form.field_tags')}</Label>
               <Controller
                 name="tags"
@@ -204,21 +219,6 @@ export function ProductForm(props: Mode) {
               />
             </div>
 
-            <Controller
-              control={control}
-              name="translations"
-              render={({ field }) => (
-                <TranslationsFields
-                  fields={[
-                    { key: 'name', label: 'Name' },
-                    { key: 'description', label: t('product_form.description') },
-                  ]}
-                  locales={languages}
-                  value={(field.value as TranslationsMap | undefined) ?? {}}
-                  onChange={field.onChange}
-                />
-              )}
-            />
           </CardContent>
         </Card>
       </form>
