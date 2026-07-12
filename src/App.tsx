@@ -69,6 +69,7 @@ import { ProductEditPage } from '@/pages/products/ProductEditPage';
 import { IndustriesPage } from '@/pages/industries/IndustriesPage';
 import { NewslettersPage } from '@/pages/newsletters/NewslettersPage';
 import { MeetingTypesPage } from '@/pages/meetings/MeetingTypesPage';
+import { FormsPage } from '@/pages/forms/FormsPage';
 import { BookingsPage } from '@/pages/meetings/BookingsPage';
 import { CalendarSyncPage } from '@/pages/meetings/CalendarSyncPage';
 import { AbsencesPage } from '@/pages/AbsencesPage';
@@ -267,6 +268,11 @@ export default function App() {
               meta: { label: 'nav.meeting_types', icon: 'CalendarClock', category: 'CRM' },
             },
             {
+              name: 'public_forms',
+              list: '/formulare',
+              meta: { label: 'nav.forms', icon: 'ClipboardList', category: 'CRM' },
+            },
+            {
               name: 'bookings',
               list: '/buchungen',
               meta: { label: 'nav.bookings', icon: 'CalendarDays', category: 'CRM' },
@@ -385,6 +391,7 @@ export default function App() {
               <Route path="/branchen" element={<IndustriesPage />} />
               <Route path="/newsletter" element={<NewslettersPage />} />
               <Route path="/terminarten" element={<MeetingTypesPage />} />
+              <Route path="/formulare" element={<FormsPage />} />
               <Route path="/buchungen" element={<BookingsPage />} />
               <Route path="/kalender-sync" element={<CalendarSyncPage />} />
               <Route path="/abwesenheiten" element={<AbsencesPage />} />
