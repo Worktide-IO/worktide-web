@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
+import { TranslationsFields, type TranslationsMap } from '@/components/TranslationsFields';
+import { useSupportedLanguages, useLocalize } from '@/lib/languages';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -37,6 +39,7 @@ type NewsletterRow = Row<{
   description?: string | null;
   parent?: string | null; // parent IRI or null for roots
   position?: number;
+  translations?: TranslationsMap | null;
 }>;
 
 type EditState = {
@@ -44,6 +47,7 @@ type EditState = {
   title: string;
   description: string;
   parentIri: string | null;
+  translations: TranslationsMap;
 };
 
 const ROOT = '__root__';
@@ -59,6 +63,7 @@ type DropZone = 'before' | 'after' | 'inside';
  */
 export function NewslettersPage() {
   const { t: translate } = useTranslation();
+  const { languages } = useSupportedLanguages();
   const { result, query } = useList<NewsletterRow>({
     resource: 'newsletters',
     pagination: { mode: 'off' },
@@ -132,7 +137,7 @@ export function NewslettersPage() {
       if (edit.id) {
         await api.patch(
           `/newsletters/${edit.id}`,
-          { title: t, description: edit.description.trim() || null, parent: edit.parentIri },
+          { title: t, description: edit.description.trim() || null, parent: edit.parentIri, translations: edit.translations },
           { headers: { 'Content-Type': 'application/merge-patch+json' } },
         );
         toast.success(translate('toast.saved'));
@@ -142,6 +147,7 @@ export function NewslettersPage() {
           title: t,
           description: edit.description.trim() || null,
           parent: edit.parentIri,
+          translations: edit.translations,
           position: siblings,
           // Root needs an explicit workspace; children inherit it server-side.
           ...(edit.parentIri ? {} : { workspace: workspaceIri }),
@@ -305,13 +311,14 @@ export function NewslettersPage() {
                   depth={0}
                   iriOf={iriOf}
                   childrenByParent={childrenByParent}
-                  onAddChild={(parentIri) => setEdit({ title: '', description: '', parentIri })}
+                  onAddChild={(parentIri) => setEdit({ title: '', description: '', parentIri, translations: {} })}
                   onEdit={(r) =>
                     setEdit({
                       id: idOf(r),
                       title: r.title,
                       description: r.description ?? '',
                       parentIri: r.parent ?? null,
+                      translations: r.translations ?? {},
                     })
                   }
                   onSend={(r) => setSendFor({ iri: iriOf(r), title: r.title })}
@@ -370,6 +377,15 @@ export function NewslettersPage() {
                   onChange={(e) => setEdit({ ...edit, description: e.target.value })}
                 />
               </div>
+              <TranslationsFields
+                fields={[
+                  { key: 'title', label: translate('newsletters.title_label') },
+                  { key: 'description', label: translate('newsletters.description_optional') },
+                ]}
+                locales={languages}
+                value={edit.translations}
+                onChange={(translations) => setEdit({ ...edit, translations })}
+              />
               <div className="space-y-1">
                 <Label>{translate('newsletters.parent')}</Label>
                 <Select
@@ -437,6 +453,7 @@ function NewsletterNode({
   onDragEndNode: () => void;
 }) {
   const { t: translate } = useTranslation();
+  const localize = useLocalize();
   const iri = iriOf(node);
   const children = childrenByParent[iri] ?? [];
   const hint = dropHint?.iri === iri ? dropHint.zone : null;
@@ -477,9 +494,9 @@ function NewsletterNode({
           <span className="inline-block size-4 shrink-0" />
         )}
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium">{node.title}</div>
+          <div className="truncate text-sm font-medium">{localize(node, 'title')}</div>
           {node.description ? (
-            <div className="truncate text-xs text-muted-foreground">{node.description}</div>
+            <div className="truncate text-xs text-muted-foreground">{localize(node, 'description')}</div>
           ) : null}
         </div>
         <div className="flex shrink-0 gap-1 opacity-0 transition group-hover:opacity-100">
