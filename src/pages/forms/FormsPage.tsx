@@ -88,13 +88,22 @@ type FormState = {
   translations: TranslationsMap;
   blocks: FormBlock[];
   isV2: boolean; // form stored as v2 schema (vs. legacy flat fields)
-  logic: unknown[]; // preserved untouched (no UI yet)
-  calc: unknown[]; // preserved untouched (no UI yet)
+  logicRules: LogicRule[]; // editable show/hide branching rules
+  logicOther: unknown[]; // other logic rules (e.g. jump) — preserved untouched
+  calc: unknown[]; // computed-field rules — preserved untouched (no UI yet)
 };
+
+/** A branching atom: a field's value tested against `op` (+ `value`). */
+type LogicAtom = { field: string; op: string; value?: string };
+/** if all/any of the atoms hold, show/hide the target field. */
+type LogicRule = { if: { all?: LogicAtom[]; any?: LogicAtom[] }; then: { action: string; target: string } };
 
 const NO_PROJECT = '__none__';
 const NO_MAP = '__nomap__';
 const LABEL_BASE = '__base__'; // field-label language selector: edit the base label
+const LOGIC_OPS = ['eq', 'neq', 'contains', 'gt', 'gte', 'lt', 'lte', 'empty', 'not_empty'] as const;
+const NO_VALUE_OPS = new Set(['empty', 'not_empty']);
+const LOGIC_ACTIONS = ['show', 'hide'] as const;
 
 /** Field types the portal renderer + backend accept (mirror of INPUT_TYPES). */
 const FIELD_TYPE_KEYS = [
@@ -117,7 +126,8 @@ const BLANK: FormState = {
   translations: {},
   blocks: [],
   isV2: false,
-  logic: [],
+  logicRules: [],
+  logicOther: [],
   calc: [],
 };
 
@@ -127,18 +137,67 @@ const slugify = (s: string) =>
 const genId = () =>
   typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `b-${Math.round(performance.now() * 1e6)}`;
 
+/** An editable show/hide rule if its action is show/hide; else null (preserved as-is). */
+function asEditableRule(raw: unknown): LogicRule | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const r = raw as { if?: unknown; then?: { action?: unknown } };
+  const action = r.then?.action;
+  return action === 'show' || action === 'hide' ? (raw as LogicRule) : null;
+}
+
+function splitLogic(logic: unknown[]): { logicRules: LogicRule[]; logicOther: unknown[] } {
+  const logicRules: LogicRule[] = [];
+  const logicOther: unknown[] = [];
+  for (const raw of logic) {
+    const rule = asEditableRule(raw);
+    if (rule) logicRules.push(rule);
+    else logicOther.push(raw);
+  }
+  return { logicRules, logicOther };
+}
+
 /** Flatten a form's fields into an editable block list, preserving its storage format. */
-function readBlocks(r: FormRow): Pick<FormState, 'blocks' | 'isV2' | 'logic' | 'calc'> {
+function readBlocks(r: FormRow): Pick<FormState, 'blocks' | 'isV2' | 'logicRules' | 'logicOther' | 'calc'> {
   const schema = r.schema;
   if (r.schemaVersion === 2 && schema && Array.isArray(schema.pages)) {
+    // Stamp each block with its page title as `section` so page grouping
+    // round-trips; ensure a stable id so logic rules can target it.
+    const blocks = schema.pages.flatMap((p) =>
+      (Array.isArray(p?.blocks) ? p.blocks : []).map((b) => ({
+        ...b,
+        id: (b.id as string) || genId(),
+        section: b.section ?? p.title ?? '',
+      })),
+    );
     return {
-      blocks: schema.pages.flatMap((p) => (Array.isArray(p?.blocks) ? p.blocks : [])),
+      blocks,
       isV2: true,
-      logic: Array.isArray(schema.logic) ? schema.logic : [],
+      ...splitLogic(Array.isArray(schema.logic) ? schema.logic : []),
       calc: Array.isArray(schema.calc) ? schema.calc : [],
     };
   }
-  return { blocks: Array.isArray(r.fields) ? r.fields : [], isV2: false, logic: [], calc: [] };
+  // v1 fields may lack ids; assign stable ones so logic targeting works.
+  const blocks = (Array.isArray(r.fields) ? r.fields : []).map((b) => ({ ...b, id: (b.id as string) || genId() }));
+  return { blocks, isV2: false, logicRules: [], logicOther: [], calc: [] };
+}
+
+/**
+ * Group the flat block list into v2 pages by `section` (first-seen order) — the
+ * same grouping the backend's fromLegacyFields does for v1, so behaviour is
+ * identical whether saved as v1 fields or a v2 schema.
+ */
+function buildPages(blocks: FormBlock[]): { id: string; title: string | null; blocks: FormBlock[] }[] {
+  const bySection = new Map<string, { id: string; title: string | null; blocks: FormBlock[] }>();
+  const order: string[] = [];
+  for (const b of blocks) {
+    const sec = ((b.section as string) ?? '').trim();
+    if (!bySection.has(sec)) {
+      bySection.set(sec, { id: `p${order.length + 1}`, title: sec === '' ? null : sec, blocks: [] });
+      order.push(sec);
+    }
+    bySection.get(sec)!.blocks.push(b);
+  }
+  return order.length === 0 ? [{ id: 'p1', title: null, blocks: [] }] : order.map((s) => bySection.get(s)!);
 }
 
 /**
@@ -225,11 +284,16 @@ export function FormsPage() {
       submissionLimit: limit,
       translations: form.translations,
     };
-    if (form.isV2) {
-      // Preserve the form's advanced schema (logic/calc) untouched; collapse to a
-      // single page (multi-page editing is a follow-up).
-      payload.schema = { version: 2, pages: [{ id: 'p1', title: null, blocks }], logic: form.logic, calc: form.calc };
+    // Logic/calc live only in the v2 schema, so save v2 when the form is already
+    // v2 or uses any advanced feature; blocks group into pages by section (same
+    // grouping the backend applies to v1 fields). Otherwise keep the flat v1
+    // fields (with per-block `section`).
+    const logic = [...form.logicRules, ...form.logicOther];
+    const needsV2 = form.isV2 || logic.length > 0 || form.calc.length > 0;
+    if (needsV2) {
+      payload.schema = { version: 2, pages: buildPages(blocks), logic, calc: form.calc };
       payload.schemaVersion = 2;
+      payload.fields = [];
     } else {
       payload.fields = blocks;
     }
@@ -319,6 +383,36 @@ export function FormsPage() {
       });
       return { ...f, blocks };
     });
+
+  // --- branching logic (show/hide rules) ---
+  // atom `field` matches an answer (block KEY); a rule `target` matches a block
+  // by ID (see the portal engine's isVisible) — so the two selects differ.
+  const fieldOptions = (form?.blocks ?? [])
+    .map((b) => ({ id: (b.id as string) || '', key: b.key?.trim() || slugify(b.label), label: b.label || b.key || '' }))
+    .filter((o) => o.key);
+  const atomsOf = (rule: LogicRule): LogicAtom[] => rule.if.all ?? rule.if.any ?? [];
+  const patchRule = (ri: number, next: LogicRule) =>
+    setForm((f) => (f ? { ...f, logicRules: f.logicRules.map((r, j) => (j === ri ? next : r)) } : f));
+  const addRule = () =>
+    setForm((f) =>
+      f
+        ? { ...f, logicRules: [...f.logicRules, { if: { all: [{ field: '', op: 'eq', value: '' }] }, then: { action: 'show', target: '' } }] }
+        : f,
+    );
+  const removeRule = (ri: number) =>
+    setForm((f) => (f ? { ...f, logicRules: f.logicRules.filter((_, j) => j !== ri) } : f));
+  const setRuleAtoms = (ri: number, rule: LogicRule, atoms: LogicAtom[]) => {
+    const mode = rule.if.any ? 'any' : 'all';
+    patchRule(ri, { ...rule, if: mode === 'any' ? { any: atoms } : { all: atoms } });
+  };
+  const setMatchMode = (ri: number, rule: LogicRule, mode: string) =>
+    patchRule(ri, { ...rule, if: mode === 'any' ? { any: atomsOf(rule) } : { all: atomsOf(rule) } });
+  const updateAtom = (ri: number, rule: LogicRule, ai: number, patch: Partial<LogicAtom>) =>
+    setRuleAtoms(ri, rule, atomsOf(rule).map((a, j) => (j === ai ? { ...a, ...patch } : a)));
+  const addAtom = (ri: number, rule: LogicRule) =>
+    setRuleAtoms(ri, rule, [...atomsOf(rule), { field: '', op: 'eq', value: '' }]);
+  const removeAtom = (ri: number, rule: LogicRule, ai: number) =>
+    setRuleAtoms(ri, rule, atomsOf(rule).filter((_, j) => j !== ai));
   const moveBlock = (i: number, dir: -1 | 1) =>
     setForm((f) => {
       if (!f) return f;
@@ -642,6 +736,83 @@ export function FormsPage() {
                   </div>
                 ))}
                 <p className="text-[11px] text-muted-foreground">{t('forms.fields_hint')}</p>
+              </div>
+
+              <div className="space-y-2 rounded-md border p-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium text-muted-foreground">{t('forms.logic')}</Label>
+                  <Button type="button" variant="outline" size="sm" className="h-7" onClick={addRule}>
+                    <Plus className="size-3" /> {t('forms.add_rule')}
+                  </Button>
+                </div>
+                {form.logicRules.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">{t('forms.no_rules')}</p>
+                ) : null}
+                {form.logicRules.map((rule, ri) => {
+                  const mode = rule.if.any ? 'any' : 'all';
+                  const atoms = atomsOf(rule);
+                  return (
+                    <div key={ri} className="space-y-2 rounded-md border bg-muted/30 p-2">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {t('forms.logic_when')}
+                        <Select value={mode} onValueChange={(v) => setMatchMode(ri, rule, v)}>
+                          <SelectTrigger className="h-7 w-24"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">{t('forms.match_all')}</SelectItem>
+                            <SelectItem value="any">{t('forms.match_any')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {t('forms.logic_conditions')}
+                        <Button type="button" variant="ghost" size="icon" className="ml-auto size-7 text-destructive" onClick={() => removeRule(ri)}>
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+                      {atoms.map((a, ai) => (
+                        <div key={ai} className="flex items-center gap-1.5">
+                          <Select value={a.field} onValueChange={(v) => updateAtom(ri, rule, ai, { field: v })}>
+                            <SelectTrigger className="h-8 flex-1"><SelectValue placeholder={t('forms.logic_field')} /></SelectTrigger>
+                            <SelectContent>
+                              {fieldOptions.map((o) => <SelectItem key={o.key} value={o.key}>{o.label ? `${o.label} · ${o.key}` : o.key}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Select value={a.op} onValueChange={(v) => updateAtom(ri, rule, ai, { op: v })}>
+                            <SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {LOGIC_OPS.map((op) => <SelectItem key={op} value={op}>{t(`forms.op.${op}`)}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          {!NO_VALUE_OPS.has(a.op) ? (
+                            <Input className="h-8 flex-1" value={a.value ?? ''} placeholder={t('forms.logic_value')} onChange={(e) => updateAtom(ri, rule, ai, { value: e.target.value })} />
+                          ) : null}
+                          <Button type="button" variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => removeAtom(ri, rule, ai)}>
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => addAtom(ri, rule)}>
+                        <Plus className="size-3" /> {t('forms.add_condition')}
+                      </Button>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {t('forms.logic_then')}
+                        <Select value={rule.then.action} onValueChange={(v) => patchRule(ri, { ...rule, then: { ...rule.then, action: v } })}>
+                          <SelectTrigger className="h-7 w-28"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {LOGIC_ACTIONS.map((act) => <SelectItem key={act} value={act}>{t(`forms.act.${act}`)}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <Select value={rule.then.target} onValueChange={(v) => patchRule(ri, { ...rule, then: { ...rule.then, target: v } })}>
+                          <SelectTrigger className="h-7 flex-1"><SelectValue placeholder={t('forms.logic_field')} /></SelectTrigger>
+                          <SelectContent>
+                            {fieldOptions.filter((o) => o.id).map((o) => <SelectItem key={o.id} value={o.id}>{o.label ? `${o.label} · ${o.key}` : o.key}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  );
+                })}
+                {form.logicOther.length > 0 ? (
+                  <p className="text-[11px] text-muted-foreground">{t('forms.logic_other_preserved', { count: form.logicOther.length })}</p>
+                ) : null}
               </div>
 
               <div className="flex items-center justify-between">
