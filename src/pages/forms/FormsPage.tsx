@@ -1,0 +1,374 @@
+import { useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
+import { ClipboardList, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
+import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import type { Row } from '@/lib/refine';
+import { LocalizedFields, type TranslationsMap } from '@/components/LocalizedFields';
+import { useSupportedLanguages, useLocalize } from '@/lib/languages';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+
+type FormRow = Row<{
+  '@id': string;
+  id?: string;
+  slug: string;
+  title: string;
+  description?: string | null;
+  successMessage?: string | null;
+  enabled: boolean;
+  project?: string | null; // target-project IRI (task landing) or null
+  recipients?: string[]; // customer IRIs the form is distributed to
+  submissionLimit?: number | null;
+  submissionCount?: number;
+  translations?: TranslationsMap | null;
+}>;
+
+type CustomerRow = Row<{ '@id': string; id?: string; name: string }>;
+type ProjectRow = Row<{ '@id': string; id?: string; name: string }>;
+
+type FormState = {
+  id?: string;
+  slug: string;
+  title: string;
+  description: string;
+  successMessage: string;
+  enabled: boolean;
+  projectIri: string | null;
+  recipientIris: string[];
+  submissionLimit: string; // '' = unlimited
+  translations: TranslationsMap;
+};
+
+const NO_PROJECT = '__none__';
+
+const BLANK: FormState = {
+  slug: '',
+  title: '',
+  description: '',
+  successMessage: '',
+  enabled: true,
+  projectIri: null,
+  recipientIris: [],
+  submissionLimit: '',
+  translations: {},
+};
+
+const slugify = (s: string) =>
+  s.toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').trim().replace(/[\s_-]+/g, '-').slice(0, 60);
+
+/**
+ * Global questionnaire management (roadmap §8 forms / Piece B1). Forms are a
+ * workspace-global resource distributed to 0..N customers (0 = staff-only,
+ * still reachable via the public slug). This edits metadata + distribution +
+ * translations; the field/logic builder is a follow-up (B2), so field editing
+ * is not here yet — new forms start empty. Mirrors the direct-api CRUD pattern
+ * of MeetingTypesPage.
+ */
+export function FormsPage() {
+  const { t } = useTranslation();
+  const { languages } = useSupportedLanguages();
+  const localize = useLocalize();
+  const { result, query } = useList<FormRow>({
+    resource: 'public_forms',
+    pagination: { mode: 'off' },
+    sorters: [{ field: 'title', order: 'asc' }],
+  });
+  const { result: customers } = useList<CustomerRow>({
+    resource: 'customers',
+    pagination: { mode: 'off' },
+    sorters: [{ field: 'name', order: 'asc' }],
+  });
+  const { result: projects } = useList<ProjectRow>({
+    resource: 'projects',
+    pagination: { mode: 'off' },
+    sorters: [{ field: 'name', order: 'asc' }],
+  });
+
+  const [form, setForm] = useState<FormState | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const rows = result?.data ?? [];
+  const customerName = (iri: string) =>
+    (customers?.data ?? []).find((c) => c['@id'] === iri)?.name ?? iri;
+  const workspaceIri = (() => {
+    const id = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
+    return id ? `/v1/workspaces/${id}` : undefined;
+  })();
+
+  const save = async () => {
+    if (!form) return;
+    const slug = form.slug.trim() || slugify(form.title);
+    if (!form.title.trim() || !/^[a-z0-9-]{1,60}$/.test(slug)) {
+      toast.error(t('toast.title_slug_required'));
+      return;
+    }
+    setBusy(true);
+    const limit = form.submissionLimit.trim() === '' ? null : Math.max(0, Number(form.submissionLimit));
+    const payload: Record<string, unknown> = {
+      slug,
+      title: form.title.trim(),
+      description: form.description.trim() || null,
+      successMessage: form.successMessage.trim() || null,
+      isEnabled: form.enabled,
+      project: form.projectIri,
+      recipients: form.recipientIris,
+      submissionLimit: limit,
+      translations: form.translations,
+    };
+    try {
+      if (form.id) {
+        await api.patch(`/public_forms/${form.id}`, payload, {
+          headers: { 'Content-Type': 'application/merge-patch+json' },
+        });
+      } else {
+        await api.post('/public_forms', { ...payload, workspace: workspaceIri, fields: [] });
+      }
+      toast.success(t('toast.saved'));
+      setForm(null);
+      await query.refetch();
+    } catch (e) {
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      toast.error(status === 422 ? t('toast.slug_taken') : t('toast.save_failed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const remove = async (r: FormRow) => {
+    if (!r.id || !window.confirm(t('forms.confirm_delete', { title: r.title }))) return;
+    try {
+      await api.delete(`/public_forms/${r.id}`);
+      toast.success(t('toast.deleted'));
+      await query.refetch();
+    } catch {
+      toast.error(t('toast.delete_failed'));
+    }
+  };
+
+  const toggleRecipient = (iri: string) =>
+    setForm((f) =>
+      f
+        ? {
+            ...f,
+            recipientIris: f.recipientIris.includes(iri)
+              ? f.recipientIris.filter((x) => x !== iri)
+              : [...f.recipientIris, iri],
+          }
+        : f,
+    );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="flex items-center gap-2 text-2xl">
+            <ClipboardList className="size-6 text-muted-foreground" /> {t('forms.heading')}
+          </h2>
+          <p className="text-sm text-muted-foreground">{t('forms.subtitle')}</p>
+        </div>
+        <Button type="button" onClick={() => setForm({ ...BLANK })}>
+          <Plus className="size-4" /> {t('forms.new')}
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('forms.count', { count: rows.length })}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {query.isLoading ? (
+            <div className="space-y-2"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
+          ) : rows.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">{t('forms.empty')}</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('forms.col_title')}</TableHead>
+                  <TableHead className="w-40">{t('forms.col_recipients')}</TableHead>
+                  <TableHead className="w-24">{t('forms.col_submissions')}</TableHead>
+                  <TableHead className="w-24">{t('forms.col_status')}</TableHead>
+                  <TableHead className="w-24 text-right" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((r) => {
+                  const recipients = r.recipients ?? [];
+                  return (
+                    <TableRow key={r['@id']}>
+                      <TableCell>
+                        <div className="font-medium">{localize(r, 'title')}</div>
+                        <div className="text-xs text-muted-foreground">/{r.slug}</div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {recipients.length === 0 ? (
+                          <span className="text-muted-foreground">{t('forms.staff_only')}</span>
+                        ) : (
+                          t('forms.recipient_count', { count: recipients.length })
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {r.submissionCount ?? 0}
+                        {r.submissionLimit ? ` / ${r.submissionLimit}` : ''}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={r.enabled ? 'secondary' : 'outline'} className="text-[10px]">
+                          {r.enabled ? t('forms.active') : t('forms.inactive')}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7"
+                            onClick={() =>
+                              setForm({
+                                id: r.id,
+                                slug: r.slug,
+                                title: r.title,
+                                description: r.description ?? '',
+                                successMessage: r.successMessage ?? '',
+                                enabled: r.enabled,
+                                projectIri: r.project ?? null,
+                                recipientIris: r.recipients ?? [],
+                                submissionLimit: r.submissionLimit != null ? String(r.submissionLimit) : '',
+                                translations: r.translations ?? {},
+                              })
+                            }
+                          >
+                            <Pencil className="size-3" />
+                          </Button>
+                          <Button type="button" variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => remove(r)}>
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={form !== null} onOpenChange={(o) => !o && setForm(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{form?.id ? t('forms.edit') : t('forms.new')}</DialogTitle>
+          </DialogHeader>
+          {form ? (
+            <div className="space-y-3">
+              <LocalizedFields
+                fields={[
+                  { key: 'title', label: t('forms.col_title') },
+                  { key: 'description', label: t('forms.description'), multiline: true },
+                  { key: 'successMessage', label: t('forms.success_message'), multiline: true },
+                ]}
+                locales={languages}
+                base={{ title: form.title, description: form.description, successMessage: form.successMessage }}
+                onBaseChange={(k, v) => setForm({ ...form, [k]: v } as FormState)}
+                translations={form.translations}
+                onTranslationsChange={(translations) => setForm({ ...form, translations })}
+              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>Slug</Label>
+                  <Input
+                    value={form.slug}
+                    placeholder={t('forms.slug_placeholder')}
+                    onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase() })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>{t('forms.submission_limit')}</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder={t('forms.unlimited')}
+                    value={form.submissionLimit}
+                    onChange={(e) => setForm({ ...form, submissionLimit: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label>{t('forms.target_project')}</Label>
+                <Select
+                  value={form.projectIri ?? NO_PROJECT}
+                  onValueChange={(v) => setForm({ ...form, projectIri: v === NO_PROJECT ? null : v })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_PROJECT}>{t('forms.no_project')}</SelectItem>
+                    {(projects?.data ?? []).map((p) => (
+                      <SelectItem key={p['@id']} value={p['@id']}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">{t('forms.target_project_hint')}</p>
+              </div>
+
+              <div className="space-y-2 rounded-md border p-3">
+                <Label className="text-xs font-medium text-muted-foreground">{t('forms.recipients')}</Label>
+                <p className="text-[11px] text-muted-foreground">{t('forms.recipients_hint')}</p>
+                <div className="max-h-40 space-y-1.5 overflow-y-auto">
+                  {(customers?.data ?? []).map((c) => (
+                    <label key={c['@id']} className="flex cursor-pointer items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={form.recipientIris.includes(c['@id'])}
+                        onCheckedChange={() => toggleRecipient(c['@id'])}
+                      />
+                      {c.name}
+                    </label>
+                  ))}
+                  {(customers?.data ?? []).length === 0 ? (
+                    <p className="text-xs text-muted-foreground">{t('forms.no_customers')}</p>
+                  ) : null}
+                </div>
+                {form.recipientIris.length === 0 ? (
+                  <p className="text-[11px] font-medium text-amber-600">{t('forms.staff_only_note')}</p>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    {form.recipientIris.map(customerName).join(', ')}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="form-enabled">{t('forms.active_enabled')}</Label>
+                <Switch id="form-enabled" checked={form.enabled} onCheckedChange={(v) => setForm({ ...form, enabled: v })} />
+              </div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setForm(null)} disabled={busy}>{t('action.cancel')}</Button>
+            <Button type="button" onClick={save} disabled={busy}>{busy ? <Loader2 className="size-4 animate-spin" /> : null} {t('action.save')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
