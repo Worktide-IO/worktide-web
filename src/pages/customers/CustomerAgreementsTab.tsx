@@ -1,13 +1,13 @@
 import { useList } from '@refinedev/core';
 import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, CheckCircle2, FileSignature, Languages, Loader2, Pencil } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, FileSignature, Languages, ListPlus, Loader2, Pencil, Receipt, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { api } from '@/lib/api';
 import { LocalizedFields, type TranslationsMap } from '@/components/LocalizedFields';
-import { useSupportedLanguages, useLocalize } from '@/lib/languages';
+import { useSupportedLanguages, useLocalize, usePrimaryLocale, languageLabel } from '@/lib/languages';
 import type { Row } from '@/lib/refine';
 import {
   AGREEMENT_STATUS_BADGE,
@@ -66,6 +66,18 @@ type EditState = {
   attachment: File | null;
 };
 
+type LineItem = {
+  id?: string;
+  description: string;
+  quantity: number;
+  unitAmountCents: number;
+  currency: string;
+  isRecurring: boolean;
+  translations: TranslationsMap;
+};
+
+const LINE_LANG_BASE = '__base__';
+
 /**
  * Per-customer contract overview: one row per configured AgreementType
  * (SLA, AV, NDA, …) with its current status at a glance, plus a dialog to
@@ -123,6 +135,86 @@ export function CustomerAgreementsTab({
     translations: TranslationsMap;
   } | null>(null);
   const [savingType, setSavingType] = useState(false);
+
+  // Per-contract line-item editor (edits the in-force revision's lines in place).
+  const primaryLocale = usePrimaryLocale();
+  const otherLocales = languages.filter((l) => l && l !== primaryLocale);
+  const [linesFor, setLinesFor] = useState<Row<AgreementTypeJsonld> | null>(null);
+  const [lines, setLines] = useState<LineItem[]>([]);
+  const [linesLoading, setLinesLoading] = useState(false);
+  const [savingLines, setSavingLines] = useState(false);
+  const [lineLang, setLineLang] = useState<string>(LINE_LANG_BASE);
+
+  const openLineItems = async (type: Row<AgreementTypeJsonld>) => {
+    setLinesFor(type);
+    setLines([]);
+    setLineLang(LINE_LANG_BASE);
+    setLinesLoading(true);
+    try {
+      const { data } = await api.get<{ lineItems?: LineItem[] }>(
+        `/customers/${customerId}/agreements/${type.slug}`,
+      );
+      setLines(
+        (data.lineItems ?? []).map((li) => ({
+          id: li.id,
+          description: li.description ?? '',
+          quantity: li.quantity ?? 1,
+          unitAmountCents: li.unitAmountCents ?? 0,
+          currency: li.currency ?? 'EUR',
+          isRecurring: !!li.isRecurring,
+          translations: (li.translations as TranslationsMap | undefined) ?? {},
+        })),
+      );
+    } catch {
+      toast.error(t('toast.load_failed'));
+    } finally {
+      setLinesLoading(false);
+    }
+  };
+
+  const saveLineItems = async () => {
+    if (!linesFor) return;
+    setSavingLines(true);
+    try {
+      await api.put(`/customers/${customerId}/agreements/${linesFor.slug}/line-items`, {
+        lineItems: lines.map((l) => ({
+          description: l.description.trim(),
+          quantity: l.quantity,
+          unitAmountCents: l.unitAmountCents,
+          currency: l.currency,
+          isRecurring: l.isRecurring,
+          translations: l.translations,
+        })),
+      });
+      toast.success(t('toast.saved'));
+      setLinesFor(null);
+      await agreementsQuery.refetch();
+    } catch (e) {
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      toast.error(status === 409 ? t('customer_agreements.line_items_need_record') : t('toast.save_failed'));
+    } finally {
+      setSavingLines(false);
+    }
+  };
+
+  const updateLine = (i: number, patch: Partial<LineItem>) =>
+    setLines((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+  const addLine = () =>
+    setLines((ls) => [...ls, { description: '', quantity: 1, unitAmountCents: 0, currency: 'EUR', isRecurring: false, translations: {} }]);
+  const removeLine = (i: number) => setLines((ls) => ls.filter((_, j) => j !== i));
+  const setLineDescI18n = (i: number, locale: string, raw: string) =>
+    setLines((ls) =>
+      ls.map((l, j) => {
+        if (j !== i) return l;
+        const desc: Record<string, string> = { ...(l.translations.description ?? {}) };
+        if (raw.trim() === '') delete desc[locale];
+        else desc[locale] = raw;
+        const translations = { ...l.translations };
+        if (Object.keys(desc).length === 0) delete translations.description;
+        else translations.description = desc;
+        return { ...l, translations };
+      }),
+    );
 
   const saveType = async () => {
     if (!typeEdit) return;
@@ -279,16 +371,30 @@ export function CustomerAgreementsTab({
                       {fmtDate(head?.validUntil)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7"
-                        onClick={() => openEdit(type)}
-                      >
-                        <Pencil className="size-3" />
-                        {status === 'none' ? t('customer_agreements.record') : t('action.edit')}
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        {status !== 'none' ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7"
+                            title={t('customer_agreements.line_items')}
+                            onClick={() => openLineItems(type)}
+                          >
+                            <Receipt className="size-3" />
+                          </Button>
+                        ) : null}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7"
+                          onClick={() => openEdit(type)}
+                        >
+                          <Pencil className="size-3" />
+                          {status === 'none' ? t('customer_agreements.record') : t('action.edit')}
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -470,6 +576,98 @@ export function CustomerAgreementsTab({
             <Button type="button" onClick={saveType} disabled={savingType}>
               {savingType ? <Loader2 className="size-4 animate-spin" /> : null}
               {t('action.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Line-item editor — edits the in-force revision's priced lines in place,
+          incl. per-locale description translations (content i18n). */}
+      <Dialog open={linesFor !== null} onOpenChange={(o) => !o && setLinesFor(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {t('customer_agreements.line_items')}{linesFor ? ` — ${localize(linesFor, 'name')}` : ''}
+            </DialogTitle>
+            <DialogDescription>{t('customer_agreements.line_items_desc')}</DialogDescription>
+          </DialogHeader>
+
+          {linesLoading ? (
+            <div className="space-y-2"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                {otherLocales.length > 0 ? (
+                  <Select value={lineLang} onValueChange={setLineLang}>
+                    <SelectTrigger className="h-8 w-52"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={LINE_LANG_BASE}>
+                        {primaryLocale
+                          ? `${languageLabel(primaryLocale)} (${t('localized_fields.standard')})`
+                          : t('localized_fields.standard')}
+                      </SelectItem>
+                      {otherLocales.map((l) => (
+                        <SelectItem key={l} value={l}>{languageLabel(l)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : <span />}
+                <Button type="button" variant="outline" size="sm" className="h-7" onClick={addLine}>
+                  <ListPlus className="size-3" /> {t('customer_agreements.add_line')}
+                </Button>
+              </div>
+
+              {lines.length === 0 ? (
+                <p className="py-4 text-center text-sm text-muted-foreground">{t('customer_agreements.no_lines')}</p>
+              ) : null}
+
+              {lines.map((l, i) => (
+                <div key={l.id ?? i} className="space-y-2 rounded-md border p-2">
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      className="h-8"
+                      placeholder={t('customer_agreements.line_description')}
+                      value={lineLang === LINE_LANG_BASE ? l.description : (l.translations.description?.[lineLang] ?? '')}
+                      onChange={(e) =>
+                        lineLang === LINE_LANG_BASE
+                          ? updateLine(i, { description: e.target.value })
+                          : setLineDescI18n(i, lineLang, e.target.value)
+                      }
+                      {...(lineLang !== LINE_LANG_BASE ? { placeholder: l.description || t('customer_agreements.line_description') } : {})}
+                    />
+                    <Button type="button" variant="ghost" size="icon" className="size-8 shrink-0 text-destructive" onClick={() => removeLine(i)}>
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                  {lineLang === LINE_LANG_BASE ? (
+                    <div className="grid grid-cols-4 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-[11px] text-muted-foreground">{t('customer_agreements.line_qty')}</Label>
+                        <Input className="h-8" type="number" min={0} step="0.5" value={l.quantity} onChange={(e) => updateLine(i, { quantity: Number(e.target.value) })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px] text-muted-foreground">{t('customer_agreements.line_unit_price')}</Label>
+                        <Input className="h-8" type="number" min={0} step="0.01" value={(l.unitAmountCents / 100).toString()} onChange={(e) => updateLine(i, { unitAmountCents: Math.round(Number(e.target.value) * 100) })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px] text-muted-foreground">{t('customer_agreements.line_currency')}</Label>
+                        <Input className="h-8" maxLength={3} value={l.currency} onChange={(e) => updateLine(i, { currency: e.target.value.toUpperCase() })} />
+                      </div>
+                      <label className="flex items-end gap-2 pb-1.5 text-xs">
+                        <input type="checkbox" checked={l.isRecurring} onChange={(e) => updateLine(i, { isRecurring: e.target.checked })} />
+                        {t('customer_agreements.line_recurring')}
+                      </label>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setLinesFor(null)} disabled={savingLines}>{t('action.cancel')}</Button>
+            <Button type="button" onClick={saveLineItems} disabled={savingLines || linesLoading}>
+              {savingLines ? <Loader2 className="size-4 animate-spin" /> : null} {t('action.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
