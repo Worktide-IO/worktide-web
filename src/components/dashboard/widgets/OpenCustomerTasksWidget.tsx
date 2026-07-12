@@ -1,4 +1,5 @@
 import { ListChecks } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -37,6 +38,7 @@ const KEY = ['dashboard', 'open-customer-tasks'] as const;
  * statuses collections and filtering client-side.
  */
 export function OpenCustomerTasksWidget() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -58,7 +60,7 @@ export function OpenCustomerTasksWidget() {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <ListChecks className="size-4 text-muted-foreground" />
-          Offene Kunden-Aufgaben
+          {t('widget.open_customer_tasks.label')}
           <span className="ml-auto text-xs font-normal text-muted-foreground">
             {rows.length}
           </span>

@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
 import { UserAvatarStack } from '@/components/UserAvatarStack';
@@ -39,6 +40,7 @@ type Props = {
  * "no tasks yet" rather than 100% which would be visually misleading.
  */
 export function ProjectWallCard({ project }: Props) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { totalTasks, openTasks, customer, memberIris } = project;
   const closed = Math.max(0, totalTasks - openTasks);
@@ -73,7 +75,7 @@ export function ProjectWallCard({ project }: Props) {
             <span className="inline-flex items-center gap-1">
               <Check className="size-3" /> {closed} / {totalTasks}
             </span>
-            {totalTasks > 0 ? <span>{Math.round(pct)}%</span> : <span>keine Aufgaben</span>}
+            {totalTasks > 0 ? <span>{Math.round(pct)}%</span> : <span>{t('wall.no_tasks')}</span>}
           </div>
           {totalTasks > 0 ? <Progress value={pct} className="h-1.5" /> : null}
         </div>

@@ -163,7 +163,7 @@ export function LeadsTable({
                     size="icon"
                     variant="ghost"
                     className="size-8"
-                    title="Verlauf"
+                    title={t('lead.history')}
                     onClick={() => setTimelineLead(lead)}
                   >
                     <History className="size-4" />

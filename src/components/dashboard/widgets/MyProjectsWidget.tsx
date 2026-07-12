@@ -1,4 +1,5 @@
 import { useGetIdentity, useList } from '@refinedev/core';
+import { useTranslation } from 'react-i18next';
 import { FolderKanban } from 'lucide-react';
 import { useNavigate } from 'react-router';
 
@@ -20,6 +21,7 @@ type Identity = { id?: string };
  * here without a refresh.
  */
 export function MyProjectsWidget() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: identity } = useGetIdentity<Identity>();
   const userIri = identity?.id ? `/v1/users/${identity.id}` : null;
@@ -48,7 +50,7 @@ export function MyProjectsWidget() {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <FolderKanban className="size-4 text-muted-foreground" />
-          Meine Projekte
+          {t('widget.my_projects.label')}
           <span className="ml-auto text-xs font-normal text-muted-foreground">
             {rows.length}
           </span>

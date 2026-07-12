@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -10,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
  * building it. See ../worktide-portal/docs/PLAN.md.
  */
 export function ResetPasswordPage() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const token = params.get('token');
 
@@ -17,7 +19,7 @@ export function ResetPasswordPage() {
     <div className="min-h-screen grid place-items-center bg-muted/40 p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Neues Passwort setzen</CardTitle>
+          <CardTitle>{t('reset.set_new_password')}</CardTitle>
           <CardDescription>Diese Ansicht ist noch nicht implementiert (Platzhalter).</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">

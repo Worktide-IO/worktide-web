@@ -89,7 +89,7 @@ export function ProjectCombobox({ value, onChange, placeholder, className }: Pro
         <Command shouldFilter={false}>
           <CommandInput placeholder={t('combobox.search_project')} value={query} onValueChange={setQuery} />
           <CommandList>
-            <CommandEmpty>Kein Projekt gefunden.</CommandEmpty>
+            <CommandEmpty>{t('combobox.no_project')}</CommandEmpty>
             {options.length > 0 ? (
               <CommandGroup heading="Projekte">
                 {options.map((p) => {

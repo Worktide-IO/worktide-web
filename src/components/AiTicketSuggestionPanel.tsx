@@ -161,7 +161,7 @@ export function AiTicketSuggestionPanel({ conversationId, onApplied }: Props) {
         {reco.reasoning ? <p className="text-xs italic text-muted-foreground">{reco.reasoning}</p> : null}
 
         <div className="space-y-1">
-          <span className="text-xs text-muted-foreground">Projekt</span>
+          <span className="text-xs text-muted-foreground">{t('ai_ticket.field_project')}</span>
           <ProjectCombobox value={projectIri} onChange={setProjectIri} />
         </div>
 
