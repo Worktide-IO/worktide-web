@@ -1,6 +1,6 @@
 import { useGetIdentity, useInvalidate, useList, useTable } from '@refinedev/core';
 import { useTranslation } from 'react-i18next';
-import { Search } from 'lucide-react';
+import { MoreHorizontal, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -10,13 +10,22 @@ import type { TimeEntryJsonld } from '@/api/types/timeEntry/Jsonld';
 import type { TypeOfWorkJsonld } from '@/api/types/typeOfWork/Jsonld';
 import type { UserJsonld } from '@/api/types/user/Jsonld';
 import { useResilientMutation } from '@/hooks/useResilientMutation';
+import { api } from '@/lib/api';
 import { useLiveResource } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { LiveBadge } from '@/components/LiveBadge';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { TimeEntryFormDialog } from './TimeEntryFormDialog';
 import {
   Select,
   SelectContent,
@@ -73,6 +82,31 @@ export function TimeEntriesListPage() {
   // listener are the real gate; this just keeps the UI honest.
   const { data: identity } = useGetIdentity<Identity>();
   const myIri = identity?.id ? `/v1/users/${identity.id}` : null;
+
+  const invalidate = useInvalidate();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Row<TimeEntryJsonld> | null>(null);
+
+  const openCreate = () => {
+    setEditing(null);
+    setDialogOpen(true);
+  };
+  const openEdit = (entry: Row<TimeEntryJsonld>) => {
+    setEditing(entry);
+    setDialogOpen(true);
+  };
+  const removeEntry = async (entry: Row<TimeEntryJsonld>) => {
+    try {
+      await api.delete(`/time_entries/${entry.id}`);
+      void invalidate({ resource: 'time_entries', invalidates: ['list'] });
+      toast.success(translate('time_entries.deleted'));
+    } catch (err) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      toast.error(
+        status === 403 ? translate('time_entries.forbidden') : translate('time_entries.delete_failed'),
+      );
+    }
+  };
 
   const { tableQuery, setFilters, setCurrentPage } = useTable<Row<TimeEntryJsonld>>({
     resource: 'time_entries',
@@ -160,6 +194,10 @@ export function TimeEntriesListPage() {
             {translate('time_entries.count', { count: total })}
           </p>
         </div>
+        <Button onClick={openCreate}>
+          <Plus className="size-4" />
+          {translate('time_entries.new')}
+        </Button>
       </div>
 
       <Card>
@@ -240,6 +278,7 @@ export function TimeEntriesListPage() {
                   <TableHead className="w-36">{translate('time_entries.col_activity')}</TableHead>
                   <TableHead>{translate('time_entries.col_note')}</TableHead>
                   <TableHead className="w-24 text-right">{translate('time_entries.col_status')}</TableHead>
+                  <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -314,6 +353,32 @@ export function TimeEntriesListPage() {
                       <TableCell className="text-right">
                         <BilledCell entry={e} isOwn={!!myIri && e.user === myIri} />
                       </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-8">
+                              <MoreHorizontal className="size-4" />
+                              <span className="sr-only">{translate('time_entries.row_actions')}</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              disabled={!!e.running}
+                              onClick={() => openEdit(e)}
+                            >
+                              <Pencil className="size-4" />
+                              {translate('time_entries.edit')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => removeEntry(e)}
+                            >
+                              <Trash2 className="size-4" />
+                              {translate('time_entries.delete')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -322,6 +387,17 @@ export function TimeEntriesListPage() {
           )}
         </CardContent>
       </Card>
+
+      <TimeEntryFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        entry={editing}
+        defaultUserIri={myIri}
+        projects={projects?.data ?? []}
+        tasks={tasks?.data ?? []}
+        typesOfWork={typesOfWork?.data ?? []}
+        users={users?.data ?? []}
+      />
     </div>
   );
 }
