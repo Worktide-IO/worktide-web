@@ -58,6 +58,7 @@ import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
 import { PortalSettingsPage } from '@/pages/settings/PortalSettingsPage';
 import { ProfileSettingsPage } from '@/pages/settings/ProfileSettingsPage';
 import { SecuritySettingsPage } from '@/pages/settings/SecuritySettingsPage';
+import { TimeTrackingSettingsPage } from '@/pages/settings/TimeTrackingSettingsPage';
 import { WorkspaceSettingsPage } from '@/pages/settings/WorkspaceSettingsPage';
 import { WallPage } from '@/pages/wall/WallPage';
 import { SocialPostsListPage } from '@/pages/social/SocialPostsListPage';
@@ -406,6 +407,7 @@ export default function App() {
               <Route path="/settings/profile" element={<ProfileSettingsPage />} />
               <Route path="/settings/security" element={<SecuritySettingsPage />} />
               <Route path="/settings/workspace" element={<WorkspaceSettingsPage />} />
+              <Route path="/settings/time-tracking" element={<TimeTrackingSettingsPage />} />
               <Route path="/settings/portal" element={<PortalSettingsPage />} />
             </Route>
             <Route path="/login" element={<LoginPage />} />
