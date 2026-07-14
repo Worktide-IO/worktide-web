@@ -1,20 +1,23 @@
 import { useList, useTable } from '@refinedev/core';
 import { useTranslation } from 'react-i18next';
-import { CalendarDays, Plus, Search, Wifi, WifiOff } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { CalendarDays, Wifi, WifiOff } from 'lucide-react';
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router';
 
-import type { CustomerSystemJsonld } from '@/api/types/customerSystem/Jsonld';
-import type { ServiceSubscriptionJsonld } from '@/api/types/serviceSubscription/Jsonld';
 import { useLiveResource } from '@/lib/mercure';
 import { formatMoney } from '@/lib/money';
 import { CustomerCombobox } from '@/components/CustomerCombobox';
 import type { Row } from '@/lib/refine';
+import {
+  SERVICE_ASSIGNMENT_STATUS_BADGE,
+  SERVICE_BILLING_LABEL,
+  type ServiceAssignmentJsonld,
+  type ServiceJsonld,
+  type ServiceVersionJsonld,
+} from '@/lib/services';
 import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -31,66 +34,54 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-
-const BILLING_LABEL: Record<string, string> = {
-  monthly: 'billing.monthly',
-  quarterly: 'billing.quarterly',
-  half_yearly: 'billing.half_yearly',
-  yearly: 'billing.yearly',
-  once: 'billing.once',
-};
-
-const STATUS_BADGE: Record<
-  string,
-  { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
-> = {
-  trial: { label: 'subscription_status.trial', variant: 'outline' },
-  active: { label: 'subscription_status.active', variant: 'default' },
-  paused: { label: 'subscription_status.paused', variant: 'secondary' },
-  cancelled: { label: 'subscription_status.cancelled', variant: 'destructive' },
-};
+import { useState } from 'react';
 
 /**
- * ServiceSubscription list (Wartung / Hosting / Retainer / einmalige
- * Aufträge pro Kunde + ggf. CustomerSystem). Lives at /subscriptions.
+ * Service assignments list (which customer runs which ServiceVersion, at
+ * what price/cycle). Lives at /subscriptions ("Abos"). Assignments are
+ * created + edited from the customer detail "Abos" tab — this page is a
+ * read-only cross-customer overview with a monthly-equivalent MRR KPI.
  *
- * The price column shows the formatted recurring price; the column to
- * its right shows `nextBillingOn` which the backend auto-recomputes
- * whenever cycle / startedOn / status changes (see CRM-2 in memory).
- * Once-billed subscriptions display "—" because nextBillingOn is null
- * by design for those.
+ * The price column shows the assignment's effective price (override or the
+ * version's net price); the next column shows `nextBillingOn` which the
+ * backend auto-recomputes. Once-billed assignments show "—".
  */
 export function SubscriptionsListPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
   const [customerFilter, setCustomerFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const { tableQuery, setFilters, setCurrentPage } = useTable<Row<ServiceSubscriptionJsonld>>({
-    resource: 'service_subscriptions',
+  const { tableQuery, setFilters, setCurrentPage } = useTable<Row<ServiceAssignmentJsonld>>({
+    resource: 'service_assignments',
     sorters: { initial: [{ field: 'nextBillingOn', order: 'asc' }] },
     pagination: { currentPage: 1, pageSize: 50 },
     syncWithLocation: true,
   });
-  const { connected: liveConnected } = useLiveResource('service_subscriptions');
+  const { connected: liveConnected } = useLiveResource('service_assignments');
 
-  const { result: systems } = useList<Row<CustomerSystemJsonld>>({
-    resource: 'customer_systems',
+  const { result: services } = useList<Row<ServiceJsonld>>({
+    resource: 'services',
+    pagination: { mode: 'off' },
+  });
+  const { result: versions } = useList<Row<ServiceVersionJsonld>>({
+    resource: 'service_versions',
     pagination: { mode: 'off' },
   });
 
-  const systemByIri = useMemo<Record<string, Row<CustomerSystemJsonld>>>(() => {
-    const map: Record<string, Row<CustomerSystemJsonld>> = {};
-    for (const s of systems?.data ?? []) {
-      if (s['@id']) map[s['@id']] = s;
-    }
-    return map;
-  }, [systems]);
+  const serviceByIri = useMemo(() => {
+    const m: Record<string, Row<ServiceJsonld>> = {};
+    for (const s of services?.data ?? []) if (s['@id']) m[s['@id']] = s;
+    return m;
+  }, [services]);
+  const versionByIri = useMemo(() => {
+    const m: Record<string, Row<ServiceVersionJsonld>> = {};
+    for (const v of versions?.data ?? []) if (v['@id']) m[v['@id']] = v;
+    return m;
+  }, [versions]);
 
-  const applyFilters = (s: string, c: string, st: string) => {
+  const applyFilters = (c: string, st: string) => {
     const f = [];
-    if (s) f.push({ field: 'name', operator: 'contains' as const, value: s });
     if (c !== 'all') f.push({ field: 'customer', operator: 'eq' as const, value: c });
     if (st !== 'all') f.push({ field: 'status', operator: 'eq' as const, value: st });
     setFilters(f, 'replace');
@@ -102,14 +93,16 @@ export function SubscriptionsListPage() {
   const customerByIri = useCustomerLookup(rows.map((r) => r.customer));
   const isLoading = tableQuery.isLoading;
 
-  // Monthly-equivalent MRR estimate across active subscriptions — quick
-  // KPI for the header band; not authoritative for accounting, just a
-  // smell-check while scrolling the list.
+  // Monthly-equivalent MRR estimate across active assignments — quick KPI
+  // for the header band; not authoritative for accounting.
   const mrrCents = useMemo(() => {
     return rows
       .filter((r) => r.status === 'active')
-      .reduce((sum, r) => sum + monthlyEquivalentCents(r), 0);
-  }, [rows]);
+      .reduce((sum, r) => {
+        const version = r.serviceVersion ? versionByIri[r.serviceVersion] : undefined;
+        return sum + monthlyEquivalentCents(r.effectivePriceCents ?? 0, version?.billingCycle);
+      }, 0);
+  }, [rows, versionByIri]);
 
   return (
     <div className="space-y-4">
@@ -131,29 +124,12 @@ export function SubscriptionsListPage() {
             {t('subscriptions_list.summary', { count: total, mrr: formatMoney(mrrCents, 'eur') })}
           </p>
         </div>
-        <Button asChild>
-          <Link to="/subscriptions/create">
-            <Plus className="size-4" /> {t('subscriptions_list.new')}
-          </Link>
-        </Button>
       </div>
 
       <Card>
         <CardHeader className="gap-4">
           <CardTitle>{t('subscriptions_list.overview')}</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex-1 min-w-[240px] max-w-md">
-              <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-              <Input
-                placeholder={t('subscriptions_list.search_placeholder')}
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  applyFilters(e.target.value, customerFilter, statusFilter);
-                }}
-                className="pl-8"
-              />
-            </div>
             <CustomerCombobox
               className="w-56"
               placeholder={t('subscriptions_list.all_customers')}
@@ -161,14 +137,14 @@ export function SubscriptionsListPage() {
               onChange={(v) => {
                 const next = v ?? 'all';
                 setCustomerFilter(next);
-                applyFilters(search, next, statusFilter);
+                applyFilters(next, statusFilter);
               }}
             />
             <Select
               value={statusFilter}
               onValueChange={(v) => {
                 setStatusFilter(v);
-                applyFilters(search, customerFilter, v);
+                applyFilters(customerFilter, v);
               }}
             >
               <SelectTrigger className="w-40">
@@ -176,7 +152,7 @@ export function SubscriptionsListPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('subscriptions_list.all_status')}</SelectItem>
-                {Object.entries(STATUS_BADGE).map(([value, b]) => (
+                {Object.entries(SERVICE_ASSIGNMENT_STATUS_BADGE).map(([value, b]) => (
                   <SelectItem key={value} value={value}>
                     {t(b.label)}
                   </SelectItem>
@@ -200,33 +176,36 @@ export function SubscriptionsListPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('subscriptions_list.col_name')}</TableHead>
                   <TableHead className="w-44">{t('subscriptions_list.col_customer')}</TableHead>
-                  <TableHead className="w-40">{t('subscriptions_list.col_system')}</TableHead>
+                  <TableHead>{t('subscriptions_list.col_service')}</TableHead>
                   <TableHead className="w-32">{t('subscriptions_list.col_status')}</TableHead>
                   <TableHead className="w-28">{t('subscriptions_list.col_cycle')}</TableHead>
-                  <TableHead className="w-28 text-right">{t('subscriptions_list.col_price')}</TableHead>
+                  <TableHead className="w-28 text-right">
+                    {t('subscriptions_list.col_price')}
+                  </TableHead>
                   <TableHead className="w-32">{t('subscriptions_list.col_next_billing')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((s) => {
-                  const customer = s.customer ? customerByIri[s.customer] : null;
-                  const system = s.system ? systemByIri[s.system] : null;
-                  const statusBadge = STATUS_BADGE[s.status ?? 'active'];
+                {rows.map((sa) => {
+                  const customer = sa.customer ? customerByIri[sa.customer] : null;
+                  const version = sa.serviceVersion ? versionByIri[sa.serviceVersion] : undefined;
+                  const service = version?.service ? serviceByIri[version.service] : undefined;
+                  const statusBadge =
+                    SERVICE_ASSIGNMENT_STATUS_BADGE[sa.status ?? 'active'];
+                  const customerId = sa.customer?.split('/').pop();
                   return (
                     <TableRow
-                      key={s['@id']}
-                      className="cursor-pointer"
-                      onClick={() => s.id && navigate(`/subscriptions/${s.id}`)}
+                      key={sa['@id']}
+                      className={customerId ? 'cursor-pointer' : undefined}
+                      onClick={() =>
+                        customerId && navigate(`/customers/${customerId}?tab=subscriptions`)
+                      }
                     >
-                      <TableCell className="font-medium">{s.name}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {customer?.name ?? '—'}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {system?.name ?? <span className="italic">{t('subscriptions_list.customer_wide')}</span>}
-                      </TableCell>
+                      <TableCell className="font-medium">{service?.name ?? '—'}</TableCell>
                       <TableCell>
                         {statusBadge ? (
                           <Badge variant={statusBadge.variant} className="text-[10px]">
@@ -235,16 +214,18 @@ export function SubscriptionsListPage() {
                         ) : null}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {BILLING_LABEL[s.billingCycle ?? 'monthly'] ? t(BILLING_LABEL[s.billingCycle ?? 'monthly']) : s.billingCycle}
+                        {version?.billingCycle
+                          ? t(SERVICE_BILLING_LABEL[version.billingCycle])
+                          : '—'}
                       </TableCell>
                       <TableCell className="text-right font-mono text-sm tabular-nums">
-                        {formatMoney(s.priceCents ?? 0, s.currency ?? 'eur')}
+                        {formatMoney(sa.effectivePriceCents ?? 0, version?.currency ?? 'eur')}
                       </TableCell>
                       <TableCell className="text-xs">
-                        {s.nextBillingOn ? (
+                        {sa.nextBillingOn ? (
                           <span className="inline-flex items-center gap-1 text-muted-foreground">
                             <CalendarDays className="size-3" />
-                            {new Date(s.nextBillingOn).toLocaleDateString()}
+                            {new Date(sa.nextBillingOn).toLocaleDateString()}
                           </span>
                         ) : (
                           <span className="text-muted-foreground/60">—</span>
@@ -263,13 +244,12 @@ export function SubscriptionsListPage() {
 }
 
 /**
- * Rough monthly-revenue projection. Yearly/once aren't strictly "MRR"
- * — once is amortised across a year, yearly divided by 12. Matches the
+ * Rough monthly-revenue projection. Yearly/once aren't strictly "MRR" —
+ * once is amortised across a year, yearly divided by 12. Matches the
  * `annualMultiplier()` semantics on the backend BillingCycle enum.
  */
-function monthlyEquivalentCents(s: Row<ServiceSubscriptionJsonld>): number {
-  const price = s.priceCents ?? 0;
-  switch (s.billingCycle) {
+function monthlyEquivalentCents(price: number, cycle: string | undefined): number {
+  switch (cycle) {
     case 'monthly':
       return price;
     case 'quarterly':

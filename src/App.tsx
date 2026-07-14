@@ -48,8 +48,6 @@ import { CustomerSystemsListPage } from '@/pages/customer-systems/CustomerSystem
 import { CustomersListPage } from '@/pages/customers/CustomersListPage';
 import { CustomerCreatePage } from '@/pages/customers/CustomerCreatePage';
 import { CustomerDetailPage } from '@/pages/customers/CustomerDetailPage';
-import { SubscriptionCreatePage } from '@/pages/subscriptions/SubscriptionCreatePage';
-import { SubscriptionEditPage } from '@/pages/subscriptions/SubscriptionEditPage';
 import { SubscriptionsListPage } from '@/pages/subscriptions/SubscriptionsListPage';
 import { ProjectCreatePage } from '@/pages/projects/ProjectCreatePage';
 import { ProjectDetailPage } from '@/pages/projects/ProjectDetailPage';
@@ -67,6 +65,9 @@ import { SocialPostEditPage } from '@/pages/social/SocialPostEditPage';
 import { ProductsListPage } from '@/pages/products/ProductsListPage';
 import { ProductCreatePage } from '@/pages/products/ProductCreatePage';
 import { ProductEditPage } from '@/pages/products/ProductEditPage';
+import { ServicesListPage } from '@/pages/services/ServicesListPage';
+import { ServiceCreatePage } from '@/pages/services/ServiceCreatePage';
+import { ServiceEditPage } from '@/pages/services/ServiceEditPage';
 import { IndustriesPage } from '@/pages/industries/IndustriesPage';
 import { NewslettersPage } from '@/pages/newsletters/NewslettersPage';
 import { MeetingTypesPage } from '@/pages/meetings/MeetingTypesPage';
@@ -235,9 +236,14 @@ export default function App() {
             {
               name: 'service_subscriptions',
               list: '/subscriptions',
-              create: '/subscriptions/create',
-              edit: '/subscriptions/:id',
               meta: { label: 'nav.service_subscriptions', icon: 'Receipt', category: 'CRM' },
+            },
+            {
+              name: 'services',
+              list: '/services',
+              create: '/services/create',
+              edit: '/services/:id',
+              meta: { label: 'nav.services', icon: 'ConciergeBell', category: 'CRM' },
             },
             {
               name: 'social_posts',
@@ -381,14 +387,15 @@ export default function App() {
               <Route path="/customer-systems/create" element={<CustomerSystemCreatePage />} />
               <Route path="/customer-systems/:id" element={<CustomerSystemEditPage />} />
               <Route path="/subscriptions" element={<SubscriptionsListPage />} />
-              <Route path="/subscriptions/create" element={<SubscriptionCreatePage />} />
-              <Route path="/subscriptions/:id" element={<SubscriptionEditPage />} />
               <Route path="/social" element={<SocialPostsListPage />} />
               <Route path="/social/create" element={<SocialPostCreatePage />} />
               <Route path="/social/:id" element={<SocialPostEditPage />} />
               <Route path="/produkte" element={<ProductsListPage />} />
               <Route path="/produkte/create" element={<ProductCreatePage />} />
               <Route path="/produkte/:id" element={<ProductEditPage />} />
+              <Route path="/services" element={<ServicesListPage />} />
+              <Route path="/services/create" element={<ServiceCreatePage />} />
+              <Route path="/services/:id" element={<ServiceEditPage />} />
               <Route path="/branchen" element={<IndustriesPage />} />
               <Route path="/newsletter" element={<NewslettersPage />} />
               <Route path="/terminarten" element={<MeetingTypesPage />} />
