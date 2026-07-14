@@ -16,15 +16,12 @@ import { CustomerSlaCard } from '@/components/CustomerSlaCard';
 import { CustomerAgreementsTab } from './CustomerAgreementsTab';
 import { CustomerFilesTab } from './CustomerFilesTab';
 import { CustomerProductsTab } from './CustomerProductsTab';
+import { CustomerServicesTab } from './CustomerServicesTab';
 import { CustomerProjectsTab } from './CustomerProjectsTab';
 import { CustomerNewslettersTab } from './CustomerNewslettersTab';
 import { CustomerAbsencesCard } from './CustomerAbsencesCard';
 import { CustomerForm } from './CustomerForm';
-import {
-  CustomerContactsTab,
-  CustomerSubscriptionsTab,
-  CustomerSystemsTab,
-} from './CustomerDetailTabs';
+import { CustomerContactsTab, CustomerSystemsTab } from './CustomerDetailTabs';
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   prospect: 'outline',
@@ -192,7 +189,7 @@ export function CustomerDetailPage() {
           <CustomerSystemsTab customerIri={iri} />
         </TabsContent>
         <TabsContent value="subscriptions" className="pt-4">
-          <CustomerSubscriptionsTab customerIri={iri} />
+          <CustomerServicesTab customerIri={iri} />
         </TabsContent>
         <TabsContent value="agreements" className="space-y-4 pt-4">
           {id ? <CustomerSlaCard customerId={id} /> : null}
