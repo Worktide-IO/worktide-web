@@ -170,18 +170,26 @@ function ServiceVersionsCard({
 
   const [open, setOpen] = useState(false);
   const [priceCents, setPriceCents] = useState(0);
+  // Raw text the user is editing. Kept separate from priceCents so typing isn't
+  // reformatted on every keystroke (a controlled `toFixed(2)` value fights input
+  // and eats characters); we only tidy it on blur.
+  const [priceInput, setPriceInput] = useState('');
   const [currency, setCurrency] = useState('eur');
   const [billingCycle, setBillingCycle] = useState<ServiceBillingCycle>('monthly');
   const [label, setLabel] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // The backend keeps cents; the dialog binds a human-friendly major-unit
-  // string via a virtual `priceMajor` (type "280,00" → persist 28000).
-  const priceMajor = (priceCents / 100).toFixed(2);
   const handlePriceChange = (raw: string) => {
+    setPriceInput(raw);
     const n = Number.parseFloat(raw.replace(',', '.'));
-    if (Number.isFinite(n)) setPriceCents(Math.round(n * 100));
-    else if (raw === '') setPriceCents(0);
+    setPriceCents(Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : 0);
+  };
+  const resetVersionForm = () => {
+    setPriceCents(0);
+    setPriceInput('');
+    setCurrency('eur');
+    setBillingCycle('monthly');
+    setLabel('');
   };
 
   const submit = async () => {
@@ -195,10 +203,7 @@ function ServiceVersionsCard({
       });
       toast.success(t('toast.saved'));
       setOpen(false);
-      setPriceCents(0);
-      setCurrency('eur');
-      setBillingCycle('monthly');
-      setLabel('');
+      resetVersionForm();
       await query.refetch();
       onChange();
     } catch (e) {
@@ -219,7 +224,7 @@ function ServiceVersionsCard({
         <CardTitle className="flex items-center gap-2">
           <Tag className="size-4 text-muted-foreground" /> {t('service_form.versions')}
         </CardTitle>
-        <Button type="button" size="sm" variant="outline" onClick={() => setOpen(true)}>
+        <Button type="button" size="sm" variant="outline" onClick={() => { resetVersionForm(); setOpen(true); }}>
           <Plus className="size-4" /> {t('service_form.release')}
         </Button>
       </CardHeader>
@@ -271,11 +276,12 @@ function ServiceVersionsCard({
                 <Label htmlFor="sv-price">{t('service_form.net_price')}</Label>
                 <Input
                   id="sv-price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={priceMajor}
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={priceInput}
                   onChange={(e) => handlePriceChange(e.target.value)}
+                  onBlur={() => setPriceInput(priceCents ? (priceCents / 100).toFixed(2) : '')}
                   className="font-mono tabular-nums"
                 />
                 <p className="text-xs text-muted-foreground tabular-nums">

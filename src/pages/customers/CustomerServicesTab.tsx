@@ -101,13 +101,20 @@ export function CustomerServicesTab({ customerIri }: { customerIri: string }) {
 
   const [edit, setEdit] = useState<EditState | null>(null);
   const [saving, setSaving] = useState(false);
+  // Raw text the user edits for the price-override input. Kept separate from
+  // edit.priceCents so typing isn't reformatted on every keystroke; synced when
+  // a version is (pre)selected, tidied on blur.
+  const [priceInput, setPriceInput] = useState('');
 
   const workspaceIri = (() => {
     const id = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
     return id ? `/v1/workspaces/${id}` : undefined;
   })();
 
-  const openAssign = () =>
+  const majorOf = (cents: number) => (cents ? (cents / 100).toFixed(2) : '');
+
+  const openAssign = () => {
+    setPriceInput('');
     setEdit({
       serviceIri: '',
       serviceVersionIri: '',
@@ -117,9 +124,12 @@ export function CustomerServicesTab({ customerIri }: { customerIri: string }) {
       notes: '',
       priceCents: 0,
     });
+  };
 
   const openEdit = (sa: Row<ServiceAssignmentJsonld>) => {
     const version = sa.serviceVersion ? versionByIri[sa.serviceVersion] : undefined;
+    const priceCents = sa.netPriceOverrideCents ?? version?.netPriceCents ?? 0;
+    setPriceInput(majorOf(priceCents));
     setEdit({
       existing: sa,
       serviceIri: version?.service ?? '',
@@ -128,20 +138,18 @@ export function CustomerServicesTab({ customerIri }: { customerIri: string }) {
       startedOn: toDateInput(sa.startedOn),
       endedOn: toDateInput(sa.endedOn),
       notes: sa.notes ?? '',
-      priceCents: sa.netPriceOverrideCents ?? version?.netPriceCents ?? 0,
+      priceCents,
     });
   };
 
   const editVersion = edit ? versionByIri[edit.serviceVersionIri] : undefined;
   const editCurrency = editVersion?.currency ?? 'eur';
 
-  // Major-unit binding for the price-override input.
-  const priceMajor = edit ? (edit.priceCents / 100).toFixed(2) : '0.00';
   const handlePriceChange = (raw: string) => {
     if (!edit) return;
+    setPriceInput(raw);
     const n = Number.parseFloat(raw.replace(',', '.'));
-    if (Number.isFinite(n)) setEdit({ ...edit, priceCents: Math.round(n * 100) });
-    else if (raw === '') setEdit({ ...edit, priceCents: 0 });
+    setEdit({ ...edit, priceCents: Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : 0 });
   };
 
   const save = async () => {
@@ -327,12 +335,10 @@ export function CustomerServicesTab({ customerIri }: { customerIri: string }) {
                   value={edit.serviceVersionIri}
                   onValueChange={(v) => {
                     const version = versionByIri[v];
-                    setEdit({
-                      ...edit,
-                      serviceVersionIri: v,
-                      // Prefill the price with the picked version's net price.
-                      priceCents: version?.netPriceCents ?? 0,
-                    });
+                    const prefill = version?.netPriceCents ?? 0;
+                    // Prefill the price (both the raw input and cents) with the version's net price.
+                    setPriceInput(majorOf(prefill));
+                    setEdit({ ...edit, serviceVersionIri: v, priceCents: prefill });
                   }}
                 >
                   <SelectTrigger>
@@ -358,11 +364,12 @@ export function CustomerServicesTab({ customerIri }: { customerIri: string }) {
                 <Label htmlFor="sa-price">{t('customer_services.price_override')}</Label>
                 <Input
                   id="sa-price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={priceMajor}
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={priceInput}
                   onChange={(e) => handlePriceChange(e.target.value)}
+                  onBlur={() => setPriceInput(majorOf(edit.priceCents))}
                   className="font-mono tabular-nums"
                   disabled={!edit.serviceVersionIri}
                 />
