@@ -1,4 +1,4 @@
-import { CalendarClock, HeartPulse, Loader2, Mail, Sparkles } from 'lucide-react';
+import { CalendarClock, CalendarPlus, CircleSlash, HeartPulse, Loader2, Mail, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -123,6 +123,28 @@ export function MyScheduleWidget() {
     }
   }
 
+  // Manual plan tweaks: shift a ticket a day later, or drop it from the plan
+  // (clear its slot) — written straight to the task via the API-Platform PATCH.
+  const [adjustId, setAdjustId] = useState<string | null>(null);
+  async function adjust(ticket: ScheduledTicket, mode: 'later' | 'remove') {
+    setAdjustId(ticket.id);
+    try {
+      let body: Record<string, string | null>;
+      if (mode === 'remove') {
+        body = { startOn: null, scheduledEnd: null };
+      } else {
+        const shift = (iso: string | null) => (iso ? new Date(new Date(iso).getTime() + 86400000).toISOString() : null);
+        body = { startOn: shift(ticket.startOn), scheduledEnd: shift(ticket.scheduledEnd) };
+      }
+      await api.patch(`/tasks/${ticket.id}`, body, { headers: { 'Content-Type': 'application/merge-patch+json' } });
+      await qc.invalidateQueries({ queryKey: KEY });
+    } catch (err) {
+      toast.error(aiErrorMessage(err, t('toast.action_failed')));
+    } finally {
+      setAdjustId(null);
+    }
+  }
+
   const tickets = data ?? [];
   const notifiable = affected?.filter((c) => c.recipient !== null) ?? [];
 
@@ -167,6 +189,28 @@ export function MyScheduleWidget() {
                     {ticket.dueOn ? <span>· {t('widget.my_schedule.due', { date: ticket.dueOn })}</span> : null}
                   </div>
                 </div>
+                {ticket.startOn ? (
+                  <div className="flex shrink-0 flex-col gap-0.5">
+                    <button
+                      type="button"
+                      title={t('widget.my_schedule.push_day')}
+                      disabled={adjustId === ticket.id}
+                      onClick={() => void adjust(ticket, 'later')}
+                      className="text-muted-foreground/60 hover:text-foreground disabled:opacity-40"
+                    >
+                      {adjustId === ticket.id ? <Loader2 className="size-3.5 animate-spin" /> : <CalendarPlus className="size-3.5" />}
+                    </button>
+                    <button
+                      type="button"
+                      title={t('widget.my_schedule.remove_from_plan')}
+                      disabled={adjustId === ticket.id}
+                      onClick={() => void adjust(ticket, 'remove')}
+                      className="text-muted-foreground/60 hover:text-destructive disabled:opacity-40"
+                    >
+                      <CircleSlash className="size-3.5" />
+                    </button>
+                  </div>
+                ) : null}
               </li>
             ))}
           </ol>
