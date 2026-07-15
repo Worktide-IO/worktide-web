@@ -35,6 +35,7 @@ import { TeamPlannerPage } from '@/pages/planner/TeamPlannerPage';
 import { SprintsPage } from '@/pages/sprints/SprintsPage';
 import { ReportsPage } from '@/pages/reports/ReportsPage';
 import { SourcesPage } from '@/pages/sources/SourcesPage';
+import { DiscoveredRecordsPage } from '@/pages/discovered/DiscoveredRecordsPage';
 import { TeamMembersListPage } from '@/pages/team-members/TeamMembersListPage';
 import { ContactCreatePage } from '@/pages/contacts/ContactCreatePage';
 import { ContactEditPage } from '@/pages/contacts/ContactEditPage';
@@ -210,6 +211,11 @@ export default function App() {
               list: '/sources',
               meta: { label: 'nav.sources', icon: 'Plug', category: 'Admin' },
             },
+            {
+              name: 'discovered_external_records',
+              list: '/discovered',
+              meta: { label: 'nav.discovered_records', icon: 'PackageSearch', category: 'Admin' },
+            },
 
             // ---- CRM -------------------------------------------------------
             {
@@ -378,6 +384,7 @@ export default function App() {
               <Route path="/inbox" element={<ConversationsListPage />} />
               <Route path="/inbox/:id" element={<ConversationDetailPage />} />
               <Route path="/sources" element={<SourcesPage />} />
+              <Route path="/discovered" element={<DiscoveredRecordsPage />} />
               <Route path="/customers" element={<CustomersListPage />} />
               <Route path="/customers/create" element={<CustomerCreatePage />} />
               <Route path="/customers/:id" element={<CustomerDetailPage />} />
