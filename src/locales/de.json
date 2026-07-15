@@ -2479,6 +2479,8 @@
   "widget.my_schedule.planning_failed": "Planung konnte nicht gestartet werden.",
   "widget.my_schedule.empty": "Keine offenen Tickets zugewiesen.",
   "widget.my_schedule.unplanned": "ungeplant",
+  "widget.my_schedule.push_day": "Einen Tag später",
+  "widget.my_schedule.remove_from_plan": "Aus Plan entfernen",
   "widget.my_schedule.due": "fällig {{date}}",
   "widget.my_schedule.absence_placeholder": "Abwesenheit melden, z. B. „heute krank“",
   "widget.my_schedule.absence_report": "Melden",

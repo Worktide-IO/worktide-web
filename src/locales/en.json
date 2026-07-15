@@ -2479,6 +2479,8 @@
   "widget.my_schedule.planning_failed": "Could not start planning.",
   "widget.my_schedule.empty": "No open tickets assigned.",
   "widget.my_schedule.unplanned": "unplanned",
+  "widget.my_schedule.push_day": "Push one day later",
+  "widget.my_schedule.remove_from_plan": "Remove from plan",
   "widget.my_schedule.due": "due {{date}}",
   "widget.my_schedule.absence_placeholder": "Report absence, e.g. \"sick today\"",
   "widget.my_schedule.absence_report": "Report",
