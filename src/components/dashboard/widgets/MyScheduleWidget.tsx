@@ -1,4 +1,4 @@
-import { CalendarClock, Loader2, Sparkles } from 'lucide-react';
+import { CalendarClock, HeartPulse, Loader2, Mail, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -10,7 +10,18 @@ import { aiErrorMessage } from '@/lib/ai';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+
+type AffectedCustomer = {
+  customerId: string;
+  customerName: string;
+  recipient: string | null;
+  tasks: { id: string; title: string; startOn: string | null }[];
+};
+type IntakeResponse =
+  | { status: 'clarify'; question: string }
+  | { status: 'created'; startsOn: string; endsOn: string; affected: AffectedCustomer[] };
 
 const PRIORITY_VARIANT: Record<string, 'outline' | 'secondary' | 'default' | 'destructive'> = {
   low: 'outline',
@@ -45,6 +56,10 @@ export function MyScheduleWidget() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [planning, setPlanning] = useState(false);
+  const [absenceText, setAbsenceText] = useState('');
+  const [absenceBusy, setAbsenceBusy] = useState(false);
+  const [clarify, setClarify] = useState<string | null>(null);
+  const [affected, setAffected] = useState<AffectedCustomer[] | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: KEY,
@@ -66,7 +81,50 @@ export function MyScheduleWidget() {
     }
   }
 
+  // Free-text absence intake → the AI parses it (may ask back), records the
+  // absence, re-plans, and returns the customer-facing tickets in the window.
+  async function reportAbsence() {
+    const text = absenceText.trim();
+    if (!text) return;
+    setAbsenceBusy(true);
+    setClarify(null);
+    try {
+      const { data: res } = await api.post<IntakeResponse>('/me/absence-intake', { text });
+      if (res.status === 'clarify') {
+        setClarify(res.question);
+      } else {
+        setAffected(res.affected);
+        setAbsenceText('');
+        toast.success(t('widget.my_schedule.absence_recorded'));
+        // Re-plan runs async; refetch the schedule once it should be applied.
+        window.setTimeout(() => void qc.invalidateQueries({ queryKey: KEY }), REPLAN_REFETCH_MS);
+      }
+    } catch (err) {
+      toast.error(aiErrorMessage(err, t('widget.my_schedule.absence_failed')));
+    } finally {
+      setAbsenceBusy(false);
+    }
+  }
+
+  async function notifyCustomers() {
+    if (!affected) return;
+    const taskIds = affected.flatMap((c) => c.tasks.map((task) => task.id));
+    if (taskIds.length === 0) return;
+    setAbsenceBusy(true);
+    try {
+      const { data: res } = await api.post<{ drafted: { created: boolean }[] }>('/me/absence-notify', { taskIds });
+      const created = res.drafted.filter((d) => d.created).length;
+      toast.success(t('widget.my_schedule.notify_done', { count: created }));
+      setAffected(null);
+    } catch (err) {
+      toast.error(aiErrorMessage(err, t('widget.my_schedule.notify_failed')));
+    } finally {
+      setAbsenceBusy(false);
+    }
+  }
+
   const tickets = data ?? [];
+  const notifiable = affected?.filter((c) => c.recipient !== null) ?? [];
 
   return (
     <Card className="flex h-full flex-col">
@@ -113,6 +171,42 @@ export function MyScheduleWidget() {
             ))}
           </ol>
         )}
+
+        {/* Absence intake: report sickness in free text; AI re-plans + offers to notify customers. */}
+        <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
+          <div className="flex items-center gap-2">
+            <HeartPulse className="size-3.5 shrink-0 text-muted-foreground" />
+            <Input
+              value={absenceText}
+              onChange={(e) => setAbsenceText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') void reportAbsence(); }}
+              placeholder={t('widget.my_schedule.absence_placeholder')}
+              disabled={absenceBusy}
+              className="h-8 text-sm"
+            />
+            <Button size="sm" variant="outline" className="h-8 shrink-0 text-xs" disabled={absenceBusy || !absenceText.trim()} onClick={() => void reportAbsence()}>
+              {absenceBusy ? <Loader2 className="size-3.5 animate-spin" /> : t('widget.my_schedule.absence_report')}
+            </Button>
+          </div>
+          {clarify ? <p className="text-xs text-amber-600">{clarify}</p> : null}
+          {affected && affected.length > 0 ? (
+            <div className="rounded-md border border-border/60 bg-muted/40 p-2 text-xs">
+              <p className="mb-1 text-muted-foreground">
+                {t('widget.my_schedule.affected_intro', { count: affected.length })}
+              </p>
+              <ul className="mb-2 space-y-0.5">
+                {affected.map((c) => (
+                  <li key={c.customerId} className={c.recipient ? '' : 'text-muted-foreground/60'}>
+                    {c.customerName} · {c.tasks.length}× {c.recipient ? '' : `(${t('widget.my_schedule.no_recipient')})`}
+                  </li>
+                ))}
+              </ul>
+              <Button size="sm" className="h-7 gap-1.5 text-xs" disabled={absenceBusy || notifiable.length === 0} onClick={() => void notifyCustomers()}>
+                <Mail className="size-3.5" /> {t('widget.my_schedule.notify_customers', { count: notifiable.length })}
+              </Button>
+            </div>
+          ) : null}
+        </div>
       </CardContent>
     </Card>
   );
