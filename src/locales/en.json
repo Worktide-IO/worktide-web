@@ -1473,6 +1473,8 @@
   "contact_portal.send": "Send invitation",
   "contact_portal.toast_revoked": "Portal access revoked.",
   "contact_portal.revoke": "Revoke access",
+  "contact_portal.preview": "View as customer",
+  "contact_portal.preview_hint": "Opens the portal in this customer's view (preview, no password).",
   "contact_portal.badge_no_access": "no access",
   "contact_portal.toast_granted": "Portal access enabled.",
   "contact_portal.grant": "Enable portal access",
