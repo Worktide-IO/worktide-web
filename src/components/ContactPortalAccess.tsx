@@ -1,7 +1,7 @@
 import { useInvalidate, useOne } from '@refinedev/core';
 import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
-import { KeyRound, Mail, ShieldCheck, ShieldOff } from 'lucide-react';
+import { Eye, KeyRound, Mail, ShieldCheck, ShieldOff } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -61,6 +61,22 @@ export function ContactPortalAccess({ contactId }: { contactId: string }) {
     }
   }
 
+  // Open the portal AS this contact (magic-link impersonation) in a new tab to
+  // preview the customer's view. The link is single-use + short-lived; nothing
+  // is emailed — we just open the returned URL.
+  async function openPreview() {
+    setBusy(true);
+    try {
+      const { data } = await api.post<{ url: string }>(`/contacts/${contactId}/portal-impersonation-link`);
+      window.open(data.url, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      toast.error(detail ?? t('toast.action_failed'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -107,6 +123,15 @@ export function ContactPortalAccess({ contactId }: { contactId: string }) {
               >
                 <Mail className="size-4" />{' '}
                 {invitedAt ? t('contact_portal.resend') : t('contact_portal.send')}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy || !customerEnabled}
+                onClick={openPreview}
+                title={t('contact_portal.preview_hint')}
+              >
+                <Eye className="size-4" /> {t('contact_portal.preview')}
               </Button>
               <Button
                 size="sm"
