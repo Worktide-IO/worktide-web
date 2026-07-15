@@ -29,6 +29,7 @@ import { ImportPage } from '@/pages/imports/ImportPage';
 import { AccessTokensPage } from '@/pages/access-tokens/AccessTokensPage';
 import { DocumentsPage } from '@/pages/documents/DocumentsPage';
 import { PermissionsMatrixPage } from '@/pages/permissions/PermissionsMatrixPage';
+import { WorkflowEditorPage } from '@/pages/workflow/WorkflowEditorPage';
 import { ConversationDetailPage } from '@/pages/inbox/ConversationDetailPage';
 import { ConversationsListPage } from '@/pages/inbox/ConversationsListPage';
 import { TeamPlannerPage } from '@/pages/planner/TeamPlannerPage';
@@ -321,6 +322,11 @@ export default function App() {
               meta: { label: 'nav.role_permission_overrides', icon: 'Shield', category: 'Admin' },
             },
             {
+              name: 'workflow_transitions',
+              list: '/workflow',
+              meta: { label: 'nav.workflow', icon: 'Workflow', category: 'Admin' },
+            },
+            {
               name: 'webhooks',
               list: '/webhooks',
               meta: { label: 'nav.webhooks', icon: 'Webhook', category: 'Admin' },
@@ -416,6 +422,7 @@ export default function App() {
               <Route path="/research/missions/:id" element={<ResearchMissionDetailPage />} />
               <Route path="/research/leads" element={<LeadsListPage />} />
               <Route path="/permissions" element={<PermissionsMatrixPage />} />
+              <Route path="/workflow" element={<WorkflowEditorPage />} />
               <Route path="/webhooks" element={<PlaceholderPage resource="webhooks" />} />
               <Route path="/access-tokens" element={<AccessTokensPage />} />
               <Route path="/imports" element={<ImportPage />} />
