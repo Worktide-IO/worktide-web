@@ -22,6 +22,7 @@ import { AcceptProjectSharePage } from '@/pages/AcceptProjectSharePage';
 import { SetupWizardPage } from '@/pages/setup/SetupWizardPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
+import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ActivityPage } from '@/pages/activity/ActivityPage';
 import { CalendarPage } from '@/pages/calendar/CalendarPage';
 import { ImportPage } from '@/pages/imports/ImportPage';
@@ -416,6 +417,8 @@ export default function App() {
               <Route path="/settings/workspace" element={<WorkspaceSettingsPage />} />
               <Route path="/settings/time-tracking" element={<TimeTrackingSettingsPage />} />
               <Route path="/settings/portal" element={<PortalSettingsPage />} />
+              {/* Unknown authenticated route → branded 404 inside the shell. */}
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/setup" element={<SetupWizardPage />} />
