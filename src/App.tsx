@@ -30,6 +30,7 @@ import { AccessTokensPage } from '@/pages/access-tokens/AccessTokensPage';
 import { DocumentsPage } from '@/pages/documents/DocumentsPage';
 import { PermissionsMatrixPage } from '@/pages/permissions/PermissionsMatrixPage';
 import { WorkflowEditorPage } from '@/pages/workflow/WorkflowEditorPage';
+import { AiCostDashboardPage } from '@/pages/ai-costs/AiCostDashboardPage';
 import { ConversationDetailPage } from '@/pages/inbox/ConversationDetailPage';
 import { ConversationsListPage } from '@/pages/inbox/ConversationsListPage';
 import { TeamPlannerPage } from '@/pages/planner/TeamPlannerPage';
@@ -327,6 +328,11 @@ export default function App() {
               meta: { label: 'nav.workflow', icon: 'Workflow', category: 'Admin' },
             },
             {
+              name: 'ai_costs',
+              list: '/ki-kosten',
+              meta: { label: 'nav.ai_costs', icon: 'Coins', category: 'Admin' },
+            },
+            {
               name: 'webhooks',
               list: '/webhooks',
               meta: { label: 'nav.webhooks', icon: 'Webhook', category: 'Admin' },
@@ -423,6 +429,7 @@ export default function App() {
               <Route path="/research/leads" element={<LeadsListPage />} />
               <Route path="/permissions" element={<PermissionsMatrixPage />} />
               <Route path="/workflow" element={<WorkflowEditorPage />} />
+              <Route path="/ki-kosten" element={<AiCostDashboardPage />} />
               <Route path="/webhooks" element={<PlaceholderPage resource="webhooks" />} />
               <Route path="/access-tokens" element={<AccessTokensPage />} />
               <Route path="/imports" element={<ImportPage />} />

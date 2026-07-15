@@ -141,6 +141,26 @@ export const aiReply = {
     api.post(`/conversations/${conversationId}/suggest-reply`).then((r) => r.data as { reply: string; model?: string | null }),
 };
 
+/** Admin AI cost/usage read-model for the KI-Kosten dashboard (micro-USD costs). */
+export type AiUsageBreakdownRow = { label: string; costMicros: number; calls: number };
+export type AiUsageDayRow = { day: string; costMicros: number; calls: number };
+export type AiUsageSummary = {
+  periodDays: number;
+  currency: string;
+  totalCostMicros: number;
+  callCount: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  byFeature: AiUsageBreakdownRow[];
+  byModel: AiUsageBreakdownRow[];
+  byDay: AiUsageDayRow[];
+};
+
+export const aiUsage = {
+  summary: (days: number): Promise<AiUsageSummary> =>
+    api.get('/ai-usage/summary', { params: { days } }).then((r) => r.data as AiUsageSummary),
+};
+
 /** Marketing-agent triggers (human-in-the-loop): drafts, never auto-publishes. */
 export const aiMarketing = {
   /**
