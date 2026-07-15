@@ -38,6 +38,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AiTriagePanel } from '@/components/AiTriagePanel';
+import { AiEstimatePanel } from '@/components/AiEstimatePanel';
 import { TagPicker } from '@/components/TagPicker';
 import { EntitySyncBadgeStack } from '@/components/EntitySyncBadgeStack';
 import { PriorityScoreBadge, scoreEntryFromTask } from '@/components/PriorityScoreBadge';
@@ -474,11 +475,17 @@ function TaskDetailBody({ task }: { task: Row<TaskJsonld> }) {
 
         <DescriptionEditor task={task} />
 
-        <AiTriagePanel
-          target="task"
-          targetId={task.id}
-          onApplied={() => void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: task.id })}
-        />
+        <div className="space-y-2">
+          <AiTriagePanel
+            target="task"
+            targetId={task.id}
+            onApplied={() => void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: task.id })}
+          />
+          <AiEstimatePanel
+            taskId={task.id}
+            onApplied={() => void invalidate({ resource: 'tasks', invalidates: ['list', 'detail'], id: task.id })}
+          />
+        </div>
 
         <TagsSection task={task} />
         <VersionSection task={task} />

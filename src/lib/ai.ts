@@ -29,6 +29,9 @@ export type AiSuggestion = {
   suggestedNewTags?: string[];
   // Conversation-shaped (triage)
   status?: string | null;
+  // Task-shaped (effort estimate)
+  estimatedMinutes?: number | null;
+  sampleSize?: number;
   // Ticket-from-conversation-shaped
   title?: string;
   shouldCreateTicket?: boolean;
@@ -114,6 +117,17 @@ export const aiTriage = {
   /** Dismiss the suggestion. */
   reject: (id: string): Promise<unknown> =>
     api.post(`/ai_recommendations/${id}/reject`).then((r) => r.data),
+};
+
+/**
+ * Effort-estimation agent (Phase D, layer 2): suggests a task's estimatedMinutes
+ * from similar completed tasks' actual logged time. Reuse aiTriage.fetchPending
+ * / accept / reject with kind 'estimate' — only the trigger endpoint differs.
+ */
+export const aiEstimate = {
+  /** Queue an on-demand effort estimate for a task (202 Accepted). */
+  request: (taskId: string): Promise<unknown> =>
+    api.post(`/tasks/${taskId}/ai-estimate`).then((r) => r.data),
 };
 
 /** Marketing-agent triggers (human-in-the-loop): drafts, never auto-publishes. */
