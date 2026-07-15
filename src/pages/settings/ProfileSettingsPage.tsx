@@ -32,11 +32,15 @@ type ProfileSnapshot = {
   // workspace / app default. `supportedLanguages` is the server's allow-list.
   preferredLanguage: string | null;
   supportedLanguages: string[];
+  // Skill discipline (developer/designer/…) used for AI scheduling + role offers.
+  discipline: string | null;
+  disciplines: string[];
 };
 
 // Radix Select has no concept of an empty value, so "no preference" gets a
 // sentinel that maps to null on the wire.
 const AUTO_LANGUAGE = '__auto__';
+const NO_DISCIPLINE = '__none__';
 
 /**
  * `/settings/profile` — user-self profile editor.
@@ -71,6 +75,7 @@ function ProfileForm() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [preferredLanguage, setPreferredLanguage] = useState<string | null>(null);
+  const [discipline, setDiscipline] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -84,6 +89,7 @@ function ProfileForm() {
         setFirstName(data.firstName ?? '');
         setLastName(data.lastName ?? '');
         setPreferredLanguage(data.preferredLanguage ?? null);
+        setDiscipline(data.discipline ?? null);
       } catch (err) {
         console.warn('ProfileSettingsPage: load failed', err);
       } finally {
@@ -102,9 +108,11 @@ function ProfileForm() {
         firstName,
         lastName,
         preferredLanguage,
+        discipline,
       });
       setProfile(data);
       setPreferredLanguage(data.preferredLanguage ?? null);
+      setDiscipline(data.discipline ?? null);
       // The active-locale + supported-languages cache keys off the profile;
       // drop it so translatable content re-resolves in the new language.
       resetI18nProfileCache();
@@ -147,7 +155,8 @@ function ProfileForm() {
   const dirty =
     firstName !== (profile.firstName ?? '') ||
     lastName !== (profile.lastName ?? '') ||
-    preferredLanguage !== (profile.preferredLanguage ?? null);
+    preferredLanguage !== (profile.preferredLanguage ?? null) ||
+    discipline !== (profile.discipline ?? null);
 
   return (
     <Card>
@@ -205,6 +214,26 @@ function ProfileForm() {
           <p className="text-xs text-muted-foreground">
             {t('profile.language_hint')}
           </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="discipline">{t('profile.discipline')}</Label>
+          <Select
+            value={discipline ?? NO_DISCIPLINE}
+            onValueChange={(value) => setDiscipline(value === NO_DISCIPLINE ? null : value)}
+          >
+            <SelectTrigger id="discipline" className="sm:w-64">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_DISCIPLINE}>{t('profile.discipline_none')}</SelectItem>
+              {(profile.disciplines ?? []).map((d) => (
+                <SelectItem key={d} value={d}>
+                  {t(`discipline.${d}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">{t('profile.discipline_hint')}</p>
         </div>
         <div>
           <Button type="button" onClick={() => void handleSave()} disabled={saving || !dirty}>
