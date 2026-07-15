@@ -147,6 +147,8 @@ export type AiUsageDayRow = { day: string; costMicros: number; calls: number };
 export type AiUsageSummary = {
   periodDays: number;
   currency: string;
+  monthlyBudgetMicros: number;
+  monthSpentMicros: number;
   totalCostMicros: number;
   callCount: number;
   totalInputTokens: number;
@@ -159,6 +161,9 @@ export type AiUsageSummary = {
 export const aiUsage = {
   summary: (days: number): Promise<AiUsageSummary> =>
     api.get('/ai-usage/summary', { params: { days } }).then((r) => r.data as AiUsageSummary),
+  /** Set the workspace's monthly AI budget in USD (0 = unlimited). */
+  setBudget: (monthlyUsd: number): Promise<{ monthlyBudgetMicros: number }> =>
+    api.put('/ai-usage/budget', { monthlyUsd }).then((r) => r.data as { monthlyBudgetMicros: number }),
 };
 
 /** Marketing-agent triggers (human-in-the-loop): drafts, never auto-publishes. */
