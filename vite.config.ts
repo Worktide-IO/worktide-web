@@ -5,6 +5,11 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Stamp the build time into the bundle so lib/version.ts can report which
+  // build is live (VITE_APP_VERSION / VITE_APP_COMMIT come in as env vars).
+  define: {
+    __APP_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
