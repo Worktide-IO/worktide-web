@@ -1,7 +1,7 @@
 import { useInvalidate, useOne } from '@refinedev/core';
 import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Mail, Paperclip, Send } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Mail, Paperclip, Send, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
@@ -27,6 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { topicFor, useLiveResource, useMercureTopic } from '@/lib/mercure';
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { aiReply, aiErrorMessage } from '@/lib/ai';
 import type { Row } from '@/lib/refine';
 import { useKeysetList } from '@/lib/useKeysetList';
 import { cn } from '@/lib/utils';
@@ -336,6 +337,23 @@ function ReplyComposer({
   const [subject, setSubject] = useState(defaultSubject);
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+
+  // Inline AI draft: fetch a suggested reply and pre-fill the composer. Appends
+  // (never overwrites) if the agent already started typing.
+  const suggest = async () => {
+    setSuggesting(true);
+    try {
+      const { reply } = await aiReply.suggest(conversationId);
+      if (reply?.trim()) {
+        setBody((prev) => (prev.trim() ? `${prev.trim()}\n\n${reply.trim()}` : reply.trim()));
+      }
+    } catch (err) {
+      toast.error(aiErrorMessage(err, t('toast.ai_analysis_failed')));
+    } finally {
+      setSuggesting(false);
+    }
+  };
 
   const send = async () => {
     if (!channelIri) {
@@ -401,6 +419,10 @@ function ReplyComposer({
           className="h-32 resize-none text-sm"
         />
         <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={suggest} disabled={suggesting || sending} title={t('conversation.ai_reply_hint')}>
+            {suggesting ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+            {suggesting ? t('conversation.ai_reply_drafting') : t('conversation.ai_reply')}
+          </Button>
           <Button onClick={send} disabled={sending}>
             <Send className="size-4" />
             {sending ? t('conversation.sending') : t('conversation.send')}

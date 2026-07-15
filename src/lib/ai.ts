@@ -130,6 +130,17 @@ export const aiEstimate = {
     api.post(`/tasks/${taskId}/ai-estimate`).then((r) => r.data),
 };
 
+/**
+ * Reply-suggestion agent (Phase D, layer 4): drafts a reply to a conversation
+ * using the workspace's Saved Replies as few-shot tone examples. Synchronous +
+ * inline like aiTags — returns the draft text; nothing is persisted or sent, the
+ * composer just pre-fills it for the agent to edit and send.
+ */
+export const aiReply = {
+  suggest: (conversationId: string): Promise<{ reply: string; model?: string | null }> =>
+    api.post(`/conversations/${conversationId}/suggest-reply`).then((r) => r.data as { reply: string; model?: string | null }),
+};
+
 /** Marketing-agent triggers (human-in-the-loop): drafts, never auto-publishes. */
 export const aiMarketing = {
   /**
