@@ -1,9 +1,10 @@
-import { Activity, CalendarClock, Clock, FolderKanban, ListChecks, ListTodo, type LucideIcon } from 'lucide-react';
+import { Activity, CalendarClock, Clock, FolderKanban, Inbox, ListChecks, ListTodo, type LucideIcon } from 'lucide-react';
 
 import { ActiveTimerWidget } from './widgets/ActiveTimerWidget';
 import { MyProjectsWidget } from './widgets/MyProjectsWidget';
 import { MyTasksWidget } from './widgets/MyTasksWidget';
 import { MyScheduleWidget } from './widgets/MyScheduleWidget';
+import { TaskOffersWidget } from './widgets/TaskOffersWidget';
 import { OpenCustomerTasksWidget } from './widgets/OpenCustomerTasksWidget';
 import { RecentStatusUpdatesWidget } from './widgets/RecentStatusUpdatesWidget';
 
@@ -65,6 +66,14 @@ export const WIDGET_REGISTRY: Record<string, WidgetDefinition> = {
     icon: CalendarClock,
     defaultSize: { w: 4, h: 14 },
     Component: MyScheduleWidget,
+  },
+  'task-offers': {
+    key: 'task-offers',
+    label: 'widget.task_offers.label',
+    description: 'widget.task_offers.desc',
+    icon: Inbox,
+    defaultSize: { w: 4, h: 12 },
+    Component: TaskOffersWidget,
   },
   'recent-status-updates': {
     key: 'recent-status-updates',
