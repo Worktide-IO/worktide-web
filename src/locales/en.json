@@ -2683,5 +2683,10 @@
   "feedback.reply_placeholder": "Write a reply…",
   "feedback.reply_send": "Reply",
   "feedback.reply_failed": "Could not send your reply.",
-  "feedback.submitted_by": "Submitted by {{name}}"
+  "feedback.submitted_by": "Submitted by {{name}}",
+  "feedback.admin_only": "Worktide team only",
+  "feedback.admin_submitter": "Submitter",
+  "feedback.admin_workspace": "Workspace",
+  "feedback.admin_source": "Source",
+  "feedback.admin_diagnostics": "Technical details"
 }
