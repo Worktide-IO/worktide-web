@@ -4,6 +4,7 @@ import './index.css'
 import './i18n' // initialise i18next before the app renders
 import App from './App.tsx'
 import { installPendingQueueDrainers } from './lib/pendingQueue.ts'
+import { installDiagnostics } from './lib/diagnostics.ts'
 import { applyBranding, readCachedBranding } from './lib/branding.ts'
 import { logVersionDiagnostics } from './lib/version.ts'
 
@@ -17,6 +18,10 @@ declare global {
 // white-labeled instance never flashes stock Worktide colors. The
 // BrandingProvider revalidates against the API once mounted.
 applyBranding(readCachedBranding())
+
+// Capture client-side diagnostics (JS errors, failed requests, breadcrumbs)
+// for the feedback tool, before React mounts so early crashes are recorded.
+installDiagnostics()
 
 // Replay any mutations that were queued during the last session's
 // outage. Safe to call before React mounts — drainers run async.

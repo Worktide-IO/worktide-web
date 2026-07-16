@@ -74,6 +74,7 @@ import { ServiceCreatePage } from '@/pages/services/ServiceCreatePage';
 import { ServiceEditPage } from '@/pages/services/ServiceEditPage';
 import { IndustriesPage } from '@/pages/industries/IndustriesPage';
 import { NewslettersPage } from '@/pages/newsletters/NewslettersPage';
+import { FeedbackBoardPage } from '@/pages/feedback/FeedbackBoardPage';
 import { MeetingTypesPage } from '@/pages/meetings/MeetingTypesPage';
 import { FormsPage } from '@/pages/forms/FormsPage';
 import { BookingsPage } from '@/pages/meetings/BookingsPage';
@@ -143,6 +144,11 @@ export default function App() {
               name: 'dashboard',
               list: '/',
               meta: { label: 'nav.dashboard', icon: 'Gauge', category: 'Arbeit' },
+            },
+            {
+              name: 'feedback',
+              list: '/feedback',
+              meta: { label: 'nav.feedback', icon: 'MessageSquarePlus', category: 'App' },
             },
             {
               name: 'wall',
@@ -380,6 +386,7 @@ export default function App() {
               }
             >
               <Route index element={<DashboardPage />} />
+              <Route path="/feedback" element={<FeedbackBoardPage />} />
               <Route path="/benachrichtigungen" element={<NotificationsListPage />} />
               <Route path="/wall" element={<WallPage />} />
               <Route path="/projects" element={<ProjectsListPage />} />

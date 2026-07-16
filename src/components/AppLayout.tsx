@@ -13,6 +13,9 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { NetworkStatusBanner } from '@/components/NetworkStatusBanner';
 import { PendingMutationsToast } from '@/components/PendingMutationsToast';
 import { QuickAddDialog } from '@/components/QuickAddDialog';
+import { FeedbackWidget, openFeedback } from '@/components/feedback/FeedbackWidget';
+import { Button } from '@/components/ui/button';
+import { MessageSquarePlus } from 'lucide-react';
 import { UserMenu } from '@/components/UserMenu';
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher';
 import { DevToolsBridge } from '@/components/DevToolsBridge';
@@ -126,6 +129,17 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <Separator orientation="vertical" className="h-6" />
           <BrandLogo className="h-6 w-auto" />
           <div className="ml-auto flex items-center gap-1">
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="size-9 rounded-full"
+              onClick={() => openFeedback()}
+              aria-label={t('feedback.trigger_aria')}
+              title={t('feedback.trigger_aria')}
+            >
+              <MessageSquarePlus className="size-4" />
+            </Button>
             <NotificationBell />
           </div>
         </header>
@@ -135,6 +149,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <QuickAddDialog />
       <GlobalSearchDialog />
       <PendingMutationsToast />
+      <FeedbackWidget />
       <DevToolsBridge />
     </SidebarProvider>
   );
