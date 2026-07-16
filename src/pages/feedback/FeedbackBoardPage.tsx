@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Loader2, MessagesSquare, Plus, Send } from 'lucide-react';
+import { Loader2, MessagesSquare, Plus, Send, ShieldAlert } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -234,15 +234,12 @@ function FeedbackDetailSheet({
               </SheetDescription>
             </SheetHeader>
 
-            <div className="flex-1 space-y-4 overflow-auto py-4">
+            <div className="flex-1 space-y-4 overflow-auto px-4 py-4">
               {detail.ticket.description && (
                 <p className="whitespace-pre-wrap text-sm text-foreground">{detail.ticket.description}</p>
               )}
-              {detail.ticket.submitter?.name && (
-                <p className="rounded bg-amber-500/10 px-2 py-1 text-xs text-amber-700 dark:text-amber-400">
-                  {t('feedback.submitted_by', { name: detail.ticket.submitter.name })}
-                </p>
-              )}
+
+              {detail.ticket.submitter && id && <AdminExtras ticket={detail.ticket} feedbackId={id} />}
 
               <div className="space-y-3 border-t border-border pt-3">
                 <h3 className="text-xs font-medium uppercase text-muted-foreground">
@@ -260,7 +257,7 @@ function FeedbackDetailSheet({
               </div>
             </div>
 
-            <div className="space-y-2 border-t border-border pt-3">
+            <div className="space-y-2 border-t border-border px-4 pb-4 pt-3">
               <Textarea
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
@@ -278,6 +275,65 @@ function FeedbackDetailSheet({
         )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** Worktide-team-only panel: who filed it, the screenshot, and the diagnostics. */
+function AdminExtras({ ticket, feedbackId }: { ticket: FeedbackTicket; feedbackId: string }) {
+  const { t } = useTranslation();
+  const [shotUrl, setShotUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!ticket.hasScreenshot) return;
+    let alive = true;
+    let created: string | null = null;
+    feedbackApi
+      .screenshotObjectUrl(feedbackId)
+      .then((u) => {
+        created = u;
+        if (alive) setShotUrl(u);
+        else URL.revokeObjectURL(u);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+      if (created) URL.revokeObjectURL(created);
+    };
+  }, [feedbackId, ticket.hasScreenshot]);
+
+  const s = ticket.submitter;
+  return (
+    <div className="space-y-2.5 rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+      <div className="flex items-center gap-1.5 text-xs font-medium uppercase text-amber-700 dark:text-amber-400">
+        <ShieldAlert className="size-3.5" /> {t('feedback.admin_only')}
+      </div>
+      {s && (
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm">
+          <dt className="text-muted-foreground">{t('feedback.admin_submitter')}</dt>
+          <dd>{s.name ?? '—'}</dd>
+          <dt className="text-muted-foreground">{t('feedback.admin_workspace')}</dt>
+          <dd>{s.workspace ?? '—'}</dd>
+          <dt className="text-muted-foreground">{t('feedback.admin_source')}</dt>
+          <dd>
+            {s.sourceApp ?? '—'}
+            {s.route ? ` · ${s.route}` : ''}
+          </dd>
+        </dl>
+      )}
+      {shotUrl && (
+        <a href={shotUrl} target="_blank" rel="noreferrer" className="block">
+          <img src={shotUrl} alt="" className="max-h-64 w-auto rounded border border-border" />
+        </a>
+      )}
+      {ticket.diagnostics != null && (
+        <details className="text-xs">
+          <summary className="cursor-pointer text-muted-foreground">{t('feedback.admin_diagnostics')}</summary>
+          <pre className="mt-1 max-h-48 overflow-auto rounded bg-background p-2 text-[11px] leading-relaxed">
+            {JSON.stringify(ticket.diagnostics, null, 2)}
+          </pre>
+        </details>
+      )}
+    </div>
   );
 }
 

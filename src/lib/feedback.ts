@@ -33,7 +33,10 @@ export type FeedbackTicket = {
   replyCount: number;
   createdAt: string;
   updatedAt: string;
-  submitter?: { name: string | null };
+  // Worktide-team-only (platform admins): who filed it + captured context.
+  submitter?: { name: string | null; workspace: string | null; sourceApp: string | null; route: string | null };
+  diagnostics?: unknown;
+  hasScreenshot?: boolean;
 };
 
 /** authorLabel is a role key for normal viewers, or `{name}` for super-admins. */
@@ -76,4 +79,8 @@ export const feedbackApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+
+  /** Fetch the admin-only screenshot as an object URL (Worktide team only). */
+  screenshotObjectUrl: (id: string) =>
+    api.get(`/feedback/${id}/screenshot`, { responseType: 'blob' }).then((r) => URL.createObjectURL(r.data as Blob)),
 };
