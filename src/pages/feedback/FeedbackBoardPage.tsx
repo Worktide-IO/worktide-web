@@ -46,6 +46,13 @@ export function FeedbackBoardPage() {
     load();
   }, [load]);
 
+  // Refresh when a report is filed via the global widget while viewing the board.
+  useEffect(() => {
+    const onSubmitted = () => load();
+    window.addEventListener('wt-feedback-submitted', onSubmitted);
+    return () => window.removeEventListener('wt-feedback-submitted', onSubmitted);
+  }, [load]);
+
   return (
     <div className="mx-auto max-w-4xl space-y-4">
       <div className="flex items-center justify-between gap-3">
