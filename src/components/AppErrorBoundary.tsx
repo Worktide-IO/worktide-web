@@ -1,7 +1,8 @@
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, MessageSquarePlus, RefreshCw } from 'lucide-react';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { openFeedback } from '@/components/feedback/FeedbackWidget';
 
 /**
  * Catches render-time exceptions from any child route so a bug in a
@@ -63,6 +64,22 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
               Seite neu laden
             </Button>
           </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mx-auto"
+            onClick={() =>
+              openFeedback({
+                category: 'bug',
+                title: `Fehler: ${this.state.error?.message ?? ''}`.slice(0, 120),
+                description:
+                  'Dieser Bereich ist abgestürzt. Technische Details werden automatisch mitgesendet.',
+              })
+            }
+          >
+            <MessageSquarePlus className="size-3.5" />
+            Problem melden
+          </Button>
         </div>
       </div>
     );
