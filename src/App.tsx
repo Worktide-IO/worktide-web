@@ -140,6 +140,11 @@ export default function App() {
           resources={[
             // ---- Arbeit ----------------------------------------------------
             {
+              name: 'dashboard',
+              list: '/',
+              meta: { label: 'nav.dashboard', icon: 'Gauge', category: 'Arbeit' },
+            },
+            {
               name: 'wall',
               list: '/wall',
               meta: { label: 'nav.wall', icon: 'LayoutDashboard', category: 'Arbeit' },
