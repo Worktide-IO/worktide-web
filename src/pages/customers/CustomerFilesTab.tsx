@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  ChevronLeft,
   ChevronRight,
   Download,
   Eye,
   EyeOff,
   File as FileIcon,
+  FileAudio,
+  FileText,
+  FileVideo,
   Folder as FolderIcon,
   FolderPlus,
   Home,
@@ -14,6 +18,7 @@ import {
   Pencil,
   Trash2,
   Upload,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -22,8 +27,14 @@ import {
   deleteFile,
   deleteFolder,
   downloadFile,
+  fetchFileObjectUrl,
+  fileKind,
+  isImage,
+  isViewable,
   listFiles,
   listFolders,
+  moveFile,
+  moveFolder,
   renameFolder,
   setHidden,
   uploadFile,
@@ -31,6 +42,7 @@ import {
   type FolderNode,
 } from '@/lib/files';
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,6 +75,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 type Crumb = { id: string; name: string; iri: string };
 type NameDialog = { mode: 'create' } | { mode: 'rename'; id: string; current: string };
 type DeleteTarget = { kind: 'folder' | 'file'; id: string; name: string };
+type DragItem = { kind: 'folder' | 'file'; id: string; iri: string; name: string };
+
+/** Highlight key for the root drop zone (the "Files" breadcrumb) — folder IRIs never collide with it. */
+const ROOT_DROP = '__root__';
 
 function formatSize(size: number | string | null | undefined): string {
   const n = typeof size === 'string' ? Number(size) : (size ?? 0);
@@ -90,6 +106,19 @@ export function CustomerFilesTab({ customerId }: { customerId: string }) {
   const [nameDialog, setNameDialog] = useState<NameDialog | null>(null);
   const [nameValue, setNameValue] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<DeleteTarget | null>(null);
+  // Drag & drop: `drag` is the item being moved internally; `dropTarget` is the
+  // highlighted drop zone key; `uploadHover` shows the OS-file upload overlay.
+  const [drag, setDrag] = useState<DragItem | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const [uploadHover, setUploadHover] = useState(false);
+  // Object URLs for previewable media (fileId → blob URL), fetched authenticated
+  // and reused for the list thumbnail and the viewer. `viewer` is the index into
+  // the current folder's viewable-media list, or null when closed. The ref
+  // mirrors the map so we can revoke every blob (image thumbs + lazily-loaded
+  // audio/video) when the folder changes.
+  const [mediaUrls, setMediaUrls] = useState<Record<string, string>>({});
+  const [viewer, setViewer] = useState<number | null>(null);
+  const urlCacheRef = useRef<Map<string, string>>(new Map());
 
   const currentIri = path.length > 0 ? path[path.length - 1].iri : null;
 
@@ -119,6 +148,52 @@ export function CustomerFilesTab({ customerId }: { customerId: string }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- load folder contents on mount + on navigation
     void reload();
   }, [reload]);
+
+  // Fetch a file's bytes as an object URL once and cache it (by id). Reused for
+  // the list thumbnail and the viewer; a concurrent duplicate is revoked.
+  const loadUrl = useCallback(async (id: string) => {
+    if (urlCacheRef.current.has(id)) return;
+    const url = await fetchFileObjectUrl(id);
+    if (urlCacheRef.current.has(id)) {
+      URL.revokeObjectURL(url);
+      return;
+    }
+    urlCacheRef.current.set(id, url);
+    setMediaUrls((prev) => ({ ...prev, [id]: url }));
+  }, []);
+
+  // Revoke every cached blob when the folder changes (or on unmount) so nothing
+  // leaks across navigation. Runs before the loaders below re-populate.
+  useEffect(() => {
+    const cache = urlCacheRef.current;
+    return () => {
+      for (const url of cache.values()) URL.revokeObjectURL(url);
+      cache.clear();
+      setMediaUrls({});
+    };
+  }, [currentIri]);
+
+  // Eagerly load image thumbnails for the current listing (keyed on the image id
+  // set so renames/hide-toggles/moves don't refetch). Audio/video are loaded
+  // lazily by the viewer instead — their blobs can be large.
+  const imageIdsKey = files.filter((f) => isImage(f.mimeType)).map((f) => f.id).join(',');
+  useEffect(() => {
+    if (imageIdsKey === '') return;
+    let cancelled = false;
+    void (async () => {
+      for (const id of imageIdsKey.split(',')) {
+        if (cancelled) return;
+        try {
+          await loadUrl(id);
+        } catch {
+          // A single failed preview shouldn't break the listing.
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [imageIdsKey, loadUrl]);
 
   const openFolder = (f: FolderNode) => setPath((p) => [...p, { id: f.id, name: f.name, iri: f['@id'] }]);
   const goTo = (index: number) => setPath((p) => (index < 0 ? [] : p.slice(0, index + 1)));
@@ -194,17 +269,118 @@ export function CustomerFilesTab({ customerId }: { customerId: string }) {
     }
   };
 
+  /**
+   * Move the item currently being dragged into `targetIri` (null = root). Cycles
+   * are prevented by the tree view itself — a folder's descendants are never
+   * visible at the same level — so we only guard the drop-onto-itself no-op.
+   */
+  const moveInto = async (targetIri: string | null) => {
+    const item = drag;
+    setDrag(null);
+    setDropTarget(null);
+    if (!item) return;
+    if (item.kind === 'folder' && item.iri === targetIri) return;
+    setBusy(true);
+    try {
+      if (item.kind === 'folder') {
+        await moveFolder(item.id, targetIri);
+      } else {
+        await moveFile(item.id, targetIri);
+      }
+      toast.success(t('customer_files.moved', { name: item.name }));
+      await reload();
+    } catch {
+      toast.error(t('customer_files.action_failed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const empty = folders.length === 0 && files.length === 0;
+  // Viewable media (image/audio/video) in listing order — the viewer steps
+  // through exactly these.
+  const media = files.filter((f) => isViewable(f.mimeType));
+
+  // Lazily load the currently-shown media item (audio/video aren't prefetched).
+  const viewerId = viewer !== null ? media[viewer]?.id : undefined;
+  useEffect(() => {
+    if (viewerId) void loadUrl(viewerId);
+  }, [viewerId, loadUrl]);
+
+  /**
+   * Open a file the way its type warrants: previewable media in the viewer,
+   * PDFs in a new tab, everything else downloads.
+   */
+  const openFile = (f: FileNode) => {
+    const kind = fileKind(f.mimeType);
+    if (kind === 'pdf') {
+      // Open a tab synchronously (avoids the popup blocker), then point it at
+      // the fetched blob — a plain href wouldn't carry the JWT. Not cached/
+      // revoked: the tab owns the blob until it's closed.
+      const win = window.open('', '_blank');
+      void fetchFileObjectUrl(f.id)
+        .then((url) => {
+          if (win) win.location.href = url;
+          else window.open(url, '_blank');
+        })
+        .catch(() => {
+          win?.close();
+          toast.error(t('customer_files.action_failed'));
+        });
+      return;
+    }
+    if (kind === 'other') {
+      void downloadFile(f.id, f.name);
+      return;
+    }
+    const idx = media.findIndex((m) => m.id === f.id);
+    if (idx >= 0) setViewer(idx);
+  };
 
   return (
-    <Card>
+    <Card
+      className="relative"
+      // OS-file drag from the desktop → upload into the current folder. Internal
+      // moves carry a `drag` item and are handled per row/crumb, so ignore those.
+      onDragOver={(e) => {
+        if (drag || !e.dataTransfer.types.includes('Files')) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        setUploadHover(true);
+      }}
+      onDragLeave={(e) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+        setUploadHover(false);
+      }}
+      onDrop={(e) => {
+        if (drag || !e.dataTransfer.files?.length) return;
+        e.preventDefault();
+        setUploadHover(false);
+        void onFilesPicked(e.dataTransfer.files);
+      }}
+    >
       <CardHeader className="gap-3">
-        {/* Breadcrumb */}
+        {/* Breadcrumb (each crumb is a drop target to move items up the tree) */}
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <button
             type="button"
             onClick={() => goTo(-1)}
-            className="inline-flex items-center gap-1 hover:text-foreground"
+            onDragOver={(e) => {
+              if (!drag) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+              setDropTarget(ROOT_DROP);
+            }}
+            onDragLeave={() => setDropTarget((cur) => (cur === ROOT_DROP ? null : cur))}
+            onDrop={(e) => {
+              if (!drag) return;
+              e.preventDefault();
+              void moveInto(null);
+            }}
+            className={cn(
+              'inline-flex items-center gap-1 rounded px-1 hover:text-foreground',
+              dropTarget === ROOT_DROP && 'bg-accent text-foreground ring-1 ring-primary/40',
+            )}
           >
             <Home className="size-3.5" /> {t('customer_files.root')}
           </button>
@@ -214,7 +390,22 @@ export function CustomerFilesTab({ customerId }: { customerId: string }) {
               <button
                 type="button"
                 onClick={() => goTo(i)}
-                className="hover:text-foreground max-w-40 truncate"
+                onDragOver={(e) => {
+                  if (!drag) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                  setDropTarget(crumb.iri);
+                }}
+                onDragLeave={() => setDropTarget((cur) => (cur === crumb.iri ? null : cur))}
+                onDrop={(e) => {
+                  if (!drag) return;
+                  e.preventDefault();
+                  void moveInto(crumb.iri);
+                }}
+                className={cn(
+                  'hover:text-foreground max-w-40 truncate rounded px-1',
+                  dropTarget === crumb.iri && 'bg-accent text-foreground ring-1 ring-primary/40',
+                )}
               >
                 {crumb.name}
               </button>
@@ -266,7 +457,41 @@ export function CustomerFilesTab({ customerId }: { customerId: string }) {
         ) : (
           <div className="divide-y">
             {folders.map((f) => (
-              <div key={f['@id']} className="flex items-center gap-3 py-2">
+              <div
+                key={f['@id']}
+                draggable={!busy}
+                onDragStart={(e) => {
+                  e.dataTransfer.effectAllowed = 'move';
+                  e.dataTransfer.setData('text/plain', f.name);
+                  setDrag({ kind: 'folder', id: f.id, iri: f['@id'], name: f.name });
+                }}
+                onDragEnd={() => {
+                  setDrag(null);
+                  setDropTarget(null);
+                }}
+                onDragOver={(e) => {
+                  // Only internal moves land on a folder row, and never onto itself.
+                  if (!drag || (drag.kind === 'folder' && drag.iri === f['@id'])) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.dataTransfer.dropEffect = 'move';
+                  setDropTarget(f['@id']);
+                }}
+                onDragLeave={(e) => {
+                  if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+                  setDropTarget((cur) => (cur === f['@id'] ? null : cur));
+                }}
+                onDrop={(e) => {
+                  if (!drag || (drag.kind === 'folder' && drag.iri === f['@id'])) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  void moveInto(f['@id']);
+                }}
+                className={cn(
+                  'flex items-center gap-3 rounded-md py-2',
+                  dropTarget === f['@id'] && 'bg-accent ring-1 ring-primary/40',
+                )}
+              >
                 <button
                   type="button"
                   onClick={() => openFolder(f)}
@@ -291,14 +516,45 @@ export function CustomerFilesTab({ customerId }: { customerId: string }) {
               </div>
             ))}
             {files.map((f) => (
-              <div key={f['@id']} className="flex items-center gap-3 py-2">
-                <div className="flex flex-1 items-center gap-3">
-                  <FileIcon className="size-5 text-muted-foreground" />
-                  <span>{f.name}</span>
+              <div
+                key={f['@id']}
+                draggable={!busy}
+                onDragStart={(e) => {
+                  e.dataTransfer.effectAllowed = 'move';
+                  e.dataTransfer.setData('text/plain', f.name);
+                  setDrag({ kind: 'file', id: f.id, iri: f['@id'], name: f.name });
+                }}
+                onDragEnd={() => {
+                  setDrag(null);
+                  setDropTarget(null);
+                }}
+                className="flex items-center gap-3 py-2"
+              >
+                <button
+                  type="button"
+                  onClick={() => openFile(f)}
+                  className="group flex flex-1 items-center gap-3 text-left"
+                >
+                  {isImage(f.mimeType) ? (
+                    <span className="relative size-9 shrink-0 overflow-hidden rounded border bg-muted">
+                      {mediaUrls[f.id] ? (
+                        <img
+                          src={mediaUrls[f.id]}
+                          alt={f.name}
+                          className="size-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      ) : (
+                        <Loader2 className="absolute inset-0 m-auto size-4 animate-spin text-muted-foreground" />
+                      )}
+                    </span>
+                  ) : (
+                    <FileKindIcon mimeType={f.mimeType} />
+                  )}
+                  <span className="truncate group-hover:underline">{f.name}</span>
                   {f.isHiddenForConnectUsers ? (
-                    <EyeOff className="size-3.5 text-muted-foreground" />
+                    <EyeOff className="size-3.5 shrink-0 text-muted-foreground" />
                   ) : null}
-                </div>
+                </button>
                 <span className="text-xs tabular-nums text-muted-foreground">{formatSize(f.size)}</span>
                 <RowMenu
                   isFile
@@ -313,6 +569,15 @@ export function CustomerFilesTab({ customerId }: { customerId: string }) {
           </div>
         )}
       </CardContent>
+
+      {/* OS-file drop overlay (only while dragging files in from the desktop) */}
+      {uploadHover ? (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-dashed border-primary bg-primary/5">
+          <div className="flex items-center gap-2 text-sm font-medium text-primary">
+            <Upload className="size-5" /> {t('customer_files.drop_to_upload')}
+          </div>
+        </div>
+      ) : null}
 
       {/* Create / rename folder dialog */}
       <Dialog open={nameDialog !== null} onOpenChange={(o) => !o && setNameDialog(null)}>
@@ -363,6 +628,19 @@ export function CustomerFilesTab({ customerId }: { customerId: string }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Media viewer (images, audio, video) */}
+      {viewer !== null && media[viewer] ? (
+        <MediaViewer
+          items={media}
+          index={viewer}
+          urls={mediaUrls}
+          onNavigate={setViewer}
+          onClose={() => setViewer(null)}
+          onDownload={(item) => void downloadFile(item.id, item.name)}
+          t={t}
+        />
+      ) : null}
     </Card>
   );
 }
@@ -412,5 +690,150 @@ function RowMenu({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/** Type icon for non-image files in the listing. */
+function FileKindIcon({ mimeType }: { mimeType: string | null | undefined }) {
+  const kind = fileKind(mimeType);
+  if (kind === 'audio') return <FileAudio className="size-5 shrink-0 text-violet-500" />;
+  if (kind === 'video') return <FileVideo className="size-5 shrink-0 text-rose-500" />;
+  if (kind === 'pdf') return <FileText className="size-5 shrink-0 text-red-500" />;
+  return <FileIcon className="size-5 shrink-0 text-muted-foreground" />;
+}
+
+/**
+ * Full-screen media viewer for images, audio and video. Steps through the
+ * folder's viewable media with the arrow buttons or ←/→ keys (wrapping around),
+ * closes on Escape or a backdrop click.
+ */
+function MediaViewer({
+  items,
+  index,
+  urls,
+  onNavigate,
+  onClose,
+  onDownload,
+  t,
+}: {
+  items: FileNode[];
+  index: number;
+  urls: Record<string, string>;
+  onNavigate: (index: number) => void;
+  onClose: () => void;
+  onDownload: (item: FileNode) => void;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+  const count = items.length;
+  const current = items[index];
+  const url = current ? urls[current.id] : undefined;
+  const kind = current ? fileKind(current.mimeType) : 'other';
+
+  const go = useCallback(
+    (delta: number) => onNavigate((index + delta + count) % count),
+    [index, count, onNavigate],
+  );
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      else if (e.key === 'ArrowRight') go(1);
+      else if (e.key === 'ArrowLeft') go(-1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [go, onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      {/* Top bar */}
+      <div
+        className="flex items-center justify-between gap-3 p-3 text-white"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <span className="truncate text-sm">
+          {current?.name}
+          {count > 1 ? (
+            <span className="ml-2 text-white/60">
+              {index + 1} / {count}
+            </span>
+          ) : null}
+        </span>
+        <div className="flex items-center gap-1">
+          {current ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/10 hover:text-white"
+              onClick={() => onDownload(current)}
+              title={t('customer_files.download')}
+            >
+              <Download className="size-5" />
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="text-white hover:bg-white/10 hover:text-white"
+            onClick={onClose}
+            title={t('action.close')}
+          >
+            <X className="size-5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Image stage */}
+      <div
+        className="relative flex min-h-0 flex-1 items-center justify-center p-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {count > 1 ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute left-2 size-11 rounded-full text-white hover:bg-white/10 hover:text-white"
+            onClick={() => go(-1)}
+            title={t('customer_files.prev_image')}
+          >
+            <ChevronLeft className="size-7" />
+          </Button>
+        ) : null}
+        {!url ? (
+          <Loader2 className="size-8 animate-spin text-white/70" />
+        ) : kind === 'video' ? (
+          <video src={url} controls autoPlay className="max-h-full max-w-full" />
+        ) : kind === 'audio' ? (
+          <div className="flex w-full max-w-lg flex-col items-center gap-4 px-6 text-white">
+            <FileAudio className="size-16 text-white/70" />
+            <audio src={url} controls autoPlay className="w-full" />
+          </div>
+        ) : (
+          <img
+            src={url}
+            alt={current?.name}
+            className="max-h-full max-w-full object-contain"
+          />
+        )}
+        {count > 1 ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute right-2 size-11 rounded-full text-white hover:bg-white/10 hover:text-white"
+            onClick={() => go(1)}
+            title={t('customer_files.next_image')}
+          >
+            <ChevronRight className="size-7" />
+          </Button>
+        ) : null}
+      </div>
+    </div>
   );
 }

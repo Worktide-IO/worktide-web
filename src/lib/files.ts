@@ -120,11 +120,66 @@ export async function deleteFile(fileId: string): Promise<void> {
   await api.delete(`/files/${fileId}`);
 }
 
+/** Move a file into a folder (null = the target's root). */
+export async function moveFile(fileId: string, folderIri: string | null): Promise<void> {
+  await api.patch(`/files/${fileId}`, { folder: folderIri }, {
+    headers: { 'Content-Type': 'application/merge-patch+json' },
+  });
+}
+
+/** Move a folder under a new parent (null = the target's root). */
+export async function moveFolder(folderId: string, parentIri: string | null): Promise<void> {
+  await api.patch(`/folders/${folderId}`, { parent: parentIri }, {
+    headers: { 'Content-Type': 'application/merge-patch+json' },
+  });
+}
+
 /** Toggle portal visibility for a folder or file. */
 export async function setHidden(kind: 'folders' | 'files', id: string, hidden: boolean): Promise<void> {
   await api.patch(`/${kind}/${id}`, { isHiddenForConnectUsers: hidden }, {
     headers: { 'Content-Type': 'application/merge-patch+json' },
   });
+}
+
+/** True for files we can render inline as an image (thumbnail + lightbox). */
+export function isImage(mimeType: string | null | undefined): boolean {
+  return typeof mimeType === 'string' && mimeType.startsWith('image/');
+}
+
+export type FileKind = 'image' | 'audio' | 'video' | 'pdf' | 'other';
+
+/**
+ * How a file should be opened from the file manager:
+ * - image/audio/video → previewable inline in the media viewer
+ * - pdf → open in a new browser tab
+ * - other → download
+ */
+export function fileKind(mimeType: string | null | undefined): FileKind {
+  if (isImage(mimeType)) return 'image';
+  if (typeof mimeType === 'string') {
+    if (mimeType.startsWith('audio/')) return 'audio';
+    if (mimeType.startsWith('video/')) return 'video';
+    if (mimeType === 'application/pdf') return 'pdf';
+  }
+  return 'other';
+}
+
+/** Kinds shown inside the media viewer (with next/prev navigation). */
+export function isViewable(mimeType: string | null | undefined): boolean {
+  const k = fileKind(mimeType);
+  return k === 'image' || k === 'audio' || k === 'video';
+}
+
+/**
+ * Fetch a file's raw bytes as an object URL through the authenticated client
+ * (a plain <img src> would not carry the JWT). There is no server-side
+ * thumbnail endpoint, so the full image is loaded once and the same URL is
+ * reused for both the list thumbnail and the lightbox. The caller owns the
+ * returned URL and must `URL.revokeObjectURL` it when done.
+ */
+export async function fetchFileObjectUrl(fileId: string): Promise<string> {
+  const { data } = await api.get<Blob>(`/files/${fileId}/content`, { responseType: 'blob' });
+  return URL.createObjectURL(data);
 }
 
 /**
