@@ -43,9 +43,14 @@ export function DashboardGrid({ layout, editing, onLayoutChange, onRemoveWidget 
       className={cn('dashboard-grid', editing && 'dashboard-grid--editing')}
       layouts={{ lg: toRglLayout(layout), xxs: toRglLayout(layout) }}
       cols={{ lg: GRID_COLS, xxs: 1 }}
-      breakpoints={{ lg: 880, xxs: 0 }}
+      // Keep the multi-column grid down to ~700px content width so tiles stay
+      // draggable ACROSS columns on laptop widths (with the sidebar the content
+      // area is narrower than the viewport); only collapse to one column on
+      // genuinely narrow/mobile screens.
+      breakpoints={{ lg: 700, xxs: 0 }}
       rowHeight={GRID_ROW_HEIGHT}
       margin={[16, 16]}
+      compactType="vertical"
       isDraggable={editing}
       isResizable={editing}
       draggableCancel=".widget-no-drag"

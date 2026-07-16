@@ -34,10 +34,17 @@ export const GRID_ROW_HEIGHT = 32;
 export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayout = {
   version: 1,
   widgets: [
-    { instanceId: 'active-timer', key: 'active-timer', x: 0, y: 0, w: 3, h: 8 },
-    { instanceId: 'my-projects', key: 'my-projects', x: 3, y: 0, w: 5, h: 8 },
-    { instanceId: 'open-customer-tasks', key: 'open-customer-tasks', x: 3, y: 8, w: 5, h: 10 },
-    { instanceId: 'my-tasks', key: 'my-tasks', x: 8, y: 0, w: 4, h: 18 },
+    // Left column: the AI assistant is the standard centrepiece, with the
+    // AI-planned schedule + role-based offers under it.
+    { instanceId: 'ai-assistant', key: 'ai-assistant', x: 0, y: 0, w: 4, h: 10 },
+    { instanceId: 'my-schedule', key: 'my-schedule', x: 0, y: 10, w: 4, h: 14 },
+    // Middle column.
+    { instanceId: 'my-tasks', key: 'my-tasks', x: 4, y: 0, w: 4, h: 18 },
+    { instanceId: 'task-offers', key: 'task-offers', x: 4, y: 18, w: 4, h: 12 },
+    // Right column.
+    { instanceId: 'active-timer', key: 'active-timer', x: 8, y: 0, w: 4, h: 8 },
+    { instanceId: 'my-projects', key: 'my-projects', x: 8, y: 8, w: 4, h: 8 },
+    { instanceId: 'open-customer-tasks', key: 'open-customer-tasks', x: 8, y: 16, w: 4, h: 10 },
   ],
 };
 
