@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import type { Row } from '@/lib/refine';
+import { AbsenceConflictDialog, type AbsenceConflicts } from '@/pages/absences/AbsenceConflictDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,7 +21,7 @@ import {
 } from '@/components/ui/select';
 
 type WorkspaceAbsenceRow = Row<{ '@id': string; id?: string; name: string; startsOn: string; endsOn: string }>;
-type AbsenceRow = Row<{ '@id': string; id?: string; user: string; type: string; startsOn: string; endsOn: string }>;
+type AbsenceRow = Row<{ '@id': string; id?: string; user: string; type: string; startsOn: string; endsOn: string; availabilityPercent?: number }>;
 type UserRow = Row<{ '@id': string; firstName?: string; lastName?: string; email?: string }>;
 type MemberRow = Row<{ '@id': string; user?: string | null }>;
 type MeetingTypeRow = Row<{ '@id': string; host?: string | null }>;
@@ -31,9 +32,14 @@ type CustomerRow = Row<{ '@id': string; name?: string }>;
 const ABSENCE_TYPES: { value: string; label: string }[] = [
   { value: 'vacation', label: 'absences.type_vacation' },
   { value: 'sick', label: 'absences.type_sick' },
+  { value: 'child_sick', label: 'absences.type_child_sick' },
   { value: 'training', label: 'absences.type_training' },
   { value: 'other', label: 'absences.type_other' },
 ];
+
+// Types for which limited availability (availabilityPercent) can be entered.
+const LIMITED_AVAILABILITY_TYPES = new Set(['sick', 'child_sick']);
+const AVAILABILITY_OPTIONS = [0, 25, 50, 75];
 
 const typeLabel = (t: string) => ABSENCE_TYPES.find((x) => x.value === t)?.label ?? t;
 
@@ -149,11 +155,18 @@ export function AbsencesPage() {
   const [aType, setAType] = useState('vacation');
   const [aStart, setAStart] = useState(todayISO());
   const [aEnd, setAEnd] = useState(todayISO());
+  const [aAvailability, setAAvailability] = useState(0);
   const [aBusy, setABusy] = useState(false);
+  const showAvailability = LIMITED_AVAILABILITY_TYPES.has(aType);
+
+  // After a limited-availability absence, ask which scheduled items are dropped.
+  const [conflicts, setConflicts] = useState<AbsenceConflicts | null>(null);
+  const [conflictUser, setConflictUser] = useState('');
 
   const addAbsence = async () => {
     if (!aUser || !aStart || !aEnd) return;
     if (aEnd < aStart) return toast.error(translate('toast.end_before_start'));
+    const availabilityPercent = showAvailability ? aAvailability : 0;
     setABusy(true);
     try {
       await api.post('/absences', {
@@ -161,10 +174,27 @@ export function AbsencesPage() {
         type: aType,
         startsOn: atNoon(aStart),
         endsOn: atNoon(aEnd),
+        availabilityPercent,
         workspace: workspaceIri,
       });
       toast.success(translate('toast.absence_created'));
       await absencesQ.refetch();
+      // Limited availability → surface colliding appointments / tasks for review.
+      if (availabilityPercent > 0) {
+        try {
+          const { data } = await api.post('/absence-conflicts', {
+            user: aUser,
+            startsOn: atNoon(aStart),
+            endsOn: atNoon(aEnd),
+          });
+          if (data && ((data.bookings?.length ?? 0) > 0 || (data.customers?.length ?? 0) > 0)) {
+            setConflictUser(aUser);
+            setConflicts(data as AbsenceConflicts);
+          }
+        } catch {
+          /* conflict review is best-effort; the absence is already saved */
+        }
+      }
     } catch {
       toast.error(translate('toast.create_failed'));
     } finally {
@@ -299,6 +329,23 @@ export function AbsencesPage() {
                 </SelectContent>
               </Select>
             </div>
+            {showAvailability ? (
+              <div className="space-y-1">
+                <Label title={translate('absences.availability_hint')}>{translate('absences.availability_label')}</Label>
+                <Select value={String(aAvailability)} onValueChange={(v) => setAAvailability(Number(v))}>
+                  <SelectTrigger className="w-28">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AVAILABILITY_OPTIONS.map((p) => (
+                      <SelectItem key={p} value={String(p)}>
+                        {p} %
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
             <div className="space-y-1">
               <Label>{translate('absences.from')}</Label>
               <Input type="date" value={aStart} onChange={(e) => setAStart(e.target.value)} />
@@ -330,6 +377,11 @@ export function AbsencesPage() {
                     ) : null}
                   </div>
                   <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{translate(typeLabel(r.type))}</span>
+                  {(r.availabilityPercent ?? 0) > 0 ? (
+                    <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                      {translate('absences.available_percent', { percent: r.availabilityPercent })}
+                    </span>
+                  ) : null}
                   <span className="shrink-0 text-xs text-muted-foreground">{fmtRange(r.startsOn, r.endsOn)}</span>
                   <Button type="button" variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => removeAbsence(r)}>
                     <Trash2 className="size-3" />
@@ -374,6 +426,8 @@ export function AbsencesPage() {
           )}
         </CardContent>
       </Card>
+
+      <AbsenceConflictDialog conflicts={conflicts} userIri={conflictUser} onClose={() => setConflicts(null)} />
     </div>
   );
 }
