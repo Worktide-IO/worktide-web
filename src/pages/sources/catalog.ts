@@ -119,13 +119,14 @@ export const SOURCE_CATALOG: SourceTypeDef[] = [
     auth: 'oauth',
   },
   {
-    code: 'zabbix_webhook',
+    code: 'zabbix',
     label: 'Zabbix',
-    description: 'Zabbix-Alerts direkt in den Inbox-Stream — Worktide kann daraus Tasks vorschlagen.',
+    description: 'Zabbix-Probleme (problem.get) pro Host+Trigger als Conversations im Inbox-Stream. Hosts lassen sich Kunden zuordnen.',
     category: 'monitoring',
     icon: Bell,
-    available: false,
-    auth: 'token',
+    available: true,
+    auth: 'apikey_pat',
+    setupHint: 'Zabbix-Frontend-URL (z.B. https://monitoring1.example.com) + API-Token (Benutzer → API-Tokens). Optional eine Host-Gruppe zum Einschränken.',
   },
   {
     code: 'prometheus_webhook',
