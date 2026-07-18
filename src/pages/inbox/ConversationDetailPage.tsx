@@ -12,6 +12,7 @@ import type { InboundEventJsonld } from '@/api/types/inboundEvent/Jsonld';
 import type { OutboundMessageJsonld } from '@/api/types/outboundMessage/Jsonld';
 import { AiTicketSuggestionPanel } from '@/components/AiTicketSuggestionPanel';
 import { AiTriagePanel } from '@/components/AiTriagePanel';
+import { AssignSenderDialog } from '@/components/AssignSenderDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -177,6 +178,13 @@ export function ConversationDetailPage() {
             {convo.senderRaw ?? '—'} · {channel?.name ?? 'Channel?'} · {t('conversation.messages_count', { count: bubbles.length })}
           </p>
         </div>
+        {!convo.customer && (convo.senderRaw ?? '').includes('@') ? (
+          <AssignSenderDialog
+            conversationId={id ?? ''}
+            senderRaw={convo.senderRaw}
+            onLinked={() => void invalidate({ resource: 'conversations', invalidates: ['list', 'detail'], id })}
+          />
+        ) : null}
         <Select value={(convo.status as string) ?? 'open'} onValueChange={setStatus}>
           <SelectTrigger className="w-36">
             <SelectValue />
