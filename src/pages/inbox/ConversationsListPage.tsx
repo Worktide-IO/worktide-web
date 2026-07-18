@@ -2,7 +2,7 @@ import { useList } from '@refinedev/core';
 import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Inbox as InboxIcon, Loader2, Mailbox } from 'lucide-react';
+import { Building2, Inbox as InboxIcon, Loader2, Mailbox } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { topicFor, useMercureTopic } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
+import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { useKeysetList } from '@/lib/useKeysetList';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -77,6 +78,11 @@ export function ConversationsListPage() {
     for (const c of channels?.data ?? []) if (c['@id']) m[c['@id']] = c;
     return m;
   }, [channels]);
+
+  // Resolve the customer each conversation was auto-linked to at ingest
+  // (ContactResolver: sender email → Contact → Customer). Looked up by IRI so
+  // it stays correct past the API's 200-customer page cap.
+  const customerByIri = useCustomerLookup(items.map((c) => c.customer));
 
   // --- virtualization (only the visible row slice is in the DOM) ---
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -193,7 +199,19 @@ export function ConversationsListPage() {
                           '—'
                         )}
                       </span>
-                      <span className="truncate text-sm">{c.senderRaw ?? '—'}</span>
+                      <span className="flex min-w-0 flex-col gap-0.5">
+                        <span className="truncate text-sm">{c.senderRaw ?? '—'}</span>
+                        {c.customer && customerByIri[c.customer] ? (
+                          <Badge
+                            variant="secondary"
+                            className="w-fit max-w-full gap-1 text-[10px] font-normal"
+                            title={customerByIri[c.customer].name}
+                          >
+                            <Building2 className="size-2.5 shrink-0" />
+                            <span className="truncate">{customerByIri[c.customer].name}</span>
+                          </Badge>
+                        ) : null}
+                      </span>
                       <span className="truncate font-medium">{c.subject || '(no subject)'}</span>
                       <span className="text-xs text-muted-foreground">
                         {c.lastEventAt ? new Date(c.lastEventAt).toLocaleString(intlLocale()) : '—'}
