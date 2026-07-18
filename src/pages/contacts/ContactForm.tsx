@@ -6,6 +6,7 @@ import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 
 import type { ContactJsonld } from '@/api/types/contact/Jsonld';
+import { ContactChannelsCard } from '@/components/ContactChannelsCard';
 import { CustomerCombobox } from '@/components/CustomerCombobox';
 import { TagPicker } from '@/components/TagPicker';
 import { TagSuggestButton } from '@/components/TagSuggestButton';
@@ -280,6 +281,10 @@ export function ContactForm(props: Mode) {
           </Card>
         </div>
       )}
+
+      {props.action === 'edit' && current?.['@id'] ? (
+        <ContactChannelsCard contactIri={current['@id']} />
+      ) : null}
     </form>
   );
 }

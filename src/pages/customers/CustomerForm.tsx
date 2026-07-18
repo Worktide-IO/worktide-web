@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router';
 import type { CustomerJsonld } from '@/api/types/customer/Jsonld';
 import type { Row } from '@/lib/refine';
 import { IndustryCombobox } from '@/components/IndustryCombobox';
+import { SocialProfilesCard } from '@/components/SocialProfilesCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -248,7 +249,15 @@ export function CustomerForm(props: Props) {
                 <Field id="email" label="Email" type="email" {...register('email')} />
                 <Field id="phone" label={t('customer_form.field_phone')} {...register('phone')} />
               </div>
-              <Field id="website" label="Website" type="url" {...register('website')} />
+              <div className="grid grid-cols-2 gap-4">
+                <Field
+                  id="invoiceEmail"
+                  label={t('customer_form.field_invoice_email')}
+                  type="email"
+                  {...register('invoiceEmail')}
+                />
+                <Field id="website" label="Website" type="url" {...register('website')} />
+              </div>
             </CardContent>
           </Card>
 
@@ -367,6 +376,10 @@ export function CustomerForm(props: Props) {
           </Card>
         </div>
       )}
+
+      {props.action === 'edit' && current?.['@id'] ? (
+        <SocialProfilesCard owner="customer" ownerIri={current['@id']} />
+      ) : null}
     </form>
   );
 }
