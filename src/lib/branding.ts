@@ -61,9 +61,11 @@ export function readCachedBranding(): Branding {
 }
 
 /**
- * Apply branding to the document: override the primary-color CSS variables,
- * set the tab title and theme-color meta. Idempotent — safe to call with the
- * cached value on boot and again after the network fetch.
+ * Apply branding to the document: override the primary-color CSS variables and
+ * the theme-color meta. Idempotent — safe to call with the cached value on boot
+ * and again after the network fetch. (The tab title is set per-route by
+ * <DocumentTitleHandler> — see lib/documentTitle.ts — which uses the brand name
+ * as a suffix, so applyBranding no longer touches document.title.)
  */
 export function applyBranding(b: Branding): void {
   const root = document.documentElement;
@@ -73,8 +75,6 @@ export function applyBranding(b: Branding): void {
   }
   // Expose the accent for any brand-specific styling that wants it.
   root.style.setProperty('--brand-accent', b.accentColor);
-
-  document.title = b.name;
 
   const themeColor = document.querySelector('meta[name="theme-color"]');
   themeColor?.setAttribute('content', b.primaryColor);
