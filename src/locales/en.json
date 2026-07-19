@@ -1867,6 +1867,8 @@
   "meeting_types.no_slots": "No time slots — no appointments will be offered.",
   "meeting_types.active_bookable": "Active (bookable)",
   "conversation.back": "Back",
+  "conversation.presence_one": "{{name}} is also viewing this conversation right now.",
+  "conversation.presence_many": "{{count}} other people are viewing this conversation right now: {{names}}",
   "conversation.messages_count_one": "{{count}} message",
   "conversation.messages_count_other": "{{count}} messages",
   "conversation.load_older": "Load older messages",
