@@ -39,12 +39,25 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { API_PUBLIC_BASE } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 
 const ADAPTER_PROVIDER_LABEL: Record<string, string> = {
   email_graph: 'adapter_provider.email_graph',
   email_gmail: 'adapter_provider.email_gmail',
 };
+
+/** Opaque per-channel webhook token (the URL is the credential). */
+function genToken(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return 'wh' + Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Full public ingest URL a mail provider (Postal, …) posts inbound mail to. */
+function webhookUrl(token: string): string {
+  return `${API_PUBLIC_BASE}/inbound/webhooks/${token}`;
+}
 
 /**
  * Helper for the two OAuth-flavoured adapters. The channel has to be
@@ -313,6 +326,11 @@ function ChannelDialog(props: DialogProps) {
   const [username, setUsername] = useState(String(ac.username ?? ''));
   const [password, setPassword] = useState('');
 
+  // Inbound webhook (email_webhook): the URL token is the credential;
+  // an optional signing secret adds HMAC verification.
+  const [webhookToken, setWebhookToken] = useState(String(ic.token ?? ''));
+  const [signingSecret, setSigningSecret] = useState('');
+
   const [inboundEnabled, setInboundEnabled] = useState(true);
   const [outboundEnabled, setOutboundEnabled] = useState(true);
 
@@ -338,43 +356,64 @@ function ChannelDialog(props: DialogProps) {
     }
   }, [isEdit, initial]);
 
+  // Show a real ingest URL immediately when configuring a webhook channel.
+  useEffect(() => {
+    if (adapterCode === 'email_webhook' && webhookToken === '') {
+      setWebhookToken(genToken());
+    }
+  }, [adapterCode, webhookToken]);
+
   const submit = async () => {
     if (!name.trim()) {
       toast.error(t('toast.name_required'));
       return;
     }
-    if (!inboundEnabled && !outboundEnabled) {
+    const isWebhook = adapterCode === 'email_webhook';
+    if (!isWebhook && !inboundEnabled && !outboundEnabled) {
       toast.error(t('toast.min_one_capability'));
       return;
     }
     setSaving(true);
     try {
-      const caps: string[] = [];
-      if (inboundEnabled) caps.push('inbound');
-      if (outboundEnabled) caps.push('outbound');
+      // Inbound webhook: inbound-only, config is just the URL token.
+      const token = isWebhook ? (webhookToken.trim() || genToken()) : '';
+      const caps: string[] = isWebhook ? ['inbound'] : [];
+      if (!isWebhook) {
+        if (inboundEnabled) caps.push('inbound');
+        if (outboundEnabled) caps.push('outbound');
+      }
 
       const body: Record<string, unknown> = {
         name: name.trim(),
         adapterCode,
         capabilities: caps,
         address: address.trim() || null,
-        inboundConfig: inboundEnabled
-          ? { host: imapHost, port: Number(imapPort) || 993, encryption: imapEnc, folder: imapFolder || 'INBOX' }
-          : {},
-        outboundConfig: outboundEnabled
-          ? { host: smtpHost, port: Number(smtpPort) || 587, encryption: smtpEnc, from: smtpFrom || address }
-          : {},
+        inboundConfig: isWebhook
+          ? { token }
+          : inboundEnabled
+            ? { host: imapHost, port: Number(imapPort) || 993, encryption: imapEnc, folder: imapFolder || 'INBOX' }
+            : {},
+        outboundConfig: isWebhook
+          ? {}
+          : outboundEnabled
+            ? { host: smtpHost, port: Number(smtpPort) || 587, encryption: smtpEnc, from: smtpFrom || address }
+            : {},
         isShared: visibility.isShared,
         ownerUser: visibility.ownerUser,
       };
       // Only send authConfig on changes — keep the existing encrypted
-      // value on edit when the operator didn't retype the password.
+      // value on edit when the operator didn't retype the secret.
       const authPatch: Record<string, unknown> = {};
-      if (username !== '') authPatch.username = username;
-      if (password !== '') authPatch.password = password;
+      if (isWebhook) {
+        if (signingSecret !== '') authPatch.signingSecret = signingSecret;
+      } else {
+        if (username !== '') authPatch.username = username;
+        if (password !== '') authPatch.password = password;
+      }
       if (Object.keys(authPatch).length > 0 || !isEdit) {
         body.authConfig = isEdit ? { ...ac, ...authPatch } : authPatch;
       }
+      if (isWebhook) setWebhookToken(token);
 
       if (isEdit && props.channel.id) {
         // Guard the auto-reply endpoint's contract before touching either call.
@@ -438,6 +477,7 @@ function ChannelDialog(props: DialogProps) {
                   <SelectItem value="email_imap">{t('ws_channels.adapter_imap')}</SelectItem>
                   <SelectItem value="email_graph">{t('ws_channels.adapter_graph')}</SelectItem>
                   <SelectItem value="email_gmail">{t('ws_channels.adapter_gmail')}</SelectItem>
+                  <SelectItem value="email_webhook">{t('ws_channels.adapter_webhook')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -449,18 +489,50 @@ function ChannelDialog(props: DialogProps) {
 
           <ChannelVisibilityFields value={visibility} onChange={setVisibility} />
 
-          <div className="grid grid-cols-2 gap-2 rounded-md border bg-muted/30 p-3">
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={inboundEnabled} onChange={(e) => setInboundEnabled(e.target.checked)} />
-              {t('ws_channels.inbound')}
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={outboundEnabled} onChange={(e) => setOutboundEnabled(e.target.checked)} />
-              {t('ws_channels.outbound')}
-            </label>
-          </div>
+          {adapterCode !== 'email_webhook' ? (
+            <div className="grid grid-cols-2 gap-2 rounded-md border bg-muted/30 p-3">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={inboundEnabled} onChange={(e) => setInboundEnabled(e.target.checked)} />
+                {t('ws_channels.inbound')}
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={outboundEnabled} onChange={(e) => setOutboundEnabled(e.target.checked)} />
+                {t('ws_channels.outbound')}
+              </label>
+            </div>
+          ) : null}
 
-          {adapterCode === 'email_imap' ? (
+          {adapterCode === 'email_webhook' ? (
+            <fieldset className="space-y-2 rounded-md border p-3">
+              <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Webhook</legend>
+              <p className="text-xs text-muted-foreground">{t('ws_channels.webhook_hint')}</p>
+              <Label className="text-xs text-muted-foreground">{t('ws_channels.webhook_url')}</Label>
+              <div className="flex gap-2">
+                <Input readOnly value={webhookUrl(webhookToken)} className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => { void navigator.clipboard?.writeText(webhookUrl(webhookToken || genToken())); toast.success(t('ws_channels.webhook_copied')); }}
+                  aria-label={t('ws_channels.webhook_copy')}
+                >
+                  <Link2 className="size-4" />
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => setWebhookToken(genToken())}>
+                  {t('ws_channels.webhook_regenerate')}
+                </Button>
+              </div>
+              <Label htmlFor="ch-signing" className="text-xs text-muted-foreground">{t('ws_channels.webhook_secret')}</Label>
+              <Input
+                id="ch-signing"
+                type="password"
+                value={signingSecret}
+                onChange={(e) => setSigningSecret(e.target.value)}
+                placeholder={isEdit ? t('ws_channels.password_placeholder_edit') : t('ws_channels.webhook_secret_placeholder')}
+                autoComplete="new-password"
+              />
+            </fieldset>
+          ) : adapterCode === 'email_imap' ? (
             <>
               {inboundEnabled ? (
                 <fieldset className="space-y-2 rounded-md border p-3">
