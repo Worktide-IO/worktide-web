@@ -1867,6 +1867,8 @@
   "meeting_types.no_slots": "Keine Zeitfenster — es werden keine Termine angeboten.",
   "meeting_types.active_bookable": "Aktiv (buchbar)",
   "conversation.back": "Zurück",
+  "conversation.presence_one": "{{name}} sieht sich diese Konversation gerade ebenfalls an.",
+  "conversation.presence_many": "{{count}} weitere Personen sehen sich diese Konversation gerade an: {{names}}",
   "conversation.messages_count_one": "{{count}} Nachricht",
   "conversation.messages_count_other": "{{count}} Nachrichten",
   "conversation.load_older": "Ältere Nachrichten laden",

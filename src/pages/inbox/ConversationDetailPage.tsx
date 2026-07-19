@@ -1,7 +1,7 @@
 import { useInvalidate, useOne } from '@refinedev/core';
 import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Mail, Paperclip, Send, Sparkles } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Eye, Loader2, Mail, Paperclip, Send, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
@@ -28,6 +28,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { topicFor, useLiveResource, useMercureTopic } from '@/lib/mercure';
+import { useConversationPresence } from '@/hooks/useConversationPresence';
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import { aiReply, aiErrorMessage } from '@/lib/ai';
 import type { Row } from '@/lib/refine';
@@ -108,6 +109,9 @@ export function ConversationDetailPage() {
   // Live: a new event on this (or any) thread reloads the newest page.
   useMercureTopic(topicFor('inbound_events'), { onMessage: () => inbound.reset() });
   useMercureTopic(topicFor('outbound_messages'), { onMessage: () => outboundList.reset() });
+
+  // Collision detection: who else is looking at this conversation right now.
+  const otherViewers = useConversationPresence(id);
 
   const hasOlder = inbound.hasMore || outboundList.hasMore;
   const loadingOlder = inbound.isLoading || outboundList.isLoading;
@@ -206,6 +210,20 @@ export function ConversationDetailPage() {
           </SelectContent>
         </Select>
       </div>
+
+      {otherViewers.length > 0 ? (
+        <div className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+          <Eye className="size-4 shrink-0" />
+          <span>
+            {otherViewers.length === 1
+              ? t('conversation.presence_one', { name: otherViewers[0].name })
+              : t('conversation.presence_many', {
+                  names: otherViewers.map((v) => v.name).join(', '),
+                  count: otherViewers.length,
+                })}
+          </span>
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <AiTriagePanel
