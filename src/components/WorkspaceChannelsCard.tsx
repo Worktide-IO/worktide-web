@@ -28,6 +28,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
   TableBody,
@@ -313,6 +315,15 @@ function ChannelDialog(props: DialogProps) {
 
   const [inboundEnabled, setInboundEnabled] = useState(true);
   const [outboundEnabled, setOutboundEnabled] = useState(true);
+
+  // Auto-reply (per-mailbox receipt acknowledgement). Saved via its own,
+  // more permissive endpoint (POST-less PUT /channels/{id}/auto-reply) so a
+  // shared-mailbox member — not only an admin — can set the message.
+  const [arEnabled, setArEnabled] = useState((initial as unknown as { autoReplyEnabled?: boolean })?.autoReplyEnabled ?? false);
+  const [arSubject, setArSubject] = useState((initial as unknown as { autoReplySubject?: string | null })?.autoReplySubject ?? '');
+  const [arBodyText, setArBodyText] = useState((initial as unknown as { autoReplyBodyText?: string | null })?.autoReplyBodyText ?? '');
+  const [arBodyHtml, setArBodyHtml] = useState((initial as unknown as { autoReplyBodyHtml?: string | null })?.autoReplyBodyHtml ?? '');
+  const [arThrottle, setArThrottle] = useState(String((initial as unknown as { autoReplyThrottleHours?: number })?.autoReplyThrottleHours ?? 24));
   const [visibility, setVisibility] = useState<ChannelVisibility>({
     isShared: (initial as unknown as { isShared?: boolean })?.isShared ?? true,
     ownerUser: (initial as unknown as { ownerUser?: string | null })?.ownerUser ?? null,
@@ -366,8 +377,22 @@ function ChannelDialog(props: DialogProps) {
       }
 
       if (isEdit && props.channel.id) {
+        // Guard the auto-reply endpoint's contract before touching either call.
+        if (arEnabled && arBodyText.trim() === '' && arBodyHtml.trim() === '') {
+          toast.error(t('ws_channels.auto_reply_body_required'));
+          setSaving(false);
+          return;
+        }
         await api.patch(`/channels/${props.channel.id}`, body, {
           headers: { 'Content-Type': 'application/merge-patch+json' },
+        });
+        // Auto-reply lives behind its own (more permissive) endpoint.
+        await api.put(`/channels/${props.channel.id}/auto-reply`, {
+          enabled: arEnabled,
+          subject: arSubject.trim() || null,
+          bodyText: arBodyText.trim() || null,
+          bodyHtml: arBodyHtml.trim() || null,
+          throttleHours: Number(arThrottle) || 0,
         });
         toast.success(t('toast.channel_updated', { name }));
       } else {
@@ -496,6 +521,58 @@ function ChannelDialog(props: DialogProps) {
           ) : (
             <OAuthConnectBlock channelId={isEdit ? props.channel.id ?? null : null} adapterCode={adapterCode} hasToken={Boolean(((initial?.authConfig ?? {}) as Record<string, unknown>).accessToken)} />
           )}
+
+          {isEdit ? (
+            <fieldset className="space-y-2 rounded-md border p-3">
+              <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t('ws_channels.auto_reply')}
+              </legend>
+              <label className="flex items-center gap-2 text-sm">
+                <Switch checked={arEnabled} onCheckedChange={setArEnabled} />
+                {t('ws_channels.auto_reply_enable')}
+              </label>
+              {arEnabled ? (
+                <div className="space-y-2">
+                  {!outboundEnabled ? (
+                    <p className="text-xs text-amber-600 dark:text-amber-500">
+                      {t('ws_channels.auto_reply_needs_outbound')}
+                    </p>
+                  ) : null}
+                  <Input
+                    value={arSubject}
+                    onChange={(e) => setArSubject(e.target.value)}
+                    placeholder={t('ws_channels.auto_reply_subject_placeholder')}
+                  />
+                  <Textarea
+                    value={arBodyText}
+                    onChange={(e) => setArBodyText(e.target.value)}
+                    placeholder={t('ws_channels.auto_reply_text_placeholder')}
+                    rows={3}
+                  />
+                  <Textarea
+                    value={arBodyHtml}
+                    onChange={(e) => setArBodyHtml(e.target.value)}
+                    placeholder={t('ws_channels.auto_reply_html_placeholder')}
+                    rows={4}
+                    className="font-mono text-xs"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="ch-ar-throttle" className="text-xs text-muted-foreground">
+                      {t('ws_channels.auto_reply_throttle')}
+                    </Label>
+                    <Input
+                      id="ch-ar-throttle"
+                      type="number"
+                      min={0}
+                      value={arThrottle}
+                      onChange={(e) => setArThrottle(e.target.value)}
+                      className="w-24"
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </fieldset>
+          ) : null}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={props.onClose} disabled={saving}>{t('action.cancel')}</Button>
