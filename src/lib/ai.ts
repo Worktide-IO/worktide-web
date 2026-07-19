@@ -144,6 +144,25 @@ export const aiReply = {
 /** Admin AI cost/usage read-model for the KI-Kosten dashboard (micro-USD costs). */
 export type AiUsageBreakdownRow = { label: string; costMicros: number; calls: number };
 export type AiUsageDayRow = { day: string; costMicros: number; calls: number };
+
+/** Where a task-type is served — mirrors the backend LlmTier enum. */
+export type AiRoutingTier = 'local' | 'cloud' | 'local_fallback_cloud';
+/** A routable feature key + its default tier (before any per-workspace override). */
+export type AiRoutingFeature = { feature: string; defaultTier: AiRoutingTier };
+/** Per-task-type routing policy for the workspace (local vs. cloud). */
+export type AiRoutingState = {
+  /** Data-residency lock: force every task-type local. */
+  forceLocal: boolean;
+  /** Whether an on-infra local model is configured (else "local" routes fall back to cloud). */
+  localConfigured: boolean;
+  /** Explicit per-feature tier overrides (feature key → tier). */
+  overrides: Record<string, AiRoutingTier>;
+  /** All selectable tiers. */
+  tiers: AiRoutingTier[];
+  /** The routable features + their defaults, in display order. */
+  features: AiRoutingFeature[];
+};
+
 export type AiUsageSummary = {
   periodDays: number;
   currency: string;
@@ -156,6 +175,7 @@ export type AiUsageSummary = {
   byFeature: AiUsageBreakdownRow[];
   byModel: AiUsageBreakdownRow[];
   byDay: AiUsageDayRow[];
+  routing: AiRoutingState;
 };
 
 export const aiUsage = {
@@ -164,6 +184,14 @@ export const aiUsage = {
   /** Set the workspace's monthly AI budget in USD (0 = unlimited). */
   setBudget: (monthlyUsd: number): Promise<{ monthlyBudgetMicros: number }> =>
     api.put('/ai-usage/budget', { monthlyUsd }).then((r) => r.data as { monthlyBudgetMicros: number }),
+  /**
+   * Update the per-task-type routing policy. Omit a field to leave it unchanged;
+   * within `routing`, a null tier clears that feature's override (back to default).
+   */
+  setRouting: (body: {
+    forceLocal?: boolean;
+    routing?: Record<string, AiRoutingTier | null>;
+  }): Promise<AiRoutingState> => api.put('/ai-usage/routing', body).then((r) => r.data as AiRoutingState),
 };
 
 /** Marketing-agent triggers (human-in-the-loop): drafts, never auto-publishes. */
