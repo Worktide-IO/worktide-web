@@ -2553,6 +2553,7 @@
   "combobox.no_customer": "No customer found.",
   "combobox.internal_option": "— Internal (no customer)",
   "notifications.title": "Notifications",
+"pagetitle.security": "Security",
   "reset.set_new_password": "Set a new password",
   "wall.no_tasks": "no tasks",
   "planner.new_task": "New task",
