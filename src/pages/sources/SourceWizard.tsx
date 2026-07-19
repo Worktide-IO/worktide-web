@@ -116,6 +116,7 @@ export function SourceWizard({
       // adapter-specific keys never collide because we namespace the
       // password-style fields (apiKey vs jiraPat etc.).
       baseUrl: String(ic.baseUrl ?? ''),
+      hostGroup: String(ic.hostGroup ?? ''),
       projectId: String(ic.projectId ?? ''),
       trackerId: String(ic.trackerId ?? ''),
       assignedToId: String(ic.assignedToId ?? ''),
@@ -195,7 +196,8 @@ export function SourceWizard({
         name: name.trim(),
         adapterCode: def.code,
         address: address.trim() || null,
-        capabilities: def.auth === 'token' ? ['inbound'] : ['inbound', 'outbound'],
+        // Zabbix is pull-only (no push-back), same as token-webhooks → inbound only.
+        capabilities: def.auth === 'token' || def.code === 'zabbix' ? ['inbound'] : ['inbound', 'outbound'],
         inboundConfig,
         outboundConfig: {},
         authConfig: {},
@@ -282,6 +284,17 @@ export function SourceWizard({
         if (cfg.jiraApiToken) authPatch.apiToken = cfg.jiraApiToken;
         if (Object.keys(authPatch).length) body.authConfig = authPatch;
         body.entityTypes = ['task'];
+      } else if (def.code === 'zabbix') {
+        body.inboundConfig = {
+          baseUrl: (cfg.baseUrl ?? '').replace(/\/$/, ''),
+          hostGroup: cfg.hostGroup || undefined,
+        };
+        // Secret token: only send when the operator typed a new one (write-only).
+        if (cfg.token) {
+          body.authConfig = { token: cfg.token };
+        }
+        body.entityTypes = ['conversation'];
+        body.capabilities = ['inbound'];
       }
       // OAuth adapters don't need a configure PATCH — the OAuth flow
       // populates authConfig directly via the callback.
@@ -372,6 +385,10 @@ export function SourceWizard({
 
           {step === 'configure' && def.code === 'jira' ? (
             <JiraConfigure cfg={cfg} setField={setField} isEdit={isEdit} />
+          ) : null}
+
+          {step === 'configure' && def.code === 'zabbix' ? (
+            <ZabbixConfigure cfg={cfg} setField={setField} isEdit={isEdit} />
           ) : null}
 
           {step === 'configure' && def.auth === 'oauth' ? (
@@ -759,6 +776,50 @@ function RedmineConfigure({
           providerHint={t('source_wizard.redmine_webhook_hint')}
         />
       ) : null}
+    </>
+  );
+}
+
+function ZabbixConfigure({
+  cfg, setField, isEdit,
+}: { cfg: Record<string, string>; setField: (k: string, v: string) => void; isEdit: boolean }) {
+  return (
+    <>
+      <fieldset className="space-y-2 rounded-md border p-3">
+        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Zabbix-Server</legend>
+        <Input
+          value={cfg.baseUrl ?? ''}
+          onChange={(e) => setField('baseUrl', e.target.value)}
+          placeholder="https://monitoring1.example.com"
+        />
+        <p className="text-xs text-muted-foreground">
+          Frontend-URL Deiner Zabbix-Instanz. Der API-Endpunkt (/zabbix/api_jsonrpc.php) wird automatisch ergänzt.
+        </p>
+      </fieldset>
+      <fieldset className="space-y-2 rounded-md border p-3">
+        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter (optional)</legend>
+        <Input
+          value={cfg.hostGroup ?? ''}
+          onChange={(e) => setField('hostGroup', e.target.value)}
+          placeholder="Host-Gruppe, z.B. WapplerSystems"
+        />
+        <p className="text-xs text-muted-foreground">
+          Leer lassen, um alle sichtbaren Probleme einzulesen. Sonst nur Probleme dieser Host-Gruppe.
+        </p>
+      </fieldset>
+      <fieldset className="space-y-2 rounded-md border p-3">
+        <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">API-Token</legend>
+        <Input
+          type="password"
+          value={cfg.token ?? ''}
+          onChange={(e) => setField('token', e.target.value)}
+          placeholder={isEdit ? 'Unverändert lassen zum Beibehalten' : 'Zabbix API-Token'}
+          autoComplete="new-password"
+        />
+        <p className="text-xs text-muted-foreground">
+          In Zabbix unter Benutzer → API-Tokens erzeugen. Wird als Bearer-Token gesendet und verschlüsselt gespeichert.
+        </p>
+      </fieldset>
     </>
   );
 }

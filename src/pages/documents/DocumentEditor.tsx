@@ -15,6 +15,7 @@ import { useUserDirectory, userDisplayName } from '@/hooks/useUserDirectory';
 import { DocumentBacklinksPanel } from './DocumentBacklinksPanel';
 import { DocumentHistoryDrawer } from './DocumentHistoryDrawer';
 import { DocumentWorkflowPanel } from './DocumentWorkflowPanel';
+import { detectExternalLink } from './externalLinkCard';
 import { detectWorktideLink } from './linkCard';
 import { documentSchema } from './mention';
 import { api } from '@/lib/api';
@@ -116,10 +117,12 @@ function EditorBody({
   }, []);
 
   // Paste-handler: if the user pastes plain text that looks like a
-  // Worktide reference (URL, IRI, or task identifier like WORK-12),
-  // intercept and insert a `linkcard` inline content instead of the
-  // raw text. ProseMirror's view has its own paste-pipeline so we
-  // hook on the `clipboardTextParser` slot.
+  // Worktide reference (URL, IRI, task id like WORK-12) or any other
+  // external URL, intercept and insert a card chip instead of the raw
+  // text. Registered in the CAPTURE phase and stops propagation on a
+  // hit, so ProseMirror never also inserts its own raw autolink (that
+  // would leave the URL AND the chip side by side). Non-matching pastes
+  // fall through untouched to ProseMirror's default pipeline.
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const view = (editor as any).prosemirrorView;
@@ -127,19 +130,30 @@ function EditorBody({
     const dom = view.dom as HTMLElement;
     const onPaste = (e: ClipboardEvent) => {
       const text = e.clipboardData?.getData('text/plain') ?? '';
-      const detected = detectWorktideLink(text);
-      if (!detected) return;
+      // Internal Worktide reference → entity chip; otherwise an external
+      // http(s) URL → rich smart-link card (oEmbed/OpenGraph preview).
+      const worktide = detectWorktideLink(text);
+      if (worktide) {
+        e.preventDefault();
+        e.stopImmediatePropagation(); // keep ProseMirror from also pasting the raw URL
+        editor.insertInlineContent([
+          { type: 'linkcard', props: { url: worktide, fallback: worktide } },
+          ' ',
+        ]);
+        return;
+      }
+      const external = detectExternalLink(text);
+      if (!external) return;
       e.preventDefault();
+      e.stopImmediatePropagation(); // keep ProseMirror from also pasting the raw URL
       editor.insertInlineContent([
-        {
-          type: 'linkcard',
-          props: { url: detected, fallback: detected },
-        },
+        { type: 'externallinkcard', props: { url: external, fallback: external } },
         ' ',
       ]);
     };
-    dom.addEventListener('paste', onPaste);
-    return () => dom.removeEventListener('paste', onPaste);
+    // Capture phase: run before ProseMirror's own paste handler.
+    dom.addEventListener('paste', onPaste, true);
+    return () => dom.removeEventListener('paste', onPaste, true);
   }, [editor]);
 
   const persist = async (body: string) => {
