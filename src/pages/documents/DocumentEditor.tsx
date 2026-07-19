@@ -15,6 +15,7 @@ import { useUserDirectory, userDisplayName } from '@/hooks/useUserDirectory';
 import { DocumentBacklinksPanel } from './DocumentBacklinksPanel';
 import { DocumentHistoryDrawer } from './DocumentHistoryDrawer';
 import { DocumentWorkflowPanel } from './DocumentWorkflowPanel';
+import { detectExternalLink } from './externalLinkCard';
 import { detectWorktideLink } from './linkCard';
 import { documentSchema } from './mention';
 import { api } from '@/lib/api';
@@ -127,14 +128,22 @@ function EditorBody({
     const dom = view.dom as HTMLElement;
     const onPaste = (e: ClipboardEvent) => {
       const text = e.clipboardData?.getData('text/plain') ?? '';
-      const detected = detectWorktideLink(text);
-      if (!detected) return;
+      // Internal Worktide reference → entity chip; otherwise an external
+      // http(s) URL → rich smart-link card (oEmbed/OpenGraph preview).
+      const worktide = detectWorktideLink(text);
+      if (worktide) {
+        e.preventDefault();
+        editor.insertInlineContent([
+          { type: 'linkcard', props: { url: worktide, fallback: worktide } },
+          ' ',
+        ]);
+        return;
+      }
+      const external = detectExternalLink(text);
+      if (!external) return;
       e.preventDefault();
       editor.insertInlineContent([
-        {
-          type: 'linkcard',
-          props: { url: detected, fallback: detected },
-        },
+        { type: 'externallinkcard', props: { url: external, fallback: external } },
         ' ',
       ]);
     };
