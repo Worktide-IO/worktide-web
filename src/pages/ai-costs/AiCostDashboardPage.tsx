@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Coins, Hash, Sparkles } from 'lucide-react';
+import { Cloud, Coins, Cpu, Hash, ServerCog, ShieldCheck, Sparkles } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -14,11 +14,13 @@ import {
 
 import { toast } from 'sonner';
 
-import { aiUsage, aiErrorMessage, type AiUsageSummary } from '@/lib/ai';
+import { aiUsage, aiErrorMessage, type AiRoutingState, type AiRoutingTier, type AiUsageSummary } from '@/lib/ai';
 import { intlLocale, formatNumber } from '@/lib/intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -133,6 +135,8 @@ export function AiCostDashboardPage() {
         onSaved={() => setTick((n) => n + 1)}
       />
 
+      <RoutingCard routing={data.routing} onSaved={() => setTick((n) => n + 1)} />
+
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">{t('ai_costs.spend_over_time')}</CardTitle>
@@ -241,6 +245,122 @@ function BudgetCard({
             {t('action.save')}
           </Button>
           <span className="text-xs text-muted-foreground">{t('ai_costs.budget_hint')}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+const TIER_ICON: Record<AiRoutingTier, typeof Cpu> = {
+  local: Cpu,
+  cloud: Cloud,
+  local_fallback_cloud: ServerCog,
+};
+
+/**
+ * Per-task-type AI routing (local vs. cloud), from /v1/ai-usage/summary.routing.
+ * A `forceLocal` switch is the data-residency lock (all task-types local); while
+ * it's on, the per-feature tier list is moot and dimmed. Each control saves
+ * immediately (PUT /v1/ai-usage/routing) and re-syncs from the server. Selecting
+ * a feature's default tier clears its override (sends null).
+ */
+function RoutingCard({ routing, onSaved }: { routing: AiRoutingState; onSaved: () => void }) {
+  const { t } = useTranslation();
+  const [busy, setBusy] = useState(false);
+
+  async function save(body: { forceLocal?: boolean; routing?: Record<string, AiRoutingTier | null> }) {
+    setBusy(true);
+    try {
+      await aiUsage.setRouting(body);
+      toast.success(t('ai_costs.routing_saved'));
+    } catch (err) {
+      toast.error(aiErrorMessage(err, t('ai_costs.routing_failed')));
+    } finally {
+      setBusy(false);
+      onSaved(); // re-sync the UI from the server, whether the save succeeded or not
+    }
+  }
+
+  // Can't turn the lock ON without a local model (backend fail-closes); turning
+  // it OFF is always allowed.
+  const canForceLocal = routing.localConfigured || routing.forceLocal;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <ServerCog className="size-4 text-muted-foreground" /> {t('ai_costs.routing_title')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">{t('ai_costs.routing_subtitle')}</p>
+
+        {!routing.localConfigured && (
+          <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+            {t('ai_costs.routing_no_local')}
+          </p>
+        )}
+
+        <div className="flex items-start justify-between gap-4 rounded-md border p-3">
+          <div className="space-y-0.5">
+            <Label htmlFor="ai-force-local" className="flex items-center gap-1.5 text-sm font-medium">
+              <ShieldCheck className="size-4 text-muted-foreground" /> {t('ai_costs.routing_force_local')}
+            </Label>
+            <p className="text-xs text-muted-foreground">{t('ai_costs.routing_force_local_hint')}</p>
+          </div>
+          <Switch
+            id="ai-force-local"
+            checked={routing.forceLocal}
+            disabled={busy || !canForceLocal}
+            onCheckedChange={(v) => void save({ forceLocal: v })}
+          />
+        </div>
+
+        <div className={routing.forceLocal ? 'pointer-events-none opacity-50' : ''}>
+          <div className="mb-2 text-xs font-medium text-muted-foreground">{t('ai_costs.routing_per_feature')}</div>
+          <div className="space-y-1.5">
+            {routing.features.map(({ feature, defaultTier }) => {
+              const current = routing.overrides[feature] ?? defaultTier;
+              const overridden = feature in routing.overrides;
+              return (
+                <div key={feature} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="truncate">{t(`ai_costs.routing_feature.${feature}`, feature)}</span>
+                  <div className="flex items-center gap-2">
+                    {overridden && (
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        {t('ai_costs.routing_overridden')}
+                      </span>
+                    )}
+                    <Select
+                      value={current}
+                      disabled={busy || routing.forceLocal}
+                      onValueChange={(v) =>
+                        void save({ routing: { [feature]: v === defaultTier ? null : (v as AiRoutingTier) } })
+                      }
+                    >
+                      <SelectTrigger className="h-8 w-56 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {routing.tiers.map((tier) => {
+                          const Icon = TIER_ICON[tier];
+                          return (
+                            <SelectItem key={tier} value={tier} className="text-xs">
+                              <span className="flex items-center gap-1.5">
+                                <Icon className="size-3.5" />
+                                {t(`ai_costs.routing_tier.${tier}`)}
+                                {tier === defaultTier ? ` · ${t('ai_costs.routing_default')}` : ''}
+                              </span>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </CardContent>
     </Card>
