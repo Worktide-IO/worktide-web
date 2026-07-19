@@ -21,6 +21,7 @@ import { topicFor, useMercureTopic } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { useKeysetList } from '@/lib/useKeysetList';
+import { LogPhoneCallDialog } from '@/pages/inbox/LogPhoneCallDialog';
 
 const STATUS_LABEL: Record<string, string> = {
   open: 'conversation_status.open',
@@ -96,14 +97,17 @@ export function ConversationsListPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-2xl flex items-center gap-2">
-          <InboxIcon className="size-6 text-muted-foreground" />
-          Inbox
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {t('inbox.subtitle')}
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-2xl flex items-center gap-2">
+            <InboxIcon className="size-6 text-muted-foreground" />
+            Inbox
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t('inbox.subtitle')}
+          </p>
+        </div>
+        <LogPhoneCallDialog />
       </div>
 
       <Card>
