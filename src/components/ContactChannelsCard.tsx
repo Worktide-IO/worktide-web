@@ -30,7 +30,7 @@ const SOCIAL_PLATFORMS = [
 
 function members<T>(data: unknown): T[] {
   const d = data as Record<string, unknown>;
-  return ((d?.member ?? d?.['hydra:member'] ?? []) as T[]) ?? [];
+  return (d?.member ?? d?.['hydra:member'] ?? []) as T[];
 }
 
 /**
