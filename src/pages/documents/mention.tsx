@@ -5,6 +5,7 @@ import {
 } from '@blocknote/core';
 import { createReactInlineContentSpec } from '@blocknote/react';
 
+import { ExternalLinkCard } from './externalLinkCard';
 import { LinkCard } from './linkCard';
 
 /**
@@ -53,5 +54,6 @@ export const documentSchema = BlockNoteSchema.create({
     ...defaultInlineContentSpecs,
     mention: Mention,
     linkcard: LinkCard,
+    externallinkcard: ExternalLinkCard,
   },
 });
