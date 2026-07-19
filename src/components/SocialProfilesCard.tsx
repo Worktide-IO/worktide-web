@@ -29,7 +29,7 @@ const SOCIAL_PLATFORMS = [
 
 function members(data: unknown): SocialRow[] {
   const d = data as Record<string, unknown>;
-  return ((d?.member ?? d?.['hydra:member'] ?? []) as SocialRow[]) ?? [];
+  return (d?.member ?? d?.['hydra:member'] ?? []) as SocialRow[];
 }
 
 /** Manage the social/web profiles of a contact or customer (/social_profiles). */
