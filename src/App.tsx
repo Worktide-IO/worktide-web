@@ -1,4 +1,4 @@
-import { Authenticated, Refine } from '@refinedev/core';
+import { Authenticated, Refine, useParsed } from '@refinedev/core';
 import { DevtoolsPanel, DevtoolsProvider } from '@refinedev/devtools';
 import routerProvider from '@refinedev/react-router';
 import { useEffect } from 'react';
@@ -6,6 +6,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router';
 
 import i18n from '@/i18n';
 import { i18nProvider } from '@/i18n/refine';
+import { resolveDocumentTitle } from '@/lib/documentTitle';
 import { useActiveLocale } from '@/lib/languages';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { AppLayout } from '@/components/AppLayout';
@@ -123,6 +124,22 @@ function LocaleSync() {
   useEffect(() => {
     void i18n.changeLanguage(locale);
   }, [locale]);
+  return null;
+}
+
+/**
+ * Sets the browser tab title per route (see lib/documentTitle.ts). We resolve
+ * the title ourselves from Refine's current resource (whose ORIGINAL meta.label
+ * is the `nav.*` i18n key) — the built-in <DocumentTitleHandler> rewrites that
+ * label before handing it over, so it can't be used here. Re-runs on locale
+ * change so the title tracks DE/EN.
+ */
+function RouteTitle() {
+  const { resource, pathname } = useParsed();
+  const locale = useActiveLocale();
+  useEffect(() => {
+    document.title = resolveDocumentTitle({ resource, pathname });
+  }, [resource, pathname, locale]);
   return null;
 }
 
@@ -460,6 +477,7 @@ export default function App() {
             <Route path="/accept-invitation" element={<AcceptInvitationPage />} />
             <Route path="/accept-project-share" element={<AcceptProjectSharePage />} />
           </Routes>
+          <RouteTitle />
         </Refine>
         <Toaster richColors closeButton position="top-right" />
       </DevtoolsGate>
