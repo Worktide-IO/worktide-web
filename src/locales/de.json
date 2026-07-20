@@ -2876,6 +2876,12 @@
   "mute_rules.load_error": "Regeln konnten nicht geladen werden.",
   "mute_rules.save_error": "Regel konnte nicht gespeichert werden.",
   "mute_rules.delete_error": "Regel konnte nicht gelöscht werden.",
+  "nav.planning": "Kalender & Planung",
+  "nav.products_services": "Produkte & Services",
+  "nav.research": "Research",
+  "nav.integrations": "Integrationen",
+  "nav.category.settings": "Einstellungen",
+
   "mute_rules.empty_conditions": "Mindestens eine Bedingung mit einem Wert ist erforderlich.",
 
   "assign_host.title": "Host einem Kunden zuweisen",

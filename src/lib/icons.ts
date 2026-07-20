@@ -34,6 +34,7 @@ export const NAV_ICONS = {
   Mail: Icons.Mail,
   Megaphone: Icons.Megaphone,
   MessageSquarePlus: Icons.MessageSquarePlus,
+  Package: Icons.Package,
   PackageSearch: Icons.PackageSearch,
   Plug: Icons.Plug,
   Receipt: Icons.Receipt,

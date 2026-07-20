@@ -2876,6 +2876,12 @@
   "mute_rules.load_error": "Could not load mute rules.",
   "mute_rules.save_error": "Could not save rule.",
   "mute_rules.delete_error": "Could not delete rule.",
+  "nav.planning": "Calendar & Planning",
+  "nav.products_services": "Products & Services",
+  "nav.research": "Research",
+  "nav.integrations": "Integrations",
+  "nav.category.settings": "Settings",
+
   "mute_rules.empty_conditions": "Add at least one condition with a value.",
 
   "assign_host.title": "Assign host to customer",
