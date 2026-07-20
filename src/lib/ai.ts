@@ -149,7 +149,23 @@ export type AiUsageDayRow = { day: string; costMicros: number; calls: number };
 export type AiRoutingTier = 'local' | 'cloud' | 'local_fallback_cloud';
 /** A routable feature key + its default tier (before any per-workspace override). */
 export type AiRoutingFeature = { feature: string; defaultTier: AiRoutingTier };
-/** Per-task-type routing policy for the workspace (local vs. cloud). */
+/** Where a model processes data — the basis for the DSGVO/GDPR signal. */
+export type AiModelResidency = 'local' | 'eu' | 'us';
+/** One selectable model in the central catalog. */
+export type AiModel = {
+  key: string;
+  provider: string;
+  label: string;
+  inputPer1M: number;
+  outputPer1M: number;
+  residency: AiModelResidency;
+  /** Prompt data stays in the EU/EEA (or on-infra) without a cross-border transfer. */
+  staysInEu: boolean;
+  speed: string;
+  /** Whether the model's provider is configured (else the pin degrades to the tier). */
+  available: boolean;
+};
+/** Per-task-type routing policy for the workspace (local vs. cloud + specific models). */
 export type AiRoutingState = {
   /** Data-residency lock: force every task-type local. */
   forceLocal: boolean;
@@ -157,10 +173,14 @@ export type AiRoutingState = {
   localConfigured: boolean;
   /** Explicit per-feature tier overrides (feature key → tier). */
   overrides: Record<string, AiRoutingTier>;
+  /** Explicit per-feature model pins (feature key → catalog key). Beats the tier. */
+  models: Record<string, string>;
   /** All selectable tiers. */
   tiers: AiRoutingTier[];
   /** The routable features + their defaults, in display order. */
   features: AiRoutingFeature[];
+  /** The central model catalog across providers. */
+  catalog: AiModel[];
 };
 
 export type AiUsageSummary = {
@@ -186,11 +206,13 @@ export const aiUsage = {
     api.put('/ai-usage/budget', { monthlyUsd }).then((r) => r.data as { monthlyBudgetMicros: number }),
   /**
    * Update the per-task-type routing policy. Omit a field to leave it unchanged;
-   * within `routing`, a null tier clears that feature's override (back to default).
+   * a null value within `routing`/`models` clears that feature's entry (back to
+   * default). `models` pins a feature to a specific catalog key.
    */
   setRouting: (body: {
     forceLocal?: boolean;
     routing?: Record<string, AiRoutingTier | null>;
+    models?: Record<string, string | null>;
   }): Promise<AiRoutingState> => api.put('/ai-usage/routing', body).then((r) => r.data as AiRoutingState),
 };
 

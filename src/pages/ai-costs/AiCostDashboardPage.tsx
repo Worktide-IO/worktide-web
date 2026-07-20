@@ -14,7 +14,15 @@ import {
 
 import { toast } from 'sonner';
 
-import { aiUsage, aiErrorMessage, type AiRoutingState, type AiRoutingTier, type AiUsageSummary } from '@/lib/ai';
+import {
+  aiUsage,
+  aiErrorMessage,
+  type AiModel,
+  type AiModelResidency,
+  type AiRoutingState,
+  type AiRoutingTier,
+  type AiUsageSummary,
+} from '@/lib/ai';
 import { intlLocale, formatNumber } from '@/lib/intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -137,6 +145,8 @@ export function AiCostDashboardPage() {
 
       <RoutingCard routing={data.routing} onSaved={() => setTick((n) => n + 1)} />
 
+      <CatalogCard catalog={data.routing.catalog} />
+
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">{t('ai_costs.spend_over_time')}</CardTitle>
@@ -257,6 +267,80 @@ const TIER_ICON: Record<AiRoutingTier, typeof Cpu> = {
   local_fallback_cloud: ServerCog,
 };
 
+// Radix Select forbids an empty-string item value, so the "follow the tier"
+// option (i.e. no model pin) uses this sentinel.
+const TIER_SENTINEL = '__tier__';
+
+/**
+ * DSGVO/GDPR-at-a-glance for a model: green when prompt data stays in the EU/EEA
+ * or on-infra, amber when it's processed in the US (usable only under a DPA).
+ */
+function ResidencyBadge({ residency }: { residency: AiModelResidency }) {
+  const { t } = useTranslation();
+  const green = residency !== 'us';
+  return (
+    <span
+      className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+        green
+          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+          : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400'
+      }`}
+    >
+      {t(`ai_costs.residency.${residency}`)}
+    </span>
+  );
+}
+
+/** The central model catalog across providers — price + DSGVO posture + availability. */
+function CatalogCard({ catalog }: { catalog: AiModel[] }) {
+  const { t } = useTranslation();
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <ServerCog className="size-4 text-muted-foreground" /> {t('ai_costs.catalog_title')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="mb-3 text-sm text-muted-foreground">{t('ai_costs.catalog_subtitle')}</p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-muted-foreground">
+                <th className="py-1 pr-3 font-medium">{t('ai_costs.catalog_model')}</th>
+                <th className="py-1 pr-3 font-medium">{t('ai_costs.catalog_price')}</th>
+                <th className="py-1 pr-3 font-medium">{t('ai_costs.catalog_residency')}</th>
+                <th className="py-1 font-medium">{t('ai_costs.catalog_status')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {catalog.map((m) => (
+                <tr key={m.key} className="border-t">
+                  <td className="py-1.5 pr-3">{m.label}</td>
+                  <td className="py-1.5 pr-3 tabular-nums text-muted-foreground">
+                    ${m.inputPer1M} / ${m.outputPer1M}{' '}
+                    <span className="text-[10px]">{t('ai_costs.per_1m')}</span>
+                  </td>
+                  <td className="py-1.5 pr-3">
+                    <ResidencyBadge residency={m.residency} />
+                  </td>
+                  <td className="py-1.5 text-xs">
+                    {m.available ? (
+                      <span className="text-emerald-600">{t('ai_costs.model_available')}</span>
+                    ) : (
+                      <span className="text-muted-foreground">{t('ai_costs.model_unavailable')}</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 /**
  * Per-task-type AI routing (local vs. cloud), from /v1/ai-usage/summary.routing.
  * A `forceLocal` switch is the data-residency lock (all task-types local); while
@@ -268,7 +352,11 @@ function RoutingCard({ routing, onSaved }: { routing: AiRoutingState; onSaved: (
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
 
-  async function save(body: { forceLocal?: boolean; routing?: Record<string, AiRoutingTier | null> }) {
+  async function save(body: {
+    forceLocal?: boolean;
+    routing?: Record<string, AiRoutingTier | null>;
+    models?: Record<string, string | null>;
+  }) {
     setBusy(true);
     try {
       await aiUsage.setRouting(body);
@@ -320,36 +408,56 @@ function RoutingCard({ routing, onSaved }: { routing: AiRoutingState; onSaved: (
           <div className="mb-2 text-xs font-medium text-muted-foreground">{t('ai_costs.routing_per_feature')}</div>
           <div className="space-y-1.5">
             {routing.features.map(({ feature, defaultTier }) => {
-              const current = routing.overrides[feature] ?? defaultTier;
-              const overridden = feature in routing.overrides;
+              const tier = routing.overrides[feature] ?? defaultTier;
+              const pinnedKey = routing.models[feature];
               return (
-                <div key={feature} className="flex items-center justify-between gap-3 text-sm">
+                <div key={feature} className="flex flex-wrap items-center justify-between gap-2 text-sm">
                   <span className="truncate">{t(`ai_costs.routing_feature.${feature}`, feature)}</span>
                   <div className="flex items-center gap-2">
-                    {overridden && (
-                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                        {t('ai_costs.routing_overridden')}
-                      </span>
-                    )}
+                    {/* Specific model pin (beats the tier). "Standard" = follow the tier. */}
                     <Select
-                      value={current}
+                      value={pinnedKey ?? TIER_SENTINEL}
                       disabled={busy || routing.forceLocal}
+                      onValueChange={(v) => void save({ models: { [feature]: v === TIER_SENTINEL ? null : v } })}
+                    >
+                      <SelectTrigger className="h-8 w-64 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={TIER_SENTINEL} className="text-xs">
+                          {t('ai_costs.routing_model_default')}
+                        </SelectItem>
+                        {routing.catalog.map((m) => (
+                          <SelectItem key={m.key} value={m.key} disabled={!m.available} className="text-xs">
+                            <span className="flex items-center gap-1.5">
+                              {m.label}
+                              <ResidencyBadge residency={m.residency} />
+                              {!m.available ? ` · ${t('ai_costs.model_unavailable')}` : ''}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {/* Tier — moot (dimmed) while a specific model is pinned. */}
+                    <Select
+                      value={tier}
+                      disabled={busy || routing.forceLocal || Boolean(pinnedKey)}
                       onValueChange={(v) =>
                         void save({ routing: { [feature]: v === defaultTier ? null : (v as AiRoutingTier) } })
                       }
                     >
-                      <SelectTrigger className="h-8 w-56 text-xs">
+                      <SelectTrigger className="h-8 w-44 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {routing.tiers.map((tier) => {
-                          const Icon = TIER_ICON[tier];
+                        {routing.tiers.map((tierOption) => {
+                          const Icon = TIER_ICON[tierOption];
                           return (
-                            <SelectItem key={tier} value={tier} className="text-xs">
+                            <SelectItem key={tierOption} value={tierOption} className="text-xs">
                               <span className="flex items-center gap-1.5">
                                 <Icon className="size-3.5" />
-                                {t(`ai_costs.routing_tier.${tier}`)}
-                                {tier === defaultTier ? ` · ${t('ai_costs.routing_default')}` : ''}
+                                {t(`ai_costs.routing_tier.${tierOption}`)}
+                                {tierOption === defaultTier ? ` · ${t('ai_costs.routing_default')}` : ''}
                               </span>
                             </SelectItem>
                           );
