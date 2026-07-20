@@ -2643,6 +2643,8 @@
   "wall.no_tasks": "keine Aufgaben",
   "planner.new_task": "Neue Aufgabe",
   "notifications.empty": "Keine Benachrichtigungen.",
+  "notifications.mark_all_read": "Alle gelesen",
+  "notifications.view_all": "Alle anzeigen",
   "ai_ticket.field_project": "Projekt",
   "combobox.no_project": "Kein Projekt gefunden.",
   "combobox.select_task": "Aufgabe wählen…",
@@ -2872,5 +2874,25 @@
   "mute_rules.load_error": "Regeln konnten nicht geladen werden.",
   "mute_rules.save_error": "Regel konnte nicht gespeichert werden.",
   "mute_rules.delete_error": "Regel konnte nicht gelöscht werden.",
-  "mute_rules.empty_conditions": "Mindestens eine Bedingung mit einem Wert ist erforderlich."
+  "mute_rules.empty_conditions": "Mindestens eine Bedingung mit einem Wert ist erforderlich.",
+
+  "assign_host.title": "Host einem Kunden zuweisen",
+  "assign_host.desc_with_host": "Ordne den Host „{{host}}” einem Kunden zu. Künftige Zabbix-Alerts dieses Hosts werden automatisch verknüpft.",
+  "assign_host.desc": "Ordne diesen Host einem Kunden zu. Künftige Zabbix-Alerts dieses Hosts werden automatisch verknüpft.",
+  "assign_host.button": "Host zuweisen",
+  "assign_host.submit": "Zuweisen",
+  "assign_host.cancel": "Abbrechen",
+  "assign_host.new_customer": "Neuen Kunden anlegen",
+  "assign_host.new_customer_name": "Name des neuen Kunden",
+  "assign_host.customer_label": "Kunde",
+  "assign_host.toast_success": "Host dem Kunden zugewiesen.",
+  "assign_host.toast_error": "Zuweisung fehlgeschlagen.",
+
+  "error.boundary.title": "Etwas ist schiefgelaufen",
+  "error.boundary.body": "Dieser Bereich konnte nicht gerendert werden. Die Sidebar bleibt nutzbar — Du kannst zu einer anderen Seite navigieren.",
+  "error.boundary.retry": "Erneut versuchen",
+  "error.boundary.reload": "Seite neu laden",
+  "error.boundary.report": "Problem melden",
+  "error.boundary.report_prefix": "Fehler: {{message}}",
+  "error.boundary.report_desc": "Dieser Bereich ist abgestürzt. Technische Details werden automatisch mitgesendet."
 }

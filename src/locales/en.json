@@ -2643,6 +2643,8 @@
   "wall.no_tasks": "no tasks",
   "planner.new_task": "New task",
   "notifications.empty": "No notifications.",
+  "notifications.mark_all_read": "Mark all read",
+  "notifications.view_all": "View all",
   "ai_ticket.field_project": "Project",
   "combobox.no_project": "No project found.",
   "combobox.select_task": "Select task…",
@@ -2872,5 +2874,25 @@
   "mute_rules.load_error": "Could not load mute rules.",
   "mute_rules.save_error": "Could not save rule.",
   "mute_rules.delete_error": "Could not delete rule.",
-  "mute_rules.empty_conditions": "Add at least one condition with a value."
+  "mute_rules.empty_conditions": "Add at least one condition with a value.",
+
+  "assign_host.title": "Assign host to customer",
+  "assign_host.desc_with_host": "Assign the host \"{{host}}\" to a customer. Future Zabbix alerts for this host will auto-link.",
+  "assign_host.desc": "Assign this host to a customer. Future Zabbix alerts for this host will auto-link.",
+  "assign_host.button": "Assign host",
+  "assign_host.submit": "Assign",
+  "assign_host.cancel": "Cancel",
+  "assign_host.new_customer": "Create new customer",
+  "assign_host.new_customer_name": "Name of new customer",
+  "assign_host.customer_label": "Customer",
+  "assign_host.toast_success": "Host assigned to customer.",
+  "assign_host.toast_error": "Assignment failed.",
+
+  "error.boundary.title": "Something went wrong",
+  "error.boundary.body": "This area could not be rendered. The sidebar remains usable — you can navigate to another page.",
+  "error.boundary.retry": "Retry",
+  "error.boundary.reload": "Reload page",
+  "error.boundary.report": "Report issue",
+  "error.boundary.report_prefix": "Error: {{message}}",
+  "error.boundary.report_desc": "This area crashed. Technical details will be sent automatically."
 }

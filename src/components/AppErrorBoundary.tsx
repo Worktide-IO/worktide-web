@@ -1,5 +1,6 @@
 import { AlertTriangle, MessageSquarePlus, RefreshCw } from 'lucide-react';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import i18next from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import { openFeedback } from '@/components/feedback/FeedbackWidget';
@@ -47,10 +48,9 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
       <div className="flex min-h-[60vh] items-center justify-center p-6">
         <div className="max-w-md space-y-4 rounded-lg border border-destructive/40 bg-destructive/5 p-6 text-center">
           <AlertTriangle className="mx-auto size-10 text-destructive" />
-          <h2 className="text-lg font-semibold">Etwas ist schiefgelaufen</h2>
+          <h2 className="text-lg font-semibold">{i18next.t('error.boundary.title')}</h2>
           <p className="text-sm text-muted-foreground">
-            Dieser Bereich konnte nicht gerendert werden. Die Sidebar
-            bleibt nutzbar — Du kannst zu einer anderen Seite navigieren.
+            {i18next.t('error.boundary.body')}
           </p>
           <pre className="overflow-x-auto rounded border bg-background p-2 text-left text-xs text-destructive">
             {this.state.error.message}
@@ -58,10 +58,10 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
           <div className="flex justify-center gap-2">
             <Button variant="outline" size="sm" onClick={this.reset}>
               <RefreshCw className="size-3.5" />
-              Erneut versuchen
+              {i18next.t('error.boundary.retry')}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => window.location.reload()}>
-              Seite neu laden
+              {i18next.t('error.boundary.reload')}
             </Button>
           </div>
           <Button
@@ -71,14 +71,13 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
             onClick={() =>
               openFeedback({
                 category: 'bug',
-                title: `Fehler: ${this.state.error?.message ?? ''}`.slice(0, 120),
-                description:
-                  'Dieser Bereich ist abgestürzt. Technische Details werden automatisch mitgesendet.',
+                title: i18next.t('error.boundary.report_prefix', { message: this.state.error?.message ?? '' }).slice(0, 120),
+                description: i18next.t('error.boundary.report_desc'),
               })
             }
           >
             <MessageSquarePlus className="size-3.5" />
-            Problem melden
+            {i18next.t('error.boundary.report')}
           </Button>
         </div>
       </div>
