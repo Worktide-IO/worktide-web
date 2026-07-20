@@ -51,11 +51,17 @@ export function ConversationsListPage() {
   const { t } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<string>('open');
   const [channelFilter, setChannelFilter] = useState<string>('all');
+  // "active" hides muted conversations (2FA noise etc.); "muted" shows only them.
+  const [viewFilter, setViewFilter] = useState<string>('active');
   const navigate = useNavigate();
 
   const filters = useMemo(
-    () => ({ status: statusFilter, channel: channelFilter }),
-    [statusFilter, channelFilter],
+    () => ({
+      status: statusFilter,
+      channel: channelFilter,
+      'exists[mutedAt]': viewFilter === 'muted' ? 'true' : 'false',
+    }),
+    [statusFilter, channelFilter, viewFilter],
   );
 
   const { items, isLoading, hasMore, loadMore, reset } = useKeysetList<Row<ConversationJsonld>>({
@@ -117,6 +123,15 @@ export function ConversationsListPage() {
             {hasMore ? '+' : ''} {t('inbox.conversations_label', { count: items.length })}
           </CardTitle>
           <div className="ml-auto flex flex-wrap gap-2">
+            <Select value={viewFilter} onValueChange={setViewFilter}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">{t('inbox.view_active')}</SelectItem>
+                <SelectItem value="muted">{t('inbox.view_muted')}</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-36">
                 <SelectValue />

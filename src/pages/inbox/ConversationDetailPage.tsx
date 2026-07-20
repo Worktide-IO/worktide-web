@@ -14,6 +14,7 @@ import { AiTicketSuggestionPanel } from '@/components/AiTicketSuggestionPanel';
 import { AiTriagePanel } from '@/components/AiTriagePanel';
 import { AssignHostDialog } from '@/components/AssignHostDialog';
 import { AssignSenderDialog } from '@/components/AssignSenderDialog';
+import { MuteSenderButton } from '@/components/MuteSenderButton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -197,6 +198,14 @@ export function ConversationDetailPage() {
             onLinked={() => void invalidate({ resource: 'conversations', invalidates: ['list', 'detail'], id })}
           />
         ) : null}
+        <MuteSenderButton
+          conversationId={id ?? ''}
+          senderRaw={convo.senderRaw}
+          onMuted={() => {
+            void invalidate({ resource: 'conversations', invalidates: ['list', 'detail'], id });
+            navigate('/inbox');
+          }}
+        />
         <Select value={(convo.status as string) ?? 'open'} onValueChange={setStatus}>
           <SelectTrigger className="w-36">
             <SelectValue />

@@ -2621,7 +2621,7 @@
   "combobox.no_customer": "Kein Kunde gefunden.",
   "combobox.internal_option": "— Intern (kein Kunde)",
   "notifications.title": "Benachrichtigungen",
-"pagetitle.security": "Sicherheit",
+  "pagetitle.security": "Sicherheit",
   "reset.set_new_password": "Neues Passwort setzen",
   "wall.no_tasks": "keine Aufgaben",
   "planner.new_task": "Neue Aufgabe",
@@ -2809,5 +2809,18 @@
   "social_platform.mastodon": "Mastodon",
   "social_platform.website": "Website",
   "social_platform.other": "Andere",
-  "customer_form.field_invoice_email": "Rechnungs-E-Mail"
+  "customer_form.field_invoice_email": "Rechnungs-E-Mail",
+  "inbox.view_active": "Aktiv",
+  "inbox.view_muted": "Ignoriert",
+  "conversation.mute": "Ignorieren",
+  "conversation.mute_title": "Diese Art künftig ausblenden?",
+  "conversation.mute_desc": "Lege eine Regel an, die Nachrichten dieser Art aus der Inbox ausblendet (bleiben durchsuchbar unter „Ignoriert“). Bestehende Treffer werden ebenfalls ausgeblendet.",
+  "conversation.mute_confirm": "Ausblenden",
+  "toast.muted": "Ausgeblendet — zukünftige Nachrichten dieser Art landen im Filter „Ignoriert“.",
+  "toast.mute_failed": "Ausblenden fehlgeschlagen.",
+  "conversation.mute_by_sender": "Absender ist {{email}}",
+  "conversation.mute_no_sender": "Kein E-Mail-Absender erkennbar — grenze über den Betreff ein.",
+  "conversation.mute_subject_label": "und Betreff enthält (optional)",
+  "conversation.mute_subject_placeholder": "z. B. Verification Code",
+  "conversation.mute_hint": "Bedingungen werden mit UND verknüpft. Nur Absender = alle Nachrichten dieses Absenders. Komplexere Regeln über die Automationen."
 }

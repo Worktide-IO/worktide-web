@@ -2621,7 +2621,7 @@
   "combobox.no_customer": "No customer found.",
   "combobox.internal_option": "— Internal (no customer)",
   "notifications.title": "Notifications",
-"pagetitle.security": "Security",
+  "pagetitle.security": "Security",
   "reset.set_new_password": "Set a new password",
   "wall.no_tasks": "no tasks",
   "planner.new_task": "New task",
@@ -2809,5 +2809,18 @@
   "social_platform.mastodon": "Mastodon",
   "social_platform.website": "Website",
   "social_platform.other": "Other",
-  "customer_form.field_invoice_email": "Invoice email"
+  "customer_form.field_invoice_email": "Invoice email",
+  "inbox.view_active": "Active",
+  "inbox.view_muted": "Muted",
+  "conversation.mute": "Mute",
+  "conversation.mute_title": "Mute this kind of message?",
+  "conversation.mute_desc": "Create a rule that hides messages of this kind from the inbox (still searchable under “Muted”). Existing matches are hidden too.",
+  "conversation.mute_confirm": "Hide",
+  "toast.muted": "Hidden — future messages of this kind will appear under the “Muted” filter.",
+  "toast.mute_failed": "Could not mute.",
+  "conversation.mute_by_sender": "Sender is {{email}}",
+  "conversation.mute_no_sender": "No email sender detected — narrow it down by subject.",
+  "conversation.mute_subject_label": "and subject contains (optional)",
+  "conversation.mute_subject_placeholder": "e.g. Verification Code",
+  "conversation.mute_hint": "Conditions are combined with AND. Sender only = every message from that sender. For more complex rules, use Automations."
 }
