@@ -2,14 +2,15 @@ import { useList } from '@refinedev/core';
 import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Building2, Inbox as InboxIcon, Loader2, Mailbox } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { Building2, Inbox as InboxIcon, Loader2, Mailbox, Search } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import type { ChannelJsonld } from '@/api/types/channel/Jsonld';
 import type { ConversationJsonld } from '@/api/types/conversation/Jsonld';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -17,10 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { CustomerCombobox } from '@/components/CustomerCombobox';
+import { TagPicker } from '@/components/TagPicker';
 import { topicFor, useMercureTopic } from '@/lib/mercure';
 import type { Row } from '@/lib/refine';
 import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { useKeysetList } from '@/lib/useKeysetList';
+import { useUserDirectory, userDisplayName } from '@/hooks/useUserDirectory';
 import { LogPhoneCallDialog } from '@/pages/inbox/LogPhoneCallDialog';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -53,15 +57,30 @@ export function ConversationsListPage() {
   const [channelFilter, setChannelFilter] = useState<string>('all');
   // "active" hides muted conversations (2FA noise etc.); "muted" shows only them.
   const [viewFilter, setViewFilter] = useState<string>('active');
+  const [assigneeFilter, setAssigneeFilter] = useState<string>('all');
+  const [customerFilter, setCustomerFilter] = useState<string | null>(null);
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const navigate = useNavigate();
+
+  // Debounce subject search to avoid hammering the API on every keystroke.
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const filters = useMemo(
     () => ({
       status: statusFilter,
       channel: channelFilter,
       'exists[mutedAt]': viewFilter === 'muted' ? 'true' : 'false',
+      assignee: assigneeFilter === '__unassigned__' ? '' : assigneeFilter === 'all' ? undefined : assigneeFilter,
+      customer: customerFilter ?? undefined,
+      'tags.id': tagFilter[0] ?? undefined,
+      subject: debouncedSearch || undefined,
     }),
-    [statusFilter, channelFilter, viewFilter],
+    [statusFilter, channelFilter, viewFilter, assigneeFilter, customerFilter, tagFilter, debouncedSearch],
   );
 
   const { items, isLoading, hasMore, loadMore, reset } = useKeysetList<Row<ConversationJsonld>>({
@@ -90,6 +109,9 @@ export function ConversationsListPage() {
   // (ContactResolver: sender email → Contact → Customer). Looked up by IRI so
   // it stays correct past the API's 200-customer page cap.
   const customerByIri = useCustomerLookup(items.map((c) => c.customer));
+
+  // User directory for the assignee filter dropdown.
+  const { users } = useUserDirectory();
 
   // --- virtualization (only the visible row slice is in the DOM) ---
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -123,6 +145,15 @@ export function ConversationsListPage() {
             {hasMore ? '+' : ''} {t('inbox.conversations_label', { count: items.length })}
           </CardTitle>
           <div className="ml-auto flex flex-wrap gap-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('inbox.search_placeholder')}
+                className="h-9 w-48 pl-7 text-sm"
+              />
+            </div>
             <Select value={viewFilter} onValueChange={setViewFilter}>
               <SelectTrigger className="w-36">
                 <SelectValue />
@@ -150,13 +181,41 @@ export function ConversationsListPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('inbox.all_channels')}</SelectItem>
-                {(channels?.data ?? []).map((c) => (
-                  <SelectItem key={c['@id']} value={c['@id'] ?? ''}>
+                {(channels?.data ?? []).filter((c) => !!c['@id']).map((c) => (
+                  <SelectItem key={c['@id']} value={c['@id']!}>
                     {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder={t('inbox.assignee_placeholder')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('inbox.all_assignees')}</SelectItem>
+                <SelectItem value="__unassigned__">{t('inbox.unassigned')}</SelectItem>
+                {users.filter((u) => !!u['@id']).map((u) => (
+                  <SelectItem key={u['@id']} value={u['@id']!}>
+                    {userDisplayName(u)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <CustomerCombobox
+              value={customerFilter}
+              onChange={setCustomerFilter}
+              placeholder={t('inbox.customer_placeholder')}
+              className="h-9 w-48"
+            />
+            <TagPicker
+              value={tagFilter}
+              onChange={setTagFilter}
+              scope="conversation"
+              disableCreate
+              placeholder={t('inbox.tag_placeholder')}
+              className="h-9"
+            />
           </div>
         </CardHeader>
         <CardContent>

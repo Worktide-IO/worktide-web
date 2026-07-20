@@ -1,4 +1,4 @@
-import { Activity, Bot, CalendarClock, Clock, FolderKanban, Inbox, ListChecks, ListTodo, type LucideIcon } from 'lucide-react';
+import { Activity, Bot, CalendarClock, Clock, FolderKanban, Inbox, ListChecks, ListTodo, Users, type LucideIcon } from 'lucide-react';
 
 import { ActiveTimerWidget } from './widgets/ActiveTimerWidget';
 import { MyProjectsWidget } from './widgets/MyProjectsWidget';
@@ -8,6 +8,7 @@ import { TaskOffersWidget } from './widgets/TaskOffersWidget';
 import { AiAssistantWidget } from './widgets/AiAssistantWidget';
 import { OpenCustomerTasksWidget } from './widgets/OpenCustomerTasksWidget';
 import { RecentStatusUpdatesWidget } from './widgets/RecentStatusUpdatesWidget';
+import { TeamAvailabilityWidget } from './widgets/TeamAvailabilityWidget';
 
 /**
  * Widget catalog. Every renderable dashboard tile must have an entry
@@ -91,6 +92,14 @@ export const WIDGET_REGISTRY: Record<string, WidgetDefinition> = {
     icon: Activity,
     defaultSize: { w: 4, h: 10 },
     Component: RecentStatusUpdatesWidget,
+  },
+  'team-availability': {
+    key: 'team-availability',
+    label: 'widget.team_availability.label',
+    description: 'widget.team_availability.desc',
+    icon: Users,
+    defaultSize: { w: 4, h: 12 },
+    Component: TeamAvailabilityWidget,
   },
 };
 
