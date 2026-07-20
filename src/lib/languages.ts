@@ -53,11 +53,13 @@ function subscribeI18nProfile(fn: () => void): () => void {
 async function fetchI18nProfile(): Promise<I18nProfile> {
   if (cache) return cache;
   // No session yet (e.g. the login page mounts a component that localizes): skip
-  // the call — GET /me/profile would 401 and log a scary red error in the console,
-  // and we'd only fall back to these defaults anyway. Deliberately NOT cached, so
-  // the first authenticated caller fetches the real profile.
+  // the call — GET /me/profile would 401 and log a scary red error in the console.
+  // Preserve the browser language so unauthenticated pages match the user's
+  // preference. Deliberately NOT cached, so the first authenticated caller
+  // fetches the real profile.
   if (!getAccessToken()) {
-    return { supportedLanguages: ['en'], preferredLanguage: null, resolvedLanguage: null };
+    const browser = detectBrowserLanguage();
+    return { supportedLanguages: [browser], preferredLanguage: null, resolvedLanguage: browser };
   }
   if (!inflight) {
     inflight = api
