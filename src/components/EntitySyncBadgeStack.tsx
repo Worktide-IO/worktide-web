@@ -57,7 +57,7 @@ export function EntitySyncBadgeStack({
       : [],
     queryOptions: { enabled: selfFetch },
   });
-  const { result: channels, query: channelsQuery } = useList<Row<ChannelJsonld>>({
+  const { result: channels } = useList<Row<ChannelJsonld>>({
     resource: 'channels',
     pagination: { mode: 'off' },
   });
@@ -78,7 +78,6 @@ export function EntitySyncBadgeStack({
   }, [providedSyncs, scope, syncs, entityType, entityId]);
 
   const loadingSelf = selfFetch && syncsQuery.isLoading;
-  const loadingChannels = channelsQuery.isLoading;
 
   if (loadingSelf) {
     return (

@@ -7,8 +7,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  ToggleLeft,
-  ToggleRight,
 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -112,10 +110,6 @@ export function MuteRulesManager({ onOpenChange: onOpenChangeProp }: Props) {
     setEditingId(rule.id ?? rule['@id']?.split('/').pop() ?? null);
     setCombinator(rule.combinator);
     setConditions(rule.conditions.length > 0 ? [...rule.conditions] : [emptyCondition()]);
-  };
-
-  const startCreate = () => {
-    resetForm();
   };
 
   const updateCondition = (index: number, patch: Partial<Condition>) => {

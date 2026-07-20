@@ -161,7 +161,7 @@ function IdleButton({
       setTaskId(null);
       setDescription('');
     } catch (err) {
-      toast.error(t('toast.operation_failed'));
+      toast.error(translate('toast.operation_failed'));
     } finally {
       setSubmitting(false);
     }
