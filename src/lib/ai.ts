@@ -146,7 +146,7 @@ export type AiUsageBreakdownRow = { label: string; costMicros: number; calls: nu
 export type AiUsageDayRow = { day: string; costMicros: number; calls: number };
 
 /** Where a task-type is served — mirrors the backend LlmTier enum. */
-export type AiRoutingTier = 'local' | 'cloud' | 'local_fallback_cloud';
+export type AiRoutingTier = 'local' | 'cloud' | 'local_fallback_cloud' | 'cheapest';
 /** A routable feature key + its default tier (before any per-workspace override). */
 export type AiRoutingFeature = { feature: string; defaultTier: AiRoutingTier };
 /** Where a model processes data — the basis for the DSGVO/GDPR signal. */

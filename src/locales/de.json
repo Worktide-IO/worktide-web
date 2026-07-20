@@ -75,6 +75,7 @@
   "ai_costs.routing_tier.local": "Lokal",
   "ai_costs.routing_tier.cloud": "Cloud",
   "ai_costs.routing_tier.local_fallback_cloud": "Lokal, Cloud als Fallback",
+  "ai_costs.routing_tier.cheapest": "Günstigstes (auto)",
   "ai_costs.routing_feature.triage": "Ticket-Triage",
   "ai_costs.routing_feature.ticket_from_conversation": "Ticket aus Konversation",
   "ai_costs.routing_feature.tags": "Tag-Vorschläge",

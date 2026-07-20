@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Cloud, Coins, Cpu, Hash, ServerCog, ShieldCheck, Sparkles } from 'lucide-react';
+import { Cloud, Coins, Cpu, Hash, PiggyBank, ServerCog, ShieldCheck, Sparkles } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -265,6 +265,7 @@ const TIER_ICON: Record<AiRoutingTier, typeof Cpu> = {
   local: Cpu,
   cloud: Cloud,
   local_fallback_cloud: ServerCog,
+  cheapest: PiggyBank,
 };
 
 // Radix Select forbids an empty-string item value, so the "follow the tier"
