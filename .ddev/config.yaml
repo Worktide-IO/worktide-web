@@ -1,0 +1,19 @@
+name: worktide-web
+type: php
+docroot: ""
+webserver_type: nginx-fpm
+disable_settings_management: true
+omit_containers: [db]
+corepack_enable: true
+nodejs_version: "22"
+
+web_extra_exposed_ports:
+  - name: vite
+    container_port: 5173
+    http_port: 5172
+    https_port: 5173
+
+web_extra_daemons:
+  - name: "vite"
+    command: bash -c 'npm install --no-package-lock 2>/dev/null; npx vite --host 0.0.0.0 --port 5173'
+    directory: /var/www/html
