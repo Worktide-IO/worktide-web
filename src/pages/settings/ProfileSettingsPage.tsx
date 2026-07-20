@@ -92,7 +92,7 @@ function ProfileForm() {
         setPreferredLanguage(data.preferredLanguage ?? null);
         setDiscipline(data.discipline ?? null);
       } catch (err) {
-        recordError('profile.load_failed', String(err));
+        recordError('profile.load_failed', { error: String(err) });
       } finally {
         if (!cancelled) setLoading(false);
       }

@@ -316,7 +316,7 @@ function SessionsCard() {
       const { data } = await api.get<{ sessions: Session[] }>('/me/sessions');
       setSessions(data.sessions);
     } catch (err) {
-      recordError('sessions.load_failed', String(err));
+      recordError('sessions.load_failed', { error: String(err) });
       toast.error(t('toast.sessions_load_failed'));
     } finally {
       setLoading(false);
@@ -339,7 +339,7 @@ function SessionsCard() {
       await load();
       qc.invalidateQueries({ queryKey: ['me'] });
     } catch (err) {
-      recordError('sessions.revoke_failed', String(err));
+      recordError('sessions.revoke_failed', { error: String(err) });
       toast.error(t('toast.could_not_end_session'));
     } finally {
       setBusy(null);
@@ -356,7 +356,7 @@ function SessionsCard() {
       toast.success(t('toast.sessions_ended', { count: data.revoked }));
       await load();
     } catch (err) {
-      recordError('sessions.revoke_others_failed', String(err));
+      recordError('sessions.revoke_others_failed', { error: String(err) });
       toast.error(t('toast.could_not_end_other_sessions'));
     } finally {
       setBusy(null);
@@ -469,7 +469,7 @@ function IdleTimeoutCard() {
         setValue(data.idleTimeoutMinutes ? String(data.idleTimeoutMinutes) : 'off');
       })
       .catch((err) => {
-        recordError('idle_timeout.load_failed', String(err));
+        recordError('idle_timeout.load_failed', { error: String(err) });
       })
       .finally(() => setLoading(false));
   }, []);
@@ -483,7 +483,7 @@ function IdleTimeoutCard() {
       });
       toast.success(t('toast.auto_logout_updated'));
     } catch (err) {
-      recordError('idle_timeout.save_failed', String(err));
+      recordError('idle_timeout.save_failed', { error: String(err) });
       toast.error(t('toast.could_not_save'));
     } finally {
       setSaving(false);

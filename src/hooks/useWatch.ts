@@ -38,7 +38,7 @@ export function useWatch(target: WatchableTarget, targetId: string | null | unde
       });
       setSnapshot(data);
     } catch (err) {
-      recordError('watch.load_failed', String(err));
+      recordError('watch.load_failed', { error: String(err) });
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +67,7 @@ export function useWatch(target: WatchableTarget, targetId: string | null | unde
       });
       setSnapshot(data);
     } catch (err) {
-      recordError('watch.toggle_failed', String(err));
+      recordError('watch.toggle_failed', { error: String(err) });
       await refresh();
     } finally {
       pending.current = false;

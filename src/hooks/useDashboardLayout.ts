@@ -65,7 +65,7 @@ export function useDashboardLayout() {
       } catch (err) {
         // Network or auth error → render defaults rather than block the
         // dashboard. The user can re-save later.
-        recordError('dashboard_layout.load_failed', String(err));
+        recordError('dashboard_layout.load_failed', { error: String(err) });
       } finally {
         if (mounted.current) setIsLoading(false);
       }
@@ -81,7 +81,7 @@ export function useDashboardLayout() {
       await api.put('/me/preferences', { dashboardLayout: next });
       if (mounted.current) setIsDirty(false);
     } catch (err) {
-      recordError('dashboard_layout.persist_failed', String(err));
+      recordError('dashboard_layout.persist_failed', { error: String(err) });
     }
   }, []);
 

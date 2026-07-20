@@ -54,7 +54,7 @@ export function useActiveTimer() {
       const { data } = await api.get<ApiResponseIdle | ApiResponseRunning>('/timers/current');
       setTimer(data.running ? data : null);
     } catch (err) {
-      recordError('active_timer.fetch_failed', String(err));
+      recordError('active_timer.fetch_failed', { error: String(err) });
     }
   }, []);
 

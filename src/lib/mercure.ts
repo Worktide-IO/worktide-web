@@ -197,7 +197,7 @@ export function useMercureTopic<T = unknown>(
       try {
         jwt = await getMercureToken();
       } catch (err) {
-        recordError('mercure.jwt_fetch_failed', String(err));
+        recordError('mercure.jwt_fetch_failed', { error: String(err) });
         if (!cancelled) {
           erroredCount += 1;
           countedErrored = true;
@@ -252,7 +252,7 @@ export function useMercureTopic<T = unknown>(
           try {
             parsed = JSON.parse(msg.data) as T;
           } catch (err) {
-            recordError('mercure.non_json_frame', String(err));
+            recordError('mercure.non_json_frame', { error: String(err) });
             return;
           }
           const out: MercureMessage<T> = { data: parsed, id: msg.id };

@@ -42,7 +42,7 @@ jobs:
           restore-keys: pnpm-${{ runner.os }}-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts --config.minimum-release-age=0
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Type-check
         run: pnpm run typecheck
