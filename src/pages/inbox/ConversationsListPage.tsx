@@ -25,6 +25,7 @@ import type { Row } from '@/lib/refine';
 import { useCustomerLookup } from '@/lib/useCustomerLookup';
 import { useKeysetList } from '@/lib/useKeysetList';
 import { useUserDirectory, userDisplayName } from '@/hooks/useUserDirectory';
+import { MuteRulesManager } from '@/components/MuteRulesManager';
 import { LogPhoneCallDialog } from '@/pages/inbox/LogPhoneCallDialog';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -135,7 +136,10 @@ export function ConversationsListPage() {
             {t('inbox.subtitle')}
           </p>
         </div>
-        <LogPhoneCallDialog />
+        <div className="flex items-center gap-2">
+          <MuteRulesManager />
+          <LogPhoneCallDialog />
+        </div>
       </div>
 
       <Card>
