@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { api, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -170,7 +171,12 @@ export function InviteMembersCard() {
           </Button>
         </form>
 
-        {!loading && shown.length > 0 ? (
+        {loading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-12 w-full rounded-md" />
+            <Skeleton className="h-12 w-full rounded-md" />
+          </div>
+        ) : shown.length > 0 ? (
           <ul className="divide-y rounded-md border">
             {shown.map((inv) => (
               <li

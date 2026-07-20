@@ -2529,6 +2529,7 @@
   "localized_fields.standard": "Default",
   "contact_absences.title": "Absences",
   "contact_absences.empty": "No absences recorded.",
+  "contact_absences.error": "Could not load absences.",
   "contact_edit.missing_id": "No contact ID in the URL.",
   "customer_system_edit.missing_id": "No system ID in the URL.",
   "time.just_now": "just now",

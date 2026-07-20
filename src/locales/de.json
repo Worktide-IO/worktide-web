@@ -2529,6 +2529,7 @@
   "localized_fields.standard": "Standard",
   "contact_absences.title": "Abwesenheiten",
   "contact_absences.empty": "Keine Abwesenheiten eingetragen.",
+  "contact_absences.error": "Abwesenheiten konnten nicht geladen werden.",
   "contact_edit.missing_id": "Keine Kontakt-ID in der URL.",
   "customer_system_edit.missing_id": "Keine System-ID in der URL.",
   "time.just_now": "gerade eben",

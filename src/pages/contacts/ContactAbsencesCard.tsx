@@ -1,9 +1,10 @@
 import { useList } from '@refinedev/core';
 import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
-import { CalendarOff } from 'lucide-react';
+import { AlertCircle, CalendarOff } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Row } from '@/lib/refine';
 
 type ContactAbsenceRow = Row<{ '@id': string; startsOn: string; endsOn: string; note?: string | null }>;
@@ -20,7 +21,7 @@ const fmtRange = (a: string, b: string) =>
  */
 export function ContactAbsencesCard({ contactId }: { contactId: string }) {
   const { t } = useTranslation();
-  const { result } = useList<ContactAbsenceRow>({
+  const { result, query } = useList<ContactAbsenceRow>({
     resource: 'contact_absences',
     filters: [{ field: 'contact', operator: 'eq', value: `/v1/contacts/${contactId}` }],
     sorters: [{ field: 'startsOn', order: 'desc' }],
@@ -36,7 +37,16 @@ export function ContactAbsencesCard({ contactId }: { contactId: string }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {rows.length === 0 ? (
+        {query.isLoading ? (
+          <div className="space-y-3 py-1">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        ) : query.isError ? (
+          <p className="flex items-center gap-1.5 py-2 text-sm text-destructive">
+            <AlertCircle className="size-3.5" /> {t('contact_absences.error')}
+          </p>
+        ) : rows.length === 0 ? (
           <p className="py-2 text-sm text-muted-foreground">{t('contact_absences.empty')}</p>
         ) : (
           <div className="divide-y">

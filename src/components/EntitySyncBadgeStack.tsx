@@ -4,9 +4,11 @@ import { useMemo } from 'react';
 import type { ChannelJsonld } from '@/api/types/channel/Jsonld';
 import type { EntitySyncJsonld } from '@/api/types/entitySync/Jsonld';
 import type { Row } from '@/lib/refine';
+import { cn } from '@/lib/utils';
 
 import { EntitySyncBadge } from './EntitySyncBadge';
 import { useEntitySyncScope } from './EntitySyncScope';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Renders all external-system badges for one Worktide entity in a row.
@@ -44,7 +46,7 @@ export function EntitySyncBadgeStack({
   // sheet) fetches its own 0–2 rows instead of crawling the whole workspace
   // table page by page.
   const selfFetch = providedSyncs === undefined && scope === null && Boolean(entityId);
-  const { result: syncs } = useList<Row<EntitySyncJsonld>>({
+  const { result: syncs, query: syncsQuery } = useList<Row<EntitySyncJsonld>>({
     resource: 'entity_syncs',
     pagination: { mode: 'off' },
     filters: entityId
@@ -55,7 +57,7 @@ export function EntitySyncBadgeStack({
       : [],
     queryOptions: { enabled: selfFetch },
   });
-  const { result: channels } = useList<Row<ChannelJsonld>>({
+  const { result: channels, query: channelsQuery } = useList<Row<ChannelJsonld>>({
     resource: 'channels',
     pagination: { mode: 'off' },
   });
@@ -75,10 +77,22 @@ export function EntitySyncBadgeStack({
     );
   }, [providedSyncs, scope, syncs, entityType, entityId]);
 
+  const loadingSelf = selfFetch && syncsQuery.isLoading;
+  const loadingChannels = channelsQuery.isLoading;
+
+  if (loadingSelf) {
+    return (
+      <span className={cn('inline-flex flex-wrap gap-1', className)}>
+        <Skeleton className="h-5 w-16 rounded-full" />
+        <Skeleton className="h-5 w-20 rounded-full" />
+      </span>
+    );
+  }
+
   if (matching.length === 0) return null;
 
   return (
-    <span className={className} style={{ display: 'inline-flex', gap: variant === 'compact' ? '0.25rem' : '0.5rem', flexWrap: 'wrap' }}>
+    <span className={cn('inline-flex flex-wrap', variant === 'compact' ? 'gap-1' : 'gap-2', className)}>
       {matching.map((s) => {
         const channel = s.channel ? channelByIri[s.channel] : null;
         return (
