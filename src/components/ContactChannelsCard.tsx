@@ -169,16 +169,18 @@ function PrimaryButton({ active, onClick }: { active: boolean; onClick: () => vo
 }
 
 function DeleteButton({ onClick }: { onClick: () => void }) {
+  const { t } = useTranslation();
   return (
-    <Button type="button" variant="ghost" size="icon" onClick={onClick}>
+    <Button type="button" variant="ghost" size="icon" onClick={onClick} aria-label={t('action.delete')}>
       <Trash2 className="size-3.5 text-muted-foreground" />
     </Button>
   );
 }
 
 function AddButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
+  const { t } = useTranslation();
   return (
-    <Button type="button" variant="outline" size="icon" onClick={onClick} disabled={disabled}>
+    <Button type="button" variant="outline" size="icon" onClick={onClick} disabled={disabled} aria-label={t('channels.add')}>
       <Plus className="size-3.5" />
     </Button>
   );

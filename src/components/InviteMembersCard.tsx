@@ -194,6 +194,7 @@ export function InviteMembersCard() {
                       size="sm"
                       onClick={() => resend(inv)}
                       title={t('invite_members.resend')}
+                      aria-label={t('invite_members.resend')}
                     >
                       <RefreshCw className="size-4" />
                     </Button>
@@ -203,6 +204,7 @@ export function InviteMembersCard() {
                       size="sm"
                       onClick={() => revoke(inv)}
                       title={t('invite_members.revoke')}
+                      aria-label={t('invite_members.revoke')}
                     >
                       <X className="size-4" />
                     </Button>
