@@ -85,7 +85,7 @@ export function BulkActionsBar({ selectedIris, onClear }: Props) {
       await invalidate({ resource: 'tasks', invalidates: ['list', 'many'] });
       onClear();
     } catch (err) {
-      console.warn('BulkActionsBar: batch failed', err);
+      toast.error(t('toast.operation_failed'));
       toast.error(t('toast.action_named_failed', { label }));
     } finally {
       setBusy(false);

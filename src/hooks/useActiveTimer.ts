@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { api } from '@/lib/api';
+import { api } from '@/lib/api'
+import { recordError } from '@/lib/diagnostics';
 import { topicFor, useMercureTopic } from '@/lib/mercure';
 
 /**
@@ -53,7 +54,7 @@ export function useActiveTimer() {
       const { data } = await api.get<ApiResponseIdle | ApiResponseRunning>('/timers/current');
       setTimer(data.running ? data : null);
     } catch (err) {
-      console.warn('useActiveTimer: failed to fetch /timers/current', err);
+      recordError('active_timer.fetch_failed', String(err));
     }
   }, []);
 

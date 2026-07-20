@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { api } from '@/lib/api';
+import { api } from '@/lib/api'
+import { recordError } from '@/lib/diagnostics';
 import {
   DEFAULT_DASHBOARD_LAYOUT,
   type DashboardLayout,
@@ -64,7 +65,7 @@ export function useDashboardLayout() {
       } catch (err) {
         // Network or auth error → render defaults rather than block the
         // dashboard. The user can re-save later.
-        console.warn('useDashboardLayout: failed to load preferences', err);
+        recordError('dashboard_layout.load_failed', String(err));
       } finally {
         if (mounted.current) setIsLoading(false);
       }
@@ -80,7 +81,7 @@ export function useDashboardLayout() {
       await api.put('/me/preferences', { dashboardLayout: next });
       if (mounted.current) setIsDirty(false);
     } catch (err) {
-      console.warn('useDashboardLayout: failed to persist preferences', err);
+      recordError('dashboard_layout.persist_failed', String(err));
     }
   }, []);
 

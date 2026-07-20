@@ -312,6 +312,7 @@
   "toast.absence_created": "Absence added.",
   "toast.access_ttl_range": "Access TTL must be between 60 and 3600 seconds.",
   "toast.action_failed": "Action failed.",
+  "toast.operation_failed": "Operation failed.",
   "toast.saved_as_template": "Saved as template.",
   "toast.changes_requested": "Changes requested.",
   "toast.llm_request_failed": "Request failed (check LLM/egress).",

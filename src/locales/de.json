@@ -312,6 +312,7 @@
   "toast.absence_created": "Abwesenheit angelegt.",
   "toast.access_ttl_range": "Access-TTL muss zwischen 60 und 3600 Sekunden liegen.",
   "toast.action_failed": "Aktion fehlgeschlagen.",
+  "toast.operation_failed": "Vorgang fehlgeschlagen.",
   "toast.saved_as_template": "Als Vorlage gespeichert.",
   "toast.changes_requested": "Änderungen angefordert.",
   "toast.llm_request_failed": "Anfrage fehlgeschlagen (LLM/Egress prüfen).",

@@ -2,6 +2,7 @@ import { useList } from '@refinedev/core';
 import { Pause, Play, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 
 import type { ProjectJsonld } from '@/api/types/project/Jsonld';
 import type { TaskJsonld } from '@/api/types/task/Jsonld';
@@ -160,7 +161,7 @@ function IdleButton({
       setTaskId(null);
       setDescription('');
     } catch (err) {
-      console.warn('Floating timer: start failed', err);
+      toast.error(t('toast.operation_failed'));
     } finally {
       setSubmitting(false);
     }

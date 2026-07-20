@@ -2,6 +2,7 @@ import { useGetIdentity } from '@refinedev/core';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { recordError } from '@/lib/diagnostics';
 
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -91,7 +92,7 @@ function ProfileForm() {
         setPreferredLanguage(data.preferredLanguage ?? null);
         setDiscipline(data.discipline ?? null);
       } catch (err) {
-        console.warn('ProfileSettingsPage: load failed', err);
+        recordError('profile.load_failed', String(err));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -121,7 +122,6 @@ function ProfileForm() {
       await refetchIdentity?.();
       toast.success(t('toast.profile_saved'));
     } catch (err) {
-      console.warn('ProfileSettingsPage: save failed', err);
       toast.error(t('toast.could_not_save'));
     } finally {
       setSaving(false);
