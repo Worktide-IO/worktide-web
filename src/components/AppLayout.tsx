@@ -2,7 +2,7 @@ import { useMenu } from '@refinedev/core';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
-import * as Icons from 'lucide-react';
+import { resolveNavIcon } from '@/lib/icons';
 
 import { BrandLogo } from '@/components/BrandLogo';
 import { FloatingTimer } from '@/components/FloatingTimer';
@@ -166,9 +166,7 @@ function NavItem({ item }: { item: Resource }) {
   }
   const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
   const iconName = (item.meta?.icon as string | undefined) ?? 'Circle';
-  const Icon =
-    (Icons[iconName as keyof typeof Icons] as React.ElementType | undefined) ??
-    Icons.Circle;
+  const Icon = resolveNavIcon(iconName);
   // meta.label holds an i18n key (e.g. `nav.wall`); fall back to the raw name.
   const label = t((item.meta?.label as string | undefined) ?? item.label ?? item.name);
 

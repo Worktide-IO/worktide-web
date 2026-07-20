@@ -2,7 +2,7 @@ import { useForm } from '@refinedev/react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useInvalidate, useList, useNavigation } from '@refinedev/core';
 import { ArrowLeft, FolderKanban, Loader2, Plus, Save, Trash2 } from 'lucide-react';
-import * as Icons from 'lucide-react';
+import { resolveNavIcon } from '@/lib/icons';
 import { useState } from 'react';
 import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
@@ -444,10 +444,7 @@ const SwitchRow = ({ control, name, label, hint }: SwitchRowProps) => (
  * stable.
  */
 function ProjectTypeIcon({ name }: { name?: string | null }) {
-  const Resolved = name
-    ? (Icons[name as keyof typeof Icons] as React.ElementType | undefined)
-    : undefined;
-  const Icon = Resolved ?? FolderKanban;
+  const Icon = name ? resolveNavIcon(name) : FolderKanban;
   return <Icon className="size-3.5 text-muted-foreground" />;
 }
 
