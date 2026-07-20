@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react';
 
 import { api, getAccessToken, readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 
+function detectBrowserLanguage(): string {
+  try {
+    const raw = navigator.language?.split('-')[0] ?? '';
+    return ['de', 'en'].includes(raw) ? raw : 'en';
+  } catch {
+    return 'en';
+  }
+}
+
 /**
  * Human labels for the locale codes the backend advertises. Unknown codes
  * fall back to the raw code, so enabling a locale server-side (via
@@ -139,7 +148,7 @@ export function useActiveLocale(): string {
     };
   }, []);
 
-  return locale ?? 'en';
+  return locale ?? detectBrowserLanguage();
 }
 
 // The workspace's own language — the one the base columns are authored in, so
