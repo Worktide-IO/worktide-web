@@ -1,7 +1,7 @@
 import { useList } from '@refinedev/core';
 import { useLiveResource } from '@/lib/mercure';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, FolderPlus, Package, Plus, Search } from 'lucide-react';
+import { ChevronRight, FolderPlus, FolderTree, Package, Plus, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
@@ -80,7 +80,11 @@ function TreeNodeRow({
         ) : (
           <span className="w-3.5 shrink-0" />
         )}
-        <Package className="size-3.5 shrink-0 text-muted-foreground" />
+        {hasChildren ? (
+          <FolderTree className="size-3.5 shrink-0 text-muted-foreground" />
+        ) : (
+          <Package className="size-3.5 shrink-0 text-muted-foreground" />
+        )}
         <span className="min-w-0 flex-1 truncate text-sm font-medium">
           {p.name}<span className="text-xs font-normal text-muted-foreground">{childCount}</span>
         </span>
