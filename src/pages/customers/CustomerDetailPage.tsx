@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CustomerPortalCard } from '@/components/CustomerPortalCard';
 import { CustomerSlaCard } from '@/components/CustomerSlaCard';
 import { CustomerAgreementsTab } from './CustomerAgreementsTab';
+import { CustomerBookmarksTab } from './CustomerBookmarksTab';
 import { CustomerFilesTab } from './CustomerFilesTab';
 import { CustomerProductsTab } from './CustomerProductsTab';
 import { CustomerServicesTab } from './CustomerServicesTab';
@@ -172,6 +173,7 @@ export function CustomerDetailPage() {
           <TabsTrigger value="agreements">{t('customer_detail.tab_agreements')}</TabsTrigger>
           <TabsTrigger value="products">{t('customer_detail.tab_products')}</TabsTrigger>
           <TabsTrigger value="files">{t('customer_detail.tab_files')}</TabsTrigger>
+          <TabsTrigger value="bookmarks">{t('customer_detail.tab_bookmarks')}</TabsTrigger>
           <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="pt-4">
@@ -200,6 +202,9 @@ export function CustomerDetailPage() {
         </TabsContent>
         <TabsContent value="files" className="pt-4">
           {id ? <CustomerFilesTab customerId={id} /> : null}
+        </TabsContent>
+        <TabsContent value="bookmarks" className="pt-4">
+          {id ? <CustomerBookmarksTab customerIri={iri} /> : null}
         </TabsContent>
         <TabsContent value="newsletter" className="pt-4">
           {id ? <CustomerNewslettersTab customerId={id} /> : null}

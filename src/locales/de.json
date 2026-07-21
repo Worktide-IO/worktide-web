@@ -2375,6 +2375,7 @@
   "customer_detail.tab_products": "Produkte",
   "customer_detail.tab_projects": "Projekte",
   "customer_detail.tab_files": "Dateien",
+  "customer_detail.tab_bookmarks": "Zugänge",
   "customer_projects.title": "Projekte ({{n}})",
   "customer_projects.empty": "Dieser Kunde hat noch keine Projekte.",
   "customer_projects.col_project": "Projekt",
@@ -2904,5 +2905,19 @@
   "error.boundary.reload": "Seite neu laden",
   "error.boundary.report": "Problem melden",
   "error.boundary.report_prefix": "Fehler: {{message}}",
-  "error.boundary.report_desc": "Dieser Bereich ist abgestürzt. Technische Details werden automatisch mitgesendet."
+  "error.boundary.report_desc": "Dieser Bereich ist abgestürzt. Technische Details werden automatisch mitgesendet.",
+
+  "nav.customer_bookmarks": "Zugänge",
+  "customer_bookmarks.empty": "Noch keine Zugänge.",
+  "customer_bookmarks.create": "Zugang anlegen",
+  "customer_bookmarks.edit": "Zugang bearbeiten",
+  "customer_bookmarks.label": "Bezeichnung",
+  "customer_bookmarks.type": "Typ",
+  "customer_bookmarks.host": "Host",
+  "customer_bookmarks.port": "Port",
+  "customer_bookmarks.remote_path": "Remote-Pfad",
+  "customer_bookmarks.database": "Datenbank",
+  "customer_bookmarks.username": "Benutzername",
+  "customer_bookmarks.password": "Passwort",
+  "customer_bookmarks.notes": "Notizen",
 }

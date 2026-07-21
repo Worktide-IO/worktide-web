@@ -2375,6 +2375,7 @@
   "customer_detail.tab_products": "Products",
   "customer_detail.tab_projects": "Projects",
   "customer_detail.tab_files": "Files",
+  "customer_detail.tab_bookmarks": "Access",
   "customer_projects.title": "Projects ({{n}})",
   "customer_projects.empty": "This customer has no projects yet.",
   "customer_projects.col_project": "Project",
@@ -2904,5 +2905,19 @@
   "error.boundary.reload": "Reload page",
   "error.boundary.report": "Report issue",
   "error.boundary.report_prefix": "Error: {{message}}",
-  "error.boundary.report_desc": "This area crashed. Technical details will be sent automatically."
+  "error.boundary.report_desc": "This area crashed. Technical details will be sent automatically.",
+
+  "nav.customer_bookmarks": "Access bookmarks",
+  "customer_bookmarks.empty": "No bookmarks yet.",
+  "customer_bookmarks.create": "Add bookmark",
+  "customer_bookmarks.edit": "Edit bookmark",
+  "customer_bookmarks.label": "Label",
+  "customer_bookmarks.type": "Type",
+  "customer_bookmarks.host": "Host",
+  "customer_bookmarks.port": "Port",
+  "customer_bookmarks.remote_path": "Remote path",
+  "customer_bookmarks.database": "Database",
+  "customer_bookmarks.username": "Username",
+  "customer_bookmarks.password": "Password",
+  "customer_bookmarks.notes": "Notes",
 }
