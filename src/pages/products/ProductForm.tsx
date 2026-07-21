@@ -1,8 +1,8 @@
-import { useList, useInvalidate } from '@refinedev/core';
+import { useList, useInvalidate, useCreate, useDelete } from '@refinedev/core';
 import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { useForm } from '@refinedev/react-hook-form';
-import { ArrowLeft, Check, ChevronsUpDown, Loader2, Plus, Save, Sparkles, Tag, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, ChevronsUpDown, GripVertical, Loader2, Plus, Save, Sparkles, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
@@ -14,6 +14,7 @@ import { useMercureTopic } from '@/lib/mercure';
 import {
   releaseVersion,
   VERSION_STATUS_BADGE,
+  type ProductFeatureJsonld,
   type ProductJsonld,
   type ProductType,
   type ProductVersionJsonld,
@@ -470,24 +471,7 @@ function ProductVersionsCard({
           <ul className="divide-y">
             {rows.map((v) => {
               const badge = VERSION_STATUS_BADGE[(v.status ?? 'supported') as ProductVersionStatus];
-              return (
-                <li key={v['@id']} className="flex items-center justify-between py-2">
-                  <span className="flex items-center gap-2 text-sm">
-                    <span className="font-mono">{v.version}</span>
-                    {v.isLatest ? (
-                      <Badge variant="default" className="text-[10px]">
-                        latest
-                      </Badge>
-                    ) : null}
-                    <Badge variant={badge.variant} className="text-[10px]">
-                      {t(badge.label)}
-                    </Badge>
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {v.releaseDate ? new Date(v.releaseDate).toLocaleDateString(intlLocale()) : '—'}
-                  </span>
-                </li>
-              );
+              return <VersionRow key={v['@id']} version={v} badge={badge} onChange={onChange} />;
             })}
           </ul>
         )}
@@ -542,6 +526,190 @@ function ProductVersionsCard({
         </DialogContent>
       </Dialog>
     </Card>
+  );
+}
+
+function VersionRow({
+  version,
+  badge,
+  onChange,
+}: {
+  version: Row<ProductVersionJsonld>;
+  badge: { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' };
+  onChange: () => void;
+}) {
+  const { t } = useTranslation();
+  const [featuresOpen, setFeaturesOpen] = useState(false);
+  const versionIri = version['@id'];
+
+  const { result: featuresResult } = useList<Row<ProductFeatureJsonld>>({
+    resource: 'product_features',
+    filters: versionIri ? [{ field: 'version', operator: 'eq', value: versionIri }] : [],
+    sorters: [{ field: 'position', order: 'asc' }],
+    pagination: { mode: 'off' },
+    queryOptions: { enabled: featuresOpen },
+  });
+  const features = featuresResult?.data ?? [];
+
+  return (
+    <li>
+      <div
+        className="flex cursor-pointer items-center justify-between py-2 hover:bg-muted/30"
+        onClick={() => setFeaturesOpen((v) => !v)}
+      >
+        <span className="flex items-center gap-2 text-sm">
+          <ChevronRight
+            className={`size-3.5 text-muted-foreground transition-transform ${featuresOpen ? 'rotate-90' : ''}`}
+          />
+          <span className="font-mono">{version.version}</span>
+          {version.isLatest ? (
+            <Badge variant="default" className="text-[10px]">
+              latest
+            </Badge>
+          ) : null}
+          <Badge variant={badge.variant} className="text-[10px]">
+            {t(badge.label)}
+          </Badge>
+          {features.length > 0 && !featuresOpen ? (
+            <span className="text-xs text-muted-foreground">
+              {t('product_form.feature_count', { count: features.length })}
+            </span>
+          ) : null}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {version.releaseDate
+            ? new Date(version.releaseDate).toLocaleDateString(intlLocale())
+            : '—'}
+        </span>
+      </div>
+      {featuresOpen ? (
+        <div className="mb-2 ml-7 space-y-1">
+          {features.map((f) => (
+            <FeatureRow key={f['@id']} feature={f} onChanged={onChange} />
+          ))}
+          <AddFeatureForm versionIri={versionIri!} position={features.length} onAdded={onChange} />
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
+function FeatureRow({
+  feature,
+  onChanged,
+}: {
+  feature: Row<ProductFeatureJsonld>;
+  onChanged: () => void;
+}) {
+  const { mutate: remove } = useDelete();
+
+  return (
+    <div className="flex items-center gap-2 rounded border px-2 py-1 text-sm">
+      <GripVertical className="size-3.5 shrink-0 text-muted-foreground" />
+      {feature.icon ? (
+        <span className="shrink-0 text-xs">{feature.icon}</span>
+      ) : null}
+      <span className="min-w-0 flex-1 truncate font-medium">{feature.name}</span>
+      {feature.description ? (
+        <span className="hidden text-muted-foreground md:inline md:max-w-[200px] md:truncate">
+          {feature.description}
+        </span>
+      ) : null}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="size-6 shrink-0"
+        onClick={() =>
+          remove(
+            { resource: 'product_features', id: feature.id! },
+            { onSuccess: onChanged },
+          )
+        }
+      >
+        <Trash2 className="size-3" />
+      </Button>
+    </div>
+  );
+}
+
+function AddFeatureForm({
+  versionIri,
+  position,
+  onAdded,
+}: {
+  versionIri: string;
+  position: number;
+  onAdded: () => void;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [icon, setIcon] = useState('');
+  const { mutate: create, mutation: createMut } = useCreate();
+  const creating = createMut.isPending;
+
+  const submit = () => {
+    if (!name.trim()) return;
+    create(
+      {
+        resource: 'product_features',
+        values: {
+          version: versionIri,
+          name: name.trim(),
+          icon: icon.trim() || null,
+          position,
+        },
+      },
+      {
+        onSuccess: () => {
+          setName('');
+          setIcon('');
+          setOpen(false);
+          onAdded();
+        },
+      },
+    );
+  };
+
+  if (!open) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-7 text-xs"
+        onClick={() => setOpen(true)}
+      >
+        <Plus className="size-3" /> {t('product_form.add_feature')}
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        className="h-7 flex-1 text-xs"
+        placeholder={t('product_form.feature_icon_placeholder')}
+        value={icon}
+        onChange={(e) => setIcon(e.target.value)}
+        maxLength={40}
+      />
+      <Input
+        className="h-7 flex-[2] text-xs"
+        placeholder={t('product_form.feature_name_placeholder')}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && submit()}
+        autoFocus
+      />
+      <Button type="button" size="sm" className="h-7 text-xs" onClick={submit} disabled={creating || !name.trim()}>
+        {t('action.save')}
+      </Button>
+      <Button type="button" variant="ghost" size="icon" className="size-6" onClick={() => setOpen(false)}>
+        <X className="size-3" />
+      </Button>
+    </div>
   );
 }
 

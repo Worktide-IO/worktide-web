@@ -37,6 +37,17 @@ export type ProductVersionJsonld = HydraItemBaseSchema & {
   releaseNotes?: string | null;
   status?: ProductVersionStatus;
   isLatest?: boolean;
+  /** IRIs of features attached to this version. */
+  features?: string[];
+};
+
+export type ProductFeatureJsonld = HydraItemBaseSchema & {
+  id?: string | null;
+  version?: string;
+  name: string;
+  description?: string | null;
+  position?: number;
+  icon?: string | null;
 };
 
 export type CustomerProductJsonld = HydraItemBaseSchema & {
