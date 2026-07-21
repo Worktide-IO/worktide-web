@@ -211,6 +211,7 @@ export default function App() {
             // Kalender & Planung (sub-items unter einem Parent)
             {
               name: '_planning',
+              list: '/calendar',
               meta: {
                 label: 'nav.planning',
                 icon: 'CalendarDays',
@@ -270,6 +271,7 @@ export default function App() {
             // Produkte & Services (sub-items)
             {
               name: '_products',
+              list: '/produkte',
               meta: {
                 label: 'nav.products_services',
                 icon: 'Package',
@@ -285,6 +287,7 @@ export default function App() {
             // Research (sub-items)
             {
               name: '_research',
+              list: '/research/missions',
               meta: {
                 label: 'nav.research',
                 icon: 'Compass',
@@ -346,6 +349,7 @@ export default function App() {
             },
             {
               name: '_integrations',
+              list: '/webhooks',
               meta: {
                 label: 'nav.integrations',
                 icon: 'Webhook',
