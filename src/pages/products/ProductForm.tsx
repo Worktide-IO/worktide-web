@@ -1,4 +1,4 @@
-import { useList, useInvalidate, useCreate, useDelete } from '@refinedev/core';
+import { useList, useInvalidate, useCreate, useDelete, useUpdate } from '@refinedev/core';
 import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { useForm } from '@refinedev/react-hook-form';
@@ -14,7 +14,9 @@ import { useMercureTopic } from '@/lib/mercure';
 import {
   releaseVersion,
   VERSION_STATUS_BADGE,
+  FEATURE_KIND_BADGE,
   type ProductFeatureJsonld,
+  type ProductFeatureKind,
   type ProductJsonld,
   type ProductType,
   type ProductVersionJsonld,
@@ -601,35 +603,159 @@ function FeatureRow({
   feature: Row<ProductFeatureJsonld>;
   onChanged: () => void;
 }) {
+  const { t } = useTranslation();
   const { mutate: remove } = useDelete();
+  const [editOpen, setEditOpen] = useState(false);
+  const kindBadge = feature.kind ? FEATURE_KIND_BADGE[feature.kind as ProductFeatureKind] : null;
 
   return (
-    <div className="flex items-center gap-2 rounded border px-2 py-1 text-sm">
-      <GripVertical className="size-3.5 shrink-0 text-muted-foreground" />
-      {feature.icon ? (
-        <span className="shrink-0 text-xs">{feature.icon}</span>
-      ) : null}
-      <span className="min-w-0 flex-1 truncate font-medium">{feature.name}</span>
-      {feature.description ? (
-        <span className="hidden text-muted-foreground md:inline md:max-w-[200px] md:truncate">
-          {feature.description}
-        </span>
-      ) : null}
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="size-6 shrink-0"
-        onClick={() =>
-          remove(
-            { resource: 'product_features', id: feature.id! },
-            { onSuccess: onChanged },
-          )
-        }
+    <>
+      <div
+        className="flex cursor-pointer items-center gap-2 rounded border px-2 py-1 text-sm hover:bg-muted/30"
+        onClick={() => setEditOpen(true)}
       >
-        <Trash2 className="size-3" />
-      </Button>
-    </div>
+        <GripVertical className="size-3.5 shrink-0 text-muted-foreground" />
+        {feature.icon ? (
+          <span className="shrink-0 text-xs">{feature.icon}</span>
+        ) : null}
+        <span className="min-w-0 flex-1 truncate font-medium">{feature.name}</span>
+        {kindBadge ? (
+          <Badge variant={kindBadge.variant} className="text-[10px] shrink-0">
+            {t(kindBadge.label)}
+          </Badge>
+        ) : null}
+        {feature.description ? (
+          <span className="hidden text-muted-foreground md:inline md:max-w-[150px] md:truncate">
+            {feature.description}
+          </span>
+        ) : null}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-6 shrink-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            remove(
+              { resource: 'product_features', id: feature.id! },
+              { onSuccess: onChanged },
+            );
+          }}
+        >
+          <Trash2 className="size-3" />
+        </Button>
+      </div>
+      <FeatureEditDialog
+        feature={feature}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSaved={onChanged}
+      />
+    </>
+  );
+}
+
+function FeatureEditDialog({
+  feature,
+  open,
+  onOpenChange,
+  onSaved,
+}: {
+  feature: Row<ProductFeatureJsonld>;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onSaved: () => void;
+}) {
+  const { t } = useTranslation();
+  const [name, setName] = useState(feature.name ?? '');
+  const [icon, setIcon] = useState(feature.icon ?? '');
+  const [desc, setDesc] = useState(feature.description ?? '');
+  const [kind, setKind] = useState<string>(feature.kind ?? 'new');
+  const { mutate: update, mutation: updateMut } = useUpdate();
+
+  useEffect(() => {
+    if (open) {
+      setName(feature.name ?? '');
+      setIcon(feature.icon ?? '');
+      setDesc(feature.description ?? '');
+      setKind(feature.kind ?? 'new');
+    }
+  }, [open, feature]);
+
+  const submit = () => {
+    if (!name.trim()) return;
+    update(
+      {
+        resource: 'product_features',
+        id: feature.id!,
+        values: { name: name.trim(), icon: icon.trim() || null, description: desc.trim() || null, kind: kind || null },
+      },
+      {
+        onSuccess: () => {
+          onOpenChange(false);
+          onSaved();
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('product_form.edit_feature')}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-[60px_1fr] gap-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="feat-icon">{t('product_form.feature_icon_placeholder')}</Label>
+              <Input
+                id="feat-icon"
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+                maxLength={40}
+                placeholder="🎯"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="feat-name">Name</Label>
+              <Input
+                id="feat-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && submit()}
+                autoFocus
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="feat-desc">{t('product_form.description')}</Label>
+            <Textarea id="feat-desc" rows={2} value={desc} onChange={(e) => setDesc(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Typ</Label>
+            <Select value={kind} onValueChange={setKind}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="new">{t('product.feature_kind.new')}</SelectItem>
+                <SelectItem value="improved">{t('product.feature_kind.improved')}</SelectItem>
+                <SelectItem value="fixed">{t('product.feature_kind.fixed')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={updateMut.isPending}>
+            {t('action.cancel')}
+          </Button>
+          <Button type="button" onClick={submit} disabled={updateMut.isPending || !name.trim()}>
+            {t('action.save')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -646,6 +772,7 @@ function AddFeatureForm({
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('');
+  const [kind, setKind] = useState<string>('new');
   const { mutate: create, mutation: createMut } = useCreate();
   const creating = createMut.isPending;
 
@@ -659,12 +786,14 @@ function AddFeatureForm({
           name: name.trim(),
           icon: icon.trim() || null,
           position,
+          kind,
         },
       },
       {
         onSuccess: () => {
           setName('');
           setIcon('');
+          setKind('new');
           setOpen(false);
           onAdded();
         },
@@ -689,7 +818,7 @@ function AddFeatureForm({
   return (
     <div className="flex items-center gap-2">
       <Input
-        className="h-7 flex-1 text-xs"
+        className="h-7 w-14 text-xs"
         placeholder={t('product_form.feature_icon_placeholder')}
         value={icon}
         onChange={(e) => setIcon(e.target.value)}
@@ -703,6 +832,16 @@ function AddFeatureForm({
         onKeyDown={(e) => e.key === 'Enter' && submit()}
         autoFocus
       />
+      <Select value={kind} onValueChange={setKind}>
+        <SelectTrigger className="h-7 w-24 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="new">{t('product.feature_kind.new')}</SelectItem>
+          <SelectItem value="improved">{t('product.feature_kind.improved')}</SelectItem>
+          <SelectItem value="fixed">{t('product.feature_kind.fixed')}</SelectItem>
+        </SelectContent>
+      </Select>
       <Button type="button" size="sm" className="h-7 text-xs" onClick={submit} disabled={creating || !name.trim()}>
         {t('action.save')}
       </Button>
