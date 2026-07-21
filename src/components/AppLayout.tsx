@@ -18,7 +18,7 @@ import { PendingMutationsToast } from '@/components/PendingMutationsToast';
 import { QuickAddDialog } from '@/components/QuickAddDialog';
 import { FeedbackWidget, openFeedback } from '@/components/feedback/FeedbackWidget';
 import { Button } from '@/components/ui/button';
-import { MessageSquarePlus } from 'lucide-react';
+import { MessageSquarePlus, Search } from 'lucide-react';
 import { UserMenu } from '@/components/UserMenu';
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher';
 import { DevToolsBridge } from '@/components/DevToolsBridge';
@@ -135,6 +135,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <Separator orientation="vertical" className="h-6" />
           <BrandLogo className="h-6 w-auto" />
           <div className="ml-auto flex items-center gap-1">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="gap-1.5 text-muted-foreground"
+              onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { metaKey: true, ctrlKey: true, key: '/' }))}
+              aria-label={t('search.trigger_aria')}
+              title={t('search.trigger_aria')}
+            >
+              <Search className="size-4" />
+              <span className="hidden sm:inline text-xs">{t('search.trigger_label')}</span>
+              <kbd className="hidden lg:inline-flex items-center gap-0.5 rounded border bg-muted px-1.5 text-[10px] font-medium text-muted-foreground">
+                <span>/</span>
+              </kbd>
+            </Button>
             <Button
               type="button"
               size="icon"

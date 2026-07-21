@@ -2190,6 +2190,8 @@
   "search.placeholder": "Suche Mail, Aufgaben, Kunden, Kontakte, Projekte, Dokumente…",
   "search.hint": "Cmd+/ oder Ctrl+/ öffnet die Suche",
   "search.esc_closes": "Esc schließt",
+  "search.trigger_aria": "Globale Suche",
+  "search.trigger_label": "Suche",
   "search.min_chars": "Mindestens 2 Zeichen eingeben.",
   "search.searching": "Suche läuft …",
   "search.no_results": "Keine Treffer.",

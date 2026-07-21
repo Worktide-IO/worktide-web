@@ -2190,6 +2190,8 @@
   "search.placeholder": "Search mail, tasks, customers, contacts, projects, documents…",
   "search.hint": "Cmd+/ or Ctrl+/ opens search",
   "search.esc_closes": "Esc closes",
+  "search.trigger_aria": "Search everything",
+  "search.trigger_label": "Search",
   "search.min_chars": "Enter at least 2 characters.",
   "search.searching": "Searching …",
   "search.no_results": "No results.",
