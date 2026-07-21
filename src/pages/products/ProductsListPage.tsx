@@ -1,4 +1,5 @@
 import { useTable } from '@refinedev/core';
+import { useLiveResource } from '@/lib/mercure';
 import { useTranslation } from 'react-i18next';
 import { Boxes, Package, Plus, Search, Wrench } from 'lucide-react';
 import { useState } from 'react';
@@ -38,6 +39,7 @@ import {
  * Products are versioned (managed on the detail page); services are versionless.
  */
 export function ProductsListPage() {
+  useLiveResource('products');
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');

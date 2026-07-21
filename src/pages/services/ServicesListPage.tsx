@@ -1,4 +1,5 @@
 import { useList, useTable } from '@refinedev/core';
+import { useLiveResource } from '@/lib/mercure';
 import { useTranslation } from 'react-i18next';
 import { ConciergeBell, Plus, Search, Wrench } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -27,6 +28,7 @@ import {
  * page); the current version's price is shown here for a quick overview.
  */
 export function ServicesListPage() {
+  useLiveResource('services');
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
