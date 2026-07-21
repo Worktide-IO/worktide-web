@@ -2,7 +2,7 @@ import { useList, useInvalidate } from '@refinedev/core';
 import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { useForm } from '@refinedev/react-hook-form';
-import { ArrowLeft, Check, Loader2, Plus, Save, Sparkles, Tag, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronsUpDown, Loader2, Plus, Save, Sparkles, Tag, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
@@ -32,6 +32,20 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -149,7 +163,7 @@ export function ProductForm(props: Mode) {
               <Input id="slug" placeholder={t('product_form.slug_placeholder')} {...register('slug')} />
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>{t('product_form.type')}</Label>
                 <Controller
@@ -187,9 +201,25 @@ export function ProductForm(props: Mode) {
                   )}
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="category">{t('product_form.category')}</Label>
                 <Input id="category" {...register('category')} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t('product_form.parent')}</Label>
+                <Controller
+                  control={control}
+                  name="parent"
+                  render={({ field }) => (
+                    <ParentSelect
+                      value={(field.value as string | undefined) ?? undefined}
+                      onChange={field.onChange}
+                      excludeId={isEdit ? props.id : undefined}
+                    />
+                  )}
+                />
               </div>
             </div>
 
@@ -512,5 +542,81 @@ function ProductVersionsCard({
         </DialogContent>
       </Dialog>
     </Card>
+  );
+}
+
+function ParentSelect({
+  value,
+  onChange,
+  excludeId,
+}: {
+  value: string | undefined;
+  onChange: (v: string | undefined) => void;
+  excludeId?: string;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+
+  const { result } = useList<Row<ProductJsonld>>({
+    resource: 'products',
+    filters: [{ field: 'type', operator: 'eq', value: 'product' }],
+    sorters: [{ field: 'name', order: 'asc' }],
+    pagination: { mode: 'off' },
+  });
+
+  const products = (result?.data ?? []).filter(
+    (p: Row<ProductJsonld>) => p['@id'] !== `/v1/products/${excludeId}`,
+  );
+  const selected = products.find((p: Row<ProductJsonld>) => p['@id'] === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal"
+        >
+          {selected ? selected.name : t('product_form.parent_none')}
+          <ChevronsUpDown className="size-3.5 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+        <Command>
+          <CommandInput placeholder={t('product_list.search_name')} />
+          <CommandList>
+            <CommandEmpty>{t('product_list.no_matches')}</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value="__none__"
+                onSelect={() => {
+                  onChange(undefined);
+                  setOpen(false);
+                }}
+              >
+                <span className={cn(!value && 'font-medium')}>
+                  {t('product_form.parent_none')}
+                </span>
+              </CommandItem>
+              {products.map((p: Row<ProductJsonld>) => (
+                <CommandItem
+                  key={p['@id']}
+                  value={p.name ?? ''}
+                  onSelect={() => {
+                    onChange(p['@id']);
+                    setOpen(false);
+                  }}
+                >
+                  <span className={cn(p['@id'] === value && 'font-medium')}>
+                    {p.name}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

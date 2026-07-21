@@ -1,8 +1,8 @@
 import { useList } from '@refinedev/core';
 import { useLiveResource } from '@/lib/mercure';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, Package, Plus, Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ChevronRight, FolderPlus, Package, Plus, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
 import type { Row } from '@/lib/refine';
@@ -109,6 +109,10 @@ export function ProductsListPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
 
+  useEffect(() => {
+    document.title = `${t('product_list.title')} \u00B7 Worktide`;
+  }, [t]);
+
   const { result, query } = useList<P>({
     resource: 'products',
     filters: [{ field: 'type', operator: 'eq', value: 'product' }],
@@ -136,11 +140,18 @@ export function ProductsListPage() {
         <h2 className="flex items-center gap-2 text-2xl">
           <Package className="size-6 text-muted-foreground" /> {t('product_list.title')}
         </h2>
-        <Button asChild>
-          <Link to="/produkte/create">
-            <Plus className="size-4" /> {t('product_list.new')}
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/produkte/create?category=1">
+              <FolderPlus className="size-4" /> {t('product_list.new_category')}
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link to="/produkte/create">
+              <Plus className="size-4" /> {t('product_list.new')}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
