@@ -1,17 +1,15 @@
 import { useList } from '@refinedev/core';
 import { useLiveResource } from '@/lib/mercure';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, Package, Plus, Search, Wrench } from 'lucide-react';
+import { ChevronRight, Package, Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
 import type { Row } from '@/lib/refine';
 import {
   PRODUCT_STATUS_BADGE,
-  PRODUCT_TYPE_LABEL,
   type ProductJsonld,
   type ProductStatus,
-  type ProductType,
 } from '@/lib/catalog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -61,47 +59,47 @@ function TreeNodeRow({
   onSelect: (id: string) => void;
 }) {
   const { t } = useTranslation();
+  const [open, setOpen] = useState(true);
   const p = node.product;
   const badge = PRODUCT_STATUS_BADGE[(p.status ?? 'active') as ProductStatus];
+  const hasChildren = node.children.length > 0;
+  const childCount = hasChildren ? ` (${node.children.length})` : '';
 
   return (
-    <>
+    <div>
       <div
         className="flex cursor-pointer items-center gap-2 border-b px-3 py-2 hover:bg-muted/50"
         style={{ paddingLeft: `${12 + depth * 20}px` }}
-        onClick={() => p.id && onSelect(p.id)}
+        onClick={() => {
+          if (hasChildren) setOpen((v) => !v);
+          else if (p.id) onSelect(p.id);
+        }}
       >
-        {node.children.length > 0 ? (
-          <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+        {hasChildren ? (
+          <ChevronRight className={`size-3.5 shrink-0 text-muted-foreground transition-transform ${open ? 'rotate-90' : ''}`} />
         ) : (
           <span className="w-3.5 shrink-0" />
         )}
-        <span className="flex items-center gap-1.5 min-w-0">
-          {p.type === 'service' ? (
-            <Wrench className="size-3.5 shrink-0 text-muted-foreground" />
-          ) : (
-            <Package className="size-3.5 shrink-0 text-muted-foreground" />
-          )}
-          <span className="truncate text-sm font-medium">{p.name}</span>
+        <Package className="size-3.5 shrink-0 text-muted-foreground" />
+        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+          {p.name}<span className="text-xs font-normal text-muted-foreground">{childCount}</span>
         </span>
-        <span className="ml-auto flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
-          {p.category ? <span>{p.category}</span> : null}
-          {badge ? (
-            <Badge variant={badge.variant} className="text-[10px]">
-              {t(badge.label)}
-            </Badge>
-          ) : null}
-        </span>
+        {badge ? (
+          <Badge variant={badge.variant} className="text-[10px] shrink-0">
+            {t(badge.label)}
+          </Badge>
+        ) : null}
       </div>
-      {node.children.map((child) => (
-        <TreeNodeRow
-          key={child.product['@id']}
-          node={child}
-          depth={depth + 1}
-          onSelect={onSelect}
-        />
-      ))}
-    </>
+      {open &&
+        node.children.map((child) => (
+          <TreeNodeRow
+            key={child.product['@id']}
+            node={child}
+            depth={depth + 1}
+            onSelect={onSelect}
+          />
+        ))}
+    </div>
   );
 }
 
@@ -110,10 +108,10 @@ export function ProductsListPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
 
   const { result, query } = useList<P>({
     resource: 'products',
+    filters: [{ field: 'type', operator: 'eq', value: 'product' }],
     sorters: [{ field: 'position', order: 'asc' }, { field: 'name', order: 'asc' }],
     pagination: { mode: 'off' },
   });
@@ -122,21 +120,15 @@ export function ProductsListPage() {
 
   const tree = useMemo(() => {
     let filtered = products;
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter((p) => p.type === typeFilter);
-    }
     if (search.trim()) {
       const q = search.toLowerCase();
       filtered = filtered.filter(
         (p) =>
-          (p.name ?? '').toLowerCase().includes(q) ||
-          (p.category ?? '').toLowerCase().includes(q),
+          (p.name ?? '').toLowerCase().includes(q),
       );
     }
     return buildTree(filtered);
-  }, [products, typeFilter, search]);
-
-  const isLoading = query.isLoading;
+  }, [products, search]);
 
   return (
     <div className="space-y-4">
@@ -152,37 +144,19 @@ export function ProductsListPage() {
       </div>
 
       <Card>
-        <CardHeader className="gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex-1 min-w-[240px] max-w-md">
-              <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-              <Input
-                placeholder={t('product_list.search_name')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-            <div className="flex gap-1 rounded-md border p-0.5">
-              {(['all', 'product', 'service'] as const).map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setTypeFilter(v)}
-                  className={`rounded-sm px-3 py-1 text-xs font-medium ${
-                    typeFilter === v
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {v === 'all' ? t('product_list.all_types') : t(PRODUCT_TYPE_LABEL[v as ProductType])}
-                </button>
-              ))}
-            </div>
+        <CardHeader className="pb-2">
+          <div className="relative max-w-md">
+            <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              placeholder={t('product_list.search_name')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8"
+            />
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {isLoading ? (
+          {query.isLoading ? (
             <div className="space-y-1 p-3">
               {[0, 1, 2, 3, 4].map((i) => (
                 <Skeleton key={i} className="h-9 w-full" />
