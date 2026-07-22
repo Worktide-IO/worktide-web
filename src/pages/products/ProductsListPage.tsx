@@ -64,6 +64,8 @@ function TreeNodeRow({
   const badge = PRODUCT_STATUS_BADGE[(p.status ?? 'active') as ProductStatus];
   const hasChildren = node.children.length > 0;
   const childCount = hasChildren ? ` (${node.children.length})` : '';
+  const sourceWs = (p as unknown as Record<string, unknown>).sourceWorkspace as string | undefined;
+  const isShared = !!sourceWs;
 
   return (
     <div>
@@ -91,6 +93,11 @@ function TreeNodeRow({
         {badge ? (
           <Badge variant={badge.variant} className="text-[10px] shrink-0">
             {t(badge.label)}
+          </Badge>
+        ) : null}
+        {isShared ? (
+          <Badge variant="outline" className="text-[10px] shrink-0">
+            {t('product_list.shared')}
           </Badge>
         ) : null}
       </div>

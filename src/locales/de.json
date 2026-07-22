@@ -2500,6 +2500,7 @@
   "product_list.col_type": "Typ",
   "product_list.col_status": "Status",
   "product_list.col_category": "Kategorie",
+  "product_list.shared": "Geteilt",
   "lead_list.title": "Leads",
   "lead_list.count_in_workspace": "{{count}} Leads im Workspace",
   "lead_list.search_name": "Name suchen…",
