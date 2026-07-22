@@ -476,21 +476,22 @@ export function AiAgentsOverviewPage() {
 }
 
 function RecommendationDetail({ rec }: { rec: AiRecommendation }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const s = rec.suggestion;
+  const reasoning = i18n.language === 'de' && rec.reasoningDe ? rec.reasoningDe : rec.reasoning;
 
   return (
     <div className="space-y-3 text-sm">
-      {rec.reasoning ? (
+      {reasoning ? (
         <div>
           <p className="mb-1 text-xs font-medium text-muted-foreground">{t('ai_agents.reasoning')}</p>
-          <p className="whitespace-pre-wrap leading-relaxed">{rec.reasoning}</p>
+          <p className="whitespace-pre-wrap leading-relaxed">{reasoning}</p>
         </div>
       ) : null}
 
       {rec.kind === 'marketing_social_draft' && s ? (
         <>
-          {rec.reasoning ? <Separator className="my-2" /> : null}
+          {reasoning ? <Separator className="my-2" /> : null}
           <p className="mb-1 text-xs font-medium text-muted-foreground">{t('ai_agents.variants')}</p>
           <p className="font-medium">{s.summary}</p>
           {(s.variants ?? []).map((v: AiSocialVariant, i: number) => (
@@ -504,7 +505,7 @@ function RecommendationDetail({ rec }: { rec: AiRecommendation }) {
 
       {rec.kind === 'product_suggestion' && s ? (
         <>
-          {rec.reasoning ? <Separator className="my-2" /> : null}
+          {reasoning ? <Separator className="my-2" /> : null}
           <p className="font-medium">{s.title}</p>
           {s.description ? (
             <p className="text-muted-foreground">{s.description}</p>
@@ -524,7 +525,7 @@ function RecommendationDetail({ rec }: { rec: AiRecommendation }) {
 
       {rec.kind === 'customer_upgrade_outreach' && s ? (
         <>
-          {rec.reasoning ? <Separator className="my-2" /> : null}
+          {reasoning ? <Separator className="my-2" /> : null}
           <p className="font-medium">{s.subject}</p>
           {s.body ? (
             <p className="whitespace-pre-wrap text-muted-foreground">{s.body}</p>
@@ -534,7 +535,7 @@ function RecommendationDetail({ rec }: { rec: AiRecommendation }) {
 
       {rec.kind === 'research_suggestion' && s ? (
         <>
-          {rec.reasoning ? <Separator className="my-2" /> : null}
+          {reasoning ? <Separator className="my-2" /> : null}
           <p className="font-medium">{s.objective}</p>
           {s.prompt ? (
             <p className="text-muted-foreground">{s.prompt}</p>
@@ -544,7 +545,7 @@ function RecommendationDetail({ rec }: { rec: AiRecommendation }) {
 
       {rec.kind === 'agent_action' && s ? (
         <>
-          {rec.reasoning ? <Separator className="my-2" /> : null}
+          {reasoning ? <Separator className="my-2" /> : null}
           <p className="font-medium">{s.summary}</p>
           {s.payload?.body ? (
             <p className="whitespace-pre-wrap text-muted-foreground">{s.payload.body}</p>
@@ -552,7 +553,7 @@ function RecommendationDetail({ rec }: { rec: AiRecommendation }) {
         </>
       ) : null}
 
-      {!rec.reasoning && !['marketing_social_draft', 'product_suggestion', 'customer_upgrade_outreach', 'research_suggestion', 'agent_action'].includes(rec.kind) ? (
+      {!reasoning && !['marketing_social_draft', 'product_suggestion', 'customer_upgrade_outreach', 'research_suggestion', 'agent_action'].includes(rec.kind) ? (
         <p className="text-xs text-muted-foreground">{t('ai_agents.no_detail')}</p>
       ) : null}
 

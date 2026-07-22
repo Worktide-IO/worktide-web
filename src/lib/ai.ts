@@ -67,6 +67,7 @@ export type AiRecommendation = {
   status: 'pending' | 'accepted' | 'rejected' | 'superseded';
   suggestion: AiSuggestion;
   reasoning?: string | null;
+  reasoningDe?: string | null;
   model?: string | null;
 };
 
