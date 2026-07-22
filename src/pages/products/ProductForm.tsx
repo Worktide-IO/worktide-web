@@ -2,14 +2,14 @@ import { useList, useInvalidate, useCreate, useDelete, useUpdate } from '@refine
 import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { useForm } from '@refinedev/react-hook-form';
-import { ArrowLeft, Check, ChevronRight, ChevronsUpDown, GripVertical, Loader2, Plus, Save, Sparkles, Tag, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, ChevronsUpDown, GripVertical, Loader2, Plus, Save, Share2, Sparkles, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import { aiMarketing, aiTriage, type AiRecommendation } from '@/lib/ai';
-import { readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { api, readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
 import { useMercureTopic } from '@/lib/mercure';
 import {
   releaseVersion,
@@ -132,9 +132,12 @@ export function ProductForm(props: Mode) {
               {isEdit ? (current?.name ?? t('action.edit')) : t('product_form.new_in_catalog')}
             </h2>
           </div>
-          <Button type="submit" disabled={isSubmitting || formLoading}>
-            <Save className="size-4" /> {t('action.save')}
-          </Button>
+          <div className="flex items-center gap-2">
+            <ShareProductButton productId={isEdit ? props.id : undefined} productIri={current?.['@id']} productName={current?.name ?? ''} />
+            <Button type="submit" disabled={isSubmitting || formLoading}>
+              <Save className="size-4" /> {t('action.save')}
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -849,6 +852,136 @@ function AddFeatureForm({
         <X className="size-3" />
       </Button>
     </div>
+  );
+}
+
+function ShareProductButton({
+  productId,
+  productIri,
+  productName,
+}: {
+  productId?: string;
+  productIri?: string;
+  productName: string;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [targetWs, setTargetWs] = useState('');
+  const [message, setMessage] = useState('');
+
+  if (!productId) return null;
+
+  return (
+    <>
+      <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Share2 className="size-4" /> {t('product_form.share')}
+      </Button>
+      <ShareProductDialog
+        open={open}
+        onOpenChange={setOpen}
+        productIri={productIri ?? ''}
+        productName={productName}
+        targetWorkspace={targetWs}
+        onTargetWorkspaceChange={setTargetWs}
+        message={message}
+        onMessageChange={setMessage}
+      />
+    </>
+  );
+}
+
+function ShareProductDialog({
+  open,
+  onOpenChange,
+  productIri,
+  productName,
+  targetWorkspace,
+  onTargetWorkspaceChange,
+  message,
+  onMessageChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  productIri: string;
+  productName: string;
+  targetWorkspace: string;
+  onTargetWorkspaceChange: (v: string) => void;
+  message: string;
+  onMessageChange: (v: string) => void;
+}) {
+  const { t } = useTranslation();
+  const { result: workspacesRes } = useList<Row<{ id: string; name: string }>>({
+    resource: 'workspaces',
+    pagination: { mode: 'off' },
+    filters: [],
+    queryOptions: { enabled: open },
+  });
+  const currentWs = typeof window !== 'undefined' ? localStorage.getItem(WORKSPACE_STORAGE_KEY) : null;
+  const workspaces = (workspacesRes?.data ?? []).filter((w) => w.id !== currentWs);
+
+  const [sharing, setSharing] = useState(false);
+
+  const submit = async () => {
+    if (!targetWorkspace || !productIri) return;
+    setSharing(true);
+    try {
+      const id = productIri.replace('/v1/products/', '');
+      await api.post(`/products/${id}/share`, { targetWorkspace, message: message.trim() || null });
+      toast.success(t('product_form.share_sent'));
+      onOpenChange(false);
+      onTargetWorkspaceChange('');
+      onMessageChange('');
+    } catch (e: unknown) {
+      const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      toast.error(detail ?? t('product_form.share_failed'));
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('product_form.share_title', { name: productName })}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>{t('product_form.share_target_workspace')}</Label>
+            <Select value={targetWorkspace} onValueChange={onTargetWorkspaceChange}>
+              <SelectTrigger>
+                <SelectValue placeholder={t('product_form.share_select_workspace')} />
+              </SelectTrigger>
+              <SelectContent>
+                {workspaces.map((w) => (
+                  <SelectItem key={w.id} value={w.id ?? ''}>
+                    {w.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="share-msg">{t('product_form.share_message')}</Label>
+            <Textarea
+              id="share-msg"
+              rows={2}
+              value={message}
+              onChange={(e) => onMessageChange(e.target.value)}
+              placeholder={t('product_form.share_message_placeholder')}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={sharing}>
+            {t('action.cancel')}
+          </Button>
+          <Button type="button" onClick={submit} disabled={sharing || !targetWorkspace}>
+            <Share2 className="size-4" /> {t('product_form.share_send')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
