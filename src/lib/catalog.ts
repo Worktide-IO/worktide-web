@@ -27,8 +27,6 @@ export type ProductJsonld = HydraItemBaseSchema & {
   latestVersion?: string | null;
   /** IRIs of attached tags (scope 'product' or 'any'). */
   tags?: string[];
-  /** Source workspace IRI if this product was shared from another workspace. */
-  sourceWorkspace?: string | null;
 };
 
 export type ProductVersionJsonld = HydraItemBaseSchema & {

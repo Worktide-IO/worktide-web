@@ -64,8 +64,8 @@ function TreeNodeRow({
   const badge = PRODUCT_STATUS_BADGE[(p.status ?? 'active') as ProductStatus];
   const hasChildren = node.children.length > 0;
   const childCount = hasChildren ? ` (${node.children.length})` : '';
-  const sourceWs = (p as unknown as Record<string, unknown>).sourceWorkspace as string | undefined;
-  const isShared = !!sourceWs;
+  const currentWsIri = `/v1/workspaces/${localStorage.getItem('wt.workspace') ?? ''}`;
+  const isShared = (p.workspace as string | undefined) !== currentWsIri && !!(p.workspace as string | undefined);
 
   return (
     <div>
