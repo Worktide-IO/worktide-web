@@ -230,6 +230,32 @@ export function ProductForm(props: Mode) {
             </div>
 
             <div className="space-y-1.5">
+              <Label>{t('product_form.marketing_text')}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs text-muted-foreground">English</Label>
+                  <Textarea rows={3} placeholder={t('product_form.marketing_text_en')} {...register('marketingText.en')} />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Deutsch</Label>
+                  <Textarea rows={3} placeholder={t('product_form.marketing_text_de')} {...register('marketingText.de')} />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>{t('product_form.media_refs')}</Label>
+              <Controller
+                name="mediaRefs"
+                control={control}
+                render={({ field }) => {
+                  const refs = (field.value as Array<{ url: string; type: string; caption?: string }> | undefined) ?? [];
+                  return <MediaRefsEditor refs={refs} onChange={field.onChange} />;
+                }}
+              />
+            </div>
+
+            <div className="space-y-1.5">
               <Label>{t('product_form.field_tags')}</Label>
               <Controller
                 name="tags"
@@ -982,6 +1008,60 @@ function ShareProductDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function MediaRefsEditor({
+  refs,
+  onChange,
+}: {
+  refs: Array<{ url: string; type: string; caption?: string }>;
+  onChange: (v: Array<{ url: string; type: string; caption?: string }>) => void;
+}) {
+  const { t } = useTranslation();
+
+  const add = () => onChange([...refs, { url: '', type: 'image' }]);
+  const update = (i: number, field: string, value: string) => {
+    const next = [...refs];
+    next[i] = { ...next[i], [field]: value };
+    onChange(next);
+  };
+  const remove = (i: number) => onChange(refs.filter((_, j) => j !== i));
+
+  return (
+    <div className="space-y-2">
+      {refs.map((r, i) => (
+        <div key={i} className="flex items-start gap-2 rounded border px-2 py-1.5">
+          <Select value={r.type} onValueChange={(v) => update(i, 'type', v)}>
+            <SelectTrigger className="h-7 w-24 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="image">{t('product_form.media_image')}</SelectItem>
+              <SelectItem value="video">{t('product_form.media_video')}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input
+            className="h-7 flex-1 text-xs"
+            placeholder={t('product_form.media_url')}
+            value={r.url}
+            onChange={(e) => update(i, 'url', e.target.value)}
+          />
+          <Input
+            className="h-7 w-32 text-xs"
+            placeholder={t('product_form.media_caption')}
+            value={r.caption ?? ''}
+            onChange={(e) => update(i, 'caption', e.target.value)}
+          />
+          <Button type="button" variant="ghost" size="icon" className="size-6 shrink-0" onClick={() => remove(i)}>
+            <Trash2 className="size-3" />
+          </Button>
+        </div>
+      ))}
+      <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={add}>
+        <Plus className="size-3" /> {t('product_form.media_add')}
+      </Button>
+    </div>
   );
 }
 

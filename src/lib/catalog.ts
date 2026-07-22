@@ -23,6 +23,8 @@ export type ProductJsonld = HydraItemBaseSchema & {
   status?: ProductStatus;
   description?: string | null;
   category?: string | null;
+  /** IRI of the owning workspace. */
+  workspace?: string;
   /** IRI of the newest version. */
   latestVersion?: string | null;
   /** IRIs of attached tags (scope 'product' or 'any'). */
