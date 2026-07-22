@@ -67,7 +67,7 @@ export function SocialProfilesCard({ owner, ownerIri }: Props) {
             <a href={row.url} target="_blank" rel="noopener noreferrer" className="flex-1 truncate text-sm text-primary hover:underline">
               {row.handle || row.url}
             </a>
-            <Button type="button" variant="ghost" size="icon" onClick={() => run(() => api.delete(row['@id']))}>
+            <Button type="button" variant="ghost" size="icon" onClick={() => run(() => api.delete(row['@id']))} aria-label={t('action.delete')}>
               <Trash2 className="size-3.5 text-muted-foreground" />
             </Button>
           </div>
@@ -86,6 +86,7 @@ export function SocialProfilesCard({ owner, ownerIri }: Props) {
             size="icon"
             disabled={!/^https?:\/\//.test(url)}
             onClick={() => run(async () => { await api.post('/social_profiles', { [owner]: ownerIri, platform, url }); setUrl(''); })}
+            aria-label={t('channels.add')}
           >
             <Plus className="size-3.5" />
           </Button>

@@ -256,7 +256,7 @@ function TransitionRow({
         {transition.label ?? '—'}
       </TableCell>
       <TableCell className="text-right">
-        <Button variant="ghost" size="icon" className="size-7" onClick={onEdit}>
+        <Button variant="ghost" size="icon" className="size-7" onClick={onEdit} aria-label={translate('action.edit')}>
           <Pencil className="size-3.5" />
         </Button>
         <Button
@@ -265,6 +265,7 @@ function TransitionRow({
           className="size-7"
           onClick={remove}
           disabled={deleting}
+          aria-label={translate('action.delete')}
         >
           {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
         </Button>

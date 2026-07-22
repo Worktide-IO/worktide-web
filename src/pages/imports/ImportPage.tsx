@@ -173,6 +173,7 @@ export function ImportPage() {
       setStep(3);
     } catch (err) {
       console.warn('Import dryRun failed', err);
+      toast.error(t('toast.operation_failed'));
       toast.error(t('toast.validation_failed'));
     } finally {
       setBusy(false);
@@ -206,6 +207,7 @@ export function ImportPage() {
       setDryRunResult(null);
     } catch (err) {
       console.warn('Import commit failed', err);
+      toast.error(t('toast.operation_failed'));
       toast.error(t('toast.import_failed'));
     } finally {
       setBusy(false);

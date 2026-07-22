@@ -37,6 +37,29 @@ export type ProductVersionJsonld = HydraItemBaseSchema & {
   releaseNotes?: string | null;
   status?: ProductVersionStatus;
   isLatest?: boolean;
+  /** IRIs of features attached to this version. */
+  features?: string[];
+};
+
+export type ProductFeatureKind = 'new' | 'improved' | 'fixed';
+
+export type ProductFeatureJsonld = HydraItemBaseSchema & {
+  id?: string | null;
+  version?: string;
+  name: string;
+  description?: string | null;
+  position?: number;
+  icon?: string | null;
+  kind?: ProductFeatureKind | null;
+};
+
+export const FEATURE_KIND_BADGE: Record<
+  ProductFeatureKind,
+  { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
+> = {
+  new: { label: 'product.feature_kind.new', variant: 'default' },
+  improved: { label: 'product.feature_kind.improved', variant: 'secondary' },
+  fixed: { label: 'product.feature_kind.fixed', variant: 'outline' },
 };
 
 export type CustomerProductJsonld = HydraItemBaseSchema & {

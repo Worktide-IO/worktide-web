@@ -1,13 +1,14 @@
 import { useList, useMany } from '@refinedev/core';
 import { useTranslation } from 'react-i18next';
-import { Sparkles, Wifi, WifiOff } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ChevronDown, ChevronUp, Sparkles, Wifi, WifiOff } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
-import type { AiRecommendation } from '@/lib/ai';
+import type { AiRecommendation, AiSocialVariant } from '@/lib/ai';
 import { aiAgent, aiMarketing, aiOutreach, aiTriage } from '@/lib/ai';
 import { readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useMercureTopic } from '@/lib/mercure';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +51,7 @@ const KIND_LABEL: Record<string, string> = {
   customer_upgrade_outreach: 'ai_kind.customer_upgrade_outreach',
   research_suggestion: 'ai_kind.research_suggestion',
   agent_action: 'ai_kind.agent_action',
+  product_suggestion: 'ai_kind.product_suggestion',
 };
 
 const TARGET_LABEL: Record<string, string> = {
@@ -80,6 +82,7 @@ export function AiAgentsOverviewPage() {
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [kindFilter, setKindFilter] = useState<string>('all');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<string>('');
   const [selectedCustomer, setSelectedCustomer] = useState<string>('');
   const [distributionContent, setDistributionContent] = useState<string>('');
@@ -200,7 +203,9 @@ export function AiAgentsOverviewPage() {
               ? t('ai_toast.research_mission')
               : rec.kind === 'agent_action'
                 ? t('ai_toast.draft_generic')
-                : t('ai_toast.recommendation_adopted');
+                : rec.kind === 'product_suggestion'
+                  ? t('ai_toast.idea_created')
+                  : t('ai_toast.recommendation_adopted');
       toast.success(msg);
       await query.refetch();
       if (rec.kind === 'marketing_social_draft') {
@@ -370,6 +375,7 @@ export function AiAgentsOverviewPage() {
                 <SelectItem value="customer_upgrade_outreach">Upgrade-Outreach</SelectItem>
                 <SelectItem value="research_suggestion">{t('ai_agents.kind_research_suggestion')}</SelectItem>
                 <SelectItem value="agent_action">{t('ai_agents.kind_agent_action')}</SelectItem>
+                <SelectItem value="product_suggestion">{t('ai_kind.product_suggestion')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -397,8 +403,12 @@ export function AiAgentsOverviewPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((rec) => (
-                  <TableRow key={rec.id}>
+                {items.map((rec) => {
+                  const isExpanded = expandedId === rec.id;
+                  const toggleExpanded = () => setExpandedId(isExpanded ? null : (rec.id ?? null));
+                  return (
+                  <React.Fragment key={rec.id}>
+                  <TableRow className={isExpanded ? 'border-b-0' : undefined}>
                     <TableCell className="font-medium">{targetLabel(rec)}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-xs">
@@ -410,8 +420,18 @@ export function AiAgentsOverviewPage() {
                         {STATUS_LABEL[rec.status] ? t(STATUS_LABEL[rec.status]) : rec.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      <span className="line-clamp-2">{summaryOf(rec)}</span>
+                    <TableCell
+                      className="cursor-pointer text-sm text-muted-foreground"
+                      onClick={toggleExpanded}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className="line-clamp-2 flex-1">{summaryOf(rec)}</span>
+                        {isExpanded ? (
+                          <ChevronUp className="size-3.5 shrink-0" />
+                        ) : (
+                          <ChevronDown className="size-3.5 shrink-0" />
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       {rec.status === 'pending' ? (
@@ -437,12 +457,111 @@ export function AiAgentsOverviewPage() {
                       )}
                     </TableCell>
                   </TableRow>
-                ))}
+                  {isExpanded ? (
+                    <TableRow className="bg-muted/30">
+                      <TableCell colSpan={5} className="py-3">
+                        <RecommendationDetail rec={rec} />
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                  </React.Fragment>
+                )})}
               </TableBody>
             </Table>
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function RecommendationDetail({ rec }: { rec: AiRecommendation }) {
+  const { t } = useTranslation();
+  const s = rec.suggestion;
+
+  return (
+    <div className="space-y-3 text-sm">
+      {rec.reasoning ? (
+        <div>
+          <p className="mb-1 text-xs font-medium text-muted-foreground">{t('ai_agents.reasoning')}</p>
+          <p className="whitespace-pre-wrap leading-relaxed">{rec.reasoning}</p>
+        </div>
+      ) : null}
+
+      {rec.kind === 'marketing_social_draft' && s ? (
+        <>
+          {rec.reasoning ? <Separator className="my-2" /> : null}
+          <p className="mb-1 text-xs font-medium text-muted-foreground">{t('ai_agents.variants')}</p>
+          <p className="font-medium">{s.summary}</p>
+          {(s.variants ?? []).map((v: AiSocialVariant, i: number) => (
+            <div key={i} className="rounded border bg-background px-2 py-1.5">
+              <span className="text-xs font-medium">{v.network ?? v.adapterCode}:</span>{' '}
+              <span className="text-muted-foreground">{v.body}</span>
+            </div>
+          ))}
+        </>
+      ) : null}
+
+      {rec.kind === 'product_suggestion' && s ? (
+        <>
+          {rec.reasoning ? <Separator className="my-2" /> : null}
+          <p className="font-medium">{s.title}</p>
+          {s.description ? (
+            <p className="text-muted-foreground">{s.description}</p>
+          ) : null}
+          {s.targetIndustry ? (
+            <p className="text-xs text-muted-foreground">
+              {t('ai_agents.target_industry')}: {s.targetIndustry}
+            </p>
+          ) : null}
+          {s.wouldServeExistingCustomers ? (
+            <Badge variant="secondary" className="text-[10px]">
+              {t('ai_agents.serves_existing_customers')}
+            </Badge>
+          ) : null}
+        </>
+      ) : null}
+
+      {rec.kind === 'customer_upgrade_outreach' && s ? (
+        <>
+          {rec.reasoning ? <Separator className="my-2" /> : null}
+          <p className="font-medium">{s.subject}</p>
+          {s.body ? (
+            <p className="whitespace-pre-wrap text-muted-foreground">{s.body}</p>
+          ) : null}
+        </>
+      ) : null}
+
+      {rec.kind === 'research_suggestion' && s ? (
+        <>
+          {rec.reasoning ? <Separator className="my-2" /> : null}
+          <p className="font-medium">{s.objective}</p>
+          {s.prompt ? (
+            <p className="text-muted-foreground">{s.prompt}</p>
+          ) : null}
+        </>
+      ) : null}
+
+      {rec.kind === 'agent_action' && s ? (
+        <>
+          {rec.reasoning ? <Separator className="my-2" /> : null}
+          <p className="font-medium">{s.summary}</p>
+          {s.payload?.body ? (
+            <p className="whitespace-pre-wrap text-muted-foreground">{s.payload.body}</p>
+          ) : null}
+        </>
+      ) : null}
+
+      {!rec.reasoning && !['marketing_social_draft', 'product_suggestion', 'customer_upgrade_outreach', 'research_suggestion', 'agent_action'].includes(rec.kind) ? (
+        <p className="text-xs text-muted-foreground">{t('ai_agents.no_detail')}</p>
+      ) : null}
+
+      {(() => {
+        const kindLabel = KIND_LABEL[rec.kind];
+        return kindLabel ? (
+          <p className="text-xs text-muted-foreground">Kind: {t(kindLabel)}</p>
+        ) : null;
+      })()}
     </div>
   );
 }

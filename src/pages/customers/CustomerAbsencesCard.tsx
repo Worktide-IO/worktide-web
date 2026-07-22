@@ -1,9 +1,11 @@
 import { useList } from '@refinedev/core';
 import { intlLocale } from '@/lib/intl';
-import { CalendarOff } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { AlertCircle, CalendarOff } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Row } from '@/lib/refine';
 
 type ContactAbsenceRow = Row<{ '@id': string; contact: string; startsOn: string; endsOn: string; note?: string | null }>;
@@ -20,13 +22,14 @@ const fmtRange = (a: string, b: string) =>
  * clients manage them in their portal.
  */
 export function CustomerAbsencesCard({ customerIri }: { customerIri: string }) {
-  const { result: absences } = useList<ContactAbsenceRow>({
+  const { t } = useTranslation();
+  const { result: absences, query: absencesQuery } = useList<ContactAbsenceRow>({
     resource: 'contact_absences',
     filters: [{ field: 'customer', operator: 'eq', value: customerIri }],
     sorters: [{ field: 'startsOn', order: 'desc' }],
     pagination: { mode: 'off' },
   });
-  const { result: contacts } = useList<ContactRow>({
+  const { result: contacts, query: contactsQuery } = useList<ContactRow>({
     resource: 'contacts',
     filters: [{ field: 'customer', operator: 'eq', value: customerIri }],
     pagination: { mode: 'off' },
@@ -41,18 +44,29 @@ export function CustomerAbsencesCard({ customerIri }: { customerIri: string }) {
   }, [contacts]);
 
   const rows = absences?.data ?? [];
+  const loading = absencesQuery.isLoading || contactsQuery.isLoading;
+  const error = absencesQuery.isError || contactsQuery.isError;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <CalendarOff className="size-4 text-muted-foreground" /> Abwesenheiten
+          <CalendarOff className="size-4 text-muted-foreground" /> {t('contact_absences.title')}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {rows.length === 0 ? (
+        {loading ? (
+          <div className="space-y-3 py-1">
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-4 w-36" />
+          </div>
+        ) : error ? (
+          <p className="flex items-center gap-1.5 py-2 text-sm text-destructive">
+            <AlertCircle className="size-3.5" /> {t('contact_absences.error')}
+          </p>
+        ) : rows.length === 0 ? (
           <p className="py-2 text-sm text-muted-foreground">
-            Keine vom Kunden eingetragenen Abwesenheiten.
+            {t('absences.no_customer_absences')}
           </p>
         ) : (
           <div className="divide-y">

@@ -1,8 +1,8 @@
-import { useList, useInvalidate } from '@refinedev/core';
+import { useList, useInvalidate, useCreate, useDelete, useUpdate } from '@refinedev/core';
 import { intlLocale } from '@/lib/intl';
 import { useTranslation } from 'react-i18next';
 import { useForm } from '@refinedev/react-hook-form';
-import { ArrowLeft, Check, Loader2, Plus, Save, Sparkles, Tag, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, ChevronsUpDown, GripVertical, Loader2, Plus, Save, Sparkles, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Controller, type FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router';
@@ -14,6 +14,9 @@ import { useMercureTopic } from '@/lib/mercure';
 import {
   releaseVersion,
   VERSION_STATUS_BADGE,
+  FEATURE_KIND_BADGE,
+  type ProductFeatureJsonld,
+  type ProductFeatureKind,
   type ProductJsonld,
   type ProductType,
   type ProductVersionJsonld,
@@ -32,6 +35,20 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -149,7 +166,7 @@ export function ProductForm(props: Mode) {
               <Input id="slug" placeholder={t('product_form.slug_placeholder')} {...register('slug')} />
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>{t('product_form.type')}</Label>
                 <Controller
@@ -187,9 +204,25 @@ export function ProductForm(props: Mode) {
                   )}
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="category">{t('product_form.category')}</Label>
                 <Input id="category" {...register('category')} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t('product_form.parent')}</Label>
+                <Controller
+                  control={control}
+                  name="parent"
+                  render={({ field }) => (
+                    <ParentSelect
+                      value={(field.value as string | undefined) ?? undefined}
+                      onChange={field.onChange}
+                      excludeId={isEdit ? props.id : undefined}
+                    />
+                  )}
+                />
               </div>
             </div>
 
@@ -440,24 +473,7 @@ function ProductVersionsCard({
           <ul className="divide-y">
             {rows.map((v) => {
               const badge = VERSION_STATUS_BADGE[(v.status ?? 'supported') as ProductVersionStatus];
-              return (
-                <li key={v['@id']} className="flex items-center justify-between py-2">
-                  <span className="flex items-center gap-2 text-sm">
-                    <span className="font-mono">{v.version}</span>
-                    {v.isLatest ? (
-                      <Badge variant="default" className="text-[10px]">
-                        latest
-                      </Badge>
-                    ) : null}
-                    <Badge variant={badge.variant} className="text-[10px]">
-                      {t(badge.label)}
-                    </Badge>
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {v.releaseDate ? new Date(v.releaseDate).toLocaleDateString(intlLocale()) : '—'}
-                  </span>
-                </li>
-              );
+              return <VersionRow key={v['@id']} version={v} badge={badge} onChange={onChange} />;
             })}
           </ul>
         )}
@@ -512,5 +528,402 @@ function ProductVersionsCard({
         </DialogContent>
       </Dialog>
     </Card>
+  );
+}
+
+function VersionRow({
+  version,
+  badge,
+  onChange,
+}: {
+  version: Row<ProductVersionJsonld>;
+  badge: { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' };
+  onChange: () => void;
+}) {
+  const { t } = useTranslation();
+  const [featuresOpen, setFeaturesOpen] = useState(false);
+  const versionIri = version['@id'];
+
+  const { result: featuresResult } = useList<Row<ProductFeatureJsonld>>({
+    resource: 'product_features',
+    filters: versionIri ? [{ field: 'version', operator: 'eq', value: versionIri }] : [],
+    sorters: [{ field: 'position', order: 'asc' }],
+    pagination: { mode: 'off' },
+    queryOptions: { enabled: featuresOpen },
+  });
+  const features = featuresResult?.data ?? [];
+
+  return (
+    <li>
+      <div
+        className="flex cursor-pointer items-center justify-between py-2 hover:bg-muted/30"
+        onClick={() => setFeaturesOpen((v) => !v)}
+      >
+        <span className="flex items-center gap-2 text-sm">
+          <ChevronRight
+            className={`size-3.5 text-muted-foreground transition-transform ${featuresOpen ? 'rotate-90' : ''}`}
+          />
+          <span className="font-mono">{version.version}</span>
+          {version.isLatest ? (
+            <Badge variant="default" className="text-[10px]">
+              latest
+            </Badge>
+          ) : null}
+          <Badge variant={badge.variant} className="text-[10px]">
+            {t(badge.label)}
+          </Badge>
+          {features.length > 0 && !featuresOpen ? (
+            <span className="text-xs text-muted-foreground">
+              {t('product_form.feature_count', { count: features.length })}
+            </span>
+          ) : null}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {version.releaseDate
+            ? new Date(version.releaseDate).toLocaleDateString(intlLocale())
+            : '—'}
+        </span>
+      </div>
+      {featuresOpen ? (
+        <div className="mb-2 ml-7 space-y-1">
+          {features.map((f) => (
+            <FeatureRow key={f['@id']} feature={f} onChanged={onChange} />
+          ))}
+          <AddFeatureForm versionIri={versionIri!} position={features.length} onAdded={onChange} />
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
+function FeatureRow({
+  feature,
+  onChanged,
+}: {
+  feature: Row<ProductFeatureJsonld>;
+  onChanged: () => void;
+}) {
+  const { t } = useTranslation();
+  const { mutate: remove } = useDelete();
+  const [editOpen, setEditOpen] = useState(false);
+  const kindBadge = feature.kind ? FEATURE_KIND_BADGE[feature.kind as ProductFeatureKind] : null;
+
+  return (
+    <>
+      <div
+        className="flex cursor-pointer items-center gap-2 rounded border px-2 py-1 text-sm hover:bg-muted/30"
+        onClick={() => setEditOpen(true)}
+      >
+        <GripVertical className="size-3.5 shrink-0 text-muted-foreground" />
+        {feature.icon ? (
+          <span className="shrink-0 text-xs">{feature.icon}</span>
+        ) : null}
+        <span className="min-w-0 flex-1 truncate font-medium">{feature.name}</span>
+        {kindBadge ? (
+          <Badge variant={kindBadge.variant} className="text-[10px] shrink-0">
+            {t(kindBadge.label)}
+          </Badge>
+        ) : null}
+        {feature.description ? (
+          <span className="hidden text-muted-foreground md:inline md:max-w-[150px] md:truncate">
+            {feature.description}
+          </span>
+        ) : null}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-6 shrink-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            remove(
+              { resource: 'product_features', id: feature.id! },
+              { onSuccess: onChanged },
+            );
+          }}
+        >
+          <Trash2 className="size-3" />
+        </Button>
+      </div>
+      <FeatureEditDialog
+        feature={feature}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSaved={onChanged}
+      />
+    </>
+  );
+}
+
+function FeatureEditDialog({
+  feature,
+  open,
+  onOpenChange,
+  onSaved,
+}: {
+  feature: Row<ProductFeatureJsonld>;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onSaved: () => void;
+}) {
+  const { t } = useTranslation();
+  const [name, setName] = useState(feature.name ?? '');
+  const [icon, setIcon] = useState(feature.icon ?? '');
+  const [desc, setDesc] = useState(feature.description ?? '');
+  const [kind, setKind] = useState<string>(feature.kind ?? 'new');
+  const { mutate: update, mutation: updateMut } = useUpdate();
+
+  useEffect(() => {
+    if (open) {
+      setName(feature.name ?? '');
+      setIcon(feature.icon ?? '');
+      setDesc(feature.description ?? '');
+      setKind(feature.kind ?? 'new');
+    }
+  }, [open, feature]);
+
+  const submit = () => {
+    if (!name.trim()) return;
+    update(
+      {
+        resource: 'product_features',
+        id: feature.id!,
+        values: { name: name.trim(), icon: icon.trim() || null, description: desc.trim() || null, kind: kind || null },
+      },
+      {
+        onSuccess: () => {
+          onOpenChange(false);
+          onSaved();
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('product_form.edit_feature')}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-[60px_1fr] gap-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="feat-icon">{t('product_form.feature_icon_placeholder')}</Label>
+              <Input
+                id="feat-icon"
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+                maxLength={40}
+                placeholder="🎯"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="feat-name">Name</Label>
+              <Input
+                id="feat-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && submit()}
+                autoFocus
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="feat-desc">{t('product_form.description')}</Label>
+            <Textarea id="feat-desc" rows={2} value={desc} onChange={(e) => setDesc(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Typ</Label>
+            <Select value={kind} onValueChange={setKind}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="new">{t('product.feature_kind.new')}</SelectItem>
+                <SelectItem value="improved">{t('product.feature_kind.improved')}</SelectItem>
+                <SelectItem value="fixed">{t('product.feature_kind.fixed')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={updateMut.isPending}>
+            {t('action.cancel')}
+          </Button>
+          <Button type="button" onClick={submit} disabled={updateMut.isPending || !name.trim()}>
+            {t('action.save')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddFeatureForm({
+  versionIri,
+  position,
+  onAdded,
+}: {
+  versionIri: string;
+  position: number;
+  onAdded: () => void;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [icon, setIcon] = useState('');
+  const [kind, setKind] = useState<string>('new');
+  const { mutate: create, mutation: createMut } = useCreate();
+  const creating = createMut.isPending;
+
+  const submit = () => {
+    if (!name.trim()) return;
+    create(
+      {
+        resource: 'product_features',
+        values: {
+          version: versionIri,
+          name: name.trim(),
+          icon: icon.trim() || null,
+          position,
+          kind,
+        },
+      },
+      {
+        onSuccess: () => {
+          setName('');
+          setIcon('');
+          setKind('new');
+          setOpen(false);
+          onAdded();
+        },
+      },
+    );
+  };
+
+  if (!open) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-7 text-xs"
+        onClick={() => setOpen(true)}
+      >
+        <Plus className="size-3" /> {t('product_form.add_feature')}
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        className="h-7 w-14 text-xs"
+        placeholder={t('product_form.feature_icon_placeholder')}
+        value={icon}
+        onChange={(e) => setIcon(e.target.value)}
+        maxLength={40}
+      />
+      <Input
+        className="h-7 flex-[2] text-xs"
+        placeholder={t('product_form.feature_name_placeholder')}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && submit()}
+        autoFocus
+      />
+      <Select value={kind} onValueChange={setKind}>
+        <SelectTrigger className="h-7 w-24 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="new">{t('product.feature_kind.new')}</SelectItem>
+          <SelectItem value="improved">{t('product.feature_kind.improved')}</SelectItem>
+          <SelectItem value="fixed">{t('product.feature_kind.fixed')}</SelectItem>
+        </SelectContent>
+      </Select>
+      <Button type="button" size="sm" className="h-7 text-xs" onClick={submit} disabled={creating || !name.trim()}>
+        {t('action.save')}
+      </Button>
+      <Button type="button" variant="ghost" size="icon" className="size-6" onClick={() => setOpen(false)}>
+        <X className="size-3" />
+      </Button>
+    </div>
+  );
+}
+
+function ParentSelect({
+  value,
+  onChange,
+  excludeId,
+}: {
+  value: string | undefined;
+  onChange: (v: string | undefined) => void;
+  excludeId?: string;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+
+  const { result } = useList<Row<ProductJsonld>>({
+    resource: 'products',
+    filters: [{ field: 'type', operator: 'eq', value: 'product' }],
+    sorters: [{ field: 'name', order: 'asc' }],
+    pagination: { mode: 'off' },
+  });
+
+  const products = (result?.data ?? []).filter(
+    (p: Row<ProductJsonld>) => p['@id'] !== `/v1/products/${excludeId}`,
+  );
+  const selected = products.find((p: Row<ProductJsonld>) => p['@id'] === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal"
+        >
+          {selected ? selected.name : t('product_form.parent_none')}
+          <ChevronsUpDown className="size-3.5 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+        <Command>
+          <CommandInput placeholder={t('product_list.search_name')} />
+          <CommandList>
+            <CommandEmpty>{t('product_list.no_matches')}</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value="__none__"
+                onSelect={() => {
+                  onChange(undefined);
+                  setOpen(false);
+                }}
+              >
+                <span className={cn(!value && 'font-medium')}>
+                  {t('product_form.parent_none')}
+                </span>
+              </CommandItem>
+              {products.map((p: Row<ProductJsonld>) => (
+                <CommandItem
+                  key={p['@id']}
+                  value={p.name ?? ''}
+                  onSelect={() => {
+                    onChange(p['@id']);
+                    setOpen(false);
+                  }}
+                >
+                  <span className={cn(p['@id'] === value && 'font-medium')}>
+                    {p.name}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

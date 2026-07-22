@@ -1,8 +1,11 @@
 import { useMenu } from '@refinedev/core';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ChevronRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
-import * as Icons from 'lucide-react';
+
+import { resolveNavIcon } from '@/lib/icons';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 import { BrandLogo } from '@/components/BrandLogo';
 import { FloatingTimer } from '@/components/FloatingTimer';
@@ -15,7 +18,7 @@ import { PendingMutationsToast } from '@/components/PendingMutationsToast';
 import { QuickAddDialog } from '@/components/QuickAddDialog';
 import { FeedbackWidget, openFeedback } from '@/components/feedback/FeedbackWidget';
 import { Button } from '@/components/ui/button';
-import { MessageSquarePlus } from 'lucide-react';
+import { MessageSquarePlus, Search } from 'lucide-react';
 import { UserMenu } from '@/components/UserMenu';
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher';
 import { DevToolsBridge } from '@/components/DevToolsBridge';
@@ -33,6 +36,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
@@ -131,6 +137,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="ml-auto flex items-center gap-1">
             <Button
               type="button"
+              size="sm"
+              variant="ghost"
+              className="gap-1.5 text-muted-foreground"
+              onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { metaKey: true, ctrlKey: true, key: '/' }))}
+              aria-label={t('search.trigger_aria')}
+              title={t('search.trigger_aria')}
+            >
+              <Search className="size-4" />
+              <span className="hidden sm:inline text-xs">{t('search.trigger_label')}</span>
+              <kbd className="hidden lg:inline-flex items-center gap-0.5 rounded border bg-muted px-1.5 text-[10px] font-medium text-muted-foreground">
+                <span>/</span>
+              </kbd>
+            </Button>
+            <Button
+              type="button"
               size="icon"
               variant="ghost"
               className="size-9 rounded-full"
@@ -158,6 +179,19 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 function NavItem({ item }: { item: Resource }) {
   const location = useLocation();
   const { t } = useTranslation();
+  const subItems = (item.meta as Record<string, unknown>)?.subItems as
+    | { name: string; list: string; meta: { label: string; icon: string } }[]
+    | undefined;
+
+  const iconName = (item.meta?.icon as string | undefined) ?? 'Circle';
+  const Icon = resolveNavIcon(iconName);
+  const label = t((item.meta?.label as string | undefined) ?? item.label ?? item.name);
+
+  // Parent item with sub-items → collapsible section
+  if (subItems && subItems.length > 0) {
+    return <NavGroup label={label} Icon={Icon} subItems={subItems} />;
+  }
+
   // `item.route` may be a path or undefined for resource groups with no list
   // route. Skip those — they wouldn't navigate anywhere.
   const to = item.route;
@@ -165,12 +199,6 @@ function NavItem({ item }: { item: Resource }) {
     return null;
   }
   const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
-  const iconName = (item.meta?.icon as string | undefined) ?? 'Circle';
-  const Icon =
-    (Icons[iconName as keyof typeof Icons] as React.ElementType | undefined) ??
-    Icons.Circle;
-  // meta.label holds an i18n key (e.g. `nav.wall`); fall back to the raw name.
-  const label = t((item.meta?.label as string | undefined) ?? item.label ?? item.name);
 
   return (
     <SidebarMenuItem>
@@ -184,6 +212,58 @@ function NavItem({ item }: { item: Resource }) {
   );
 }
 
+function NavGroup({
+  label,
+  Icon,
+  subItems,
+}: {
+  label: string;
+  Icon: React.ElementType;
+  subItems: { name: string; list: string; meta: { label: string; icon: string } }[];
+}) {
+  const { t } = useTranslation();
+  const location = useLocation();
+  const isActive = subItems.some(
+    (s) => location.pathname === s.list || location.pathname.startsWith(`${s.list}/`),
+  );
+  const [open, setOpen] = useState(isActive);
+
+  return (
+    <SidebarMenuItem>
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton tooltip={label} isActive={isActive}>
+            <Icon className="size-4" />
+            <span>{label}</span>
+            <ChevronRight
+              className={`ml-auto size-4 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+            />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {subItems.map((s) => {
+              const active =
+                location.pathname === s.list || location.pathname.startsWith(`${s.list}/`);
+              const SubIcon = resolveNavIcon(s.meta.icon);
+              return (
+                <SidebarMenuSubItem key={s.name}>
+                  <SidebarMenuSubButton asChild isActive={active}>
+                    <Link to={s.list}>
+                      <SubIcon className="size-4" />
+                      <span>{t(s.meta.label)}</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              );
+            })}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </Collapsible>
+    </SidebarMenuItem>
+  );
+}
+
 /**
  * Buckets the flat resources list into the labelled groups the sidebar
  * renders. The category lives on `meta.category` and falls back to "App"
@@ -192,7 +272,7 @@ function NavItem({ item }: { item: Resource }) {
  * Section order is fixed (most-used first) rather than alphabetical so
  * users find Projekte / Aufgaben without scanning the whole sidebar.
  */
-const CATEGORY_ORDER = ['App', 'Arbeit', 'CRM', 'Admin'] as const;
+const CATEGORY_ORDER = ['Arbeit', 'CRM', 'Einstellungen', 'App'] as const;
 
 // The category id ('Arbeit', …) is a stable grouping key; map it to an i18n
 // key so the section header localizes while the bucketing stays language-neutral.
@@ -200,7 +280,7 @@ const CATEGORY_LABEL_KEY: Record<string, string> = {
   App: 'nav.category.app',
   Arbeit: 'nav.category.work',
   CRM: 'nav.category.crm',
-  Admin: 'nav.category.admin',
+  Einstellungen: 'nav.category.settings',
 };
 
 function groupByCategory(items: Resource[]): { label: string; items: Resource[] }[] {

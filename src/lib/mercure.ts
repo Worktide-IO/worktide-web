@@ -2,7 +2,8 @@ import { useInvalidate } from '@refinedev/core';
 import { EventSourcePlus } from 'event-source-plus';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { api } from '@/lib/api';
+import { api } from '@/lib/api'
+import { recordError } from '@/lib/diagnostics';
 
 /**
  * Mercure hub + topic-prefix constants.
@@ -197,6 +198,7 @@ export function useMercureTopic<T = unknown>(
         jwt = await getMercureToken();
       } catch (err) {
         console.warn('useMercureTopic: failed to fetch JWT, subscription skipped', err);
+        recordError('mercure.jwt_fetch_failed', { error: String(err) });
         if (!cancelled) {
           erroredCount += 1;
           countedErrored = true;
@@ -251,7 +253,7 @@ export function useMercureTopic<T = unknown>(
           try {
             parsed = JSON.parse(msg.data) as T;
           } catch (err) {
-            console.warn('useMercureTopic: non-JSON frame ignored', err);
+            recordError('mercure.non_json_frame', { error: String(err) });
             return;
           }
           const out: MercureMessage<T> = { data: parsed, id: msg.id };

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { api } from '@/lib/api';
+import { api } from '@/lib/api'
+import { recordError } from '@/lib/diagnostics';
 
 export type WatchableTarget = 'task' | 'project' | 'document';
 
@@ -37,7 +38,7 @@ export function useWatch(target: WatchableTarget, targetId: string | null | unde
       });
       setSnapshot(data);
     } catch (err) {
-      console.warn('useWatch: load failed', err);
+      recordError('watch.load_failed', { error: String(err) });
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +67,7 @@ export function useWatch(target: WatchableTarget, targetId: string | null | unde
       });
       setSnapshot(data);
     } catch (err) {
-      console.warn('useWatch: toggle failed, reverting', err);
+      recordError('watch.toggle_failed', { error: String(err) });
       await refresh();
     } finally {
       pending.current = false;

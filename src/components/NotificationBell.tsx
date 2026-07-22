@@ -119,13 +119,13 @@ export function NotificationBell() {
             disabled={unread === 0}
           >
             <CheckCheck className="size-3.5" />
-            Alle gelesen
+            {t('notifications.mark_all_read')}
           </Button>
         </div>
 
         {items.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-            Keine Benachrichtigungen.
+            {t('notifications.empty')}
           </p>
         ) : (
           <ul className="max-h-96 divide-y overflow-y-auto">
@@ -173,7 +173,7 @@ export function NotificationBell() {
               navigate('/benachrichtigungen');
             }}
           >
-            Alle anzeigen
+            {t('notifications.view_all')}
           </Button>
         </div>
       </PopoverContent>

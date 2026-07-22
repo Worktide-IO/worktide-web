@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 
-import { api, readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+import { api, getAccessToken, readAuth, WORKSPACE_STORAGE_KEY } from '@/lib/api';
+
+function detectBrowserLanguage(): string {
+  try {
+    const raw = navigator.language?.split('-')[0] ?? '';
+    return ['de', 'en'].includes(raw) ? raw : 'en';
+  } catch {
+    return 'en';
+  }
+}
 
 /**
  * Human labels for the locale codes the backend advertises. Unknown codes
@@ -43,6 +52,15 @@ function subscribeI18nProfile(fn: () => void): () => void {
 
 async function fetchI18nProfile(): Promise<I18nProfile> {
   if (cache) return cache;
+  // No session yet (e.g. the login page mounts a component that localizes): skip
+  // the call — GET /me/profile would 401 and log a scary red error in the console.
+  // Preserve the browser language so unauthenticated pages match the user's
+  // preference. Deliberately NOT cached, so the first authenticated caller
+  // fetches the real profile.
+  if (!getAccessToken()) {
+    const browser = detectBrowserLanguage();
+    return { supportedLanguages: [browser], preferredLanguage: null, resolvedLanguage: browser };
+  }
   if (!inflight) {
     inflight = api
       .get<{
@@ -132,7 +150,7 @@ export function useActiveLocale(): string {
     };
   }, []);
 
-  return locale ?? 'en';
+  return locale ?? detectBrowserLanguage();
 }
 
 // The workspace's own language — the one the base columns are authored in, so

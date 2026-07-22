@@ -47,7 +47,7 @@ type MeetingTypeRow = Row<{
 }>;
 
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-const PORTAL_BASE = import.meta.env.VITE_PORTAL_BASE_URL ?? 'https://portal.worktide.ddev.site';
+const PORTAL_BASE = import.meta.env.VITE_PORTAL_BASE_URL ?? 'https://worktide-portal.ddev.site';
 
 type FormState = {
   id?: string;

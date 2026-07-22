@@ -124,7 +124,7 @@ function DiscoveredRecordCard({
           <div className="flex flex-wrap gap-1.5">
             {record.participants.map((p, i) => (
               <span
-                key={i}
+                key={p.email ?? p.externalUserId ?? i}
                 className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground"
               >
                 {p.email || p.externalUserId || '?'}

@@ -62,7 +62,7 @@ export function useKeysetList<T>(options: KeysetOptions<T>): KeysetList<T> {
       itemsPerPage: pageSize,
     };
     for (const [k, v] of Object.entries(filtersRef.current)) {
-      if (v !== undefined && v !== '' && v !== 'all') params[k] = v;
+      if (v !== undefined && v !== 'all') params[k] = v;
     }
     if (cursor) params[`${orderField}[before]`] = cursor;
     return params;

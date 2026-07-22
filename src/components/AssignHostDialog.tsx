@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Loader2, Server } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -32,6 +33,7 @@ type Props = {
  * `POST /conversations/{id}/link-system` (mode customer | create).
  */
 export function AssignHostDialog({ conversationId, hostLabel, onLinked }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [customer, setCustomer] = useState<string>('');
@@ -47,11 +49,11 @@ export function AssignHostDialog({ conversationId, hostLabel, onLinked }: Props)
         ? { mode: 'create', newCustomerName }
         : { mode: 'customer', customer };
       await api.post(`/conversations/${conversationId}/link-system`, body);
-      toast.success('Host dem Kunden zugewiesen.');
+      toast.success(t('assign_host.toast_success'));
       setOpen(false);
       onLinked();
     } catch {
-      toast.error('Zuweisung fehlgeschlagen.');
+      toast.error(t('assign_host.toast_error'));
     } finally {
       setSaving(false);
     }
@@ -62,42 +64,42 @@ export function AssignHostDialog({ conversationId, hostLabel, onLinked }: Props)
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm" className="gap-1.5">
           <Server className="size-3.5" />
-          Host zuweisen
+          {t('assign_host.button')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Host einem Kunden zuweisen</DialogTitle>
+          <DialogTitle>{t('assign_host.title')}</DialogTitle>
           <DialogDescription>
             {hostLabel
-              ? `Ordne den Host „${hostLabel}" einem Kunden zu. Künftige Zabbix-Alerts dieses Hosts werden automatisch verknüpft.`
-              : 'Ordne diesen Host einem Kunden zu. Künftige Zabbix-Alerts dieses Hosts werden automatisch verknüpft.'}
+              ? t('assign_host.desc_with_host', { host: hostLabel })
+              : t('assign_host.desc')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between rounded-md border p-2">
-            <Label htmlFor="ah-newcust" className="text-sm font-normal">Neuen Kunden anlegen</Label>
+            <Label htmlFor="ah-newcust" className="text-sm font-normal">{t('assign_host.new_customer')}</Label>
             <Switch id="ah-newcust" checked={newCustomer} onCheckedChange={setNewCustomer} />
           </div>
           {newCustomer ? (
             <div className="space-y-1">
-              <Label htmlFor="ah-custname">Name des neuen Kunden</Label>
+              <Label htmlFor="ah-custname">{t('assign_host.new_customer_name')}</Label>
               <Input id="ah-custname" value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} />
             </div>
           ) : (
             <div className="space-y-1">
-              <Label>Kunde</Label>
+              <Label>{t('assign_host.customer_label')}</Label>
               <CustomerCombobox value={customer} onChange={(v) => setCustomer(v ?? '')} />
             </div>
           )}
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>{t('assign_host.cancel')}</Button>
           <Button type="button" onClick={submit} disabled={!canSubmit || saving} className="gap-1.5">
             {saving ? <Loader2 className="size-3.5 animate-spin" /> : null}
-            Zuweisen
+            {t('assign_host.submit')}
           </Button>
         </DialogFooter>
       </DialogContent>
