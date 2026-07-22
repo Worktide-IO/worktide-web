@@ -1,7 +1,7 @@
 import { useList } from '@refinedev/core';
 import { useLiveResource } from '@/lib/mercure';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, FolderPlus, FolderTree, Package, Plus, Search } from 'lucide-react';
+import { ChevronRight, FolderPlus, FolderTree, Package, Plus, Search, Share2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
@@ -96,9 +96,7 @@ function TreeNodeRow({
           </Badge>
         ) : null}
         {isShared ? (
-          <Badge variant="outline" className="text-[10px] shrink-0">
-            {t('product_list.shared')}
-          </Badge>
+          <Share2 className="size-3 shrink-0 text-blue-500" />
         ) : null}
       </div>
       {open &&
