@@ -50,6 +50,7 @@ const KIND_LABEL: Record<string, string> = {
   customer_upgrade_outreach: 'ai_kind.customer_upgrade_outreach',
   research_suggestion: 'ai_kind.research_suggestion',
   agent_action: 'ai_kind.agent_action',
+  product_suggestion: 'ai_kind.product_suggestion',
 };
 
 const TARGET_LABEL: Record<string, string> = {
@@ -200,7 +201,9 @@ export function AiAgentsOverviewPage() {
               ? t('ai_toast.research_mission')
               : rec.kind === 'agent_action'
                 ? t('ai_toast.draft_generic')
-                : t('ai_toast.recommendation_adopted');
+                : rec.kind === 'product_suggestion'
+                  ? t('ai_toast.idea_created')
+                  : t('ai_toast.recommendation_adopted');
       toast.success(msg);
       await query.refetch();
       if (rec.kind === 'marketing_social_draft') {
@@ -370,6 +373,7 @@ export function AiAgentsOverviewPage() {
                 <SelectItem value="customer_upgrade_outreach">Upgrade-Outreach</SelectItem>
                 <SelectItem value="research_suggestion">{t('ai_agents.kind_research_suggestion')}</SelectItem>
                 <SelectItem value="agent_action">{t('ai_agents.kind_agent_action')}</SelectItem>
+                <SelectItem value="product_suggestion">{t('ai_kind.product_suggestion')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
