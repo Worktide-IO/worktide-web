@@ -50,6 +50,10 @@ export type AiSuggestion = {
   // Workspace-shaped (generic agent action)
   archetype?: string;
   connectorCode?: string;
+  // Workspace-shaped (product opportunity suggestion)
+  description?: string;
+  targetIndustry?: string | null;
+  wouldServeExistingCustomers?: boolean;
   channelId?: string;
   payload?: { body?: string; recipient?: string; subject?: string };
 };
