@@ -40,6 +40,7 @@ export const SOURCE_CATALOG: SourceTypeDef[] = [
   { code: 'zabbix', label: 'Zabbix', description: 'Zabbix-Probleme als Conversations im Inbox-Stream.', category: 'monitoring', icon: Bell, available: true, auth: 'apikey_pat', setupHint: 'Zabbix-Frontend-URL + API-Token.' },
   { code: 'security_advisory', label: 'CVE / Security Advisories', description: 'CVE-Daten (NVD), GitHub Advisories und Packagist Advisories für genutzte Pakete.', category: 'monitoring', icon: Shield, available: true, auth: 'none', setupHint: 'Keywords eintragen (z.B. typo3,php,symfony). InboundConfig: sources=["nvd","github","packagist"].' },
   { code: 'status_page', label: 'Status Page (Atom/RSS)', description: 'Status-Meldungen von Hetzner, Mittwald, AWS & Co. per Atom/RSS-Feed mit System-Filterung.', category: 'monitoring', icon: Bell, available: true, auth: 'none', setupHint: 'Feed-URL eintragen. InboundConfig: systems=["cloud","dedicated"] für Filter.' },
+  { code: 'sipgate', label: 'sipgate (VoIP / SMS)', description: 'Telefonie und SMS via sipgate: Anrufe empfangen/initiieren, SMS senden, Push-API-Webhooks.', category: 'voice', icon: Phone, available: true, auth: 'password', setupHint: 'tokenId + token aus den sipgate API-Einstellungen. InboundConfig: userId, webhookToken, dialTargets.' },
 
   // --- Analytics ---
   { code: 'matomo_analytics', label: 'Matomo Analytics', description: 'Täglicher Analytics-Report: Visits, Pages, Referrers.', category: 'analytics', icon: ChartBar, available: true, auth: 'token', setupHint: 'Matomo-URL + authToken + siteId.' },
